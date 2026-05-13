@@ -1,0 +1,685 @@
+<?php
+session_start();
+require_once __DIR__ . '/../inc/db.php';
+
+
+// Check if client is logged in
+if (!isset($_SESSION['client_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+$client_id = $_SESSION['client_id'];
+$client_name = $_SESSION['client_name'];
+
+$message = '';
+$messageType = '';
+
+// Handle appointment deletion and booking
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = isset($_POST['action']) ? $_POST['action'] : 'book';
+
+    if ($action === 'delete') {
+        // Handle appointment deletion
+        $appointment_id = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
+
+        if ($appointment_id) {
+            try {
+                // Verify the appointment belongs to this client and is rejected
+                $stmt = $pdo->prepare("SELECT id, status FROM appointments WHERE id = ? AND client_id = ?");
+                $stmt->execute([$appointment_id, $client_id]);
+                $appointment = $stmt->fetch();
+
+                if ($appointment && $appointment['status'] === 'rejected') {
+                    // Delete the rejected appointment
+                    $stmt = $pdo->prepare("DELETE FROM appointments WHERE id = ? AND client_id = ? AND status = 'rejected'");
+                    $result = $stmt->execute([$appointment_id, $client_id]);
+
+                    if ($result) {
+                        $message = 'Rejected appointment deleted successfully.';
+                        $messageType = 'success';
+                    } else {
+                        $message = 'Failed to delete appointment.';
+                        $messageType = 'danger';
+                    }
+                } else {
+                    $message = 'Appointment not found or cannot be deleted.';
+                    $messageType = 'danger';
+                }
+            } catch (PDOException $e) {
+                $message = 'Error deleting appointment: ' . htmlspecialchars($e->getMessage());
+                $messageType = 'danger';
+            }
+        }
+    } else {
+        // Handle appointment booking
+        $case_id = isset($_POST['case_id']) ? (int)$_POST['case_id'] : 0;
+        $lawyer_id = isset($_POST['lawyer_id']) ? (int)$_POST['lawyer_id'] : 0;
+        $appointment_date = trim($_POST['appointment_date']);
+        $appointment_time = trim($_POST['appointment_time']);
+        $notes = trim($_POST['notes']);
+
+    if (empty($lawyer_id) || empty($case_id) || empty($appointment_date) || empty($appointment_time)) {
+        $message = 'Please select lawyer, case, date and time for the appointment.';
+        $messageType = 'danger';
+    } else {
+        try {
+            // Verify the case belongs to this client
+            $stmt = $pdo->prepare("SELECT id FROM cases WHERE id = ? AND client_id = ?");
+            $stmt->execute([$case_id, $client_id]);
+            if (!$stmt->fetch()) {
+                $message = 'Invalid case selected.';
+                $messageType = 'danger';
+            } else {
+                // Check if the lawyer is available at the requested time
+                $availabilityCheckPassed = true;
+
+                if (!empty($lawyer_id)) {
+                    // Lawyer selected - verify availability
+                    $dayOfWeek = strtolower(date('l', strtotime($appointment_date)));
+                    $requestedTime = $appointment_time . ':00';
+
+                    $stmt = $pdo->prepare("
+                        SELECT * FROM lawyer_time_slots
+                        WHERE lawyer_id = ? AND day_of_week = ? AND slot_type = 'available'
+                        AND start_time <= ? AND end_time >= ?
+                        ORDER BY start_time
+                    ");
+                    $stmt->execute([$lawyer_id, $dayOfWeek, $requestedTime, $requestedTime]);
+                    $availability = $stmt->fetch();
+
+                    if (!$availability) {
+                        $availabilityCheckPassed = false;
+                        $message = 'Lawyer not available at the selected date and time. Please choose a different time.';
+                        $messageType = 'danger';
+                    }
+                }
+
+                if ($availabilityCheckPassed) {
+                    $startDateTime = $appointment_date . ' ' . $appointment_time . ':00';
+                    $endDateTime = date('Y-m-d H:i:s', strtotime($startDateTime . ' +1 hour')); // Assume 1 hour duration
+
+                    $stmt = $pdo->prepare("INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+                    $result = $stmt->execute([$client_id, $case_id, $lawyer_id, $startDateTime, $endDateTime, $notes]);
+
+                    if ($result) {
+                        $appointmentId = $pdo->lastInsertId();
+                        $message = 'Appointment request submitted successfully. Waiting for lawyer approval.';
+                        $messageType = 'success';
+                    } else {
+                        $message = 'Failed to save appointment. Please try again.';
+                        $messageType = 'danger';
+                    }
+                }
+            }
+        } catch (PDOException $e) {
+            $message = 'Error booking appointment: ' . htmlspecialchars($e->getMessage());
+            $messageType = 'danger';
+        }
+    }
+}
+}
+
+try {
+    // Get client's cases for appointment booking
+    $stmt = $pdo->prepare("SELECT id, title FROM cases WHERE client_id = ? ORDER BY title ASC");
+    $stmt->execute([$client_id]);
+    $clientCases = $stmt->fetchAll();
+
+    // Get all appointments for this client
+    $stmt = $pdo->prepare("
+        SELECT
+            a.*,
+            c.title as case_title,
+            CONCAT(l.first_name, ' ', l.last_name) as lawyer_name
+        FROM appointments a
+        LEFT JOIN cases c ON c.id = a.case_id
+        LEFT JOIN lawyers l ON l.id = a.lawyer_id
+        WHERE a.client_id = ?
+        ORDER BY a.created_at DESC
+    ");
+    $stmt->execute([$client_id]);
+    $appointments = $stmt->fetchAll();
+
+} catch (PDOException $e) {
+    $message = 'Error loading appointments: ' . htmlspecialchars($e->getMessage());
+    $messageType = 'danger';
+    $clientCases = [];
+    $appointments = [];
+}
+
+$messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
+
+// Build appointments table rows
+$appointmentsRows = '';
+if (empty($appointments)) {
+    $appointmentsRows = '<tr><td colspan="5" class="text-center py-4"><p class="text-muted mb-0">No appointments scheduled.</p></td></tr>';
+} else {
+    foreach ($appointments as $apt) {
+        $appointmentDate = date('M d, Y', strtotime($apt['starts_at']));
+        $appointmentTime = date('g:i A', strtotime($apt['starts_at']));
+        $lawyerName = $apt['lawyer_name'] ?: 'TBD';
+
+        // Status badge based on appointment status and time
+        $statusBadge = '';
+        switch ($apt['status']) {
+            case 'pending':
+                $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending Approval</span>';
+                break;
+            case 'accepted':
+                if (strtotime($apt['starts_at']) > time()) {
+                    $statusBadge = '<span class="badge badge-sm bg-gradient-info">Upcoming</span>';
+                } elseif (strtotime($apt['ends_at']) < time()) {
+                    $statusBadge = '<span class="badge badge-sm bg-gradient-success">Completed</span>';
+                } else {
+                    $statusBadge = '<span class="badge badge-sm bg-gradient-primary">In Progress</span>';
+                }
+                break;
+            case 'rejected':
+                $statusBadge = '<span class="badge badge-sm bg-gradient-danger">Rejected</span>';
+                break;
+            default:
+                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($apt['status']) . '</span>';
+        }
+
+        $appointmentsRows .= '<tr>
+            <td>
+                <div class="d-flex px-2 py-1">
+                    <div class="d-flex flex-column justify-content-center">
+                        <h6 class="mb-0 text-sm">' . htmlspecialchars($apt['case_title']) . '</h6>
+                        <p class="text-xs text-secondary mb-0">' . $appointmentDate . ' at ' . $appointmentTime . '</p>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <p class="text-xs font-weight-bold mb-0">' . htmlspecialchars($lawyerName) . '</p>
+            </td>
+            <td class="align-middle text-center">
+                ' . $statusBadge . '
+            </td>
+            <td>
+                <p class="text-xs font-weight-bold mb-0">' . htmlspecialchars(substr($apt['notes'] ?: 'No notes', 0, 50)) . '...</p>
+            </td>
+            <td class="align-middle text-end">
+                <div class="d-flex gap-2 justify-content-end">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewAppointmentDetails(' . $apt['id'] . ')">Details</button>';
+                    if ($apt['status'] === 'rejected') {
+                        $appointmentsRows .= '
+                    <form method="POST" style="display: inline;" onsubmit="return confirm(\'Are you sure you want to permanently delete this rejected appointment request?\')">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="appointment_id" value="' . $apt['id'] . '">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete rejected appointment">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>';
+                    }
+                $appointmentsRows .= '
+                </div>
+            </td>
+        </tr>';
+    }
+}
+
+// Fetch available lawyers (those assigned to client's cases)
+$availableLawyers = [];
+try {
+    $stmt = $pdo->prepare("
+        SELECT DISTINCT l.id, l.first_name, l.last_name
+        FROM lawyers l
+        INNER JOIN case_lawyers cl ON cl.lawyer_id = l.id
+        INNER JOIN cases c ON c.id = cl.case_id
+        WHERE c.client_id = ? AND l.is_active = 1
+        ORDER BY l.first_name, l.last_name
+    ");
+    $stmt->execute([$client_id]);
+    $availableLawyers = $stmt->fetchAll();
+
+    // If no lawyers assigned to cases, show all active lawyers with a note
+    if (empty($availableLawyers)) {
+        try {
+            $stmt = $pdo->query("SELECT id, first_name, last_name FROM lawyers WHERE is_active = 1 ORDER BY first_name, last_name");
+            $availableLawyers = $stmt->fetchAll();
+            if (!empty($availableLawyers)) {
+                $message = 'No lawyers are currently assigned to your cases. The lawyers shown below are available in the system, but you may need to contact the administrator to assign one to your case.';
+                $messageType = 'info';
+            } else {
+                $message = 'No active lawyers found in the system. Please contact the administrator.';
+                $messageType = 'warning';
+            }
+        } catch (PDOException $e) {
+            $availableLawyers = [];
+            $message = 'Error loading lawyers. Please contact the administrator.';
+            $messageType = 'danger';
+        }
+    }
+} catch (PDOException $e) {
+    $availableLawyers = [];
+}
+
+// Build case options for appointment booking
+$caseOptions = '<option value="">Select a case</option>';
+foreach ($clientCases as $case) {
+    $caseOptions .= '<option value="' . $case['id'] . '">' . htmlspecialchars($case['title']) . '</option>';
+}
+
+// Build lawyer availability data
+$lawyerAvailability = [];
+foreach ($availableLawyers as $lawyer) {
+    $lawyerAvailability[$lawyer['id']] = [];
+
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM lawyer_time_slots WHERE lawyer_id = ? ORDER BY day_of_week, start_time");
+        $stmt->execute([$lawyer['id']]);
+        $slots = $stmt->fetchAll();
+
+        foreach ($slots as $slot) {
+            if (!isset($lawyerAvailability[$lawyer['id']][$slot['day_of_week']])) {
+                $lawyerAvailability[$lawyer['id']][$slot['day_of_week']] = [];
+            }
+            $lawyerAvailability[$lawyer['id']][$slot['day_of_week']][] = [
+                'start' => $slot['start_time'],
+                'end' => $slot['end_time'],
+                'type' => $slot['slot_type']
+            ];
+        }
+    } catch (PDOException $e) {
+        // Continue without availability data
+    }
+}
+
+// Build lawyer options
+$lawyerOptions = '<option value="">Select a lawyer</option>';
+foreach ($availableLawyers as $lawyer) {
+    $lawyerOptions .= '<option value="' . $lawyer['id'] . '">' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '</option>';
+}
+
+$html = <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+    <title>LexMate - My Appointments</title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+    <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+
+    <style>
+        .time-option {
+            transition: all 0.2s ease;
+        }
+        .time-option.text-success.font-weight-bold {
+            background-color: rgba(25, 135, 84, 0.1);
+            border-left: 3px solid #19a463;
+        }
+        .time-option:disabled {
+            color: #6c757d !important;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body class="g-sidenav-show bg-gray-100">
+    <div class="min-height-300 bg-primary position-absolute w-100"></div>
+    <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
+        <div class="sidenav-header">
+            <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
+            <a class="navbar-brand m-0" href="#">
+            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LexMate logo">
+            <span class="ms-1 font-weight-bold">LexMate</span>
+            </a>
+        </div>
+        <hr class="horizontal dark mt-0">
+        <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="client-dashboard.php">
+                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="ni ni-tv-2 text-primary text-sm opacity-10"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="client-cases.php">
+                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="ni ni-folder-17 text-warning text-sm opacity-10"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">My Cases</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="client-appointments.php">
+                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="ni ni-calendar-grid-58 text-info text-sm opacity-10"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Appointments</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="client-court-tracking.php">
+                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="ni ni-collection text-success text-sm opacity-10"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Court Tracking</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="client-payments.php">
+                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
+                            <i class="ni ni-credit-card text-info text-sm opacity-10"></i>
+                        </div>
+                        <span class="nav-link-text ms-1">Payments</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="sidenav-footer position-absolute bottom-0 w-100">
+            <div class="text-center">
+                <p class="text-xs text-muted mb-1">Logged in as</p>
+                <p class="text-sm font-weight-bold mb-2">{CLIENT_NAME}</p>
+                <a href="client-logout.php" class="btn btn-sm btn-outline-danger w-100">Logout</a>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content position-relative border-radius-lg">
+        <!-- Navbar -->
+        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
+            <div class="container-fluid py-1 px-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Pages</a></li>
+                        <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Appointments</li>
+                    </ol>
+                    <h6 class="font-weight-bolder mb-0">My Appointments</h6>
+                </nav>
+                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+                    <div class="ms-md-auto pe-md-3 d-flex align-items-center">
+                        <div class="input-group">
+                            <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
+                            <input type="text" class="form-control" placeholder="Search appointments...">
+                        </div>
+                    </div>
+                    <ul class="navbar-nav justify-content-end">
+                        <li class="nav-item d-flex align-items-center">
+                            <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
+                                <i class="fa fa-user me-sm-1"></i>
+                                <span class="d-sm-inline d-none">Welcome, {CLIENT_NAME}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
+                            <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+                                <div class="sidenav-toggler-inner">
+                                    <i class="sidenav-toggler-line"></i>
+                                    <i class="sidenav-toggler-line"></i>
+                                    <i class="sidenav-toggler-line"></i>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- End Navbar -->
+        <div class="container-fluid py-4">
+            {MESSAGE}
+
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header pb-0">
+                            <h6>All Appointments</h6>
+                            <p class="text-sm text-muted">View all your scheduled appointments</p>
+                        </div>
+                        <div class="card-body px-0 pt-0 pb-2">
+                            <div class="table-responsive p-0">
+                                <table class="table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Appointment</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Lawyer</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Notes</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {APPOINTMENTS_ROWS}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header pb-0">
+                            <h6>Book New Appointment</h6>
+                            <p class="text-sm text-muted">Schedule a new appointment with your lawyer</p>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="">
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label">Select Lawyer</label>
+                                    <select class="form-control" name="lawyer_id" id="lawyer_id" required onchange="loadLawyerAvailability()">
+                                        {LAWYER_OPTIONS}
+                                    </select>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label">Select Case</label>
+                                    <select class="form-control" name="case_id" required>
+                                        {CASE_OPTIONS}
+                                    </select>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label">Appointment Date</label>
+                                    <input type="date" class="form-control" name="appointment_date" id="appointment_date" min="<?php echo date('Y-m-d'); ?>" required onchange="loadTimeAvailability()">
+                                    <div id="dateAvailabilityMessage" class="mt-2" style="display: none;"></div>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label">Preferred Time</label>
+                                    <select class="form-control" name="appointment_time" id="appointment_time" required>
+                                        <option value="">Select time</option>
+                                        <option value="09:00" class="time-option">9:00 AM</option>
+                                        <option value="10:00" class="time-option">10:00 AM</option>
+                                        <option value="11:00" class="time-option">11:00 AM</option>
+                                        <option value="12:00" class="time-option">12:00 PM</option>
+                                        <option value="13:00" class="time-option">1:00 PM</option>
+                                        <option value="14:00" class="time-option">2:00 PM</option>
+                                        <option value="15:00" class="time-option">3:00 PM</option>
+                                        <option value="16:00" class="time-option">4:00 PM</option>
+                                        <option value="17:00" class="time-option">5:00 PM</option>
+                                    </select>
+                                    <small class="text-muted">Green options indicate available times for the selected lawyer</small>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label">Notes (Optional)</label>
+                                    <textarea class="form-control" name="notes" rows="3" placeholder="Any specific topics or concerns..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Request Appointment</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Appointment Details Modal -->
+    <div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="appointmentModalLabel">Appointment Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="appointmentDetails">
+                    <!-- Details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/js/core/popper.min.js"></script>
+    <script src="../assets/js/core/bootstrap.min.js"></script>
+    <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+    <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+
+    <script>
+        function viewAppointmentDetails(appointmentId) {
+            // This would typically fetch appointment details via AJAX
+            // For now, just show a placeholder
+            document.getElementById('appointmentDetails').innerHTML = '<p>Detailed appointment information would be loaded here.</p>';
+            new bootstrap.Modal(document.getElementById('appointmentModal')).show();
+        }
+
+        // Available time slots data (would normally come from server)
+        const lawyerAvailability = {$lawyerAvailabilityJson};
+
+        function loadTimeAvailability() {
+            const lawyerId = document.getElementById('lawyer_id').value;
+            const dateInput = document.getElementById('appointment_date');
+            const timeSelect = document.getElementById('appointment_time');
+            const dateMessageDiv = document.getElementById('dateAvailabilityMessage');
+
+            // Reset all time options to default state
+            const timeOptions = timeSelect.querySelectorAll('.time-option');
+            timeOptions.forEach(option => {
+                option.classList.remove('text-success', 'font-weight-bold');
+                option.disabled = false;
+            });
+
+            // Hide date message
+            dateMessageDiv.style.display = 'none';
+            dateMessageDiv.innerHTML = '';
+
+            if (!lawyerId || !dateInput.value) {
+                return;
+            }
+
+            // Get day of week from selected date
+            const date = new Date(dateInput.value + 'T00:00:00');
+            const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const dayOfWeek = days[date.getDay()];
+
+            // Get available slots for this lawyer and day
+            const daySlots = lawyerAvailability[lawyerId] && lawyerAvailability[lawyerId][dayOfWeek] ? lawyerAvailability[lawyerId][dayOfWeek] : [];
+            const availableSlots = daySlots.filter(slot => slot.type === 'available');
+
+                // If no availability slots are set up for this lawyer, allow all times
+                // This ensures backward compatibility if time slots haven't been configured
+                if (availableSlots.length === 0) {
+                    // No availability slots configured - allow all times (backward compatibility)
+                    dateMessageDiv.style.display = 'block';
+                    dateMessageDiv.innerHTML = '<div class="alert alert-info py-2"><i class="ni ni-info-16"></i> Lawyer availability not configured - all times shown.</div>';
+
+                    // Enable all time options
+                    timeOptions.forEach(option => {
+                        option.classList.remove('text-success', 'font-weight-bold');
+                        option.disabled = false;
+                    });
+                    return;
+                }
+
+            // Enable and highlight available time slots
+            let hasAvailableTimes = false;
+            timeOptions.forEach(option => {
+                if (option.value) {
+                    const optionTime = option.value + ':00';
+                    let isAvailable = false;
+
+                    // Check if this time falls within any available slot
+                    availableSlots.forEach(slot => {
+                        if (optionTime >= slot.start && optionTime < slot.end) {
+                            isAvailable = true;
+                        }
+                    });
+
+                    if (isAvailable) {
+                        option.classList.add('text-success', 'font-weight-bold');
+                        option.disabled = false;
+                        hasAvailableTimes = true;
+                    } else {
+                        option.disabled = true;
+                    }
+                }
+            });
+
+            if (!hasAvailableTimes) {
+                // No specific times available (this shouldn't happen if slots are set up correctly, but just in case)
+                dateMessageDiv.style.display = 'block';
+                dateMessageDiv.innerHTML = '<div class="alert alert-warning py-2"><i class="ni ni-info-16"></i> No available times found for the selected date.</div>';
+            }
+        }
+
+
+        // Load time availability when lawyer or date changes
+        document.getElementById('lawyer_id').addEventListener('change', function() {
+            // If a date is already selected, update time availability
+            const dateInput = document.getElementById('appointment_date');
+            if (dateInput.value) {
+                loadTimeAvailability();
+            }
+        });
+
+        // Form validation before submission
+        function validateAppointmentForm() {
+            const lawyerId = document.getElementById('lawyer_id').value;
+            const caseId = document.getElementById('case_id').value;
+            const dateInput = document.getElementById('appointment_date').value;
+            const timeSelect = document.getElementById('appointment_time');
+            const selectedTime = timeSelect.value;
+            const selectedOption = timeSelect.querySelector('option[value="' + selectedTime + '"]');
+
+            // Check required fields
+            if (!lawyerId) {
+                alert('Please select a lawyer.');
+                return false;
+            }
+
+            if (!caseId) {
+                alert('Please select a case.');
+                return false;
+            }
+
+            if (!dateInput) {
+                alert('Please select an appointment date.');
+                return false;
+            }
+
+            if (!selectedTime) {
+                alert('Please select an appointment time.');
+                return false;
+            }
+
+            // Check if selected time is disabled
+            if (selectedOption && selectedOption.disabled) {
+                alert('The selected time is not available. Please choose a different time.');
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>
+HTML;
+
+// Replace placeholders
+$html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{CLIENT_NAME}', htmlspecialchars($client_name), $html);
+$html = str_replace('{APPOINTMENTS_ROWS}', $appointmentsRows, $html);
+$html = str_replace('{CASE_OPTIONS}', $caseOptions, $html);
+$html = str_replace('{LAWYER_OPTIONS}', $lawyerOptions, $html);
+$html = str_replace('{$lawyerAvailabilityJson}', json_encode($lawyerAvailability), $html);
+
+echo $html;
+?>

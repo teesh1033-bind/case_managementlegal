@@ -1,0 +1,103 @@
+/* Simple Calendar Fallback Styles */
+.simple-calendar {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.calendar-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.calendar-header h5 {
+    margin: 0;
+    flex: 1;
+    text-align: center;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day-header {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #6c757d;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.calendar-day {
+    min-height: 100px;
+    padding: 0.5rem;
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+    position: relative;
+}
+
+.calendar-day.other-month {
+    background: #f8f9fa;
+    color: #adb5bd;
+}
+
+.calendar-day.today {
+    background: #e3f2fd;
+}
+
+.calendar-day.has-events {
+    background: #f0f8ff;
+}
+
+.day-number {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.day-events {
+    margin-top: 0.25rem;
+}
+
+.day-event {
+    background: #007bff;
+    color: white;
+    padding: 0.125rem 0.25rem;
+    margin-bottom: 0.125rem;
+    border-radius: 0.125rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.day-event:hover {
+    opacity: 0.8;
+}
+
+.day-event-more {
+    font-size: 0.7rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .calendar-day {
+        min-height: 80px;
+        padding: 0.25rem;
+    }
+
+    .day-event {
+        font-size: 0.65rem;
+        padding: 0.1rem 0.2rem;
+    }
+}
