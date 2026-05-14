@@ -188,6 +188,7 @@ $html = <<<'HTML'
             background: rgba(255, 255, 255, 0.86) !important;
             border: 1px solid rgba(255, 255, 255, 0.6) !important;
             box-shadow: 0 0.35rem 1.25rem rgba(52, 71, 103, 0.08) !important;
+            margin-top: 20px;
         }
         .client-dashboard-page .breadcrumb .text-dark { color: #344767 !important; }
     </style>
