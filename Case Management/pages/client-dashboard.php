@@ -82,13 +82,117 @@ $html = <<<'HTML'
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>LexMate - Client Dashboard</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <style>
+        .client-dashboard-page { --cd-radius: 1rem; --cd-radius-lg: 1.25rem; }
+        .client-dashboard-page .min-height-300 {
+            background: linear-gradient(125deg, #5e72e4 0%, #324cdd 42%, #172b4d 100%) !important;
+            opacity: 1;
+        }
+        .client-dashboard-page .cd-hero {
+            border-radius: var(--cd-radius-lg);
+            background: linear-gradient(135deg, rgba(94, 114, 228, 0.95) 0%, rgba(50, 76, 221, 0.98) 55%, rgba(23, 43, 77, 1) 100%);
+            box-shadow: 0 1rem 2.5rem rgba(23, 43, 77, 0.18);
+        }
+        .client-dashboard-page .cd-hero .cd-hero-kicker {
+            letter-spacing: 0.12em;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
+        .client-dashboard-page .cd-stat-card {
+            border-radius: var(--cd-radius-lg);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .client-dashboard-page .cd-stat-card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            border-radius: 4px 0 0 4px;
+        }
+        .client-dashboard-page .cd-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.75rem 1.75rem rgba(52, 71, 103, 0.12) !important;
+        }
+        .client-dashboard-page .cd-stat-card--primary::before { background: linear-gradient(180deg, #5e72e4, #324cdd); }
+        .client-dashboard-page .cd-stat-card--success::before { background: linear-gradient(180deg, #2dce89, #24a46d); }
+        .client-dashboard-page .cd-stat-card--warning::before { background: linear-gradient(180deg, #fb6340, #f56036); }
+        .client-dashboard-page .cd-stat-card--dark::before { background: linear-gradient(180deg, #8898aa, #525f7f); }
+        .client-dashboard-page .cd-stat-card .cd-stat-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        .client-dashboard-page .cd-stat-card .cd-stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+        .client-dashboard-page .cd-stat-card .cd-stat-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--bs-secondary-color);
+        }
+        .client-dashboard-page .cd-panel {
+            border-radius: var(--cd-radius-lg);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 0.25rem 1rem rgba(52, 71, 103, 0.06);
+        }
+        .client-dashboard-page .cd-panel .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 1.1rem 1.25rem 0.85rem;
+        }
+        .client-dashboard-page .cd-panel .card-header h6 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+        .client-dashboard-page .cd-panel .card-header .cd-panel-sub {
+            font-size: 0.8rem;
+            color: var(--bs-secondary-color);
+            margin: 0.15rem 0 0;
+        }
+        .client-dashboard-page .cd-list-item {
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 0.75rem;
+            transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+        .client-dashboard-page .cd-list-item:hover {
+            border-color: rgba(94, 114, 228, 0.35);
+            background: rgba(94, 114, 228, 0.04);
+            box-shadow: 0 0.35rem 1rem rgba(94, 114, 228, 0.08);
+        }
+        .client-dashboard-page .cd-list-item .flex-grow-1 { min-width: 0; }
+        .client-dashboard-page .cd-list-item:last-child { margin-bottom: 0 !important; }
+        .client-dashboard-page .navbar-main {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.86) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 0.35rem 1.25rem rgba(52, 71, 103, 0.08) !important;
+        }
+        .client-dashboard-page .breadcrumb .text-dark { color: #344767 !important; }
+    </style>
 </head>
-<body class="g-sidenav-show bg-gray-100">
+<body class="g-sidenav-show bg-gray-100 client-dashboard-page">
     <div class="min-height-300 bg-primary position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
@@ -147,7 +251,7 @@ $html = <<<'HTML'
             <div class="text-center">
                 <p class="text-xs text-muted mb-1">Logged in as</p>
                 <p class="text-sm font-weight-bold mb-2">{CLIENT_NAME}</p>
-                <a href="client-logout.php" class="btn btn-sm btn-outline-danger w-100">Logout</a>
+                <a href="client-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
             </div>
         </div>
     </aside>
@@ -157,18 +261,18 @@ $html = <<<'HTML'
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Pages</a></li>
+                        <li class="breadcrumb-item text-sm"><a class="opacity-6 text-dark" href="client-dashboard.php">Client</a></li>
                         <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Dashboard</li>
                     </ol>
-                    <h6 class="font-weight-bolder mb-0">Client Dashboard</h6>
+                    <h5 class="font-weight-bolder mb-0 text-dark">Dashboard</h5>
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <div class="ms-md-auto pe-md-3 d-flex align-items-center">
+                    <form class="ms-md-auto pe-md-3 d-flex align-items-center lexmate-navbar-search" method="get" action="search.php" role="search">
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="text" class="form-control" placeholder="Type here...">
+                            <input type="search" name="q" class="form-control" placeholder="Search cases or appointments…" value="" autocomplete="off" maxlength="200" aria-label="Search">
                         </div>
-                    </div>
+                    </form>
                     <ul class="navbar-nav justify-content-end">
                         <li class="nav-item d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
@@ -193,79 +297,82 @@ $html = <<<'HTML'
         <div class="container-fluid py-4">
             {MESSAGE}
 
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card cd-hero border-0 text-white">
+                        <div class="card-body p-4 p-lg-5 d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-4">
+                            <div class="flex-grow-1" style="max-width: 36rem;">
+                                <p class="cd-hero-kicker text-white mb-2">Your legal workspace</p>
+                                <h4 class="text-white font-weight-bolder mb-2">Welcome back, {CLIENT_NAME}</h4>
+                                <p class="text-sm text-white mb-0" style="opacity: 0.88; line-height: 1.55;">Review active matters, prepare for upcoming meetings, and stay on top of court dates—all from one place.</p>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                                <a href="client-cases.php" class="btn btn-sm bg-white text-dark font-weight-bold mb-0 px-3">My cases</a>
+                                <a href="client-appointments.php" class="btn btn-sm btn-outline-light font-weight-bold mb-0 px-3">Appointments</a>
+                                <a href="client-court-tracking.php" class="btn btn-sm btn-outline-light font-weight-bold mb-0 px-3">Court tracking</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Stats Cards -->
             <div class="row">
                 <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <div class="row">
-                                <div class="col-8">
-                                    <div class="numbers">
-                                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Total Cases</p>
-                                        <h5 class="font-weight-bolder mb-0">{TOTAL_CASES}</h5>
-                                    </div>
+                    <div class="card cd-stat-card cd-stat-card--primary border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <p class="cd-stat-label mb-1">Total cases</p>
+                                    <p class="cd-stat-value text-dark mb-0">{TOTAL_CASES}</p>
                                 </div>
-                                <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                                        <i class="ni ni-folder-17 text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                <div class="cd-stat-icon bg-gradient-primary text-white shadow">
+                                    <i class="ni ni-folder-17 opacity-10" aria-hidden="true"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <div class="row">
-                                <div class="col-8">
-                                    <div class="numbers">
-                                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Open Cases</p>
-                                        <h5 class="font-weight-bolder mb-0">{OPEN_CASES}</h5>
-                                    </div>
+                    <div class="card cd-stat-card cd-stat-card--success border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <p class="cd-stat-label mb-1">Open</p>
+                                    <p class="cd-stat-value text-dark mb-0">{OPEN_CASES}</p>
                                 </div>
-                                <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
-                                        <i class="ni ni-check-bold text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                <div class="cd-stat-icon bg-gradient-success text-white shadow">
+                                    <i class="ni ni-check-bold opacity-10" aria-hidden="true"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <div class="row">
-                                <div class="col-8">
-                                    <div class="numbers">
-                                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Pending Cases</p>
-                                        <h5 class="font-weight-bolder mb-0">{PENDING_CASES}</h5>
-                                    </div>
+                    <div class="card cd-stat-card cd-stat-card--warning border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <p class="cd-stat-label mb-1">Pending</p>
+                                    <p class="cd-stat-value text-dark mb-0">{PENDING_CASES}</p>
                                 </div>
-                                <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
-                                        <i class="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                <div class="cd-stat-icon bg-gradient-warning text-white shadow">
+                                    <i class="ni ni-time-alarm opacity-10" aria-hidden="true"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <div class="row">
-                                <div class="col-8">
-                                    <div class="numbers">
-                                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Closed Cases</p>
-                                        <h5 class="font-weight-bolder mb-0">{CLOSED_CASES}</h5>
-                                    </div>
+                    <div class="card cd-stat-card cd-stat-card--dark border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <p class="cd-stat-label mb-1">Closed</p>
+                                    <p class="cd-stat-value text-dark mb-0">{CLOSED_CASES}</p>
                                 </div>
-                                <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-md">
-                                        <i class="ni ni-archive-2 text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                <div class="cd-stat-icon bg-gradient-dark text-white shadow">
+                                    <i class="ni ni-archive-2 opacity-10" aria-hidden="true"></i>
                                 </div>
                             </div>
                         </div>
@@ -273,14 +380,18 @@ $html = <<<'HTML'
                 </div>
             </div>
 
-            <div class="row mt-4">
+            <div class="row mt-2">
                 <!-- Recent Cases -->
                 <div class="col-lg-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-header pb-0">
-                            <h6>Recent Cases</h6>
+                    <div class="card cd-panel h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h6>Recent cases</h6>
+                                <p class="cd-panel-sub">Latest updates on your matters</p>
+                            </div>
+                            <a href="client-cases.php" class="btn btn-sm btn-outline-primary mb-0">View all</a>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="card-body p-3 pt-2">
                             {RECENT_CASES}
                         </div>
                     </div>
@@ -288,11 +399,15 @@ $html = <<<'HTML'
 
                 <!-- Upcoming Appointments -->
                 <div class="col-lg-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-header pb-0">
-                            <h6>Upcoming Appointments</h6>
+                    <div class="card cd-panel h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h6>Upcoming appointments</h6>
+                                <p class="cd-panel-sub">Accepted meetings on your calendar</p>
+                            </div>
+                            <a href="client-appointments.php" class="btn btn-sm btn-outline-primary mb-0">Schedule</a>
                         </div>
-                        <div class="card-body p-3">
+                        <div class="card-body p-3 pt-2">
                             {UPCOMING_APPOINTMENTS}
                         </div>
                     </div>
@@ -322,16 +437,17 @@ $html = str_replace('{CLOSED_CASES}', isset($caseStats['closed_cases']) ? $caseS
 // Recent Cases
 $recentCasesHtml = '';
 if (empty($recentCases)) {
-    $recentCasesHtml = '<p class="text-sm text-muted">No cases found.</p>';
+    $recentCasesHtml = '<div class="text-center text-muted py-5 px-3"><p class="text-sm mb-1 font-weight-bold">No cases yet</p><p class="text-xs mb-3">When your firm opens a matter for you, it will show up here.</p><a href="client-cases.php" class="btn btn-sm btn-primary mb-0">Go to My cases</a></div>';
 } else {
     foreach ($recentCases as $case) {
         $lawyerNames = $case['lawyer_names'] ?: 'Unassigned';
+        $caseId = (int) $case['id'];
         switch ($case['status']) {
             case 'open':
                 $statusBadge = '<span class="badge badge-sm bg-gradient-success">Open</span>';
                 break;
             case 'closed':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-danger">Closed</span>';
+                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">Closed</span>';
                 break;
             case 'pending':
                 $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
@@ -342,17 +458,19 @@ if (empty($recentCases)) {
         }
 
         $recentCasesHtml .= '
-            <div class="d-flex align-items-center mb-3">
-                <div class="w-100">
-                    <div class="d-flex justify-content-between">
-                        <h6 class="mb-1 text-sm">' . htmlspecialchars($case['title']) . '</h6>
-                        ' . $statusBadge . '
+            <a href="client-case-view.php?id=' . $caseId . '" class="cd-list-item d-block text-decoration-none text-reset mb-2 p-3">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 text-sm font-weight-bold text-truncate">' . htmlspecialchars($case['title']) . '</h6>
+                        <p class="text-xs text-secondary mb-0"><strong class="font-weight-bold">Lawyer:</strong> ' . htmlspecialchars($lawyerNames) . '</p>
+                        <p class="text-xs text-secondary mb-0"><strong class="font-weight-bold">Updated:</strong> ' . date('M j, Y', strtotime($case['updated_at'])) . '</p>
                     </div>
-                    <p class="text-xs text-secondary mb-0">Lawyer: ' . htmlspecialchars($lawyerNames) . '</p>
-                    <p class="text-xs text-secondary mb-0">Updated: ' . date('M d, Y', strtotime($case['updated_at'])) . '</p>
+                    <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
+                        ' . $statusBadge . '
+                        <span class="text-xs text-primary font-weight-bold">View <i class="ni ni-bold-right ms-1" aria-hidden="true"></i></span>
+                    </div>
                 </div>
-            </div>
-            <hr class="horizontal dark">';
+            </a>';
     }
 }
 $html = str_replace('{RECENT_CASES}', $recentCasesHtml, $html);
@@ -360,20 +478,24 @@ $html = str_replace('{RECENT_CASES}', $recentCasesHtml, $html);
 // Upcoming Appointments
 $appointmentsHtml = '';
 if (empty($upcomingAppointments)) {
-    $appointmentsHtml = '<p class="text-sm text-muted">No upcoming appointments.</p>';
+    $appointmentsHtml = '<div class="text-center text-muted py-5 px-3"><p class="text-sm mb-1 font-weight-bold">No upcoming meetings</p><p class="text-xs mb-3">Accepted appointments will appear here with date and counsel.</p><a href="client-appointments.php" class="btn btn-sm btn-primary mb-0">Book an appointment</a></div>';
 } else {
     foreach ($upcomingAppointments as $apt) {
-        $appointmentDate = date('M d, Y g:i A', strtotime($apt['starts_at']));
+        $appointmentDate = date('M j, Y g:i A', strtotime($apt['starts_at']));
+        $notesRaw = $apt['notes'] ?: '';
+        $notesPreview = $notesRaw !== '' ? htmlspecialchars(substr($notesRaw, 0, 72)) . (strlen($notesRaw) > 72 ? '…' : '') : 'No notes';
         $appointmentsHtml .= '
-            <div class="d-flex align-items-center mb-3">
-                <div class="w-100">
-                    <h6 class="mb-1 text-sm">' . htmlspecialchars($apt['case_title'] ?: 'General Appointment') . '</h6>
-                    <p class="text-xs text-secondary mb-0">Date: ' . $appointmentDate . '</p>
-                    <p class="text-xs text-secondary mb-0">Lawyer: ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
-                    <p class="text-xs text-secondary mb-0">Notes: ' . htmlspecialchars(substr($apt['notes'] ?: 'No notes', 0, 50)) . '...</p>
+            <a href="client-appointments.php" class="cd-list-item d-block text-decoration-none text-reset mb-2 p-3">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 text-sm font-weight-bold text-truncate">' . htmlspecialchars($apt['case_title'] ?: 'General appointment') . '</h6>
+                        <p class="text-xs text-secondary mb-0"><strong class="font-weight-bold">When:</strong> ' . $appointmentDate . '</p>
+                        <p class="text-xs text-secondary mb-0"><strong class="font-weight-bold">Lawyer:</strong> ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
+                        <p class="text-xs text-secondary mb-0 text-truncate" title="' . htmlspecialchars($apt['notes'] ?: '') . '">' . $notesPreview . '</p>
+                    </div>
+                    <span class="text-xs text-primary font-weight-bold flex-shrink-0 pt-1">Calendar <i class="ni ni-bold-right ms-1" aria-hidden="true"></i></span>
                 </div>
-            </div>
-            <hr class="horizontal dark">';
+            </a>';
     }
 }
 $html = str_replace('{UPCOMING_APPOINTMENTS}', $appointmentsHtml, $html);
