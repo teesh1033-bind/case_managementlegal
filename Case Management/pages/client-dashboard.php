@@ -88,6 +88,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+
     <style>
         .client-dashboard-page { --cd-radius: 1rem; --cd-radius-lg: 1.25rem; }
         .client-dashboard-page .min-height-300 {
@@ -205,6 +206,7 @@ $html = <<<'HTML'
         </div>
         <hr class="horizontal dark mt-0">
         <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
+
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link active" href="client-dashboard.php">
@@ -255,6 +257,7 @@ $html = <<<'HTML'
                 <a href="client-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
             </div>
         </div>
+        <h1>Hello</h1>
     </aside>
     <main class="main-content position-relative border-radius-lg">
         <!-- Navbar -->
