@@ -588,7 +588,7 @@ $html = <<<'HTML'
                                 <input type="text" class="form-control" name="specialization" value="{SPECIALIZATION}" placeholder="e.g., Criminal Law, Corporate Law">
                             </div>
                         </div>
-
+                        <h1>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Sed alias, itaque maxime sequi dignissimos quas quo delectus suscipit voluptas possimus debitis iure quia quaerat temporibus error autem dolorem tempore ipsam.</h1>
                         <div class="mb-3">
                             <label class="form-label">Office Address</label>
                             <textarea class="form-control" name="office_address" rows="2">{OFFICE_ADDRESS}</textarea>
