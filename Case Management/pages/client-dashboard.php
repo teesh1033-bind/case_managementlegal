@@ -81,7 +81,7 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LexMate - Client Dashboard</title>
+    <title>LegalPro - Client Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -91,21 +91,25 @@ $html = <<<'HTML'
 
     <style>
         .client-dashboard-page { --cd-radius: 1rem; --cd-radius-lg: 1.25rem; }
-        .client-dashboard-page .min-height-300 {
-            background: linear-gradient(125deg, #5e72e4 0%, #324cdd 42%, #172b4d 100%) !important;
-            opacity: 1;
-        }
         .client-dashboard-page .cd-hero {
             border-radius: var(--cd-radius-lg);
-            background: linear-gradient(135deg, rgba(94, 114, 228, 0.95) 0%, rgba(50, 76, 221, 0.98) 55%, rgba(23, 43, 77, 1) 100%);
-            box-shadow: 0 1rem 2.5rem rgba(23, 43, 77, 0.18);
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 0.25rem 1rem rgba(52, 71, 103, 0.08);
         }
         .client-dashboard-page .cd-hero .cd-hero-kicker {
             letter-spacing: 0.12em;
             font-size: 0.68rem;
             font-weight: 700;
             text-transform: uppercase;
-            opacity: 0.85;
+            color: #5e72e4;
+            opacity: 1;
+        }
+        .client-dashboard-page .cd-hero .cd-hero-title {
+            color: #344767;
+        }
+        .client-dashboard-page .cd-hero .cd-hero-text {
+            color: #67748e;
         }
         .client-dashboard-page .cd-stat-card {
             border-radius: var(--cd-radius-lg);
@@ -200,8 +204,8 @@ $html = <<<'HTML'
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
             <a class="navbar-brand m-0" href="#">
-            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LexMate logo">
-            <span class="ms-1 font-weight-bold">LexMate</span>
+            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LegalPro logo">
+            <span class="ms-1 font-weight-bold">LegalPro</span>
             </a>
         </div>
         <hr class="horizontal dark mt-0">
@@ -257,7 +261,7 @@ $html = <<<'HTML'
                 <a href="client-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
             </div>
         </div>
-        <h1>Hello</h1>
+       
     </aside>
     <main class="main-content position-relative border-radius-lg">
         <!-- Navbar -->
@@ -271,7 +275,7 @@ $html = <<<'HTML'
                     <h5 class="font-weight-bolder mb-0 text-dark">Dashboard</h5>
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <form class="ms-md-auto pe-md-3 d-flex align-items-center lexmate-navbar-search" method="get" action="search.php" role="search">
+                    <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
                             <input type="search" name="q" class="form-control" placeholder="Search cases or appointments…" value="" autocomplete="off" maxlength="200" aria-label="Search">
@@ -303,17 +307,17 @@ $html = <<<'HTML'
 
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card cd-hero border-0 text-white">
+                    <div class="card cd-hero border-0">
                         <div class="card-body p-4 p-lg-5 d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-4">
                             <div class="flex-grow-1" style="max-width: 36rem;">
-                                <p class="cd-hero-kicker text-white mb-2">Your legal workspace</p>
-                                <h4 class="text-white font-weight-bolder mb-2">Welcome back, {CLIENT_NAME}</h4>
-                                <p class="text-sm text-white mb-0" style="opacity: 0.88; line-height: 1.55;">Review active matters, prepare for upcoming meetings, and stay on top of court dates—all from one place.</p>
+                                <p class="cd-hero-kicker mb-2">Your legal workspace</p>
+                                <h4 class="cd-hero-title font-weight-bolder mb-2">Welcome back, {CLIENT_NAME}</h4>
+                                <p class="cd-hero-text text-sm mb-0" style="line-height: 1.55;">Review active matters, prepare for upcoming meetings, and stay on top of court dates—all from one place.</p>
                             </div>
                             <div class="d-flex flex-wrap gap-2 flex-shrink-0">
-                                <a href="client-cases.php" class="btn btn-sm bg-white text-dark font-weight-bold mb-0 px-3">My cases</a>
-                                <a href="client-appointments.php" class="btn btn-sm btn-outline-light font-weight-bold mb-0 px-3">Appointments</a>
-                                <a href="client-court-tracking.php" class="btn btn-sm btn-outline-light font-weight-bold mb-0 px-3">Court tracking</a>
+                                <a href="client-cases.php" class="btn btn-sm bg-gradient-primary text-white font-weight-bold mb-0 px-3">My cases</a>
+                                <a href="client-appointments.php" class="btn btn-sm btn-outline-primary font-weight-bold mb-0 px-3">Appointments</a>
+                                <a href="client-court-tracking.php" class="btn btn-sm btn-outline-primary font-weight-bold mb-0 px-3">Court tracking</a>
                             </div>
                         </div>
                     </div>
