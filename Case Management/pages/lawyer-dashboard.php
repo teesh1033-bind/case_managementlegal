@@ -128,7 +128,7 @@ if (empty($upcomingAppointments)) {
         <tr>
             <td>
                 <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-warning shadow text-center border-radius-md me-3">
+                    <div class="icon icon-shape icon-sm bg-gradient-success shadow text-center border-radius-md me-3">
                         <i class="ni ni-time-alarm text-white text-xs opacity-10"></i>
                     </div>
                     <div>
@@ -154,8 +154,8 @@ $navHtml = <<<'NAV'
     <div class="sidenav-header">
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
         <a class="navbar-brand m-0" href="lawyer-dashboard.php">
-            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LexMate logo">
-            <span class="ms-1 font-weight-bold">LexMate</span>
+            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LegalPro logo">
+            <span class="ms-1 font-weight-bold">LegalPro</span>
         </a>
     </div>
     <hr class="horizontal dark mt-0">
@@ -223,7 +223,7 @@ $navHtml = <<<'NAV'
         <div class="text-center">
             <p class="text-xs text-muted mb-1">Logged in as</p>
             <p class="text-sm font-weight-bold mb-2">{LAWYER_NAME}</p>
-            <a href="lawyer-logout.php" class="btn btn-sm btn-outline-danger w-100">Logout</a>
+            <a href="lawyer-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
         </div>
     </div>
 </aside>
@@ -239,12 +239,13 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LexMate - Lawyer Dashboard</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <title>LegalPro - Lawyer Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100">
     <div class="min-height-300 bg-primary position-absolute w-100"></div>
@@ -316,7 +317,7 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
+                                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
                                         <i class="ni ni-circle-08 text-lg opacity-10" aria-hidden="true"></i>
                                     </div>
                                 </div>
@@ -368,7 +369,7 @@ $html = <<<'HTML'
                     <div class="card">
                         <div class="card-header pb-0 p-3">
                             <div class="d-flex align-items-center">
-                                <div class="icon icon-shape icon-md bg-gradient-warning shadow text-center border-radius-md me-3">
+                                <div class="icon icon-shape icon-md bg-gradient-success shadow text-center border-radius-md me-3">
                                     <i class="ni ni-time-alarm text-white text-lg opacity-10"></i>
                                 </div>
                                 <div>
@@ -403,7 +404,7 @@ $html = <<<'HTML'
                 <div class="row align-items-center justify-content-lg-between">
                     <div class="col-lg-6 mb-lg-0 mb-4">
                         <div class="copyright text-center text-sm text-muted text-lg-start">
-                            © <script>document.write(new Date().getFullYear())</script>, LexMate Lawyer Portal.
+                            © <script>document.write(new Date().getFullYear())</script>, LegalPro Lawyer Portal.
                         </div>
                     </div>
                 </div>

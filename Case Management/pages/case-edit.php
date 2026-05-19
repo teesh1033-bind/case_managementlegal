@@ -84,8 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : '';
         $expectedCompletion = isset($_POST['expected_completion']) ? $_POST['expected_completion'] : '';
 
-        // Set user_id to the first (primary) lawyer
-        $userId = !empty($lawyerIds) ? $lawyerIds[0] : null;
+        // cases.user_id = client's portal user (not lawyer — lawyers use case_lawyers)
+        $clientUserId = null;
+        $stmt = $pdo->prepare("SELECT user_id FROM clients WHERE id = ?");
+        $stmt->execute([$clientId]);
+        $clientRow = $stmt->fetch();
+        if ($clientRow && !empty($clientRow['user_id'])) {
+            $clientUserId = (int) $clientRow['user_id'];
+        }
 
         if (empty($title) || empty($clientId)) {
             $message = 'Case title and client are required.';
@@ -101,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         status = ?, priority = ?, category = ?, start_date = ?, expected_completion = ?
                     WHERE id = ?
                 ");
-                $stmt->execute([$title, $clientId, $userId, $description, $status, $priority, $category, $startDate ? $startDate : null, $expectedCompletion ? $expectedCompletion : null, $caseId]);
+                $stmt->execute([$title, $clientId, $clientUserId, $description, $status, $priority, $category, $startDate ? $startDate : null, $expectedCompletion ? $expectedCompletion : null, $caseId]);
 
                 // Get old lawyer assignments for tracking
                 $oldLawyers = isset($case['assigned_lawyers']) ? $case['assigned_lawyers'] : [];
@@ -429,7 +435,12 @@ $clients = [];
 $lawyers = [];
 
 try {
-    $clients = $pdo->query("SELECT id, first_name, last_name FROM clients ORDER BY first_name, last_name")->fetchAll();
+    $clients = $pdo->query("
+        SELECT c.id, c.first_name, c.last_name, c.email, c.user_id, u.username
+        FROM clients c
+        LEFT JOIN users u ON u.id = c.user_id
+        ORDER BY c.first_name, c.last_name
+    ")->fetchAll();
     $lawyers = $pdo->query("SELECT l.id, l.first_name, l.last_name FROM lawyers l WHERE l.is_active = 1 ORDER BY l.last_name, l.first_name")->fetchAll();
 
 
@@ -468,7 +479,16 @@ $clientOptions = '<option value="">Select client</option>';
 foreach ($clients as $client) {
     $fullName = trim($client['first_name'] . ' ' . $client['last_name']);
     $selected = ((int)$case['client_id'] === (int)$client['id']) ? ' selected' : '';
-    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName) . '</option>';
+    $hint = '';
+    if (!empty($client['username'])) {
+        $hint = ' — login: ' . $client['username'];
+    } elseif (!empty($client['email'])) {
+        $hint = ' — ' . $client['email'];
+    }
+    if (empty($client['user_id'])) {
+        $hint .= ' (no client portal account)';
+    }
+    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName . $hint) . '</option>';
 }
 
 // Build lawyer checkboxes
@@ -677,15 +697,16 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LexMate Case Manager - Edit Case</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <title>LegalPro Case Manager - Edit Case</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100">
-    <div class="min-height-300 bg-dark position-absolute w-100"></div>
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+    <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
     </aside>
     <main class="main-content position-relative border-radius-lg ">
@@ -843,7 +864,7 @@ $html = <<<'HTML'
                     <div class="row align-items-center justify-content-lg-between">
                         <div class="col-lg-6 mb-lg-0 mb-4">
                             <div class="copyright text-center text-sm text-muted text-lg-start">
-                                © <script>document.write(new Date().getFullYear())</script>, LexMate Case Manager.
+                                © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
                             </div>
                         </div>
                     </div>

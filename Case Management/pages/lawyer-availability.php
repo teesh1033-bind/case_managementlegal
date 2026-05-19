@@ -74,12 +74,13 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LexMate - My Availability</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <title>LegalPro - My Availability</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <style>
         .day-card {
             transition: all 0.3s ease;
@@ -113,8 +114,8 @@ $html = <<<'HTML'
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
             <a class="navbar-brand m-0" href="#">
-                <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LexMate logo">
-                <span class="ms-1 font-weight-bold">LexMate</span>
+                <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LegalPro logo">
+                <span class="ms-1 font-weight-bold">LegalPro</span>
             </a>
         </div>
         <hr class="horizontal dark mt-0">
@@ -182,7 +183,7 @@ $html = <<<'HTML'
             <div class="text-center">
                 <p class="text-xs text-muted mb-1">Logged in as</p>
                 <p class="text-sm font-weight-bold mb-2">{$lawyerName}</p>
-                <a href="lawyer-logout.php" class="btn btn-sm btn-outline-danger w-100">Logout</a>
+                <a href="lawyer-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
             </div>
         </div>
     </aside>

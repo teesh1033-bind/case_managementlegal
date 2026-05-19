@@ -28,7 +28,7 @@ $html = <<<'HTML'
 		Argon Dashboard
 	</title>
 	<!--     Fonts and icons     -->
-	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 	<!-- Nucleo Icons -->
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -36,11 +36,12 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<!-- CSS Files -->
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 </head>
 
-<body class="g-sidenav-show bg-gray-100">
-	<div class="position-absolute w-100 min-height-300 top-0" style="background-image: url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/profile-layout-header.jpg'); background-position-y: 50%;">
-		<span class="mask bg-primary opacity-6"></span>
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+	<div class="position-absolute w-100 min-height-300 top-0 profile-header-strip">
+		<span class="mask opacity-6"></span>
 	</div>
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
 		<div class="sidenav-header">
@@ -167,12 +168,12 @@ $html = <<<'HTML'
 					<h6 class="text-white font-weight-bolder ms-2">Profile</h6>
 				</nav>
 				<div class="collapse navbar-collapse me-md-0 me-sm-4 mt-sm-0 mt-2" id="navbar">
-					<div class="ms-md-auto pe-md-3 d-flex align-items-center">
+					<form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
 						<div class="input-group">
 							<span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-							<input type="text" class="form-control" placeholder="Type here...">
+							<input type="search" name="q" class="form-control" placeholder="Search cases…" value="" autocomplete="off" maxlength="200" aria-label="Search">
 						</div>
-					</div>
+					</form>
 					<ul class="navbar-nav justify-content-end">
 						<li class="nav-item d-flex align-items-center">
 							<a href="javascript:;" class="nav-link text-white font-weight-bold px-0">

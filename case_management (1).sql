@@ -676,7 +676,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `password`, `email`, `role`, `created_at`) VALUES
-(1, 'admin', '$2y$10$z3CFnqdKb6afSv5zDF9P.eCIiAVfxTfaaEKIOR8yiPw5FxmWEoS6.', 'admin@lexmate.com', 'admin', '2025-11-12 10:26:55'),
+(1, 'admin', '$2y$10$z3CFnqdKb6afSv5zDF9P.eCIiAVfxTfaaEKIOR8yiPw5FxmWEoS6.', 'admin@legalpro.com', 'admin', '2025-11-12 10:26:55'),
 (6, 'lawyer', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'lawyer@example.com', 'lawyer', '2025-12-01 08:26:24'),
 (7, 'staff', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'staff@example.com', 'staff', '2025-12-01 08:26:24'),
 (8, 'client', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'client@example.com', 'client', '2025-12-01 08:26:24'),

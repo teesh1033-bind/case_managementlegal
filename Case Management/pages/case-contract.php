@@ -51,7 +51,7 @@ $feeFormatted = formatCurrency($case['estimated_fees'] ?: 0);
 $today = date('F d, Y');
 $description = trim($case['description']) ?: 'Scope of representation as agreed between the firm and the client.';
 
-$title = 'LexMate Engagement Contract';
+$title = 'LegalPro Engagement Contract';
 $bodyHtml = '
 <!DOCTYPE html>
 <html lang="en">
@@ -107,7 +107,7 @@ $bodyHtml = '
         <div class="section">
             <h2>Mandate</h2>
             <p>
-                LexMate Case Manager is engaged to represent the client in the matter described above. The firm
+                LegalPro Case Manager is engaged to represent the client in the matter described above. The firm
                 commits to providing diligent, confidential, and professional legal services, while the client agrees
                 to furnish accurate information and timely instructions.
             </p>

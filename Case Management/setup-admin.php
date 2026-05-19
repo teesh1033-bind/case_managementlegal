@@ -123,12 +123,13 @@ $html = <<<'HTML'
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>LexMate - Admin Setup</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <title>LegalPro - Admin Setup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <style>
         .setup-card { max-width: 800px; margin: 0 auto; }
         .user-table { font-size: 14px; }
@@ -140,7 +141,7 @@ $html = <<<'HTML'
             <div class="col-12 col-lg-10">
                 <div class="card setup-card">
                     <div class="card-header">
-                        <h3 class="mb-0">LexMate Admin Setup</h3>
+                        <h3 class="mb-0">LegalPro Admin Setup</h3>
                         <p class="text-muted mb-0">Create or update admin users for the system</p>
                     </div>
                     <div class="card-body">

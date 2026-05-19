@@ -142,7 +142,7 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LexMate - Login Portal</title>
+    <title>LegalPro - Login Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -349,7 +349,7 @@ $html = <<<'HTML'
         <div class="w-100" style="max-width: 440px;">
                 <div class="card auth-card">
                     <div class="card-header pb-0 text-center border-0">
-                        <h3 class="mb-0 font-weight-bolder">LexMate Portal</h3>
+                        <h3 class="mb-0 font-weight-bolder">LegalPro Portal</h3>
                         <p class="mb-0">Choose how you sign in, then enter your credentials.</p>
                     </div>
                     <div class="card-body auth-body">

@@ -1,6 +1,6 @@
 <?php
 // inc/menunav.php
-// Clean navigation menu for LexMate Case Manager
+// Clean navigation menu for LegalPro Case Manager
 // Usage: include __DIR__ . '/../inc/menunav.php';
 
 // Get current page to highlight active menu item
@@ -105,8 +105,9 @@ function isActive($itemId, $currentPage) {
 }
 ?>
 
+<link href="../assets/css/legalpro-admin-portal.css?v=4" rel="stylesheet" />
 <style>
-    .lexmate-nav .nav-link {
+    .legalpro-nav .nav-link {
         display: flex;
         align-items: center;
         padding: 0.75rem 1.25rem;
@@ -117,7 +118,7 @@ function isActive($itemId, $currentPage) {
         color: #344767;
         transition: all 0.15s ease;
     }
-    .lexmate-nav .nav-link .lexmate-nav-icon {
+    .legalpro-nav .nav-link .legalpro-nav-icon {
         min-width: 36px;
         width: 36px;
         height: 36px;
@@ -125,46 +126,46 @@ function isActive($itemId, $currentPage) {
         color: #5e72e4;
         transition: all 0.15s ease;
     }
-    .lexmate-nav .nav-link .lexmate-nav-icon i {
+    .legalpro-nav .nav-link .legalpro-nav-icon i {
         color: inherit !important;
         opacity: 0.9;
 }
-    .lexmate-nav .nav-link.active,
-    .lexmate-nav .nav-link:hover {
+    .legalpro-nav .nav-link.active,
+    .legalpro-nav .nav-link:hover {
         background: linear-gradient(135deg, #5e72e4, #825ee4);
         color: #fff;
         box-shadow: 0 10px 20px rgba(94, 114, 228, 0.25);
     }
-    .lexmate-nav .nav-link.active .lexmate-nav-icon,
-    .lexmate-nav .nav-link:hover .lexmate-nav-icon {
+    .legalpro-nav .nav-link.active .legalpro-nav-icon,
+    .legalpro-nav .nav-link:hover .legalpro-nav-icon {
         background-color: rgba(255, 255, 255, 0.2);
         color: #fff;
     }
-    .lexmate-nav .nav-link.active .lexmate-nav-text,
-    .lexmate-nav .nav-link:hover .lexmate-nav-text {
+    .legalpro-nav .nav-link.active .legalpro-nav-text,
+    .legalpro-nav .nav-link:hover .legalpro-nav-text {
         color: #fff !important;
     }
-    .lexmate-nav .nav-scroll {
+    .legalpro-nav .nav-scroll {
         flex: 1;
         overflow-y: auto;
         padding-right: 0.25rem;
         margin-right: -0.25rem;
     }
-    .lexmate-nav .nav-scroll::-webkit-scrollbar {
+    .legalpro-nav .nav-scroll::-webkit-scrollbar {
         width: 4px;
     }
-    .lexmate-nav .nav-scroll::-webkit-scrollbar-thumb {
+    .legalpro-nav .nav-scroll::-webkit-scrollbar-thumb {
         background: rgba(52, 71, 103, 0.3);
         border-radius: 4px;
 }
 </style>
 
-<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl fixed-start ms-4 lexmate-nav" id="sidenav-main" style="height: calc(100vh - 2rem); top: 1rem; display: flex; flex-direction: column; overflow: hidden;">
+<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl fixed-start ms-4 legalpro-nav" id="sidenav-main" style="height: calc(100vh - 2rem); top: 1rem; display: flex; flex-direction: column; overflow: hidden;">
     <div class="sidenav-header" style="flex-shrink: 0; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: center; position: relative; width: 100%;">
         <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
         <a class="navbar-brand m-0" href="dashboard.php" style="display: flex; align-items: center; justify-content: center; margin: 0 auto; width: 100%;">
-            <img src="../assets/img/logo-ct-dark.png" width="24" height="24" class="navbar-brand-img" alt="LexMate logo">
-            <span class="ms-2 font-weight-bold" style="font-size: 0.875rem;">LexMate</span>
+            <img src="../assets/img/logo-ct-dark.png" width="24" height="24" class="navbar-brand-img" alt="LegalPro logo">
+            <span class="ms-2 font-weight-bold" style="font-size: 0.875rem;">LegalPro</span>
         </a>
     </div>
     <hr class="horizontal dark mt-0 mb-0" style="flex-shrink: 0; margin: 0;">
@@ -175,10 +176,10 @@ function isActive($itemId, $currentPage) {
                     <li class="nav-item" style="flex-shrink: 0; margin: 0;">
                         <a class="nav-link <?php echo isActive($item['id'], $currentPage) ? 'active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
                             <div class="d-flex align-items-center">
-                                <div class="icon icon-shape border-radius-md text-center me-2 d-flex align-items-center justify-content-center lexmate-nav-icon">
+                                <div class="icon icon-shape border-radius-md text-center me-2 d-flex align-items-center justify-content-center legalpro-nav-icon">
                                     <i class="<?php echo htmlspecialchars($item['icon']); ?> text-dark text-xs opacity-10"></i>
                                 </div>
-                                <span class="nav-link-text lexmate-nav-text" style="font-size: 0.95rem;"><?php echo htmlspecialchars($item['title']); ?></span>
+                                <span class="nav-link-text legalpro-nav-text" style="font-size: 0.95rem;"><?php echo htmlspecialchars($item['title']); ?></span>
                         </div>
                     </a>
                 </li>
@@ -190,7 +191,7 @@ function isActive($itemId, $currentPage) {
         <div class="text-center">
             <p class="text-xs text-muted mb-1" style="font-size: 0.7rem;">Logged in as</p>
             <p class="text-sm font-weight-bold mb-2"><?php echo isset($_SESSION['admin_username']) ? htmlspecialchars($_SESSION['admin_username']) : 'Admin'; ?></p>
-            <a href="admin-logout.php" class="btn btn-sm btn-outline-danger w-100">Logout</a>
+            <a href="admin-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
             </div>
     </div>
 </aside>

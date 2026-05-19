@@ -126,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($formType === 'save') {
         $caseId = isset($_POST['case_id']) ? (int)$_POST['case_id'] : 0;
         $clientId = isset($_POST['client_id']) ? (int)$_POST['client_id'] : 0;
+        $clientUserId = null;
         $lawyerIds = isset($_POST['lawyer_ids']) ? $_POST['lawyer_ids'] : [];
         $title = isset($_POST['title']) ? trim($_POST['title']) : '';
         $description = isset($_POST['description']) ? trim($_POST['description']) : '';
@@ -157,17 +158,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Client and case title are required.';
             $messageType = 'danger';
         } else {
+            // Portal user linked to this client (for cases.user_id — not a lawyer id)
+            $stmt = $pdo->prepare("SELECT user_id FROM clients WHERE id = ?");
+            $stmt->execute([$clientId]);
+            $clientRow = $stmt->fetch();
+            if ($clientRow && !empty($clientRow['user_id'])) {
+                $clientUserId = (int) $clientRow['user_id'];
+            }
+
             try {
                 if ($caseId) {
                     // Update existing case
                     $stmt = $pdo->prepare("
                         UPDATE cases 
-                        SET client_id = ?, title = ?, description = ?, status = ?,
+                        SET client_id = ?, user_id = ?, title = ?, description = ?, status = ?,
                             priority = ?, category = ?, estimated_fees = ?, start_date = ?, expected_completion = ?
                         WHERE id = ?
                     ");
                     $stmt->execute([
-                        $clientId, $title, $description, $status,
+                        $clientId, $clientUserId, $title, $description, $status,
                         $priority, $category, $estimatedFees, $startDate ?: null, $expectedCompletion ?: null, $caseId
                     ]);
 
@@ -229,11 +238,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     // Insert new case
                     $stmt = $pdo->prepare("
-                        INSERT INTO cases (client_id, title, description, status, priority, category, estimated_fees, start_date, expected_completion)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO cases (client_id, user_id, title, description, status, priority, category, estimated_fees, start_date, expected_completion)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
                     $stmt->execute([
-                        $clientId, $title, $description, $status,
+                        $clientId, $clientUserId, $title, $description, $status,
                         $priority, $category, $estimatedFees, $startDate ?: null, $expectedCompletion ?: null
                     ]);
                     $newCaseId = $pdo->lastInsertId();
@@ -303,7 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $formData = [
             'case_id' => $caseId ?: '',
             'client_id' => $clientId,
-            'user_id' => $userId,
+            'user_id' => $clientUserId,
             'title' => $title,
             'description' => $description,
             'status' => $status,
@@ -314,6 +323,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'expected_completion' => $expectedCompletion
         ];
     }
+}
+
+// Pre-fill client when opening from client detail (?client_id=)
+if (empty($formData['case_id']) && isset($_GET['client_id']) && ctype_digit((string) $_GET['client_id'])) {
+    $formData['client_id'] = (int) $_GET['client_id'];
 }
 
 // Pre-fill form if editing via GET
@@ -357,7 +371,12 @@ if (empty($formData['case_id']) && isset($_GET['id']) && ctype_digit($_GET['id']
 
 // Fetch dropdown data
 try {
-    $clientsList = $pdo->query("SELECT id, first_name, last_name FROM clients ORDER BY first_name, last_name")->fetchAll();
+    $clientsList = $pdo->query("
+        SELECT c.id, c.first_name, c.last_name, c.email, c.user_id, u.username
+        FROM clients c
+        LEFT JOIN users u ON u.id = c.user_id
+        ORDER BY c.first_name, c.last_name
+    ")->fetchAll();
 } catch (PDOException $e) {
     $clientsList = [];
 }
@@ -373,7 +392,16 @@ $clientOptions = '<option value="">Select existing client</option>';
 foreach ($clientsList as $client) {
     $fullName = trim($client['first_name'] . ' ' . $client['last_name']);
     $selected = ((int)$formData['client_id'] === (int)$client['id']) ? ' selected' : '';
-    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName) . '</option>';
+    $hint = '';
+    if (!empty($client['username'])) {
+        $hint = ' — login: ' . $client['username'];
+    } elseif (!empty($client['email'])) {
+        $hint = ' — ' . $client['email'];
+    }
+    if (empty($client['user_id'])) {
+        $hint .= ' (no client portal account)';
+    }
+    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName . $hint) . '</option>';
 }
 
 $lawyerCheckboxes = '';
@@ -413,15 +441,16 @@ $html = <<<'HTML'
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
 	<link rel="icon" type="image/png" href="../assets/img/favicon.png">
-	<title>LexMate Case Manager - {FORM_TITLE}</title>
-	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+	<title>LegalPro Case Manager - {FORM_TITLE}</title>
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100">
-	<div class="min-height-300 bg-dark position-absolute w-100"></div>
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
 	</aside>
 	<main class="main-content position-relative border-radius-lg ">
@@ -580,7 +609,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, LexMate Case Manager.
+								© <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
 							</div>
 						</div>
 					</div>

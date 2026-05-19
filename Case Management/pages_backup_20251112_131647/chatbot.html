@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
   <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-  <title>LexMate Case Manager - Chatbot</title>
+  <title>LegalPro Case Manager - Chatbot</title>
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
   <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
   <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -22,8 +22,8 @@
     <div class="sidenav-header">
       <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
       <a class="navbar-brand m-0" href="../pages/dashboard.html">
-        <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LexMate logo">
-        <span class="ms-1 font-weight-bold">LexMate Case Manager</span>
+        <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LegalPro logo">
+        <span class="ms-1 font-weight-bold">LegalPro Case Manager</span>
       </a>
     </div>
     <hr class="horizontal dark mt-0">
@@ -69,7 +69,7 @@
                 <div class="d-flex mb-3">
                   <div class="icon icon-shape icon-sm me-2 bg-gradient-dark shadow text-center"><i class="ni ni-chat-round text-white opacity-10"></i></div>
                   <div>
-                    <p class="text-sm mb-0"><strong>LexMate:</strong> How can I help? Try: “Show my active cases” or “Generate an invoice for C-1029”.</p>
+                    <p class="text-sm mb-0"><strong>LegalPro:</strong> How can I help? Try: “Show my active cases” or “Generate an invoice for C-1029”.</p>
                   </div>
                 </div>
               </div>
@@ -100,7 +100,7 @@
           <div class="row align-items-center justify-content-lg-between">
             <div class="col-lg-6 mb-lg-0 mb-4">
               <div class="copyright text-center text-sm text-muted text-lg-start">
-                © <script>document.write(new Date().getFullYear())</script>, LexMate Case Manager.
+                © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
               </div>
             </div>
           </div>
@@ -117,7 +117,7 @@
       row.className = 'd-flex mb-3';
       row.innerHTML = sender === 'You'
         ? '<div><p class="text-sm mb-0"><strong>You:</strong> ' + text + '</p></div>'
-        : '<div class="icon icon-shape icon-sm me-2 bg-gradient-dark shadow text-center"><i class="ni ni-chat-round text-white opacity-10"></i></div><div><p class="text-sm mb-0"><strong>LexMate:</strong> ' + text + '</p></div>';
+        : '<div class="icon icon-shape icon-sm me-2 bg-gradient-dark shadow text-center"><i class="ni ni-chat-round text-white opacity-10"></i></div><div><p class="text-sm mb-0"><strong>LegalPro:</strong> ' + text + '</p></div>';
       chatWindow.appendChild(row);
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
@@ -126,9 +126,9 @@
       if (!q) return;
       appendMessage('You', q);
       // Placeholder response
-      if (/active cases/i.test(q)) appendMessage('LexMate', 'You have 64 active cases.');
-      else if (/invoice/i.test(q)) appendMessage('LexMate', 'Opening Finance → Invoices. You can generate a PDF there.');
-      else appendMessage('LexMate', 'I will help with that. This is a placeholder for AI integration.');
+      if (/active cases/i.test(q)) appendMessage('LegalPro', 'You have 64 active cases.');
+      else if (/invoice/i.test(q)) appendMessage('LegalPro', 'Opening Finance → Invoices. You can generate a PDF there.');
+      else appendMessage('LegalPro', 'I will help with that. This is a placeholder for AI integration.');
       chatInput.value = '';
     });
   </script>

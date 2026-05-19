@@ -45,9 +45,9 @@ $sumStmt->execute([$caseId, $paymentId]);
 $paidToDate = (float)$sumStmt->fetchColumn();
 $balance = max((float)$payment['estimated_fees'] - $paidToDate, 0);
 
-$firmName = 'LexMate Case Manager';
+$firmName = 'LegalPro Case Manager';
 $firmAddress = '123 Legal Street, Capital City';
-$firmEmail = 'support@lexmate.local';
+$firmEmail = 'support@legalpro.local';
 $firmPhone = '+1 (555) 010-0000';
 
 function h($value) {

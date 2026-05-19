@@ -63,8 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                 $message = 'File uploaded successfully!';
                 $messageType = 'success';
 
-                // Log the event
-                logDocumentUpload($pdo, $case_id, $label ?: $file['name'], $client_name, $client_user_id);
+                CaseEvents::trackDocumentUploaded($case_id, [
+                    'filename' => $file['name'],
+                    'label' => $label ?: $file['name'],
+                ]);
             } catch (PDOException $e) {
                 $message = 'Error saving file information: ' . htmlspecialchars($e->getMessage());
                 $messageType = 'danger';
@@ -209,54 +211,76 @@ if (!empty($stages)) {
     $stagesHtml = '<p class="text-muted text-sm">No case stages defined yet.</p>';
 }
 
-// Build comments list (chat-like interface)
+// Role badge for comment thread
+$commentRoleBadge = static function (string $type): string {
+    switch ($type) {
+        case 'client':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-info">Client</span>';
+        case 'lawyer':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
+        case 'admin':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-warning">Admin</span>';
+        case 'staff':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Staff</span>';
+        default:
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">System</span>';
+    }
+};
+
+// Build comments list (activity feed)
 $commentsHtml = '';
 if (!empty($comments)) {
-    $commentsHtml .= '<div class="chat-messages" style="max-height: 400px; overflow-y: auto;">';
+    $commentsHtml .= '<ul class="cc-comment-list list-unstyled mb-0">';
     foreach ($comments as $comment) {
-        $isCurrentUser = ($comment['user_id'] == $client_user_id);
-        $alignment = $isCurrentUser ? 'justify-content-end' : 'justify-content-start';
-        $bgColor = $isCurrentUser ? 'bg-primary' : 'bg-light';
-        $textColor = $isCurrentUser ? 'text-white' : 'text-dark';
-        $marginClass = $isCurrentUser ? 'ms-3' : 'me-3';
-
-        // Add user type badge
-        $userTypeBadge = '';
-        switch ($comment['comment_type']) {
-            case 'client':
-                $userTypeBadge = '<span class="badge badge-sm bg-info">Client</span>';
-                break;
-            case 'lawyer':
-                $userTypeBadge = '<span class="badge badge-sm bg-success">Lawyer</span>';
-                break;
-            case 'admin':
-                $userTypeBadge = '<span class="badge badge-sm bg-warning">Admin</span>';
-                break;
-            case 'staff':
-                $userTypeBadge = '<span class="badge badge-sm bg-secondary">Staff</span>';
-                break;
+        $isCurrentUser = ((int) $comment['user_id'] === (int) $client_user_id);
+        $username = trim((string) ($comment['username'] ?? ''));
+        $displayName = $username !== '' ? $username : 'User';
+        $type = $comment['comment_type'] ?? '';
+        $itemClass = 'cc-comment-item cc-comment-item--' . preg_replace('/[^a-z]/', '', $type);
+        if ($isCurrentUser) {
+            $itemClass .= ' cc-comment-item--yours';
         }
+        $timeLabel = date('M j, Y · g:i A', strtotime($comment['created_at']));
+        $body = nl2br(htmlspecialchars($comment['comment']));
+        $roleBadge = $commentRoleBadge($type);
+        $youBadge = $isCurrentUser ? '<span class="badge badge-sm bg-gradient-primary ms-1">You</span>' : '';
 
-        $commentsHtml .= '<div class="d-flex ' . $alignment . ' mb-3">
-            <div class="chat-message ' . $bgColor . ' ' . $textColor . ' rounded-lg p-3 ' . $marginClass . '" style="max-width: 70%;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="d-flex align-items-center">
-                        <strong class="me-2">' . htmlspecialchars($comment['commenter_name']) . '</strong>
-                        ' . $userTypeBadge . '
+        $commentsHtml .= '
+        <li class="' . $itemClass . '">
+
+            <div class="cc-comment-item-inner">
+                <div class="cc-comment-head">
+                    <div class="cc-comment-head-main">
+                        <span class="cc-comment-author">' . htmlspecialchars($displayName) . '</span>
+                        ' . $youBadge . '
+                        ' . $roleBadge . '
                     </div>
-                    <small class="opacity-75">' . date('M d, H:i', strtotime($comment['created_at'])) . '</small>
+                    <time class="cc-comment-time" datetime="' . htmlspecialchars(date('c', strtotime($comment['created_at']))) . '">' . htmlspecialchars($timeLabel) . '</time>
                 </div>
-                <p class="mb-0" style="word-wrap: break-word;">' . nl2br(htmlspecialchars($comment['comment'])) . '</p>
+                <div class="cc-comment-text">' . $body . '</div>
             </div>
-        </div>';
+        </li>';
     }
-    $commentsHtml .= '</div>';
+    $commentsHtml .= '</ul>';
 } else {
-    $commentsHtml = '<div class="text-center py-4">
-        <i class="ni ni-chat-round text-muted" style="font-size: 3rem;"></i>
-        <p class="text-muted mt-2">No comments yet. Start the conversation!</p>
+    $commentsHtml = '
+    <div class="cc-comments-empty text-center py-5 mb-0">
+        <div class="cc-comments-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
+            <i class="ni ni-chat-round text-primary text-lg opacity-10" aria-hidden="true"></i>
+        </div>
+        <h6 class="font-weight-bolder mt-4 mb-2">No comments yet</h6>
+        <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Add a comment below to communicate with your legal team about this case.</p>
     </div>';
 }
+
+$commentFormHtml = '
+<form method="POST" action="" class="cc-comment-form mt-4 pt-4 border-top">
+    <label for="case-comment-input" class="form-label text-sm font-weight-bold mb-2">Add a comment</label>
+    <textarea id="case-comment-input" class="form-control" name="comment" rows="4" placeholder="Write your comment here…" required></textarea>
+    <div class="d-flex justify-content-end mt-3">
+        <button type="submit" class="btn bg-gradient-primary mb-0">Post comment</button>
+    </div>
+</form>';
 
 // Build documents list
 $documentsHtml = '';
@@ -341,21 +365,95 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LexMate - Case Details</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <title>LegalPro - Case Details</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+
+    <style>
+        .cc-comments-panel .card-header { border-bottom: 1px solid rgba(0,0,0,.06); }
+        .cc-comments-panel .card-body { padding: 1.25rem 1.5rem 1.5rem; }
+        .cc-comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: min(32rem, 60vh);
+            overflow-y: auto;
+            padding-right: 0.15rem;
+        }
+        .cc-comment-list::-webkit-scrollbar { width: 6px; }
+        .cc-comment-list::-webkit-scrollbar-thumb {
+            background: rgba(94, 114, 228, 0.3);
+            border-radius: 999px;
+        }
+        .cc-comment-item-inner {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,.06);
+            border-radius: 0.75rem;
+            padding: 1rem 1.15rem;
+            border-left: 4px solid #8392ab;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .cc-comment-item--client .cc-comment-item-inner { border-left-color: #11cdef; }
+        .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
+        .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
+        .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
+        .cc-comment-item--yours .cc-comment-item-inner {
+            background: #f8f9fe;
+            border-color: rgba(94, 114, 228, 0.2);
+        }
+        .cc-comment-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.65rem;
+            flex-wrap: wrap;
+        }
+        .cc-comment-head-main {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.35rem;
+            min-width: 0;
+        }
+        .cc-comment-author {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #344767;
+            line-height: 1.3;
+        }
+        .cc-comment-time {
+            font-size: 0.75rem;
+            color: #8392ab;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .cc-comment-text {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #525f7f;
+            word-break: break-word;
+            margin: 0;
+        }
+        .cc-comment-form textarea {
+            border-radius: 0.65rem;
+            resize: vertical;
+            min-height: 6rem;
+        }
+    </style>
 </head>
-<body class="g-sidenav-show bg-gray-100">
+<body class="g-sidenav-show bg-gray-100 client-portal-page">
     <div class="min-height-300 bg-primary position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
             <a class="navbar-brand m-0" href="#">
-            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LexMate logo">
-            <span class="ms-1 font-weight-bold">LexMate</span>
+            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LegalPro logo">
+            <span class="ms-1 font-weight-bold">LegalPro</span>
             </a>
         </div>
         <hr class="horizontal dark mt-0">
@@ -407,7 +505,7 @@ $html = <<<'HTML'
             <div class="text-center">
                 <p class="text-xs text-muted mb-1">Logged in as</p>
                 <p class="text-sm font-weight-bold mb-2">{CLIENT_NAME}</p>
-                <a href="client-logout.php" class="btn btn-sm btn-outline-danger w-100">Logout</a>
+                <a href="client-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
             </div>
         </div>
     </aside>
@@ -520,21 +618,6 @@ $html = <<<'HTML'
                         </div>
                     </div>
 
-                    <!-- Add Comment -->
-                    <div class="card mb-4">
-                        <div class="card-header pb-0">
-                            <h6>Add Comment</h6>
-                        </div>
-                        <div class="card-body">
-                            <form method="POST" action="">
-                                <div class="form-group">
-                                    <textarea class="form-control" name="comment" rows="3" placeholder="Add your comment here..." required></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary btn-sm mt-2">Add Comment</button>
-                            </form>
-                        </div>
-                    </div>
-
                     <!-- Upload File -->
                     <div class="card">
                         <div class="card-header pb-0">
@@ -555,19 +638,25 @@ $html = <<<'HTML'
                 </div>
             </div>
 
-            <!-- Comments Section -->
+            <!-- Case comments -->
             <div class="row mt-4">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <h6>Case Comments</h6>
+                    <div class="card cc-comments-panel shadow-sm">
+                        <div class="card-header pb-0 pt-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <h6 class="mb-0">Case comments</h6>
+                                <p class="text-xs text-muted mb-0 mt-1">Notes and updates from you and your legal team</p>
+                            </div>
+                            <span class="badge bg-gradient-primary">{COMMENTS_COUNT}</span>
                         </div>
                         <div class="card-body">
                             {COMMENTS_HTML}
+                            {COMMENT_FORM_HTML}
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </main>
 
@@ -597,6 +686,8 @@ $html = str_replace('{LAST_UPDATED}', date('M d, Y', strtotime($case['updated_at
 $html = str_replace('{SERVICES_HTML}', $servicesHtml, $html);
 $html = str_replace('{STAGES_HTML}', $stagesHtml, $html);
 $html = str_replace('{COMMENTS_HTML}', $commentsHtml, $html);
+$html = str_replace('{COMMENT_FORM_HTML}', $commentFormHtml, $html);
+$html = str_replace('{COMMENTS_COUNT}', (string) count($comments), $html);
 $html = str_replace('{DOCUMENTS_HTML}', $documentsHtml, $html);
 $html = str_replace('{APPOINTMENTS_HTML}', $appointmentsHtml, $html);
 

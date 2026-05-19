@@ -25,7 +25,7 @@ $html = <<<'HTML'
 	<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 </head>
 
-<body class="">
+<body class="bg-gray-100">
 	<main class="main-content  mt-0">
 		<section>
 			<div class="page-header min-vh-100">
