@@ -12,6 +12,81 @@ if (!isset($_SESSION['client_id'])) {
 $client_id = $_SESSION['client_id'];
 $client_name = $_SESSION['client_name'];
 
+// AJAX: appointment details for modal
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $appointmentId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+    if ($appointmentId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid appointment ID']);
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                a.*,
+                c.title AS case_title,
+                CONCAT(l.first_name, ' ', l.last_name) AS lawyer_name
+            FROM appointments a
+            LEFT JOIN cases c ON c.id = a.case_id
+            LEFT JOIN lawyers l ON l.id = a.lawyer_id
+            WHERE a.id = ? AND a.client_id = ?
+        ");
+        $stmt->execute([$appointmentId, $client_id]);
+        $apt = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$apt) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Appointment not found']);
+            exit;
+        }
+
+        $startsAt = strtotime($apt['starts_at']);
+        $endsAt = !empty($apt['ends_at']) ? strtotime($apt['ends_at']) : null;
+        $now = time();
+
+        $statusLabel = ucfirst($apt['status'] ?? 'unknown');
+        $statusClass = 'secondary';
+        if (($apt['status'] ?? '') === 'pending') {
+            $statusLabel = 'Pending approval';
+            $statusClass = 'warning';
+        } elseif (($apt['status'] ?? '') === 'accepted') {
+            if ($startsAt > $now) {
+                $statusLabel = 'Upcoming';
+                $statusClass = 'info';
+            } elseif ($endsAt && $endsAt < $now) {
+                $statusLabel = 'Completed';
+                $statusClass = 'success';
+            } else {
+                $statusLabel = 'In progress';
+                $statusClass = 'primary';
+            }
+        } elseif (($apt['status'] ?? '') === 'rejected') {
+            $statusLabel = 'Rejected';
+            $statusClass = 'danger';
+        }
+
+        echo json_encode([
+            'id' => (int) $apt['id'],
+            'case_title' => $apt['case_title'] ?: 'Appointment',
+            'lawyer_name' => $apt['lawyer_name'] ?: 'TBD',
+            'starts_at' => date('M j, Y g:i A', $startsAt),
+            'ends_at' => $endsAt ? date('M j, Y g:i A', $endsAt) : null,
+            'status' => $apt['status'],
+            'status_label' => $statusLabel,
+            'status_class' => $statusClass,
+            'notes' => trim((string) ($apt['notes'] ?? '')),
+            'requested_at' => !empty($apt['created_at']) ? date('M j, Y g:i A', strtotime($apt['created_at'])) : null,
+        ]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Could not load appointment details']);
+    }
+    exit;
+}
+
 $message = '';
 $messageType = '';
 
@@ -75,23 +150,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $availabilityCheckPassed = true;
 
                 if (!empty($lawyer_id)) {
-                    // Lawyer selected - verify availability
-                    $dayOfWeek = strtolower(date('l', strtotime($appointment_date)));
-                    $requestedTime = $appointment_time . ':00';
-
                     $stmt = $pdo->prepare("
-                        SELECT * FROM lawyer_time_slots
-                        WHERE lawyer_id = ? AND day_of_week = ? AND slot_type = 'available'
-                        AND start_time <= ? AND end_time >= ?
-                        ORDER BY start_time
+                        SELECT COUNT(*) FROM lawyer_time_slots
+                        WHERE lawyer_id = ? AND slot_type = 'available'
                     ");
-                    $stmt->execute([$lawyer_id, $dayOfWeek, $requestedTime, $requestedTime]);
-                    $availability = $stmt->fetch();
+                    $stmt->execute([$lawyer_id]);
+                    $hasAvailabilitySlots = (int) $stmt->fetchColumn() > 0;
 
-                    if (!$availability) {
-                        $availabilityCheckPassed = false;
-                        $message = 'Lawyer not available at the selected date and time. Please choose a different time.';
-                        $messageType = 'danger';
+                    if ($hasAvailabilitySlots) {
+                        $dayOfWeek = strtolower(date('l', strtotime($appointment_date)));
+                        $requestedTime = $appointment_time . ':00';
+
+                        $stmt = $pdo->prepare("
+                            SELECT * FROM lawyer_time_slots
+                            WHERE lawyer_id = ? AND day_of_week = ? AND slot_type = 'available'
+                            AND start_time <= ? AND end_time > ?
+                            ORDER BY start_time
+                        ");
+                        $stmt->execute([$lawyer_id, $dayOfWeek, $requestedTime, $requestedTime]);
+                        $availability = $stmt->fetch();
+
+                        if (!$availability) {
+                            $availabilityCheckPassed = false;
+                            $message = 'Lawyer not available at the selected date and time. Please choose a different time.';
+                            $messageType = 'danger';
+                        }
                     }
                 }
 
@@ -299,10 +382,11 @@ foreach ($availableLawyers as $lawyer) {
         $slots = $stmt->fetchAll();
 
         foreach ($slots as $slot) {
-            if (!isset($lawyerAvailability[$lawyer['id']][$slot['day_of_week']])) {
-                $lawyerAvailability[$lawyer['id']][$slot['day_of_week']] = [];
+            $dayKey = strtolower($slot['day_of_week']);
+            if (!isset($lawyerAvailability[$lawyer['id']][$dayKey])) {
+                $lawyerAvailability[$lawyer['id']][$dayKey] = [];
             }
-            $lawyerAvailability[$lawyer['id']][$slot['day_of_week']][] = [
+            $lawyerAvailability[$lawyer['id']][$dayKey][] = [
                 'start' => $slot['start_time'],
                 'end' => $slot['end_time'],
                 'type' => $slot['slot_type']
@@ -675,15 +759,99 @@ $html = <<<'HTML'
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 
     <script>
-        function viewAppointmentDetails(appointmentId) {
-            // This would typically fetch appointment details via AJAX
-            // For now, just show a placeholder
-            document.getElementById('appointmentDetails').innerHTML = '<p>Detailed appointment information would be loaded here.</p>';
-            new bootstrap.Modal(document.getElementById('appointmentModal')).show();
+        const lawyerAvailability = {$lawyerAvailabilityJson};
+        let appointmentModalInstance = null;
+
+        function escapeHtml(text) {
+            const el = document.createElement('div');
+            el.textContent = text == null ? '' : String(text);
+            return el.innerHTML;
         }
 
-        // Available time slots data (would normally come from server)
-        const lawyerAvailability = {$lawyerAvailabilityJson};
+        function getAppointmentModal() {
+            const modalEl = document.getElementById('appointmentModal');
+            if (!appointmentModalInstance) {
+                appointmentModalInstance = new bootstrap.Modal(modalEl);
+            }
+            return appointmentModalInstance;
+        }
+
+        function renderAppointmentDetails(data) {
+            const notesBlock = data.notes
+                ? '<p class="text-sm mb-0">' + escapeHtml(data.notes) + '</p>'
+                : '<p class="text-sm text-muted mb-0">No notes provided.</p>';
+
+            return (
+                '<div class="d-flex flex-column gap-3">' +
+                    '<div class="d-flex justify-content-between align-items-start gap-2">' +
+                        '<div>' +
+                            '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Matter</p>' +
+                            '<h6 class="mb-0 font-weight-bold">' + escapeHtml(data.case_title) + '</h6>' +
+                        '</div>' +
+                        '<span class="badge bg-gradient-' + escapeHtml(data.status_class) + '">' + escapeHtml(data.status_label) + '</span>' +
+                    '</div>' +
+                    '<div class="row g-3">' +
+                        '<div class="col-sm-6">' +
+                            '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Lawyer</p>' +
+                            '<p class="text-sm font-weight-bold mb-0">' + escapeHtml(data.lawyer_name) + '</p>' +
+                        '</div>' +
+                        '<div class="col-sm-6">' +
+                            '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Requested</p>' +
+                            '<p class="text-sm mb-0">' + escapeHtml(data.requested_at || '—') + '</p>' +
+                        '</div>' +
+                        '<div class="col-sm-6">' +
+                            '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Starts</p>' +
+                            '<p class="text-sm mb-0">' + escapeHtml(data.starts_at) + '</p>' +
+                        '</div>' +
+                        '<div class="col-sm-6">' +
+                            '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Ends</p>' +
+                            '<p class="text-sm mb-0">' + escapeHtml(data.ends_at || '—') + '</p>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div>' +
+                        '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Notes</p>' +
+                        notesBlock +
+                    '</div>' +
+                '</div>'
+            );
+        }
+
+        function viewAppointmentDetails(appointmentId) {
+            const detailsEl = document.getElementById('appointmentDetails');
+            detailsEl.innerHTML =
+                '<div class="text-center py-4">' +
+                    '<span class="spinner-border spinner-border-sm text-primary" role="status"></span>' +
+                    '<p class="text-sm text-muted mt-2 mb-0">Loading appointment…</p>' +
+                '</div>';
+            getAppointmentModal().show();
+
+            fetch('client-appointments.php?ajax=appointment_details&id=' + encodeURIComponent(appointmentId), {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            })
+                .then(function(response) {
+                    return response.json().then(function(body) {
+                        if (!response.ok) {
+                            throw new Error(body.error || 'Could not load appointment');
+                        }
+                        return body;
+                    });
+                })
+                .then(function(data) {
+                    detailsEl.innerHTML = renderAppointmentDetails(data);
+                })
+                .catch(function(err) {
+                    detailsEl.innerHTML =
+                        '<div class="alert alert-danger mb-0 py-2">' +
+                            '<i class="ni ni-bell-55"></i> ' + escapeHtml(err.message || 'Failed to load details.') +
+                        '</div>';
+                });
+        }
+
+        function loadLawyerAvailability() {
+            document.getElementById('appointment_time').value = '';
+            loadTimeAvailability();
+        }
 
         function loadTimeAvailability() {
             const lawyerId = document.getElementById('lawyer_id').value;
@@ -702,18 +870,23 @@ $html = <<<'HTML'
             dateMessageDiv.style.display = 'none';
             dateMessageDiv.innerHTML = '';
 
-            if (!lawyerId || !dateInput.value) {
+            if (!lawyerId) {
                 return;
             }
 
-            // Get day of week from selected date
+            if (!dateInput.value) {
+                dateMessageDiv.style.display = 'block';
+                dateMessageDiv.innerHTML = '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a date to see available times.</div>';
+                return;
+            }
+
             const date = new Date(dateInput.value + 'T00:00:00');
             const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
             const dayOfWeek = days[date.getDay()];
 
-            // Get available slots for this lawyer and day
-            const daySlots = lawyerAvailability[lawyerId] && lawyerAvailability[lawyerId][dayOfWeek] ? lawyerAvailability[lawyerId][dayOfWeek] : [];
-            const availableSlots = daySlots.filter(slot => slot.type === 'available');
+            const lawyerSlots = lawyerAvailability[lawyerId] || lawyerAvailability[String(lawyerId)] || {};
+            const daySlots = lawyerSlots[dayOfWeek] || [];
+            const availableSlots = daySlots.filter(function(slot) { return slot.type === 'available'; });
 
                 // If no availability slots are set up for this lawyer, allow all times
                 // This ensures backward compatibility if time slots haven't been configured
@@ -754,21 +927,20 @@ $html = <<<'HTML'
                 }
             });
 
+            const selected = timeSelect.options[timeSelect.selectedIndex];
+            if (selected && selected.disabled) {
+                timeSelect.value = '';
+            }
+
             if (!hasAvailableTimes) {
-                // No specific times available (this shouldn't happen if slots are set up correctly, but just in case)
                 dateMessageDiv.style.display = 'block';
-                dateMessageDiv.innerHTML = '<div class="alert alert-warning py-2"><i class="ni ni-info-16"></i> No available times found for the selected date.</div>';
+                dateMessageDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> No available times for the selected date.</div>';
             }
         }
 
-
-        // Load time availability when lawyer or date changes
-        document.getElementById('lawyer_id').addEventListener('change', function() {
-            // If a date is already selected, update time availability
-            const dateInput = document.getElementById('appointment_date');
-            if (dateInput.value) {
-                loadTimeAvailability();
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('lawyer_id').addEventListener('change', loadLawyerAvailability);
+            document.getElementById('appointment_date').addEventListener('change', loadTimeAvailability);
         });
 
         // Form validation before submission
