@@ -148,23 +148,43 @@ try {
     $appointments = [];
 }
 
+$apptTotal = count($appointments);
+$apptPending = 0;
+$apptUpcoming = 0;
+foreach ($appointments as $_apt) {
+    if (($_apt['status'] ?? '') === 'pending') {
+        $apptPending++;
+    }
+    if (($_apt['status'] ?? '') === 'accepted' && !empty($_apt['starts_at']) && strtotime($_apt['starts_at']) > time()) {
+        $apptUpcoming++;
+    }
+}
+
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
 
 // Build appointments table rows
 $appointmentsRows = '';
 if (empty($appointments)) {
-    $appointmentsRows = '<tr><td colspan="5" class="text-center py-4"><p class="text-muted mb-0">No appointments scheduled.</p></td></tr>';
+    $appointmentsRows = '<tr><td colspan="5" class="border-0">
+        <div class="text-center py-5 px-4">
+            <div class="ca-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
+                <i class="ni ni-calendar-grid-58 text-primary text-lg opacity-10" aria-hidden="true"></i>
+            </div>
+            <h5 class="font-weight-bolder mt-4 mb-2">No appointments yet</h5>
+            <p class="text-sm text-muted mb-4 mx-auto" style="max-width: 22rem;">Use the booking panel to request a time with your counsel. Pending requests appear here until they are accepted.</p>
+        </div>
+    </td></tr>';
 } else {
     foreach ($appointments as $apt) {
-        $appointmentDate = date('M d, Y', strtotime($apt['starts_at']));
+        $aid = (int) $apt['id'];
+        $appointmentDate = date('M j, Y', strtotime($apt['starts_at']));
         $appointmentTime = date('g:i A', strtotime($apt['starts_at']));
         $lawyerName = $apt['lawyer_name'] ?: 'TBD';
 
-        // Status badge based on appointment status and time
         $statusBadge = '';
         switch ($apt['status']) {
             case 'pending':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending Approval</span>';
+                $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
                 break;
             case 'accepted':
                 if (strtotime($apt['starts_at']) > time()) {
@@ -172,7 +192,7 @@ if (empty($appointments)) {
                 } elseif (strtotime($apt['ends_at']) < time()) {
                     $statusBadge = '<span class="badge badge-sm bg-gradient-success">Completed</span>';
                 } else {
-                    $statusBadge = '<span class="badge badge-sm bg-gradient-primary">In Progress</span>';
+                    $statusBadge = '<span class="badge badge-sm bg-gradient-primary">In progress</span>';
                 }
                 break;
             case 'rejected':
@@ -182,38 +202,44 @@ if (empty($appointments)) {
                 $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($apt['status']) . '</span>';
         }
 
-        $appointmentsRows .= '<tr>
-            <td>
-                <div class="d-flex px-2 py-1">
-                    <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($apt['case_title']) . '</h6>
-                        <p class="text-xs text-secondary mb-0">' . $appointmentDate . ' at ' . $appointmentTime . '</p>
+        $notesRaw = isset($apt['notes']) ? trim((string) $apt['notes']) : '';
+        $notesDisp = $notesRaw === '' ? '—' : (strlen($notesRaw) > 64 ? htmlspecialchars(substr($notesRaw, 0, 64)) . '…' : htmlspecialchars($notesRaw));
+
+        $appointmentsRows .= '<tr class="ca-appt-row">
+            <td class="ps-4">
+                <div class="d-flex align-items-center gap-3 py-1">
+                    <div class="ca-appt-icon icon icon-shape icon-sm bg-gradient-info shadow text-center border-radius-md flex-shrink-0">
+                        <i class="ni ni-time-alarm text-white text-xs opacity-10" aria-hidden="true"></i>
+                    </div>
+                    <div class="min-width-0">
+                        <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 14rem;">' . htmlspecialchars($apt['case_title'] ?: 'Appointment') . '</h6>
+                        <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointmentDate) . ' · ' . htmlspecialchars($appointmentTime) . '</p>
                     </div>
                 </div>
             </td>
             <td>
-                <p class="text-xs font-weight-bold mb-0">' . htmlspecialchars($lawyerName) . '</p>
+                <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 9rem;" title="' . htmlspecialchars($lawyerName) . '">' . htmlspecialchars($lawyerName) . '</p>
             </td>
             <td class="align-middle text-center">
                 ' . $statusBadge . '
             </td>
             <td>
-                <p class="text-xs font-weight-bold mb-0">' . htmlspecialchars(substr($apt['notes'] ?: 'No notes', 0, 50)) . '...</p>
+                <p class="text-xs text-secondary mb-0 text-truncate" style="max-width: 11rem;" title="' . htmlspecialchars($notesRaw) . '">' . $notesDisp . '</p>
             </td>
-            <td class="align-middle text-end">
-                <div class="d-flex gap-2 justify-content-end">
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewAppointmentDetails(' . $apt['id'] . ')">Details</button>';
-                    if ($apt['status'] === 'rejected') {
-                        $appointmentsRows .= '
-                    <form method="POST" style="display: inline;" onsubmit="return confirm(\'Are you sure you want to permanently delete this rejected appointment request?\')">
+            <td class="align-middle text-end pe-4">
+                <div class="d-flex flex-wrap gap-2 justify-content-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary mb-0" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>';
+        if ($apt['status'] === 'rejected') {
+            $appointmentsRows .= '
+                    <form method="POST" class="d-inline" onsubmit="return confirm(\'Delete this rejected appointment request permanently?\')">
                         <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="appointment_id" value="' . $apt['id'] . '">
-                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete rejected appointment">
-                            <i class="fas fa-trash"></i> Delete
+                        <input type="hidden" name="appointment_id" value="' . $aid . '">
+                        <button type="submit" class="btn btn-sm btn-outline-danger mb-0" title="Delete rejected appointment">
+                            <i class="fas fa-trash" aria-hidden="true"></i>
                         </button>
                     </form>';
-                    }
-                $appointmentsRows .= '
+        }
+        $appointmentsRows .= '
                 </div>
             </td>
         </tr>';
@@ -301,35 +327,119 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LexMate - My Appointments</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <title>LegalPro - My Appointments</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 
     <style>
-        .time-option {
+        .client-appointments-page { --ca-radius: 1.15rem; }
+        .client-appointments-page .navbar-main {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 0.35rem 1.25rem rgba(52, 71, 103, 0.08) !important;
+            margin-top: 20px;
+        }
+        .client-appointments-page .breadcrumb .text-dark { color: #344767 !important; }
+        .client-appointments-page .ca-hero {
+            border-radius: var(--ca-radius);
+            background: #fff;
+            box-shadow: 0 0.25rem 1rem rgba(52, 71, 103, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .client-appointments-page .ca-hero .ca-hero-kicker {
+            letter-spacing: 0.12em;
+            color: #5e72e4;
+            opacity: 1;
+        }
+        .client-appointments-page .ca-hero .ca-hero-title {
+            color: #344767;
+        }
+        .client-appointments-page .ca-hero .ca-hero-text {
+            color: #67748e;
+        }
+        .client-appointments-page .ca-hero-pill {
+            background: #f8f9fe;
+            border-radius: 0.75rem;
+            padding: 0.55rem 0.9rem;
+            border: 1px solid rgba(94, 114, 228, 0.15);
+            min-width: 5.5rem;
+            text-align: center;
+        }
+        .client-appointments-page .ca-hero-pill .ca-hero-pill-label {
+            color: #67748e;
+        }
+        .client-appointments-page .ca-hero-pill .ca-hero-pill-value {
+            color: #344767;
+        }
+        .client-appointments-page .ca-panel {
+            border-radius: var(--ca-radius);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 0.25rem 1.1rem rgba(52, 71, 103, 0.07);
+            overflow: hidden;
+        }
+        .client-appointments-page .ca-panel .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 1.1rem 1.25rem 0.9rem;
+        }
+        .client-appointments-page .ca-panel .card-header h5 {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+        .client-appointments-page .ca-book .card-body {
+            background: linear-gradient(180deg, rgba(94, 114, 228, 0.04) 0%, transparent 40%);
+        }
+        .client-appointments-page .ca-panel .table thead th {
+            font-size: 0.65rem;
+            letter-spacing: 0.06em;
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+            background: rgba(248, 249, 250, 0.95);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .client-appointments-page .ca-appt-row td {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            vertical-align: middle;
+        }
+        .client-appointments-page .ca-appt-row:hover td {
+            background: rgba(94, 114, 228, 0.04);
+        }
+        .client-appointments-page .ca-appt-icon {
+            width: 2.35rem;
+            height: 2.35rem;
+        }
+        .client-appointments-page .min-width-0 { min-width: 0; }
+        .client-appointments-page .ca-empty-icon {
+            width: 4rem;
+            height: 4rem;
+        }
+        .client-appointments-page .time-option {
             transition: all 0.2s ease;
         }
-        .time-option.text-success.font-weight-bold {
+        .client-appointments-page .time-option.text-success.font-weight-bold {
             background-color: rgba(25, 135, 84, 0.1);
             border-left: 3px solid #19a463;
         }
-        .time-option:disabled {
+        .client-appointments-page .time-option:disabled {
             color: #6c757d !important;
             background-color: #f8f9fa;
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100">
+<body class="g-sidenav-show bg-gray-100 client-appointments-page">
     <div class="min-height-300 bg-primary position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
-            <a class="navbar-brand m-0" href="#">
-            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LexMate logo">
-            <span class="ms-1 font-weight-bold">LexMate</span>
+            <a class="navbar-brand m-0" href="client-dashboard.php">
+            <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LegalPro logo">
+            <span class="ms-1 font-weight-bold">LegalPro</span>
             </a>
         </div>
         <hr class="horizontal dark mt-0">
@@ -381,7 +491,7 @@ $html = <<<'HTML'
             <div class="text-center">
                 <p class="text-xs text-muted mb-1">Logged in as</p>
                 <p class="text-sm font-weight-bold mb-2">{CLIENT_NAME}</p>
-                <a href="client-logout.php" class="btn btn-sm btn-outline-danger w-100">Logout</a>
+                <a href="client-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
             </div>
         </div>
     </aside>
@@ -391,18 +501,18 @@ $html = <<<'HTML'
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Pages</a></li>
+                        <li class="breadcrumb-item text-sm"><a class="opacity-6 text-dark" href="client-dashboard.php">Client</a></li>
                         <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Appointments</li>
                     </ol>
-                    <h6 class="font-weight-bolder mb-0">My Appointments</h6>
+                    <h5 class="font-weight-bolder mb-0 text-dark">Appointments</h5>
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <div class="ms-md-auto pe-md-3 d-flex align-items-center">
+                    <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="text" class="form-control" placeholder="Search appointments...">
+                            <input type="search" name="q" class="form-control" placeholder="Search appointments…" value="" autocomplete="off" maxlength="200" aria-label="Search">
                         </div>
-                    </div>
+                    </form>
                     <ul class="navbar-nav justify-content-end">
                         <li class="nav-item d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
@@ -427,23 +537,54 @@ $html = <<<'HTML'
         <div class="container-fluid py-4">
             {MESSAGE}
 
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card ca-hero mb-0">
+                        <div class="card-body p-4 d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-4">
+                            <div>
+                                <p class="ca-hero-kicker text-xs text-uppercase font-weight-bold mb-1">Calendar</p>
+                                <h4 class="ca-hero-title font-weight-bolder mb-1">Meetings with your legal team</h4>
+                                <p class="ca-hero-text text-sm mb-0" style="max-width: 32rem;">Track requests, confirmations, and past sessions. Book a new slot from the panel on the right.</p>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 justify-content-lg-end">
+                                <div class="ca-hero-pill">
+                                    <p class="ca-hero-pill-label text-xs mb-0">Total</p>
+                                    <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_TOTAL}</p>
+                                </div>
+                                <div class="ca-hero-pill">
+                                    <p class="ca-hero-pill-label text-xs mb-0">Pending</p>
+                                    <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_PENDING}</p>
+                                </div>
+                                <div class="ca-hero-pill">
+                                    <p class="ca-hero-pill-label text-xs mb-0">Upcoming</p>
+                                    <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_UPCOMING}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-lg-8 mb-4">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <h6>All Appointments</h6>
-                            <p class="text-sm text-muted">View all your scheduled appointments</p>
+                    <div class="card ca-panel mb-4 mb-lg-0">
+                        <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2">
+                            <div>
+                                <h5 class="text-dark">Your appointments</h5>
+                                <p class="text-sm text-muted mb-0">Newest activity first.</p>
+                            </div>
+                            <a href="client-dashboard.php" class="btn btn-sm btn-outline-primary mb-0">Dashboard</a>
                         </div>
-                        <div class="card-body px-0 pt-0 pb-2">
-                            <div class="table-responsive p-0">
+                        <div class="card-body px-0 pt-0 pb-0">
+                            <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Appointment</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Appointment</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Lawyer</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Notes</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pe-4 text-end">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -456,35 +597,35 @@ $html = <<<'HTML'
                 </div>
 
                 <div class="col-lg-4">
-                    <div class="card">
+                    <div class="card ca-panel ca-book border-radius-lg sticky-lg-top" style="top: 1rem;">
                         <div class="card-header pb-0">
-                            <h6>Book New Appointment</h6>
-                            <p class="text-sm text-muted">Schedule a new appointment with your lawyer</p>
+                            <h5 class="text-dark">Book a visit</h5>
+                            <p class="text-sm text-muted mb-0">Pick counsel, matter, date, and time.</p>
                         </div>
-                        <div class="card-body">
-                            <form method="POST" action="">
+                        <div class="card-body pt-3">
+                            <form method="POST" action="" onsubmit="return validateAppointmentForm();">
                                 <div class="form-group mb-3">
-                                    <label class="form-control-label">Select Lawyer</label>
+                                    <label class="form-control-label">Lawyer</label>
                                     <select class="form-control" name="lawyer_id" id="lawyer_id" required onchange="loadLawyerAvailability()">
                                         {LAWYER_OPTIONS}
                                     </select>
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <label class="form-control-label">Select Case</label>
-                                    <select class="form-control" name="case_id" required>
+                                    <label class="form-control-label">Case</label>
+                                    <select class="form-control" name="case_id" id="case_id" required>
                                         {CASE_OPTIONS}
                                     </select>
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <label class="form-control-label">Appointment Date</label>
-                                    <input type="date" class="form-control" name="appointment_date" id="appointment_date" min="<?php echo date('Y-m-d'); ?>" required onchange="loadTimeAvailability()">
+                                    <label class="form-control-label">Date</label>
+                                    <input type="date" class="form-control" name="appointment_date" id="appointment_date" min="{MIN_DATE}" required onchange="loadTimeAvailability()">
                                     <div id="dateAvailabilityMessage" class="mt-2" style="display: none;"></div>
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <label class="form-control-label">Preferred Time</label>
+                                    <label class="form-control-label">Time</label>
                                     <select class="form-control" name="appointment_time" id="appointment_time" required>
                                         <option value="">Select time</option>
                                         <option value="09:00" class="time-option">9:00 AM</option>
@@ -497,13 +638,13 @@ $html = <<<'HTML'
                                         <option value="16:00" class="time-option">4:00 PM</option>
                                         <option value="17:00" class="time-option">5:00 PM</option>
                                     </select>
-                                    <small class="text-muted">Green options indicate available times for the selected lawyer</small>
+                                    <small class="text-muted">Green slots match the lawyer’s published availability.</small>
                                 </div>
                                 <div class="form-group mb-3">
-                                    <label class="form-control-label">Notes (Optional)</label>
-                                    <textarea class="form-control" name="notes" rows="3" placeholder="Any specific topics or concerns..."></textarea>
+                                    <label class="form-control-label">Notes <span class="text-muted font-weight-normal">(optional)</span></label>
+                                    <textarea class="form-control" name="notes" rows="3" placeholder="Topics you want to cover…"></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">Request Appointment</button>
+                                <button type="submit" class="btn btn-primary w-100 mb-0 font-weight-bold border-radius-lg">Request appointment</button>
                             </form>
                         </div>
                     </div>
@@ -514,10 +655,10 @@ $html = <<<'HTML'
 
     <!-- Appointment Details Modal -->
     <div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="appointmentModalLabel">Appointment Details</h5>
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-radius-xl shadow-lg overflow-hidden">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title font-weight-bolder mb-0" id="appointmentModalLabel">Appointment details</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="appointmentDetails">
@@ -680,6 +821,10 @@ $html = str_replace('{APPOINTMENTS_ROWS}', $appointmentsRows, $html);
 $html = str_replace('{CASE_OPTIONS}', $caseOptions, $html);
 $html = str_replace('{LAWYER_OPTIONS}', $lawyerOptions, $html);
 $html = str_replace('{$lawyerAvailabilityJson}', json_encode($lawyerAvailability), $html);
+$html = str_replace('{MIN_DATE}', date('Y-m-d'), $html);
+$html = str_replace('{APPT_TOTAL}', (string) $apptTotal, $html);
+$html = str_replace('{APPT_PENDING}', (string) $apptPending, $html);
+$html = str_replace('{APPT_UPCOMING}', (string) $apptUpcoming, $html);
 
 echo $html;
 ?>
