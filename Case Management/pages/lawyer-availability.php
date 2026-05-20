@@ -97,6 +97,42 @@ $html = <<<'HTML'
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
+        }
+        .time-slot-time {
+            flex: 1;
+        }
+        .time-slot-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .time-slot-meta .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            padding: 0 10px;
+            line-height: 1;
+        }
+        .time-slot-delete-form {
+            display: inline-flex;
+            align-items: center;
+            margin: 0;
+        }
+        .time-slot-delete-btn {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1 !important;
+            padding: 0;
+            margin: 0;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 700;
         }
         .time-slot.available {
             background: #d4edda;
@@ -313,15 +349,17 @@ foreach ($daysOfWeek as $day) {
     } else {
         foreach ($slots as $slot) {
             $slotClass = $slot['slot_type'] === 'available' ? 'available' : 'unavailable';
-            $deleteBtn = '<form method="POST" style="display: inline;">
+            $deleteBtn = '<form method="POST" class="time-slot-delete-form">
                             <input type="hidden" name="slot_id" value="' . $slot['id'] . '">
-                            <button type="submit" name="delete_slot" class="btn btn-sm btn-outline-danger btn-sm" onclick="return confirm(\'Delete this time slot?\')">×</button>
+                            <button type="submit" name="delete_slot" class="btn btn-sm btn-danger btn-color-danger time-slot-delete-btn" onclick="return confirm(\'Delete this time slot?\')" aria-label="Delete time slot">&times;</button>
                           </form>';
 
             $scheduleHtml .= '<div class="time-slot ' . $slotClass . '">
-                                <span><strong>' . date('g:i A', strtotime($slot['start_time'])) . ' - ' . date('g:i A', strtotime($slot['end_time'])) . '</strong></span>
-                                <span class="badge ' . ($slot['slot_type'] === 'available' ? 'bg-success' : 'bg-danger') . '">' . ucfirst($slot['slot_type']) . '</span>
-                                ' . $deleteBtn . '
+                                <span class="time-slot-time"><strong>' . date('g:i A', strtotime($slot['start_time'])) . ' - ' . date('g:i A', strtotime($slot['end_time'])) . '</strong></span>
+                                <span class="time-slot-meta">
+                                    <span class="badge ' . ($slot['slot_type'] === 'available' ? 'bg-success' : 'bg-danger') . '">' . ucfirst($slot['slot_type']) . '</span>
+                                    ' . $deleteBtn . '
+                                </span>
                               </div>';
         }
     }
