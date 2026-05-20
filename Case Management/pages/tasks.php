@@ -245,7 +245,7 @@ if (!empty($tasks)) {
                         <form method="POST" action="" class="d-inline">
                             <input type="hidden" name="action" value="update_status">
                             <input type="hidden" name="task_id" value="' . $task['id'] . '">
-                            <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                            <select name="status" class="form-select form-select-sm task-status-select d-inline-block w-auto" onchange="this.form.submit()">
                                 <option value="pending" ' . ($task['status'] === 'pending' ? 'selected' : '') . '>Pending</option>
                                 <option value="in_progress" ' . ($task['status'] === 'in_progress' ? 'selected' : '') . '>In Progress</option>
                                 <option value="completed" ' . ($task['status'] === 'completed' ? 'selected' : '') . '>Completed</option>
@@ -280,8 +280,21 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <style>
+        /* More space between option text and dropdown chevron */
+        .lawyer-tasks-page select.form-select {
+            padding-left: 0.875rem;
+            padding-right: 2.85rem;
+            background-position: right 0.85rem center;
+        }
+        .lawyer-tasks-page select.form-select-sm {
+            padding-left: 0.75rem;
+            padding-right: 2.65rem;
+            background-position: right 0.65rem center;
+        }
+    </style>
 </head>
-<body class="g-sidenav-show bg-gray-100">
+<body class="g-sidenav-show bg-gray-100 lawyer-tasks-page">
     <div class="min-height-300 bg-dark position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4">
         <div class="sidenav-header">
