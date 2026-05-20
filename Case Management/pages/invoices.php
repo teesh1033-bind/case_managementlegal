@@ -296,12 +296,12 @@ if (empty($invoices)) {
             <td class="text-center">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
             <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
-                    <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-outline-dark" title="Edit Invoice">Edit</a>
+                    <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-dark" title="Edit Invoice">Edit</a>
                     <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary" title="Download Invoice" target="_blank">Download</a>
                     <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete">
                         <input type="hidden" name="invoice_id" value="' . (int)$invoice['id'] . '">
-                        <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete Invoice">
+                        <button class="btn btn-sm btn-danger" type="submit" title="Delete Invoice">
                             <i class="ni ni-fat-remove"></i>
                         </button>
                     </form>

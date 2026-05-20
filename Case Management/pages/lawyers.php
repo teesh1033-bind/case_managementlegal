@@ -306,11 +306,11 @@ if (empty($lawyers)) {
             </td>
             <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
-                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-outline-dark">Edit</a>
+                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-dark">Edit</a>
                     <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete ' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete_lawyer">
                         <input type="hidden" name="lawyer_id" value="' . (int)$lawyer['id'] . '">
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                     </form>
                 </div>
             </td>
@@ -475,10 +475,12 @@ $html = <<<'HTML'
                                         <option value="">Select existing user account</option>
                                         {USER_OPTIONS}
                                     </select>
-                                    <small class="text-muted mt-1">
-                                        <strong>Important:</strong> Each lawyer needs their own user account.
-                                        <a href="#" onclick="showCreateUserForm(); return false;">Create new user account</a> for this lawyer.
+                                    <small class="text-muted d-block mt-1">
+                                        <strong>Important:</strong> Each lawyer needs their own login. Pick an existing account above, or create one below.
                                     </small>
+                                    <button type="button" class="btn btn-primary btn-sm mt-2 w-100" id="btn_show_create_user" onclick="showCreateUserForm(); return false;">
+                                        <i class="fas fa-user-plus me-1"></i> Create new user account
+                                    </button>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Status</label>
@@ -516,8 +518,9 @@ $html = <<<'HTML'
                         </div>
 
                         <!-- New User Account Creation Form (hidden by default) -->
-                        <div id="create_user_form" style="display: none;" class="border rounded p-3 mb-3 bg-light">
-                            <h6 class="mb-3">Create New User Account</h6>
+                        <div id="create_user_form" style="display: none;" class="border border-primary border-2 rounded p-3 mb-3 bg-light">
+                            <h6 class="mb-1 text-primary fw-bold">Create New User Account</h6>
+                            <p class="text-xs text-muted mb-3">Fill in the fields below, then save the lawyer at the bottom of this form.</p>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Username <span class="text-danger">*</span></label>
@@ -546,7 +549,9 @@ $html = <<<'HTML'
                                     <option value="staff">Staff</option>
                                 </select>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="hideCreateUserForm()">Cancel</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="hideCreateUserForm()">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </button>
                         </div>
 
                         <div class="row">
@@ -738,12 +743,16 @@ $html = <<<'HTML'
 
         function showCreateUserForm() {
             document.getElementById('create_user_form').style.display = 'block';
+            var btn = document.getElementById('btn_show_create_user');
+            if (btn) btn.style.display = 'none';
             document.getElementById('user_select').value = '';
             document.getElementById('user_select').required = false;
         }
 
         function hideCreateUserForm() {
             document.getElementById('create_user_form').style.display = 'none';
+            var btn = document.getElementById('btn_show_create_user');
+            if (btn) btn.style.display = '';
             document.getElementById('user_select').required = true;
             // Clear the form fields
             document.getElementById('new_username').value = '';

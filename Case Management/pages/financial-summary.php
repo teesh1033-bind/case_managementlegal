@@ -159,7 +159,7 @@ foreach ($cases as $case) {
         <td class="text-center">' . ($paymentCount ? $paymentCount : '—') . '</td>
         <td class="text-center">' . ($lastPayment !== '—' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
         <td class="text-end">
-            <button class="btn btn-sm btn-outline-dark" data-case="' . $caseId . '" onclick="showPaymentHistory(' . $caseId . ')">History</button>
+            <button class="btn btn-sm btn-dark" data-case="' . $caseId . '" onclick="showPaymentHistory(' . $caseId . ')">History</button>
         </td>
     </tr>';
 
@@ -357,7 +357,7 @@ $html = <<<'HTML'
                     </div>
                     <div class="mt-3 mt-md-0">
                         <a href="payments.php" class="btn btn-sm btn-dark me-2">Record Payment</a>
-                        <a href="documents.php" class="btn btn-sm btn-outline-secondary">Generate Invoice</a>
+                        <a href="documents.php" class="btn btn-sm btn-dark">Generate Invoice</a>
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">

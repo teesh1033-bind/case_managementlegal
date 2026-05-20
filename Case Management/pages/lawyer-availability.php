@@ -108,8 +108,8 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100">
-    <div class="min-height-300 bg-primary position-absolute w-100"></div>
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+    <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
@@ -193,19 +193,19 @@ $html = <<<'HTML'
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="javascript:;">Pages</a></li>
-                        <li class="breadcrumb-item text-sm text-dark active" aria-current="page">My Availability</li>
+                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
+                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Availability</li>
                     </ol>
-                    <h6 class="font-weight-bolder mb-0">Manage My Availability</h6>
+                    <h6 class="font-weight-bolder text-black">Manage My Availability</h6>
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <ul class="navbar-nav justify-content-end">
-                        <li class="nav-item d-flex align-items-center">
-                            <span class="text-sm text-muted">
+                        <!-- <li class="nav-item d-flex align-items-center">
+                            <span class="text-sm text-white">
                                 <i class="fa fa-user me-sm-1"></i>
                                 Lawyer Portal
-                            </span>
-                        </li>
+                            </span> 
+                        </li> -->
                     </ul>
                 </div>
             </div>

@@ -67,6 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Case, lawyer, date, and time are required.';
             $messageType = 'danger';
         } else {
+            $lawyerCheck = $pdo->prepare("SELECT id FROM lawyers WHERE id = ? AND is_active = 1");
+            $lawyerCheck->execute([$lawyerId]);
+            if (!$lawyerCheck->fetch()) {
+                $message = 'Please select a valid lawyer from the list.';
+                $messageType = 'danger';
+            } else {
             $dateTime = DateTime::createFromFormat('Y-m-d H:i', $date . ' ' . $time);
             if (!$dateTime) {
                 $message = 'Invalid date or time format.';
@@ -126,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $message = 'Error saving appointment: ' . htmlspecialchars($e->getMessage());
                     $messageType = 'danger';
                 }
+            }
             }
         }
     } elseif ($formType === 'status') {
@@ -220,7 +227,7 @@ if (empty($formData['appointment_id']) && isset($_GET['id']) && ctype_digit($_GE
             'appointment_id' => $appointment['id'],
             'case_id' => $appointment['case_id'],
             'client_name' => $clientName,
-            'lawyer_id' => $appointment['user_id'],
+            'lawyer_id' => $appointment['lawyer_id'],
             'date' => $startsAt ? $startsAt->format('Y-m-d') : '',
             'time' => $startsAt ? $startsAt->format('H:i') : '',
             'notes' => $appointment['notes']
@@ -254,11 +261,17 @@ try {
 }
 
 try {
-    $lawyersList = $pdo->query("SELECT id, username, role FROM users ORDER BY username")->fetchAll();
+    $lawyersList = $pdo->query("
+        SELECT l.id, l.first_name, l.last_name, u.username
+        FROM lawyers l
+        LEFT JOIN users u ON u.id = l.user_id
+        WHERE l.is_active = 1
+        ORDER BY l.last_name, l.first_name
+    ")->fetchAll();
 } catch (PDOException $e) {
     $lawyersList = [];
     if (!$message) {
-        $message = 'Unable to load staff list: ' . htmlspecialchars($e->getMessage());
+        $message = 'Unable to load lawyers list: ' . htmlspecialchars($e->getMessage());
         $messageType = 'danger';
     }
 }
@@ -278,7 +291,6 @@ try {
         LEFT JOIN cases cs ON cs.id = a.case_id
         LEFT JOIN clients cl ON cl.id = cs.client_id
         LEFT JOIN lawyers l ON l.id = a.lawyer_id
-        WHERE a.status = 'accepted'
         ORDER BY a.starts_at DESC
     ");
     $appointments = $stmt->fetchAll();
@@ -297,11 +309,11 @@ foreach ($casesList as $case) {
     $caseOptions .= '<option value="' . (int)$case['id'] . '" data-client="' . htmlspecialchars($case['client_name']) . '"' . $selected . '>' . htmlspecialchars($case['case_display']) . '</option>';
 }
 
-$lawyerOptions = '<option value="">Select lawyer/staff</option>';
+$lawyerOptions = '<option value="">Select lawyer</option>';
 foreach ($lawyersList as $lawyer) {
-    $label = $lawyer['username'];
-    if (!empty($lawyer['role'])) {
-        $label .= ' (' . $lawyer['role'] . ')';
+    $label = trim($lawyer['first_name'] . ' ' . $lawyer['last_name']);
+    if (!empty($lawyer['username'])) {
+        $label .= ' (' . $lawyer['username'] . ')';
     }
     $selected = ((int)$formData['lawyer_id'] === (int)$lawyer['id']) ? ' selected' : '';
     $lawyerOptions .= '<option value="' . (int)$lawyer['id'] . '"' . $selected . '>' . htmlspecialchars($label) . '</option>';
@@ -331,9 +343,21 @@ if (empty($appointments)) {
         $lawyerName = $appointment['lawyer_name'] ? $appointment['lawyer_name'] : 'Unassigned';
 
         $startsAt = $appointment['starts_at'] ? date('m/d/y · H:i', strtotime($appointment['starts_at'])) : 'TBD';
-        $status = isset($appointment['status']) ? $appointment['status'] : 'pending';
-        $badgeClass = 'bg-gradient-success'; // All appointments shown here are accepted
-        $statusText = 'Scheduled';
+        $status = isset($appointment['status']) ? strtolower($appointment['status']) : 'pending';
+        switch ($status) {
+            case 'accepted':
+                $badgeClass = 'bg-gradient-success';
+                $statusText = 'Accepted';
+                break;
+            case 'rejected':
+                $badgeClass = 'bg-gradient-danger';
+                $statusText = 'Rejected';
+                break;
+            default:
+                $badgeClass = 'bg-gradient-warning';
+                $statusText = 'Pending';
+                break;
+        }
 
         $appointmentsRows .= '
         <tr>
@@ -360,10 +384,10 @@ if (empty($appointments)) {
             </td>
             <td class="text-end pe-3">
                 <div class="d-flex gap-1 justify-content-end">
-                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-dark mb-0" title="Edit" onclick="window.location.href=\'appointments.php?id=' . (int)$appointment['id'] . '#appointment-form\'; return false;">
+                    <a href="javascript:void(0)" class="btn btn-sm btn-dark mb-0" title="Edit" onclick="window.location.href=\'appointments.php?id=' . (int)$appointment['id'] . '#appointment-form\'; return false;">
                         <i class="ni ni-ruler-pencil"></i>
                     </a>
-                    <a href="javascript:void(0)" class="btn btn-sm btn-outline-danger mb-0" title="Delete" onclick="deleteAppointment(' . (int)$appointment['id'] . ', \'' . addslashes($caseDisplay) . '\'); return false;">
+                    <a href="javascript:void(0)" class="btn btn-sm btn-danger mb-0" title="Delete" onclick="deleteAppointment(' . (int)$appointment['id'] . ', \'' . addslashes($caseDisplay) . '\'); return false;">
                         <i class="ni ni-fat-remove"></i>
                     </a>
                 </div>

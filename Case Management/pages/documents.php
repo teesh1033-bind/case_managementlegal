@@ -409,10 +409,10 @@ if (empty($cases)) {
                         </div>
                     </div>
                     <div class="d-flex gap-2">
-                        <a class="btn btn-sm btn-outline-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" title="View Document">
+                        <a class="btn btn-sm btn-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" title="View Document">
                             <i class="ni ni-zoom-split-in me-1"></i>View
                         </a>
-                        <a class="btn btn-sm btn-outline-success" href="' . htmlspecialchars($downloadUrl) . '" download title="Download Document">
+                        <a class="btn btn-sm btn-success" href="' . htmlspecialchars($downloadUrl) . '" download title="Download Document">
                             <i class="ni ni-cloud-download-95 me-1"></i>Download
                         </a>
                     </div>
@@ -504,10 +504,10 @@ if (empty($recentDocuments)) {
                 </div>
             </div>
             <div class="d-flex gap-2">
-                <a class="btn btn-sm btn-outline-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" title="View Document">
+                <a class="btn btn-sm btn-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" title="View Document">
                     <i class="ni ni-zoom-split-in me-1"></i>View
                 </a>
-                <a class="btn btn-sm btn-outline-success" href="' . htmlspecialchars($downloadUrl) . '" download title="Download Document">
+                <a class="btn btn-sm btn-success" href="' . htmlspecialchars($downloadUrl) . '" download title="Download Document">
                     <i class="ni ni-cloud-download-95 me-1"></i>Download
                 </a>
             </div>

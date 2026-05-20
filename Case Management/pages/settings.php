@@ -167,17 +167,17 @@ $html = <<<'HTML'
 					<div class="card">
 						<div class="card-header pb-0 d-flex justify-content-between align-items-center">
 							<h6>Services Offered</h6>
-							<button class="btn btn-sm btn-outline-dark">Add Service</button>
+							<button class="btn btn-sm btn-dark">Add Service</button>
 						</div>
 						<div class="card-body">
 							<ul class="list-group">
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Contract Law
-									<button class="btn btn-sm btn-outline-danger">Remove</button>
+									<button class="btn btn-sm btn-danger">Remove</button>
 								</li>
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Family Law
-									<button class="btn btn-sm btn-outline-danger">Remove</button>
+									<button class="btn btn-sm btn-danger">Remove</button>
 								</li>
 							</ul>
 						</div>
@@ -197,7 +197,7 @@ $html = <<<'HTML'
 								<label class="form-control-label">Password Reset Email</label>
 								<input class="form-control" type="email" placeholder="admin@firm.com">
 							</div>
-							<button class="btn btn-outline-dark">Update Security Settings</button>
+							<button class="btn btn-dark">Update Security Settings</button>
 						</div>
 					</div>
 				</div>
