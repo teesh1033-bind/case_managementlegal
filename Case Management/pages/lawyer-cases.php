@@ -67,7 +67,7 @@ if (empty($cases)) {
 
         $priorityBadge = '';
         switch ($case['priority']) {
-            case 'High': $priorityBadge = '<span class="badge bg-danger">High</span>'; break;
+            case 'High': $priorityBadge = '<span class="badge bg-warning text-white">High</span>'; break;
             case 'Urgent': $priorityBadge = '<span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>Urgent</span>'; break;
             case 'Normal': $priorityBadge = '<span class="badge bg-warning">Normal</span>'; break;
             default: $priorityBadge = '<span class="badge bg-light">' . htmlspecialchars($case['priority']) . '</span>';
@@ -232,7 +232,7 @@ $html = <<<'HTML'
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Status Filter</label>
-                                    <select class="form-control" name="status">
+                                    <select class="form-select" name="status">
                                         <option value="all"{STATUS_ALL}>All Cases</option>
                                         <option value="open"{STATUS_OPEN}>Open</option>
                                         <option value="in_progress"{STATUS_IN_PROGRESS}>In Progress</option>
@@ -240,7 +240,8 @@ $html = <<<'HTML'
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                                    <label class="form-label d-block invisible">Filter</label>
+                                    <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
                                 </div>
                                 <div class="col-md-3 text-end">
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_CASES} cases</p>

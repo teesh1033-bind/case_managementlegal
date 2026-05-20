@@ -213,7 +213,8 @@ $html = <<<'HTML'
                                     <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="Search by name or email">
                                 </div>
                                 <div class="col-md-2">
-                                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                                    <label class="form-label d-block invisible">Search</label>
+                                    <button type="submit" class="btn btn-primary w-100 mb-0">Search</button>
                                 </div>
                                 <div class="col-md-2 text-end">
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_CLIENTS} clients</p>

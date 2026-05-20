@@ -272,7 +272,7 @@ $html = <<<'HTML'
                             <form method="GET" class="row align-items-end">
                                 <div class="col-md-4">
                                     <label class="form-label">Status Filter</label>
-                                    <select class="form-control" name="status">
+                                    <select class="form-select" name="status">
                                         <option value="all"{STATUS_ALL}>All Appointments</option>
                                         <option value="pending"{STATUS_PENDING}>Pending</option>
                                         <option value="accepted"{STATUS_ACCEPTED}>Accepted</option>
@@ -281,7 +281,8 @@ $html = <<<'HTML'
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <button type="submit" class="btn btn-primary w-100 mt-4">Filter</button>
+                                    <label class="form-label d-block invisible">Filter</label>
+                                    <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
                                 </div>
                                 <div class="col-md-5 text-end">
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_APPOINTMENTS} appointments</p>
