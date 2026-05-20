@@ -258,10 +258,10 @@ SIDEBAR;
 }
 
 $portalTitle = $portal === 'client' ? 'Client' : ($portal === 'lawyer' ? 'Lawyer' : 'Admin');
-$stripClass = ($portal === 'admin' || $portal === 'lawyer') ? 'bg-legalpro-admin' : 'bg-primary';
+$stripClass = $portal === 'admin' ? 'bg-legalpro-admin' : ($portal === 'lawyer' ? 'bg-legalpro-lawyer' : 'bg-primary');
 $bodyExtra = 'search-portal-page search-portal-page--' . $portal;
 if ($portal === 'lawyer') {
-    $bodyExtra .= ' legalpro-admin-portal';
+    $bodyExtra .= ' legalpro-lawyer-portal';
 }
 $navBreadcrumbMuted = 'opacity-6 text-white';
 $navHeadingClass = 'font-weight-bolder text-white mb-0';

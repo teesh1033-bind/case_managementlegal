@@ -267,8 +267,8 @@ foreach ($court_dates as $date) {
         .status-postponed { background-color: #ffc107; color: black; }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
-    <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal">
+    <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
     <?php
     // Create navigation HTML (copied from lawyer-dashboard.php)
     $navHtml = <<<'NAV'
