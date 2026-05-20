@@ -127,7 +127,7 @@ if (empty($appointments)) {
             <td>' . htmlspecialchars($appointment['notes'] ?: 'No notes') . '</td>
             <td class="text-center">' . $statusBadge . '</td>
             <td class="text-end">
-                <a href="lawyer-case-view.php?id=' . (int)$appointment['case_id'] . '" class="btn btn-sm btn-outline-primary me-1">View Case</a>';
+                <a href="lawyer-case-view.php?id=' . (int)$appointment['case_id'] . '" class="btn btn-sm btn-primary me-1">View Case</a>';
                 if ($appointment['status'] === 'pending') {
                     $appointmentsTable .= '
                 <form method="post" class="d-inline">
@@ -245,8 +245,8 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
-    <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal">
+    <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
 
