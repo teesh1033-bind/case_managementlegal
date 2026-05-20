@@ -256,8 +256,13 @@ if (empty($documents)) {
     $documentsHtml = '<tr><td colspan="3" class="text-center text-muted py-3">No documents uploaded</td></tr>';
 } else {
     foreach ($documents as $document) {
-        $fileSize = filesize('../uploads/' . $document['file_path']);
+        $documentPath = isset($document['filepath']) ? (string) $document['filepath'] : '';
+        $documentName = !empty($document['label']) ? $document['label'] : (!empty($document['filename']) ? $document['filename'] : basename($documentPath));
+        $fileUrl = '../' . ltrim($documentPath, '/');
+        $fileSystemPath = __DIR__ . '/../' . ltrim($documentPath, '/');
+        $fileSize = ($documentPath !== '' && is_file($fileSystemPath)) ? filesize($fileSystemPath) : false;
         $fileSizeFormatted = $fileSize ? round($fileSize / 1024, 1) . ' KB' : 'Unknown';
+        $fileType = !empty($document['filename']) ? strtoupper(pathinfo($document['filename'], PATHINFO_EXTENSION)) : 'File';
 
         $documentsHtml .= '
         <tr>
@@ -267,16 +272,16 @@ if (empty($documents)) {
                         <i class="ni ni-single-copy-04 text-white text-xs opacity-10"></i>
                     </div>
                     <div>
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($document['label'] ?: basename($document['file_path'])) . '</h6>
+                        <h6 class="mb-0 text-sm">' . htmlspecialchars($documentName) . '</h6>
                         <p class="text-xs text-muted mb-0">Uploaded ' . date('M d, Y', strtotime($document['uploaded_at'])) . '</p>
                     </div>
                 </div>
             </td>
-            <td class="text-center">' . htmlspecialchars($document['file_type']) . '</td>
+            <td class="text-center">' . htmlspecialchars($fileType) . '</td>
             <td class="text-center">' . $fileSizeFormatted . '</td>
             <td class="text-end">
-                <a href="../uploads/' . htmlspecialchars($document['file_path']) . '" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
-                <a href="../uploads/' . htmlspecialchars($document['file_path']) . '" download class="btn btn-sm btn-outline-secondary">Download</a>
+                <a href="' . htmlspecialchars($fileUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="' . htmlspecialchars($fileUrl) . '" download class="btn btn-sm btn-outline-secondary">Download</a>
             </td>
         </tr>';
     }
