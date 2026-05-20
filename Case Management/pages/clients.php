@@ -240,7 +240,7 @@ $html = <<<'HTML'
 				<div class="container-fluid">
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
-							<div class="copyright text-center text-sm text-muted text-lg-start">
+							<div class="copyright text-center text-sm text-white text-lg-start">
 								© <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
 							</div>
 						</div>
@@ -293,8 +293,8 @@ if (empty($clients)) {
             <td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' . $activeCases . '</span></td>
             <td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' . $lastActivity . '</span></td>
             <td class="align-middle">
-                <a href="client-detail.php?id=' . $clientId . '" class="btn btn-sm btn-outline-primary me-2">View</a>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteClient(' . $clientId . ', \'' . addslashes($fullName) . '\')">Delete</button>
+                <a href="client-detail.php?id=' . $clientId . '" class="btn btn-sm btn-primary me-2">View</a>
+                <button type="button" class="btn btn-sm btn-danger" onclick="deleteClient(' . $clientId . ', \'' . addslashes($fullName) . '\')">Delete</button>
             </td>
         </tr>';
     }

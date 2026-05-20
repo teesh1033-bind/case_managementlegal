@@ -18,7 +18,54 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 	<style>
 		.chat-window { height: 420px; overflow-y: auto; background: #fff; border-radius: 0.75rem; border: 1px solid #e9ecef; padding: 1rem; }
-		.chat-input { border-top-left-radius: .5rem; border-bottom-left-radius: .5rem; }
+		/* Theme uses different padding/line-height on .form-control vs .btn — force one row height */
+		.card-body .chat-compose {
+			--chat-compose-h: 3rem;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			align-items: stretch;
+			width: 100%;
+			column-gap: 0;
+		}
+		.card-body .chat-compose .chat-input {
+			min-width: 0;
+			width: 100%;
+			height: var(--chat-compose-h) !important;
+			min-height: var(--chat-compose-h) !important;
+			max-height: var(--chat-compose-h) !important;
+			box-sizing: border-box !important;
+			padding-top: 0 !important;
+			padding-bottom: 0 !important;
+			padding-left: 0.75rem;
+			padding-right: 0.75rem;
+			line-height: normal !important;
+			border-top-right-radius: 0;
+			border-bottom-right-radius: 0;
+			border-right: 0;
+			margin: 0;
+		}
+		.card-body .chat-compose .chat-input:focus {
+			position: relative;
+			z-index: 1;
+		}
+		.card-body .chat-compose #sendBtn {
+			height: var(--chat-compose-h) !important;
+			min-height: var(--chat-compose-h) !important;
+			max-height: var(--chat-compose-h) !important;
+			box-sizing: border-box !important;
+			display: inline-flex !important;
+			align-items: center !important;
+			justify-content: center !important;
+			padding-top: 0 !important;
+			padding-bottom: 0 !important;
+			padding-left: 1.25rem !important;
+			padding-right: 1.25rem !important;
+			line-height: 1.2 !important;
+			border-top-left-radius: 0;
+			border-bottom-left-radius: 0;
+			margin: 0 0 0 -1px;
+			align-self: stretch;
+		}
 	</style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
@@ -78,9 +125,9 @@ $html = <<<'HTML'
 									</div>
 								</div>
 							</div>
-							<div class="input-group">
+							<div class="chat-compose">
 								<input id="chatInput" type="text" class="form-control chat-input" placeholder="Ask anything...">
-								<button id="sendBtn" class="btn btn-dark">Send</button>
+								<button type="button" id="sendBtn" class="btn btn-dark">Send</button>
 							</div>
 						</div>
 					</div>
@@ -92,9 +139,9 @@ $html = <<<'HTML'
 						</div>
 						<div class="card-body">
 							<div class="d-grid gap-2">
-								<a href="tables.php" class="btn btn-outline-dark">Show Active Cases</a>
-								<a href="reports.html" class="btn btn-outline-dark">Revenue Summary</a>
-								<a href="documents.html" class="btn btn-outline-dark">Generate Retainer</a>
+								<a href="tables.php" class="btn btn-dark">Show Active Cases</a>
+								<a href="reports.html" class="btn btn-dark">Revenue Summary</a>
+								<a href="documents.html" class="btn btn-dark">Generate Retainer</a>
 							</div>
 						</div>
 					</div>
