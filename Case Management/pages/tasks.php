@@ -279,7 +279,7 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <style>
         /* More space between option text and dropdown chevron */
         .lawyer-tasks-page select.form-select {

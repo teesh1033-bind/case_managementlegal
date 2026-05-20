@@ -4,8 +4,8 @@
 :root {
     --admin-portal-gradient: linear-gradient(135deg, #3d4f7c 0%, #5d6ea3 50%, #8aa0d6 100%);
     --admin-portal-bg-fallback: #3d4f7c;
-    --lawyer-portal-gradient: linear-gradient(135deg, #2f3f73 0%, #3f63b8 48%, #5e72e4 100%);
-    --lawyer-portal-bg-fallback: #2f3f73;
+    --lawyer-portal-gradient: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
+    --lawyer-portal-bg-fallback: #2d3f6f;
 }
 
 body.legalpro-admin-portal,

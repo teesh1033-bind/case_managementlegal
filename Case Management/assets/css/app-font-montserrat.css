@@ -1,5 +1,6 @@
 /* Global Montserrat — load after argon-dashboard.css */
 @import url("legalpro-admin-portal.css");
+@import url("legalpro-lawyer-portal.css");
 @import url("legalpro-client-portal.css");
 
 

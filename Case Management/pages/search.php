@@ -284,7 +284,7 @@ $aptCount = count($appointments);
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-    <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <style>
         .search-portal-page--client .min-height-300 {
             background: linear-gradient(125deg, #5e72e4 0%, #324cdd 42%, #172b4d 100%) !important;
