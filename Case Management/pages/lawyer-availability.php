@@ -196,7 +196,7 @@ $html = <<<'HTML'
                         <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Availability</li>
                     </ol>
-                    <h6 class="font-weight-bolder text-black">Manage My Availability</h6>
+                    <h6 class="font-weight-bolder text-white">Manage My Availability</h6>
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <ul class="navbar-nav justify-content-end">
