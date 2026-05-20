@@ -8,6 +8,9 @@
     --lawyer-portal-bg-fallback: #2d3f6f;
 }
 
+.{
+    
+}
 body.legalpro-admin-portal,
 body.legalpro-admin-portal.bg-gray-100 {
     background: var(--admin-portal-gradient) fixed !important;

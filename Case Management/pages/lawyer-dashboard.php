@@ -107,12 +107,12 @@ if (empty($recentCases)) {
                     </div>
                 </div>
             </td>
-            <td class="text-center">' . $statusBadge . '</td>
+            <td class="text-center align-middle">' . $statusBadge . '</td>
             <td class="text-center">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
-            <td class="text-end">
-                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-outline-primary">View</a>
+            <td class="text-center align-middle">
+                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">View</a>
             </td>
         </tr>';
     }
@@ -403,7 +403,7 @@ $html = <<<'HTML'
             <div class="container-fluid">
                 <div class="row align-items-center justify-content-lg-between">
                     <div class="col-lg-6 mb-lg-0 mb-4">
-                        <div class="copyright text-center text-sm text-muted text-lg-start">
+                        <div class="copyright text-center text-sm text-white text-lg-start">
                             © <script>document.write(new Date().getFullYear())</script>, LegalPro Lawyer Portal.
                         </div>
                     </div>
