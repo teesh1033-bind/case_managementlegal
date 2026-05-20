@@ -78,7 +78,7 @@ if (empty($clients)) {
                 <span class="text-sm" title="' . $caseTitles . '">' . $caseTitlesShort . '</span>
             </td>
             <td class="text-end">
-                <a href="lawyer-client-view.php?id=' . (int)$client['id'] . '" class="btn btn-sm btn-outline-primary">View Details</a>
+                <a href="lawyer-client-view.php?id=' . (int)$client['id'] . '" class="btn btn-sm btn-primary">View Details</a>
             </td>
         </tr>';
     }
