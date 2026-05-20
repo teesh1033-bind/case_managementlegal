@@ -192,7 +192,7 @@ if (empty($cases)) {
                         <input type="hidden" name="form_type" value="delete">
                         <input type="hidden" name="case_id" value="' . $caseId . '">
                         <button class="btn btn-sm btn-outline-danger mb-0" type="submit" title="Delete Case">
-                            <i class="ni ni-fat-remove"></i>
+                            <i class="ni ni-fat-remove"></i> Delete
                         </button>
                     </form>
                     <a class="btn btn-sm btn-outline-info mb-0" href="case-contract.php?id=' . $caseId . '" target="_blank" onclick="event.stopPropagation();" title="Generate Contract">

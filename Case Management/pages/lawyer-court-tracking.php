@@ -234,6 +234,33 @@ foreach ($court_dates as $date) {
             font-size: 0.75rem;
             font-weight: 600;
         }
+        /* Only previous/next month buttons */
+        .fc .fc-prev-button,
+        .fc .fc-next-button {
+            background: #ffffff !important;
+            border-color: #ffffff !important;
+            color: #344767 !important;
+        }
+        .fc .fc-prev-button:hover,
+        .fc .fc-next-button:hover,
+        .fc .fc-prev-button:focus,
+        .fc .fc-next-button:focus {
+            background: #f8f9fa !important;
+            border-color: #f8f9fa !important;
+            color: #1f2b4d !important;
+            box-shadow: none !important;
+        }
+        .fc .fc-prev-button .fc-icon,
+        .fc .fc-next-button .fc-icon {
+            color: #344767 !important;
+        }
+        /* Fallback simple calendar prev/next controls */
+        .simple-calendar .calendar-header .btn:first-of-type,
+        .simple-calendar .calendar-header .btn:last-of-type {
+            background: #ffffff !important;
+            border-color: #ffffff !important;
+            color: #344767 !important;
+        }
         .status-scheduled { background-color: #17a2b8; color: white; }
         .status-completed { background-color: #28a745; color: white; }
         .status-cancelled { background-color: #dc3545; color: white; }
