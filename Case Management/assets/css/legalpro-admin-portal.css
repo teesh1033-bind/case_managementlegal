@@ -7,10 +7,6 @@
     --lawyer-portal-gradient: linear-gradient(135deg, #2f3f73 0%, #3f63b8 48%, #5e72e4 100%);
     --lawyer-portal-bg-fallback: #2f3f73;
 }
-
-.{
-    
-}
 body.legalpro-admin-portal,
 body.legalpro-admin-portal.bg-gray-100 {
     background: var(--admin-portal-gradient) fixed !important;
