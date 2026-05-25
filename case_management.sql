@@ -394,8 +394,8 @@ CREATE TABLE `invoices` (
 -- Dumping data for table `invoices`
 --
 
-INSERT INTO `invoices` (`id`, `client_id`, `case_id`, `invoice_number`, `amount`, `issue_date`, `due_date`, `notes`, `status`, `created_at`, `Test`) VALUES
-(8, 5, 17, 'Invoice 1', 5000.00, '2025-12-23', '2026-01-06', 'qwerty', 'paid', '2025-12-23 11:38:54', 0);
+INSERT INTO `invoices` (`id`, `client_id`, `case_id`, `invoice_number`, `amount`, `issue_date`, `due_date`, `notes`, `status`, `created_at`) VALUES
+(8, 5, 17, 'Invoice 1', 5000.00, '2025-12-23', '2026-01-06', 'qwerty', 'paid', '2025-12-23 11:38:54');
 
 -- --------------------------------------------------------
 
