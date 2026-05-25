@@ -1,0 +1,105 @@
+/* Global Montserrat — load after argon-dashboard.css */
+@import url("legalpro-admin-portal.css");
+@import url("legalpro-lawyer-portal.css");
+@import url("legalpro-client-portal.css");
+
+
+
+:root,
+
+[data-bs-theme="light"],
+
+[data-bs-theme="dark"] {
+
+  --bs-font-sans-serif: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+}
+
+
+
+body {
+
+  font-family: var(--bs-font-sans-serif);
+
+}
+
+
+
+.card .card-body {
+
+  font-family: "Montserrat", sans-serif;
+
+}
+
+
+
+.text-sans-serif {
+
+  font-family: "Montserrat", sans-serif !important;
+
+}
+
+
+
+/* Argon zeros padding-left for any .form-control not first in .input-group, which makes
+
+   text sit under / flush with leading icons. Restore inset after prepend / input-group-text. */
+
+body .input-group > .input-group-text + .form-control,
+
+body .input-group > .input-group-text + textarea.form-control,
+
+body .input-group > .input-group-text + .form-select,
+
+body .input-group > .input-group-prepend + .form-control,
+
+body .input-group > .input-group-prepend + textarea.form-control,
+
+body .input-group > .input-group-prepend + .form-select {
+
+  padding-left: 0.5rem;
+
+}
+
+
+
+/* Top navbar search — text/placeholder flush to inner edge of input (after icon) */
+
+.navbar-main .legalpro-navbar-search .input-group {
+
+  max-width: min(22rem, 92vw);
+
+}
+
+.navbar-main .legalpro-navbar-search .input-group-text {
+
+  padding: 0.5rem 0.5rem 0.5rem 0.65rem;
+
+  min-width: auto;
+
+  border-right: 0;
+
+}
+
+.navbar-main .legalpro-navbar-search .input-group > .input-group-text + .form-control,
+.navbar-main .legalpro-navbar-search .input-group > .input-group-text + input[type="search"].form-control {
+
+  padding-left: 0 !important;
+
+  -webkit-appearance: none;
+
+  appearance: none;
+
+}
+
+.navbar-main .legalpro-navbar-search input[type="search"].form-control::-webkit-search-decoration,
+.navbar-main .legalpro-navbar-search input[type="search"].form-control::-webkit-search-cancel-button {
+
+  -webkit-appearance: none;
+
+  appearance: none;
+
+  margin: 0;
+
+}
+

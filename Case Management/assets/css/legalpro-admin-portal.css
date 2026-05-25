@@ -1,0 +1,118 @@
+/**
+ * LegalPro admin portal — full-page gradient; content .card panels stay white.
+ */
+:root {
+    --admin-portal-gradient: linear-gradient(135deg, #3d4f7c 0%, #5d6ea3 50%, #8aa0d6 100%);
+    --admin-portal-bg-fallback: #3d4f7c;
+    --lawyer-portal-gradient: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
+    --lawyer-portal-bg-fallback: #2d3f6f;
+}
+body.legalpro-admin-portal,
+body.legalpro-admin-portal.bg-gray-100 {
+    background: var(--admin-portal-gradient) fixed !important;
+    background-color: var(--admin-portal-bg-fallback) !important;
+    min-height: 100vh;
+}
+
+body.legalpro-lawyer-portal,
+body.legalpro-lawyer-portal.bg-gray-100 {
+    background: var(--lawyer-portal-gradient) fixed !important;
+    background-color: var(--lawyer-portal-bg-fallback) !important;
+    min-height: 100vh;
+}
+
+body.legalpro-admin-portal > .min-height-300.bg-legalpro-admin,
+body.legalpro-admin-portal > .min-height-300:not(.profile-header-strip) {
+    display: none !important;
+}
+
+
+body.legalpro-lawyer-portal > .min-height-300.bg-legalpro-lawyer,
+body.legalpro-lawyer-portal > .min-height-300:not(.profile-header-strip) {
+    display: none !important;
+}
+
+body.legalpro-admin-portal .main-content,
+body.legalpro-admin-portal .main-content > .container-fluid,
+body.legalpro-admin-portal .max-height-vh-100,
+body.legalpro-lawyer-portal .main-content,
+body.legalpro-lawyer-portal .main-content > .container-fluid,
+body.legalpro-lawyer-portal .max-height-vh-100 {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.legalpro-admin-portal .main-content.border-radius-lg,
+body.legalpro-lawyer-portal .main-content.border-radius-lg {
+    border-radius: 0 !important;
+}
+
+body.legalpro-admin-portal .main-content .card,
+body.legalpro-lawyer-portal .main-content .card {
+    background-color: #fff !important;
+}
+
+.search-portal-page--admin {
+    background: var(--admin-portal-gradient) fixed !important;
+    background-color: var(--admin-portal-bg-fallback) !important;
+    min-height: 100vh;
+}
+
+.search-portal-page--admin > .min-height-300 {
+    display: none !important;
+}
+
+ .search-portal-page--lawyer {
+    background: var(--lawyer-portal-gradient) fixed !important;
+    background-color: var(--lawyer-portal-bg-fallback) !important;
+    min-height: 100vh;
+}
+
+.search-portal-page--lawyer > .min-height-300 {
+    display: none !important;
+}
+
+body.legalpro-admin-portal .profile-header-strip,
+body.legalpro-admin-portal .profile-header-strip .mask,
+body.legalpro-admin-portal .min-height-300.top-0 .mask.bg-primary,
+body.legalpro-lawyer-portal .profile-header-strip,
+body.legalpro-lawyer-portal .profile-header-strip .mask,
+body.legalpro-lawyer-portal .min-height-300.top-0 .mask.bg-primary {
+    background: var(--admin-portal-gradient) !important;
+    background-color: var(--admin-portal-bg-fallback) !important;
+    opacity: 1 !important;
+}
+
+body.legalpro-lawyer-portal .profile-header-strip,
+body.legalpro-lawyer-portal .profile-header-strip .mask,
+body.legalpro-lawyer-portal .min-height-300.top-0 .mask.bg-primary {
+    background: var(--lawyer-portal-gradient) !important;
+    background-color: var(--lawyer-portal-bg-fallback) !important;
+}
+
+body.legalpro-admin-portal .navbar-main,
+body.legalpro-admin-portal .navbar-main.blur,
+body.legalpro-admin-portal .navbar-main.shadow-blur,
+body.legalpro-admin-portal #navbarBlur,
+body.legalpro-admin-portal #navbarBlur.blur,
+body.legalpro-lawyer-portal .navbar-main,
+body.legalpro-lawyer-portal .navbar-main.blur,
+body.legalpro-lawyer-portal .navbar-main.shadow-blur,
+body.legalpro-lawyer-portal #navbarBlur,
+body.legalpro-lawyer-portal #navbarBlur.blur,
+.search-portal-page--admin .navbar-main,
+.search-portal-page--admin .navbar-main.blur,
+.search-portal-page--admin #navbarBlur,
+.search-portal-page--admin #navbarBlur.blur,
+.search-portal-page--lawyer .navbar-main,
+.search-portal-page--lawyer .navbar-main.blur,
+.search-portal-page--lawyer #navbarBlur,
+.search-portal-page--lawyer #navbarBlur.blur {
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+}

@@ -1,0 +1,228 @@
+<!--
+=========================================================
+* LegalPro Case Manager - Case Detail
+=========================================================
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
+  <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+  <title>
+    LegalPro Case Manager - Case Detail
+  </title>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+  <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
+  <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+</head>
+<body class="g-sidenav-show   bg-gray-100">
+  <div class="min-height-300 bg-dark position-absolute w-100"></div>
+  <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
+    <div class="sidenav-header">
+      <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
+      <a class="navbar-brand m-0" href="../pages/dashboard.html">
+        <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LegalPro logo">
+        <span class="ms-1 font-weight-bold">LegalPro Case Manager</span>
+      </a>
+    </div>
+    <hr class="horizontal dark mt-0">
+    <div class="collapse navbar-collapse  w-auto " id="sidenav-collapse-main">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="../pages/dashboard.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-tv-2 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Dashboard</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/tables.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-collection text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Cases</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/clients.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-circle-08 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Clients</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/staff.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-badge text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Staff</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/billing.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-credit-card text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Finance</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/documents.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-folder-17 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Documents</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/appointments.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-time-alarm text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Appointments</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/reports.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-chart-bar-32 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Reports</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/settings.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-settings text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Settings</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="../pages/chatbot.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-chat-round text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Chatbot</span></a></li>
+      </ul>
+    </div>
+  </aside>
+  <main class="main-content position-relative border-radius-lg ">
+    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
+      <div class="container-fluid py-1 px-3">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+            <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="../pages/tables.html">Cases</a></li>
+            <li class="breadcrumb-item text-sm text-white active" aria-current="page">Case Detail</li>
+          </ol>
+          <h6 class="font-weight-bolder text-white mb-0">C-1029 · Contract Dispute</h6>
+        </nav>
+      </div>
+    </nav>
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header pb-0">
+              <div class="d-flex align-items-center">
+                <p class="mb-0">Overview</p>
+                <a href="case-new.html" class="btn btn-primary btn-sm ms-auto">Edit</a>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <p class="text-xs text-uppercase text-muted mb-1">Client</p>
+                  <p class="text-sm mb-3">Jane Doe</p>
+                </div>
+                <div class="col-md-4">
+                  <p class="text-xs text-uppercase text-muted mb-1">Assigned Lawyer</p>
+                  <p class="text-sm mb-3">A. Smith</p>
+                </div>
+                <div class="col-md-4">
+                  <p class="text-xs text-uppercase text-muted mb-1">Status</p>
+                  <span class="badge bg-gradient-warning">In Progress</span>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <p class="text-xs text-uppercase text-muted mb-1">Start Date</p>
+                  <p class="text-sm mb-3">01/11/2025</p>
+                </div>
+                <div class="col-md-4">
+                  <p class="text-xs text-uppercase text-muted mb-1">Expected Completion</p>
+                  <p class="text-sm mb-3">30/11/2025</p>
+                </div>
+                <div class="col-md-4">
+                  <p class="text-xs text-uppercase text-muted mb-1">Estimated Fees</p>
+                  <p class="text-sm mb-3">$2,500</p>
+                </div>
+              </div>
+              <hr class="horizontal dark">
+              <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link active" data-bs-toggle="tab" href="#timeline" role="tab">Timeline</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link" data-bs-toggle="tab" href="#tasks" role="tab">Tasks</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link" data-bs-toggle="tab" href="#finance" role="tab">Finance</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link" data-bs-toggle="tab" href="#documents" role="tab">Documents</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link" data-bs-toggle="tab" href="#notes" role="tab">Notes</a>
+                </li>
+              </ul>
+              <div class="tab-content pt-3">
+                <div class="tab-pane active" id="timeline" role="tabpanel">
+                  <ul class="list-group">
+                    <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                      <div class="d-flex align-items-center">
+                        <div class="icon icon-shape icon-sm me-3 bg-gradient-dark shadow text-center"><i class="ni ni-time-alarm text-white opacity-10"></i></div>
+                        <div class="d-flex flex-column">
+                          <h6 class="mb-1 text-dark text-sm">Hearing Scheduled</h6>
+                          <span class="text-xs">12 Nov 2025, 10:00 AM</span>
+                        </div>
+                      </div>
+                    </li>
+                    <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+                      <div class="d-flex align-items-center">
+                        <div class="icon icon-shape icon-sm me-3 bg-gradient-info shadow text-center"><i class="ni ni-folder-17 text-white opacity-10"></i></div>
+                        <div class="d-flex flex-column">
+                          <h6 class="mb-1 text-dark text-sm">Affidavit Uploaded</h6>
+                          <span class="text-xs">10 Nov 2025</span>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+                <div class="tab-pane" id="tasks" role="tabpanel">
+                  <div class="d-flex mb-3">
+                    <input type="text" class="form-control me-2" placeholder="New task...">
+                    <button class="btn btn-primary btn-sm">Add</button>
+                  </div>
+                  <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Draft reply to notice
+                      <span class="badge bg-gradient-warning">Due Today</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Meet client
+                      <span class="badge bg-gradient-info">Tomorrow</span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="tab-pane" id="finance" role="tabpanel">
+                  <div class="row">
+                    <div class="col-md-4">
+                      <p class="text-sm mb-1">Fees</p>
+                      <h6>$2,500</h6>
+                    </div>
+                    <div class="col-md-4">
+                      <p class="text-sm mb-1">Paid</p>
+                      <h6>$1,200</h6>
+                    </div>
+                    <div class="col-md-4">
+                      <p class="text-sm mb-1">Balance</p>
+                      <h6>$1,300</h6>
+                    </div>
+                  </div>
+                  <a href="billing.html" class="btn btn-sm btn-outline-primary mt-2">Generate Invoice</a>
+                </div>
+                <div class="tab-pane" id="documents" role="tabpanel">
+                  <div class="mb-2">
+                    <input class="form-control" type="file" multiple>
+                  </div>
+                  <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Affidavit.pdf
+                      <div>
+                        <button class="btn btn-sm btn-outline-dark">View</button>
+                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+                <div class="tab-pane" id="notes" role="tabpanel">
+                  <textarea class="form-control" rows="4" placeholder="Add private notes..."></textarea>
+                  <button class="btn btn-sm btn-dark mt-2">Save Notes</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card">
+            <div class="card-header pb-0">
+              <h6>Actions</h6>
+            </div>
+            <div class="card-body">
+              <a href="documents.html" class="btn btn-outline-dark w-100 mb-2">Generate Legal Document</a>
+              <a href="appointments.html" class="btn btn-outline-dark w-100 mb-2">Book Appointment</a>
+              <a href="billing.html" class="btn btn-outline-dark w-100">Record Payment</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="footer pt-3  ">
+        <div class="container-fluid">
+          <div class="row align-items-center justify-content-lg-between">
+            <div class="col-lg-6 mb-lg-0 mb-4">
+              <div class="copyright text-center text-sm text-muted text-lg-start">
+                © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </main>
+  <script src="../assets/js/core/popper.min.js"></script>
+  <script src="../assets/js/core/bootstrap.min.js"></script>
+  <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+</body>
+</html>
+

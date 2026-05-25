@@ -1,0 +1,122 @@
+/**
+ * LegalPro lawyer portal — full-page gradient; content cards stay white.
+ */
+:root {
+    --lawyer-portal-gradient: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
+    --lawyer-portal-bg-fallback: #2d3f6f;
+}
+
+.bg-legalpro-lawyer {
+    background: var(--lawyer-portal-gradient) !important;
+    background-color: var(--lawyer-portal-bg-fallback) !important;
+}
+
+body.legalpro-lawyer-portal,
+body.legalpro-lawyer-portal.bg-gray-100,
+body.g-sidenav-show.legalpro-lawyer-portal,
+body.g-sidenav-show.legalpro-lawyer-portal.bg-gray-100,
+body.lawyer-dashboard-page,
+body.lawyer-cases-page,
+body.lawyer-clients-page,
+body.lawyer-appointments-page,
+body.lawyer-availability-page,
+body.lawyer-case-view-page,
+body.lawyer-client-view-page,
+body.lawyer-court-tracking-page,
+body.lawyer-tasks-page,
+.search-portal-page--lawyer {
+    background: var(--lawyer-portal-gradient) fixed !important;
+    background-color: var(--lawyer-portal-bg-fallback) !important;
+    background-image: var(--lawyer-portal-gradient) !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    min-height: 100vh;
+}
+
+body.legalpro-lawyer-portal > .min-height-300,
+body.lawyer-dashboard-page > .min-height-300,
+body.lawyer-cases-page > .min-height-300,
+body.lawyer-clients-page > .min-height-300,
+body.lawyer-appointments-page > .min-height-300,
+body.lawyer-availability-page > .min-height-300,
+body.lawyer-case-view-page > .min-height-300,
+body.lawyer-client-view-page > .min-height-300,
+body.lawyer-court-tracking-page > .min-height-300,
+body.lawyer-tasks-page > .min-height-300,
+.search-portal-page--lawyer > .min-height-300 {
+    display: none !important;
+}
+
+body.legalpro-lawyer-portal .main-content,
+body.legalpro-lawyer-portal .main-content > .container-fluid,
+body.legalpro-lawyer-portal .max-height-vh-100,
+body.lawyer-dashboard-page .main-content,
+body.lawyer-cases-page .main-content,
+body.lawyer-clients-page .main-content,
+body.lawyer-appointments-page .main-content,
+body.lawyer-availability-page .main-content,
+body.lawyer-case-view-page .main-content,
+body.lawyer-client-view-page .main-content,
+body.lawyer-court-tracking-page .main-content,
+body.lawyer-tasks-page .main-content,
+body.lawyer-dashboard-page .main-content > .container-fluid,
+body.lawyer-cases-page .main-content > .container-fluid,
+body.lawyer-clients-page .main-content > .container-fluid,
+body.lawyer-appointments-page .main-content > .container-fluid,
+body.lawyer-availability-page .main-content > .container-fluid,
+body.lawyer-case-view-page .main-content > .container-fluid,
+body.lawyer-client-view-page .main-content > .container-fluid,
+body.lawyer-court-tracking-page .main-content > .container-fluid,
+body.lawyer-tasks-page .main-content > .container-fluid,
+.search-portal-page--lawyer .main-content,
+.search-portal-page--lawyer .main-content > .container-fluid {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.legalpro-lawyer-portal .main-content.border-radius-lg,
+body.lawyer-dashboard-page .main-content.border-radius-lg,
+body.lawyer-cases-page .main-content.border-radius-lg,
+body.lawyer-clients-page .main-content.border-radius-lg,
+body.lawyer-appointments-page .main-content.border-radius-lg,
+body.lawyer-availability-page .main-content.border-radius-lg,
+body.lawyer-case-view-page .main-content.border-radius-lg,
+body.lawyer-client-view-page .main-content.border-radius-lg,
+body.lawyer-court-tracking-page .main-content.border-radius-lg,
+body.lawyer-tasks-page .main-content.border-radius-lg {
+    border-radius: 0 !important;
+}
+
+body.legalpro-lawyer-portal .main-content .card,
+body.lawyer-dashboard-page .main-content .card,
+body.lawyer-cases-page .main-content .card,
+body.lawyer-clients-page .main-content .card,
+body.lawyer-appointments-page .main-content .card,
+body.lawyer-availability-page .main-content .card,
+body.lawyer-case-view-page .main-content .card,
+body.lawyer-client-view-page .main-content .card,
+body.lawyer-court-tracking-page .main-content .card,
+body.lawyer-tasks-page .main-content .card,
+.search-portal-page--lawyer .main-content .card {
+    background-color: #fff !important;
+}
+
+body.legalpro-lawyer-portal .navbar-main,
+body.legalpro-lawyer-portal .navbar-main.blur,
+body.legalpro-lawyer-portal .navbar-main.shadow-blur,
+body.legalpro-lawyer-portal #navbarBlur,
+body.legalpro-lawyer-portal #navbarBlur.blur,
+.search-portal-page--lawyer .navbar-main,
+.search-portal-page--lawyer .navbar-main.blur,
+.search-portal-page--lawyer #navbarBlur,
+.search-portal-page--lawyer #navbarBlur.blur {
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
