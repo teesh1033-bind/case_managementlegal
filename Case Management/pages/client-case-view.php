@@ -371,7 +371,7 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=3" rel="stylesheet" />
 
     <style>
         .cc-comments-panel .card-header { border-bottom: 1px solid rgba(0,0,0,.06); }
@@ -447,7 +447,7 @@ $html = <<<'HTML'
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 client-portal-page">
-    <div class="min-height-300 bg-primary position-absolute w-100"></div>
+    <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
@@ -515,15 +515,15 @@ $html = <<<'HTML'
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="client-cases.php">My Cases</a></li>
-                        <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Case Details</li>
+                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="client-cases.php">My Cases</a></li>
+                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Case Details</li>
                     </ol>
-                    <h6 class="font-weight-bolder mb-0">Case {CASE_NUMBER}</h6>
+                    <h6 class="font-weight-bolder mb-0 text-white">Case {CASE_NUMBER}</h6>
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <ul class="navbar-nav justify-content-end">
                         <li class="nav-item d-flex align-items-center">
-                            <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
+                            <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
                                 <i class="fa fa-user me-sm-1"></i>
                                 <span class="d-sm-inline d-none">Welcome, {CLIENT_NAME}</span>
                             </a>
