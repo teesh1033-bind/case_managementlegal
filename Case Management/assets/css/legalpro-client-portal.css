@@ -2,8 +2,8 @@
  * LegalPro client portal — full-page gradient (aligned with lawyer/admin portals).
  */
 :root {
-    --client-portal-gradient: var(--lawyer-portal-gradient);
-    --client-portal-bg-fallback: var(--lawyer-portal-bg-fallback);
+    --client-portal-gradient: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
+    --client-portal-bg-fallback: #2d3f6f;
 }
 
 .bg-legalpro-client {
