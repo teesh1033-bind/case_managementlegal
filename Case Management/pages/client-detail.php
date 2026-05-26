@@ -1,8 +1,24 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+<<<<<<< HEAD
 
 $message = '';
 $messageType = '';
+=======
+require_once __DIR__ . '/../inc/password-validation.php';
+
+$message = '';
+$messageType = '';
+$updatePasswordErrorHtml = '';
+$updateConfirmErrorHtml = '';
+$createPasswordErrorHtml = '';
+$createConfirmErrorHtml = '';
+$updatePasswordInvalidClass = '';
+$updateConfirmInvalidClass = '';
+$createPasswordInvalidClass = '';
+$createConfirmInvalidClass = '';
+$showCreateUserFields = false;
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -19,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $update_password = isset($_POST['update_password']) ? $_POST['update_password'] : '';
     $confirm_password = isset($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
     
+<<<<<<< HEAD
     if (empty($first_name) || empty($last_name)) {
         $message = 'First name and last name are required.';
         $messageType = 'danger';
@@ -29,6 +46,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'Password must be at least 6 characters long.';
         $messageType = 'danger';
     } else {
+=======
+    $createUser = isset($_POST['create_user_account']) && $_POST['create_user_account'] == '1';
+    $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
+    $password = isset($_POST['password']) ? $_POST['password'] : '';
+    $password_confirm = isset($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
+
+    if ($createUser) {
+        $showCreateUserFields = true;
+    }
+
+    if (empty($first_name) || empty($last_name)) {
+        $message = 'First name and last name are required.';
+        $messageType = 'danger';
+    } else {
+        if (!empty($update_password) || !empty($confirm_password)) {
+            $passwordCheck = legalpro_validate_optional_password_update($update_password, $confirm_password);
+            if (!$passwordCheck['valid']) {
+                $message = legalpro_password_form_message($passwordCheck);
+                $messageType = 'danger';
+                $updatePasswordErrorHtml = legalpro_password_field_error_html($passwordCheck['password_errors']);
+                $updateConfirmErrorHtml = legalpro_password_field_error_html($passwordCheck['confirm_error']);
+                $updatePasswordInvalidClass = legalpro_password_input_invalid_class($passwordCheck['password_errors']);
+                $updateConfirmInvalidClass = legalpro_password_input_invalid_class($passwordCheck['confirm_error']);
+            }
+        }
+
+        if ($messageType !== 'danger' && $createUser) {
+            if (empty($username)) {
+                $message = 'Username is required when creating a user account.';
+                $messageType = 'danger';
+            } else {
+                $passwordCheck = legalpro_validate_password_pair($password, $password_confirm);
+                if (!$passwordCheck['valid']) {
+                    $message = legalpro_password_form_message($passwordCheck);
+                    $messageType = 'danger';
+                    $createPasswordErrorHtml = legalpro_password_field_error_html($passwordCheck['password_errors']);
+                    $createConfirmErrorHtml = legalpro_password_field_error_html($passwordCheck['confirm_error']);
+                    $createPasswordInvalidClass = legalpro_password_input_invalid_class($passwordCheck['password_errors']);
+                    $createConfirmInvalidClass = legalpro_password_input_invalid_class($passwordCheck['confirm_error']);
+                }
+            }
+        }
+
+        if ($messageType !== 'danger') {
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
         try {
             if ($client_id) {
                 // Update existing client
@@ -82,11 +144,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$first_name, $last_name, $email, $phone]);
                 $newClientId = $pdo->lastInsertId();
 
+<<<<<<< HEAD
                 // Create user account for client if username and password provided
                 $createUser = isset($_POST['create_user_account']) && $_POST['create_user_account'] == '1';
                 $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
                 $password = isset($_POST['password']) ? $_POST['password'] : '';
 
+=======
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 if ($createUser && !empty($username) && !empty($password)) {
                     try {
                         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
@@ -117,6 +182,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Error saving client: ' . htmlspecialchars($e->getMessage());
             $messageType = 'danger';
         }
+<<<<<<< HEAD
+=======
+        }
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
     }
 }
 
@@ -373,21 +442,50 @@ $html = <<<'HTML'
 	<script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
 	<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
 	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+<<<<<<< HEAD
 	<script>
+=======
+	<script src="../assets/js/legalpro-password-validation.js?v=1"></script>
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			var clientForm = document.querySelector('form[method="POST"]');
+			if (clientForm && window.LegalProPassword) {
+				LegalProPassword.attachClientDetailForm(clientForm);
+			}
+			{SHOW_CREATE_USER_FIELDS}
+		});
+
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 		function toggleUserAccountFields() {
 			const checkbox = document.getElementById('create_user_account');
 			const fields = document.getElementById('user_account_fields');
 			const usernameField = document.querySelector('input[name="username"]');
 			const passwordField = document.querySelector('input[name="password"]');
+<<<<<<< HEAD
+=======
+			const confirmField = document.querySelector('input[name="password_confirm"]');
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 
 			if (checkbox.checked) {
 				fields.style.display = 'block';
 				usernameField.required = true;
 				passwordField.required = true;
+<<<<<<< HEAD
+=======
+				if (confirmField) {
+					confirmField.required = true;
+				}
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 			} else {
 				fields.style.display = 'none';
 				usernameField.required = false;
 				passwordField.required = false;
+<<<<<<< HEAD
+=======
+				if (confirmField) {
+					confirmField.required = false;
+				}
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 			}
 		}
 	</script>
@@ -413,7 +511,12 @@ if ($client_id && $client && $client['user_id'] && $userData) {
     $userAccountUpdateSection = '
     <div class="mt-4">
         <h6>Update User Account</h6>
+<<<<<<< HEAD
         <p class="text-sm text-muted mb-3">Update the client\'s login credentials. Leave fields empty to keep current values.</p>
+=======
+        <p class="text-sm text-muted mb-2">Update the client\'s login credentials. Leave password fields empty to keep current values.</p>
+        ' . legalpro_password_requirements_html() . '
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group">
@@ -425,8 +528,14 @@ if ($client_id && $client && $client['user_id'] && $userData) {
             <div class="col-md-6">
                 <div class="form-group">
                     <label class="form-control-label">New Password</label>
+<<<<<<< HEAD
                     <input class="form-control" type="password" name="update_password" placeholder="New password">
                     <small class="form-text text-muted">Leave empty to keep current password</small>
+=======
+                    <input class="form-control' . $updatePasswordInvalidClass . '" type="password" name="update_password" placeholder="New password" minlength="8" maxlength="128" autocomplete="new-password">
+                    <small class="form-text text-muted">Leave empty to keep current password</small>
+                    ' . $updatePasswordErrorHtml . '
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 </div>
             </div>
         </div>
@@ -434,7 +543,12 @@ if ($client_id && $client && $client['user_id'] && $userData) {
             <div class="col-md-6">
                 <div class="form-group">
                     <label class="form-control-label">Confirm New Password</label>
+<<<<<<< HEAD
                     <input class="form-control" type="password" name="confirm_password" placeholder="Confirm new password">
+=======
+                    <input class="form-control' . $updateConfirmInvalidClass . '" type="password" name="confirm_password" placeholder="Confirm new password" minlength="8" maxlength="128" autocomplete="new-password">
+                    ' . $updateConfirmErrorHtml . '
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 </div>
             </div>
         </div>
@@ -444,18 +558,33 @@ if ($client_id && $client && $client['user_id'] && $userData) {
     </div>';
 } elseif (!$client_id) {
     // New client - show creation section
+<<<<<<< HEAD
     $newUserAccountSection = '
     <div class="mt-4">
         <div class="form-check">
             <input class="form-check-input" type="checkbox" id="create_user_account" name="create_user_account" value="1" onchange="toggleUserAccountFields()">
+=======
+    $createUserChecked = $showCreateUserFields ? ' checked' : '';
+    $createUserDisplay = $showCreateUserFields ? 'block' : 'none';
+    $newUserAccountSection = '
+    <div class="mt-4">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="create_user_account" name="create_user_account" value="1"' . $createUserChecked . ' onchange="toggleUserAccountFields()">
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
             <label class="form-check-label" for="create_user_account">
                 Create user account for client login
             </label>
         </div>
     </div>
 
+<<<<<<< HEAD
     <div id="user_account_fields" style="display: none;" class="mt-3 p-3 border rounded bg-light">
         <h6>User Account Details</h6>
+=======
+    <div id="user_account_fields" style="display: ' . $createUserDisplay . ';" class="mt-3 p-3 border rounded bg-light">
+        <h6>User Account Details</h6>
+        ' . legalpro_password_requirements_html() . '
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group">
@@ -467,8 +596,22 @@ if ($client_id && $client && $client['user_id'] && $userData) {
             <div class="col-md-6">
                 <div class="form-group">
                     <label class="form-control-label">Password <span class="text-danger">*</span></label>
+<<<<<<< HEAD
                     <input class="form-control" type="password" name="password" placeholder="Password" value="">
                     <small class="form-text text-muted">Minimum 6 characters</small>
+=======
+                    <input class="form-control' . $createPasswordInvalidClass . '" type="password" name="password" placeholder="Password" minlength="8" maxlength="128" autocomplete="new-password">
+                    ' . $createPasswordErrorHtml . '
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-control-label">Confirm Password <span class="text-danger">*</span></label>
+                    <input class="form-control' . $createConfirmInvalidClass . '" type="password" name="password_confirm" placeholder="Confirm password" minlength="8" maxlength="128" autocomplete="new-password">
+                    ' . $createConfirmErrorHtml . '
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 </div>
             </div>
         </div>
@@ -486,6 +629,13 @@ $html = str_replace('{TYPE_CORPORATE}', $type === 'Corporate' ? 'selected' : '',
 $html = str_replace('{USER_ACCOUNT_UPDATE_SECTION}', $userAccountUpdateSection, $html);
 $html = str_replace('{NEW_USER_ACCOUNT_SECTION}', $newUserAccountSection, $html);
 $html = str_replace('{LINKED_CASES_ROWS}', $linkedCasesRows, $html);
+<<<<<<< HEAD
+=======
+$showCreateUserFieldsJs = $showCreateUserFields
+    ? "if (typeof toggleUserAccountFields === 'function') { toggleUserAccountFields(); }"
+    : '';
+$html = str_replace('{SHOW_CREATE_USER_FIELDS}', $showCreateUserFieldsJs, $html);
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 
 // Add message display
 $messageHtml = '';

@@ -113,6 +113,7 @@ try {
     $recentCases = [];
 }
 
+<<<<<<< HEAD
 // Appointments for dashboard calendar (same joins as appointments.php)
 $calendarEvents = [];
 try {
@@ -174,10 +175,13 @@ try {
     $calendarEvents = [];
 }
 
+=======
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<<<<<<< HEAD
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
@@ -610,6 +614,267 @@ $html = <<<'HTML'
     </script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script src="../assets/js/spa-nav.js"></script>
+=======
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
+	<link rel="icon" type="image/png" href="../assets/img/favicon.png">
+	<title>LegalPro Case Manager - Dashboard</title>
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
+	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
+	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+</head>
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
+	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
+	</aside>
+	<main class="main-content position-relative border-radius-lg ">
+		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
+			<div class="container-fluid py-1 px-3">
+				<nav aria-label="breadcrumb">
+					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
+						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Dashboard</li>
+					</ol>
+					<h6 class="font-weight-bolder text-white mb-0">Dashboard</h6>
+				</nav>
+			</div>
+		</nav>
+		<div class="container-fluid py-4">
+			<div class="row">
+				<div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+					<a href="tables.php" style="text-decoration: none; color: inherit;">
+						<div class="card" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+							<div class="card-body p-3">
+								<div class="row">
+									<div class="col-8">
+										<div class="numbers">
+											<p class="text-sm mb-0 text-uppercase font-weight-bold">Total Cases</p>
+											<h5 class="font-weight-bolder">{TOTAL_CASES}</h5>
+											<p class="mb-0">
+												<span class="text-success text-sm font-weight-bolder">+{NEW_CASES_WEEK}</span>
+												new this week
+											</p>
+										</div>
+									</div>
+									<div class="col-4 text-end">
+										<div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+											<i class="ni ni-collection text-lg opacity-10" aria-hidden="true"></i>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+				<div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+					<a href="tables.php" style="text-decoration: none; color: inherit;">
+						<div class="card" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+							<div class="card-body p-3">
+								<div class="row">
+									<div class="col-8">
+										<div class="numbers">
+											<p class="text-sm mb-0 text-uppercase font-weight-bold">Active Cases</p>
+											<h5 class="font-weight-bolder">{ACTIVE_CASES}</h5>
+											<p class="mb-0">
+												<span class="text-info text-sm font-weight-bolder">In Progress</span>
+											</p>
+										</div>
+									</div>
+									<div class="col-4 text-end">
+										<div class="icon icon-shape bg-gradient-danger shadow-danger text-center rounded-circle">
+											<i class="ni ni-world text-lg opacity-10" aria-hidden="true"></i>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+				<div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+					<a href="tables.php" style="text-decoration: none; color: inherit;">
+						<div class="card" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+							<div class="card-body p-3">
+								<div class="row">
+									<div class="col-8">
+										<div class="numbers">
+											<p class="text-sm mb-0 text-uppercase font-weight-bold">Completed Cases</p>
+											<h5 class="font-weight-bolder">{COMPLETED_CASES}</h5>
+											<p class="mb-0">
+												<span class="text-success text-sm font-weight-bolder">{COMPLETION_RATE}%</span>
+												completion rate
+											</p>
+										</div>
+									</div>
+									<div class="col-4 text-end">
+										<div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+											<i class="ni ni-paper-diploma text-lg opacity-10" aria-hidden="true"></i>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+				<div class="col-xl-3 col-sm-6">
+					<a href="appointments.php" style="text-decoration: none; color: inherit;">
+						<div class="card" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+							<div class="card-body p-3">
+								<div class="row">
+									<div class="col-8">
+										<div class="numbers">
+											<p class="text-sm mb-0 text-uppercase font-weight-bold">Pending Tasks</p>
+											<h5 class="font-weight-bolder">{PENDING_TASKS}</h5>
+											<p class="mb-0">
+												<span class="text-danger text-sm font-weight-bolder">{DUE_TODAY}</span>
+												due today
+											</p>
+										</div>
+									</div>
+									<div class="col-4 text-end">
+										<div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+											<i class="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</a>
+				</div>
+			</div>
+			<div class="row mt-4">
+				<div class="col-lg-7 mb-lg-0 mb-4">
+					<div class="card z-index-2 h-100">
+						<div class="card-header pb-0 pt-3 bg-transparent">
+							<h6 class="text-capitalize">Financial Overview</h6>
+							<p class="text-sm mb-0">
+								<i class="fa fa-arrow-up text-success"></i>
+								<span class="font-weight-bold">Net positive</span> trend this quarter
+							</p>
+						</div>
+						<div class="card-body p-3">
+							<div class="chart">
+								<canvas id="chart-line" class="chart-canvas" height="300"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-lg-5">
+					<div class="card h-100">
+						<div class="card-header pb-0 pt-3 bg-transparent">
+							<h6 class="text-capitalize">Recent Cases</h6>
+							<p class="text-sm mb-0">Latest case activity and updates</p>
+						</div>
+						<div class="card-body p-3">
+							{RECENT_CASES_LIST}
+						</div>
+					</div>
+				</div>
+			</div>
+			<footer class="footer pt-3">
+				<div class="container-fluid">
+					<div class="row align-items-center justify-content-lg-between">
+						<div class="col-lg-6 mb-lg-0 mb-4">
+							<div class="copyright text-center text-sm text-muted text-lg-start">
+								© <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+							</div>
+						</div>
+					</div>
+				</div>
+			</footer>
+		</div>
+	</main>
+	<script src="../assets/js/core/popper.min.js"></script>
+	<script src="../assets/js/core/bootstrap.min.js"></script>
+	<script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+	<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+	<script src="../assets/js/plugins/chartjs.min.js"></script>
+	<script>
+		var ctx1 = document.getElementById("chart-line").getContext("2d");
+		var gradientStroke1 = ctx1.createLinearGradient(0, 230, 0, 50);
+		gradientStroke1.addColorStop(1, 'rgba(94, 114, 228, 0.2)');
+		gradientStroke1.addColorStop(0.2, 'rgba(94, 114, 228, 0.0)');
+		gradientStroke1.addColorStop(0, 'rgba(94, 114, 228, 0)');
+		new Chart(ctx1, {
+			type: "line",
+			data: {
+				labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+				datasets: [{
+					label: "Mobile apps",
+					tension: 0.4,
+					borderWidth: 0,
+					pointRadius: 0,
+					borderColor: "#5e72e4",
+					backgroundColor: gradientStroke1,
+					borderWidth: 3,
+					fill: true,
+					data: [50, 40, 300, 220, 500, 250, 400, 230, 500],
+					maxBarThickness: 6
+				}],
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				plugins: {
+					legend: {
+						display: false,
+					}
+				},
+				interaction: {
+					intersect: false,
+					mode: 'index',
+				},
+				scales: {
+					y: {
+						grid: {
+							drawBorder: false,
+							display: true,
+							drawOnChartArea: true,
+							drawTicks: false,
+							borderDash: [5, 5]
+						},
+						ticks: {
+							display: true,
+							padding: 10,
+							color: '#fbfbfb',
+							font: {
+								size: 11,
+								family: "Montserrat",
+								style: 'normal',
+								lineHeight: 2
+							},
+						}
+					},
+					x: {
+						grid: {
+							drawBorder: false,
+							display: false,
+							drawOnChartArea: false,
+							drawTicks: false,
+							borderDash: [5, 5]
+						},
+						ticks: {
+							display: true,
+							color: '#ccc',
+							padding: 20,
+							font: {
+								size: 11,
+								family: "Montserrat",
+								style: 'normal',
+								lineHeight: 2
+							},
+						}
+					},
+				},
+			},
+		});
+	</script>
+	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+	<script src="../assets/js/spa-nav.js"></script>
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 </body>
 </html>
 HTML;
@@ -664,9 +929,12 @@ $html = str_replace('{COMPLETION_RATE}', $completionRate, $html);
 $html = str_replace('{DUE_TODAY}', $dueToday, $html);
 $html = str_replace('{RECENT_CASES_LIST}', $recentCasesList, $html);
 
+<<<<<<< HEAD
 // Inject dynamic calendar data directly into the template
 $html = str_replace('{CALENDAR_EVENTS_JSON}', json_encode($calendarEvents), $html);
 
+=======
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
 // rewrite internal links from .html to .php
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
 
@@ -687,4 +955,8 @@ $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
 
 echo $html;
+<<<<<<< HEAD
 ?>
+=======
+?>
+>>>>>>> f827a933538474659c1629f07f5a4af06a073209
