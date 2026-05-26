@@ -96,7 +96,11 @@ if (empty($cases)) {
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
             <td class="text-end">
+<<<<<<< HEAD
                 <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">View</a>
+=======
+                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary">View Details</a>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             </td>
         </tr>';
     }

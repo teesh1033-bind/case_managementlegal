@@ -10,6 +10,7 @@ if (!isset($_SESSION['lawyer_id'])) {
 
 $lawyerId = $_SESSION['lawyer_id'];
 
+<<<<<<< HEAD
 require_once __DIR__ . '/../inc/ensure-court-dates-table.php';
 
 $tableExists = ensureCourtDatesTable($pdo);
@@ -21,6 +22,29 @@ if (!$tableExists) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!ensureCourtDatesTable($pdo)) {
         $_SESSION['error_message'] = 'Court dates table is not available.';
+=======
+// Check if court_dates table exists
+$tableExists = false;
+try {
+    $stmt = $pdo->query("SHOW TABLES LIKE 'court_dates'");
+    $tableExists = $stmt->fetch() ? true : false;
+} catch (PDOException $e) {
+    $tableExists = false;
+}
+
+if (!$tableExists) {
+    $_SESSION['error_message'] = "Court dates table not found. Please run the SQL script in sql/create_court_dates_table.sql or visit fix_court_dates_table.php to create it.";
+}
+
+// Table creation is now handled by the SQL script in sql/create_court_dates_table.sql
+
+// Handle form submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check table exists before processing
+    $stmt = $pdo->query("SHOW TABLES LIKE 'court_dates'");
+    if (!$stmt->fetch()) {
+        $_SESSION['error_message'] = "Court dates table not found. Please create the table first.";
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         header('Location: lawyer-court-tracking.php');
         exit;
     }
@@ -31,7 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $title = trim($_POST['title']);
         $description = trim($_POST['description']);
         $location = trim($_POST['location']);
+<<<<<<< HEAD
         $created_by = (int)($_SESSION['lawyer_user_id'] ?? $_SESSION['lawyer_id'] ?? 0);
+=======
+        $created_by = (int)$_SESSION['lawyer_id'];
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
         // Verify the case is assigned to this lawyer
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM case_lawyers WHERE case_id = ? AND lawyer_id = ?");
@@ -443,6 +471,7 @@ NAV;
                                                     </span>
                                                 </td>
                                                 <td>
+<<<<<<< HEAD
                                                     <div class="btn-actions">
                                                     <button class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo $date['id']; ?>)" title="View Details">
                                                         <i class="fas fa-eye"></i> View
@@ -454,6 +483,17 @@ NAV;
                                                         <i class="fas fa-trash"></i> Delete
                                                     </button>
                                                     </div>
+=======
+                                                    <button class="btn btn-info btn-sm me-1" onclick="viewCourtDate(<?php echo $date['id']; ?>)" title="View Details">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </button>
+                                                    <button class="btn btn-warning btn-sm me-1" onclick="editCourtDate(<?php echo $date['id']; ?>)" title="Edit Court Date">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                    <button class="btn btn-danger btn-sm" onclick="deleteCourtDate(<?php echo $date['id']; ?>)" title="Delete Court Date">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>

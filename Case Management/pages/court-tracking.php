@@ -8,6 +8,7 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 
+<<<<<<< HEAD
 require_once __DIR__ . '/../inc/ensure-court-dates-table.php';
 
 $tableExists = ensureCourtDatesTable($pdo);
@@ -19,6 +20,29 @@ if (!$tableExists) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!ensureCourtDatesTable($pdo)) {
         $_SESSION['error_message'] = 'Court dates table is not available.';
+=======
+// Check if court_dates table exists
+$tableExists = false;
+try {
+    $stmt = $pdo->query("SHOW TABLES LIKE 'court_dates'");
+    $tableExists = $stmt->fetch() ? true : false;
+} catch (PDOException $e) {
+    $tableExists = false;
+}
+
+if (!$tableExists) {
+    $_SESSION['error_message'] = "Court dates table not found. Please run the SQL script in sql/create_court_dates_table.sql or visit fix_court_dates_table.php to create it.";
+}
+
+// Table creation is now handled by the SQL script in sql/create_court_dates_table.sql
+
+// Handle form submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check table exists before processing
+    $stmt = $pdo->query("SHOW TABLES LIKE 'court_dates'");
+    if (!$stmt->fetch()) {
+        $_SESSION['error_message'] = "Court dates table not found. Please create the table first.";
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         header('Location: court-tracking.php');
         exit;
     }
@@ -38,12 +62,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             $stmt->execute([$case_id, $court_date, $title, $description, $location, $created_by]);
 
+<<<<<<< HEAD
             try {
                 require_once __DIR__ . '/../lib/case_events.php';
                 CaseEvents::trackCourtDateCreated($case_id, $title, $court_date);
             } catch (Throwable $e) {
                 error_log('Court date event log: ' . $e->getMessage());
             }
+=======
+            // Log the event
+            require_once __DIR__ . '/../lib/case_events.php';
+            CaseEvents::trackCourtDateCreated($case_id, $title, $court_date);
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
             $_SESSION['success_message'] = "Court date added successfully!";
         } catch (PDOException $e) {
@@ -113,9 +143,12 @@ try {
     $court_dates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $court_dates = [];
+<<<<<<< HEAD
     if (empty($_SESSION['error_message'])) {
         $_SESSION['error_message'] = 'Could not load court dates: ' . $e->getMessage();
     }
+=======
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 // Get cases for dropdown
@@ -134,9 +167,14 @@ try {
 // Prepare calendar events for FullCalendar
 $calendar_events = [];
 foreach ($court_dates as $date) {
+<<<<<<< HEAD
     $status = $date['status'] ?? 'scheduled';
     $status_color = '';
     switch ($status) {
+=======
+    $status_color = '';
+    switch ($date['status']) {
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         case 'scheduled': $status_color = '#17a2b8'; break;
         case 'completed': $status_color = '#28a745'; break;
         case 'cancelled': $status_color = '#dc3545'; break;
@@ -154,7 +192,11 @@ foreach ($court_dates as $date) {
         'extendedProps' => [
             'description' => $date['description'],
             'location' => $date['location'],
+<<<<<<< HEAD
             'status' => $status,
+=======
+            'status' => $date['status'],
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             'client_name' => $date['client_name'],
             'created_by_name' => $date['created_by_name'],
             'creator_role' => $date['creator_role']
@@ -281,7 +323,13 @@ foreach ($court_dates as $date) {
                         <div class="card-header pb-0">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Court Dates Calendar</h6>
+<<<<<<< HEAD
                                 <button type="button" class="btn btn-sm btn-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">Add Court Date</button>
+=======
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
+                                    <i class="fas fa-plus me-2"></i>Add Court Date
+                                </button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             </div>
                         </div>
                         <div class="card-body">
@@ -312,6 +360,7 @@ foreach ($court_dates as $date) {
                                         </tr>
                                     </thead>
                                     <tbody>
+<<<<<<< HEAD
                                         <?php if (empty($court_dates)): ?>
                                             <tr>
                                                 <td colspan="6" class="text-center text-muted py-4">No court dates scheduled yet.</td>
@@ -343,6 +392,32 @@ foreach ($court_dates as $date) {
                                             </tr>
                                         <?php endforeach; ?>
                                         <?php endif; ?>
+=======
+                                        <?php foreach ($court_dates as $date): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($date['case_title']); ?></td>
+                                                <td><?php echo htmlspecialchars($date['client_name']); ?></td>
+                                                <td><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
+                                                <td><?php echo htmlspecialchars($date['title']); ?></td>
+                                                <td>
+                                                    <span class="status-badge status-<?php echo $date['status']; ?>">
+                                                        <?php echo ucfirst($date['status']); ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-info btn-sm me-1" onclick="viewCourtDate(<?php echo $date['id']; ?>)" title="View Details">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </button>
+                                                    <button class="btn btn-warning btn-sm me-1" onclick="editCourtDate(<?php echo $date['id']; ?>)" title="Edit Court Date">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                    <button class="btn btn-danger btn-sm" onclick="deleteCourtDate(<?php echo $date['id']; ?>)" title="Delete Court Date">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                     </tbody>
                                 </table>
                             </div>
@@ -509,10 +584,15 @@ foreach ($court_dates as $date) {
         </div>
     </div>
 
+<<<<<<< HEAD
+=======
+    <script src="../assets/js/core/jquery.min.js"></script>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+<<<<<<< HEAD
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script src="../assets/js/fullcalendar/fallback.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.js"></script>
@@ -621,6 +701,187 @@ foreach ($court_dates as $date) {
         }
 
         document.addEventListener('DOMContentLoaded', initCourtCalendar);
+=======
+    <script src="../assets/js/fullcalendar/fallback.js"></script>
+    <script>
+        // Try FullCalendar first, fallback to simple calendar
+        let calendarLoaded = false;
+
+        try {
+            // Load FullCalendar from CDN
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.js';
+            script.onload = function() {
+                calendarLoaded = true;
+                console.log('FullCalendar loaded successfully');
+                initFullCalendar();
+            };
+            script.onerror = function() {
+                console.warn('FullCalendar CDN failed, using fallback');
+                initSimpleCalendar();
+            };
+            document.head.appendChild(script);
+        } catch (e) {
+            console.error('Error loading FullCalendar:', e);
+            initSimpleCalendar();
+        }
+
+        function initFullCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+
+            try {
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    events: <?php echo json_encode($calendar_events); ?>,
+                    eventClick: function(info) {
+                        console.log('Event clicked:', info.event.id);
+                        viewCourtDate(info.event.id);
+                    },
+                    height: 'auto',
+                    eventDisplay: 'block'
+                });
+                calendar.render();
+                console.log('FullCalendar rendered successfully');
+            } catch (error) {
+                console.error('Error initializing FullCalendar:', error);
+                initSimpleCalendar();
+            }
+        }
+
+        function initSimpleCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+
+            try {
+                simpleCalendar = new SimpleCalendar(calendarEl, {
+                    events: <?php echo json_encode($calendar_events); ?>
+                });
+                console.log('Simple calendar rendered successfully');
+            } catch (error) {
+                console.error('Error initializing simple calendar:', error);
+                calendarEl.innerHTML = '<div class="alert alert-danger">Failed to load calendar. Please contact administrator.</div>';
+            }
+        }
+
+        // Initialize on DOM load if FullCalendar is already loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof FullCalendar !== 'undefined') {
+                calendarLoaded = true;
+                initFullCalendar();
+            } else {
+                // Wait a bit for CDN to load
+                setTimeout(function() {
+                    if (!calendarLoaded) {
+                        initSimpleCalendar();
+                    }
+                }, 2000);
+            }
+        });
+    </script>
+
+    <script>
+        // Initialize FullCalendar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing calendar...');
+            var calendarEl = document.getElementById('calendar');
+
+            if (!calendarEl) {
+                console.error('Calendar element not found!');
+                return;
+            }
+
+            if (typeof FullCalendar === 'undefined') {
+                console.error('FullCalendar not loaded!');
+                calendarEl.innerHTML = '<div class="alert alert-warning">Calendar library failed to load. Please refresh the page.</div>';
+                return;
+            }
+
+            try {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    events: <?php echo json_encode($calendar_events); ?>,
+                    eventClick: function(info) {
+                        console.log('Event clicked:', info.event.id);
+                        viewCourtDate(info.event.id);
+                    },
+                    height: 'auto',
+                    eventDisplay: 'block'
+                });
+                calendar.render();
+                console.log('Calendar rendered successfully');
+            } catch (error) {
+                console.error('Error initializing calendar:', error);
+                calendarEl.innerHTML = '<div class="alert alert-danger">Error loading calendar: ' + error.message + '</div>';
+            }
+        });
+
+        // View court date details
+        function viewCourtDate(id) {
+            // Find the event data
+            var events = <?php echo json_encode($court_dates); ?>;
+            var eventData = events.find(function(e) { return e.id == id; });
+
+            if (eventData) {
+                document.getElementById('view_case_title').textContent = eventData.case_title;
+                document.getElementById('view_client_name').textContent = eventData.client_name;
+                document.getElementById('view_datetime').textContent = new Date(eventData.court_date).toLocaleString();
+                document.getElementById('view_status').textContent = eventData.status.charAt(0).toUpperCase() + eventData.status.slice(1);
+                document.getElementById('view_status').className = 'status-badge status-' + eventData.status;
+                document.getElementById('view_title').textContent = eventData.title;
+                document.getElementById('view_description').textContent = eventData.description || 'No description';
+                document.getElementById('view_location').textContent = eventData.location || 'Not specified';
+                document.getElementById('view_created_by').textContent = eventData.created_by_name || 'Unknown';
+                document.getElementById('view_creator_role').textContent = eventData.creator_role ? eventData.creator_role.charAt(0).toUpperCase() + eventData.creator_role.slice(1) : 'Unknown';
+
+                var modal = new bootstrap.Modal(document.getElementById('viewCourtDateModal'));
+                modal.show();
+            }
+        }
+
+        // Edit court date
+        function editCourtDate(id) {
+            // Find the event data
+            var events = <?php echo json_encode($court_dates); ?>;
+            var eventData = events.find(function(e) { return e.id == id; });
+
+            if (eventData) {
+                document.getElementById('edit_id').value = eventData.id;
+                document.getElementById('edit_case_id').value = eventData.case_id;
+                var dateTime = new Date(eventData.court_date);
+                document.getElementById('edit_court_date').value = dateTime.toISOString().split('T')[0];
+                document.getElementById('edit_court_time').value = dateTime.toTimeString().split(' ')[0].substring(0, 5);
+                document.getElementById('edit_title').value = eventData.title;
+                document.getElementById('edit_description').value = eventData.description || '';
+                document.getElementById('edit_location').value = eventData.location || '';
+                document.getElementById('edit_status').value = eventData.status;
+
+                var modal = new bootstrap.Modal(document.getElementById('editCourtDateModal'));
+                modal.show();
+            }
+        }
+
+        // Delete court date
+        function deleteCourtDate(id) {
+            if (confirm('Are you sure you want to delete this court date?')) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML = '<input type="hidden" name="id" value="' + id + '"><input type="hidden" name="delete_court_date" value="1">';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     </script>
 </body>
 </html>

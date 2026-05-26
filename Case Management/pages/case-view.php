@@ -292,7 +292,11 @@ if (empty($stages)) {
                         <p class="text-sm">' . ($stage['actual_end_date'] ? date('M j, Y', strtotime($stage['actual_end_date'])) : 'Not set') . '</p>
                     </div>
                 </div>
+<<<<<<< HEAD
                 ' . ($stage['file_path'] ? '<div class="mt-3 pt-3 border-top"><a href="' . htmlspecialchars('../' . $stage['file_path']) . '" target="_blank" class="btn btn-sm btn-primary mb-0">View</a></div>' : '') . '
+=======
+                ' . ($stage['file_path'] ? '<div class="mt-3 pt-3 border-top"><a href="' . htmlspecialchars('../' . $stage['file_path']) . '" target="_blank" class="btn btn-sm btn-outline-primary"><i class="ni ni-single-copy-04 me-1"></i>View Attached Document</a></div>' : '') . '
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             </div>
         </div>';
     }
@@ -507,7 +511,13 @@ if (empty($invoices)) {
                 </div>
             </div>
             <div class="text-end">
+<<<<<<< HEAD
                 <a href="invoice-download.php?id=' . $invoice['id'] . '" class="btn btn-sm btn-primary mb-0" target="_blank">View</a>
+=======
+                <a href="invoice-download.php?id=' . $invoice['id'] . '" class="btn btn-sm btn-outline-primary" target="_blank">
+                    <i class="ni ni-single-copy-04 me-1"></i>View
+                </a>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             </div>
         </div>';
     }
@@ -536,7 +546,13 @@ if (empty($payments)) {
                 </div>
             </div>
             <div class="text-end">
+<<<<<<< HEAD
                 <a href="payment-receipt.php?id=' . $payment['id'] . '" class="btn btn-sm btn-secondary mb-0" target="_blank">Receipt</a>
+=======
+                <a href="payment-receipt.php?id=' . $payment['id'] . '" class="btn btn-sm btn-outline-success" target="_blank">
+                    <i class="ni ni-single-copy-04 me-1"></i>Receipt
+                </a>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             </div>
         </div>';
     }
@@ -586,10 +602,19 @@ if (empty($documents)) {
                 </div>
             </div>
             <div class="text-end d-flex gap-2">
+<<<<<<< HEAD
                 <div class="btn-actions">
                 <a href="' . htmlspecialchars($fileUrl) . '" class="btn btn-sm btn-primary mb-0" target="_blank">View</a>
                 <a href="' . htmlspecialchars($fileUrl) . '" class="btn btn-sm btn-secondary mb-0" download>Download</a>
                 </div>
+=======
+                <a href="' . htmlspecialchars($fileUrl) . '" class="btn btn-sm btn-outline-primary" target="_blank">
+                    <i class="ni ni-zoom-split-in me-1"></i>View
+                </a>
+                <a href="' . htmlspecialchars($fileUrl) . '" class="btn btn-sm btn-outline-success" download>
+                    <i class="ni ni-cloud-download-95 me-1"></i>Download
+                </a>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             </div>
         </div>';
     }
@@ -638,8 +663,17 @@ $html = <<<'HTML'
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Case Summary</h6>
                                 <div class="d-flex gap-2">
+<<<<<<< HEAD
                                     <a href="case-edit.php?id={CASE_ID}" class="btn btn-sm btn-dark mb-0">Edit Case</a>
                                     <a href="documents.php?case_id={CASE_ID}" class="btn btn-sm btn-info mb-0">Add Document</a>
+=======
+                                    <a href="case-edit.php?id={CASE_ID}" class="btn btn-sm btn-dark">
+                                        <i class="ni ni-settings me-1"></i>Edit Case
+                                    </a>
+                                    <a href="documents.php?case_id={CASE_ID}" class="btn btn-sm btn-outline-primary">
+                                        <i class="ni ni-cloud-upload-96 me-1"></i>Add Document
+                                    </a>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                 </div>
                             </div>
                         </div>
@@ -990,7 +1024,13 @@ if (!empty($tasks)) {
                 <form method="POST" action="" style="display: inline;" onsubmit="return confirm(\'Are you sure you want to delete this task? This will remove it from the assigned lawyer\'s task list.\')">
                     <input type="hidden" name="action" value="delete_task">
                     <input type="hidden" name="task_id" value="' . $task['id'] . '">
+<<<<<<< HEAD
                     <button type="submit" class="btn btn-sm btn-danger mb-0">Delete</button>
+=======
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="ni ni-fat-remove"></i>
+                    </button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </form>
             </td>
         </tr>';

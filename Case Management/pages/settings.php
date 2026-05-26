@@ -173,11 +173,19 @@ $html = <<<'HTML'
 							<ul class="list-group">
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Contract Law
+<<<<<<< HEAD
 									<button class="btn btn-sm btn-danger mb-0">Remove</button>
 								</li>
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Family Law
 									<button class="btn btn-sm btn-danger mb-0">Remove</button>
+=======
+									<button class="btn btn-sm btn-danger">Remove</button>
+								</li>
+								<li class="list-group-item d-flex justify-content-between align-items-center">
+									Family Law
+									<button class="btn btn-sm btn-danger">Remove</button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 								</li>
 							</ul>
 						</div>

@@ -89,7 +89,11 @@ $html = <<<'HTML'
 								<input class="form-control" type="text" placeholder="Search...">
 							</div>
 							<button class="btn btn-dark">Generate</button>
+<<<<<<< HEAD
 							<button class="btn btn-dark ms-2 mb-0">Export PDF</button>
+=======
+							<button class="btn btn-outline-dark ms-2">Export PDF</button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 						</div>
 					</div>
 				</div>

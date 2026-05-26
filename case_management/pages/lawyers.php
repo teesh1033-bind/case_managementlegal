@@ -1,13 +1,7 @@
-<<<<<<< HEAD
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
-=======
-﻿<?php
-session_start();
-require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/password-validation.php';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -18,8 +12,6 @@ if (!isset($_SESSION['admin_id'])) {
 $message = '';
 $messageType = '';
 $editLawyer = null;
-<<<<<<< HEAD
-=======
 $newPasswordErrorHtml = '';
 $newConfirmErrorHtml = '';
 $updatePasswordErrorHtml = '';
@@ -28,7 +20,6 @@ $newPasswordInvalidClass = '';
 $newConfirmInvalidClass = '';
 $updatePasswordInvalidClass = '';
 $updateConfirmInvalidClass = '';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 // Ensure lawyer tables exist
 try {
@@ -71,18 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newRole = isset($_POST['new_role']) ? $_POST['new_role'] : 'lawyer';
 
             // Validate new user data
-<<<<<<< HEAD
-            if (empty($newUsername) || empty($newPassword)) {
-                $message = 'Username and password are required for new user account.';
-                $messageType = 'danger';
-            } elseif ($newPassword !== $newPasswordConfirm) {
-                $message = 'Passwords do not match.';
-                $messageType = 'danger';
-            } elseif (strlen($newPassword) < 6) {
-                $message = 'Password must be at least 6 characters long.';
-                $messageType = 'danger';
-            } else {
-=======
             if (empty($newUsername)) {
                 $message = 'Username is required for new user account.';
                 $messageType = 'danger';
@@ -99,7 +78,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($messageType !== 'danger') {
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 // Check if username already exists
                 $checkStmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
                 $checkStmt->execute([$newUsername]);
@@ -117,9 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Handle availability
-        $availability = isset($_POST['availability']) ? $_POST['availability'] : [];
-
         if (empty($firstName) || empty($lastName) || empty($email)) {
             $message = 'First name, last name, and email are required.';
             $messageType = 'danger';
@@ -128,15 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'danger';
         } elseif ($createNewUser && !empty($message)) {
             // Error message already set above
-<<<<<<< HEAD
-        } elseif (!empty($updatePassword) && $updatePassword !== $confirmPassword) {
-            $message = 'Passwords do not match.';
-            $messageType = 'danger';
-        } elseif (!empty($updatePassword) && strlen($updatePassword) < 6) {
-            $message = 'Password must be at least 6 characters long.';
-            $messageType = 'danger';
-        } else {
-=======
         } else {
             if (!empty($updatePassword) || !empty($confirmPassword)) {
                 $passwordCheck = legalpro_validate_optional_password_update($updatePassword, $confirmPassword);
@@ -151,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($messageType !== 'danger') {
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             try {
                 if ($lawyerId) {
                     // Update existing lawyer
@@ -202,8 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
 
-                    // Update availability
-                    $pdo->prepare("DELETE FROM lawyer_availability WHERE lawyer_id = ?")->execute([$lawyerId]);
                 } else {
                     // Create new lawyer
                     $stmt = $pdo->prepare("
@@ -214,19 +177,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $lawyerId = $pdo->lastInsertId();
                 }
 
-                // Insert availability
-                $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                foreach ($days as $day) {
-                    if (isset($availability[$day])) {
-                        $startTime = isset($availability[$day]['start']) ? $availability[$day]['start'] : '09:00';
-                        $endTime = isset($availability[$day]['end']) ? $availability[$day]['end'] : '17:00';
-                        $isAvailable = isset($availability[$day]['available']) ? 1 : 0;
-
-                        $stmt = $pdo->prepare("INSERT INTO lawyer_availability (lawyer_id, day_of_week, start_time, end_time, is_available) VALUES (?, ?, ?, ?, ?)");
-                        $stmt->execute([$lawyerId, $day, $startTime, $endTime, $isAvailable]);
-                    }
-                }
-
                 $message = $lawyerId ? 'Lawyer updated successfully.' : 'Lawyer added successfully.';
                 $messageType = 'success';
 
@@ -234,10 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Error saving lawyer: ' . htmlspecialchars($e->getMessage());
                 $messageType = 'danger';
             }
-<<<<<<< HEAD
-=======
             }
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         }
     } elseif ($formType === 'delete_lawyer') {
         $lawyerId = isset($_POST['lawyer_id']) ? (int)$_POST['lawyer_id'] : 0;
@@ -273,13 +220,6 @@ if (isset($_GET['edit']) && ctype_digit($_GET['edit'])) {
         $stmt = $pdo->prepare("SELECT l.*, u.username FROM lawyers l LEFT JOIN users u ON u.id = l.user_id WHERE l.id = ?");
         $stmt->execute([$editId]);
         $editLawyer = $stmt->fetch();
-
-        if ($editLawyer) {
-            // Get availability
-            $stmt = $pdo->prepare("SELECT * FROM lawyer_availability WHERE lawyer_id = ?");
-            $stmt->execute([$editId]);
-            $editLawyer['availability'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
     } catch (PDOException $e) {
         // Continue without edit data
     }
@@ -331,11 +271,7 @@ foreach ($availableUsers as $user) {
 
 $lawyersTable = '';
 if (empty($lawyers)) {
-<<<<<<< HEAD
     $lawyersTable = '<tr><td colspan="6" class="text-center text-muted py-4">No lawyers added yet.</td></tr>';
-=======
-    $lawyersTable = '<tr><td colspan="5" class="text-center text-muted py-4">No lawyers added yet.</td></tr>';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 } else {
     foreach ($lawyers as $lawyer) {
         $statusBadge = $lawyer['is_active'] ? '<span class="badge bg-gradient-success">Active</span>' : '<span class="badge bg-gradient-secondary">Inactive</span>';
@@ -363,21 +299,9 @@ if (empty($lawyers)) {
                 <span class="text-sm font-weight-bold">' . $activeCases . '</span>
                 <p class="text-xs text-muted mb-0">active cases</p>
             </td>
-<<<<<<< HEAD
             <td class="text-center">
                 <p class="text-sm mb-0">' . htmlspecialchars($lawyer['available_days'] ?: 'Not set') . '</p>
             </td>
-            <td class="text-end">
-                <div class="d-flex gap-1 justify-content-end">
-                    <div class="btn-actions">
-                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>
-                    <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete ' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '? This action cannot be undone.\');">
-                        <input type="hidden" name="form_type" value="delete_lawyer">
-                        <input type="hidden" name="lawyer_id" value="' . (int)$lawyer['id'] . '">
-                        <button class="btn btn-sm btn-danger mb-0" type="submit">Delete</button>
-                    </form>
-                    </div>
-=======
             <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
                     <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-dark">Edit</a>
@@ -386,7 +310,6 @@ if (empty($lawyers)) {
                         <input type="hidden" name="lawyer_id" value="' . (int)$lawyer['id'] . '">
                         <button class="btn btn-sm btn-danger" type="submit">Delete</button>
                     </form>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </div>
             </td>
         </tr>';
@@ -407,8 +330,7 @@ $formData = [
     'bio' => isset($editLawyer['bio']) ? $editLawyer['bio'] : '',
     'office_address' => isset($editLawyer['office_address']) ? $editLawyer['office_address'] : '',
     'is_active' => isset($editLawyer['is_active']) ? $editLawyer['is_active'] : 1,
-    'username' => isset($editLawyer['username']) ? $editLawyer['username'] : '',
-    'availability' => isset($editLawyer['availability']) ? $editLawyer['availability'] : []
+    'username' => isset($editLawyer['username']) ? $editLawyer['username'] : ''
 ];
 
 $isEditing = !empty($formData['lawyer_id']);
@@ -430,11 +352,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <style>
-        .availability-row { margin-bottom: 10px; }
-        .day-checkbox { margin-right: 10px; }
-        .time-inputs { display: inline-block; margin-left: 20px; }
-    </style>
+    <style></style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -500,10 +418,7 @@ $html = <<<'HTML'
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Specialization</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cases</th>
-<<<<<<< HEAD
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Availability</th>
-=======
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
@@ -522,11 +437,7 @@ $html = <<<'HTML'
                     <div class="row align-items-center justify-content-lg-between">
                         <div class="col-lg-6 mb-lg-0 mb-4">
                             <div class="copyright text-center text-sm text-muted text-lg-start">
-<<<<<<< HEAD
                                 © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
-=======
-                                ┬⌐ <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             </div>
                         </div>
                     </div>
@@ -576,11 +487,8 @@ $html = <<<'HTML'
 
                         <!-- User Account Update Section (for existing lawyers) -->
                         <div id="user_update_section" style="display: none;">
-<<<<<<< HEAD
-=======
                             <p class="text-xs text-muted mb-2">Leave password fields empty to keep the current password.</p>
                             {PASSWORD_REQUIREMENTS}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Username</label>
@@ -589,25 +497,16 @@ $html = <<<'HTML'
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">New Password</label>
-<<<<<<< HEAD
-                                    <input type="password" class="form-control" name="update_password" id="update_password">
-                                    <small class="text-muted">Leave empty to keep current password</small>
-=======
                                     <input type="password" class="form-control{UPDATE_PASSWORD_INVALID}" name="update_password" id="update_password" minlength="8" maxlength="128" autocomplete="new-password">
                                     <small class="text-muted">Leave empty to keep current password</small>
                                     {UPDATE_PASSWORD_ERROR}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Confirm New Password</label>
-<<<<<<< HEAD
-                                    <input type="password" class="form-control" name="confirm_password" id="confirm_password">
-=======
                                     <input type="password" class="form-control{UPDATE_CONFIRM_INVALID}" name="confirm_password" id="confirm_password" minlength="8" maxlength="128" autocomplete="new-password">
                                     {UPDATE_CONFIRM_ERROR}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                 </div>
                             </div>
                             <div class="alert alert-warning">
@@ -618,12 +517,8 @@ $html = <<<'HTML'
                         <!-- New User Account Creation Form (hidden by default) -->
                         <div id="create_user_form" style="display: none;" class="border border-primary border-2 rounded p-3 mb-3 bg-light">
                             <h6 class="mb-1 text-primary fw-bold">Create New User Account</h6>
-<<<<<<< HEAD
-                            <p class="text-xs text-muted mb-3">Fill in the fields below, then save the lawyer at the bottom of this form.</p>
-=======
                             <p class="text-xs text-muted mb-2">Fill in the fields below, then save the lawyer at the bottom of this form.</p>
                             {PASSWORD_REQUIREMENTS}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Username <span class="text-danger">*</span></label>
@@ -637,13 +532,6 @@ $html = <<<'HTML'
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Password <span class="text-danger">*</span></label>
-<<<<<<< HEAD
-                                    <input type="password" class="form-control" name="new_password" id="new_password">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control" name="new_password_confirm" id="new_password_confirm">
-=======
                                     <input type="password" class="form-control{NEW_PASSWORD_INVALID}" name="new_password" id="new_password" minlength="8" maxlength="128" autocomplete="new-password">
                                     {NEW_PASSWORD_ERROR}
                                 </div>
@@ -651,7 +539,6 @@ $html = <<<'HTML'
                                     <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
                                     <input type="password" class="form-control{NEW_CONFIRM_INVALID}" name="new_password_confirm" id="new_password_confirm" minlength="8" maxlength="128" autocomplete="new-password">
                                     {NEW_CONFIRM_ERROR}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                 </div>
                             </div>
                             <div class="mb-3">
@@ -717,87 +604,8 @@ $html = <<<'HTML'
                             <textarea class="form-control" name="bio" rows="3" placeholder="Brief professional biography...">{BIO}</textarea>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Availability Schedule</label>
-                            <div class="border rounded p-3">
-                                <div class="availability-row">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input day-checkbox" type="checkbox" name="availability[monday][available]" value="1" {MONDAY_CHECKED}>
-                                        <label class="form-check-label">Monday</label>
-                                    </div>
-                                    <div class="time-inputs">
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[monday][start]" value="{MONDAY_START}" style="width: 120px;">
-                                        <span class="mx-2">to</span>
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[monday][end]" value="{MONDAY_END}" style="width: 120px;">
-                                    </div>
-                                </div>
-                                <div class="availability-row">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input day-checkbox" type="checkbox" name="availability[tuesday][available]" value="1" {TUESDAY_CHECKED}>
-                                        <label class="form-check-label">Tuesday</label>
-                                    </div>
-                                    <div class="time-inputs">
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[tuesday][start]" value="{TUESDAY_START}" style="width: 120px;">
-                                        <span class="mx-2">to</span>
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[tuesday][end]" value="{TUESDAY_END}" style="width: 120px;">
-                                    </div>
-                                </div>
-                                <div class="availability-row">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input day-checkbox" type="checkbox" name="availability[wednesday][available]" value="1" {WEDNESDAY_CHECKED}>
-                                        <label class="form-check-label">Wednesday</label>
-                                    </div>
-                                    <div class="time-inputs">
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[wednesday][start]" value="{WEDNESDAY_START}" style="width: 120px;">
-                                        <span class="mx-2">to</span>
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[wednesday][end]" value="{WEDNESDAY_END}" style="width: 120px;">
-                                    </div>
-                                </div>
-                                <div class="availability-row">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input day-checkbox" type="checkbox" name="availability[thursday][available]" value="1" {THURSDAY_CHECKED}>
-                                        <label class="form-check-label">Thursday</label>
-                                    </div>
-                                    <div class="time-inputs">
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[thursday][start]" value="{THURSDAY_START}" style="width: 120px;">
-                                        <span class="mx-2">to</span>
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[thursday][end]" value="{THURSDAY_END}" style="width: 120px;">
-                                    </div>
-                                </div>
-                                <div class="availability-row">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input day-checkbox" type="checkbox" name="availability[friday][available]" value="1" {FRIDAY_CHECKED}>
-                                        <label class="form-check-label">Friday</label>
-                                    </div>
-                                    <div class="time-inputs">
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[friday][start]" value="{FRIDAY_START}" style="width: 120px;">
-                                        <span class="mx-2">to</span>
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[friday][end]" value="{FRIDAY_END}" style="width: 120px;">
-                                    </div>
-                                </div>
-                                <div class="availability-row">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input day-checkbox" type="checkbox" name="availability[saturday][available]" value="1" {SATURDAY_CHECKED}>
-                                        <label class="form-check-label">Saturday</label>
-                                    </div>
-                                    <div class="time-inputs">
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[saturday][start]" value="{SATURDAY_START}" style="width: 120px;">
-                                        <span class="mx-2">to</span>
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[saturday][end]" value="{SATURDAY_END}" style="width: 120px;">
-                                    </div>
-                                </div>
-                                <div class="availability-row">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input day-checkbox" type="checkbox" name="availability[sunday][available]" value="1" {SUNDAY_CHECKED}>
-                                        <label class="form-check-label">Sunday</label>
-                                    </div>
-                                    <div class="time-inputs">
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[sunday][start]" value="{SUNDAY_START}" style="width: 120px;">
-                                        <span class="mx-2">to</span>
-                                        <input type="time" class="form-control form-control-sm d-inline-block w-auto" name="availability[sunday][end]" value="{SUNDAY_END}" style="width: 120px;">
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="alert alert-info">
+                            Availability schedule is managed by each lawyer.
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -814,10 +622,7 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
-<<<<<<< HEAD
-=======
     <script src="../assets/js/legalpro-password-validation.js?v=1"></script>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     <script>
         function showLawyerForm() {
             document.getElementById('lawyerModalLabel').textContent = 'Add New Lawyer';
@@ -836,35 +641,12 @@ $html = <<<'HTML'
         // Show create user form if needed
         {SHOW_CREATE_USER_FORM}
 
-<<<<<<< HEAD
-        // Handle availability checkboxes
-        document.addEventListener('DOMContentLoaded', function() {
-=======
         document.addEventListener('DOMContentLoaded', function() {
             var lawyerForm = document.querySelector('#lawyerModal form');
             if (lawyerForm && window.LegalProPassword) {
                 LegalProPassword.attachLawyerSaveForm(lawyerForm);
             }
 
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
-            document.querySelectorAll('.day-checkbox').forEach(function(checkbox) {
-                checkbox.addEventListener('change', function() {
-                    var timeInputs = this.parentElement.nextElementSibling;
-                    if (this.checked) {
-                        timeInputs.style.display = 'inline-block';
-                    } else {
-                        timeInputs.style.display = 'none';
-                    }
-                });
-
-                // Set initial state
-                var timeInputs = checkbox.parentElement.nextElementSibling;
-                if (checkbox.checked) {
-                    timeInputs.style.display = 'inline-block';
-                } else {
-                    timeInputs.style.display = 'none';
-                }
-            });
         });
 
         function showCreateUserForm() {
@@ -902,19 +684,8 @@ $html = <<<'HTML'
 </html>
 HTML;
 
-// Prepare availability data for form
-$availability = isset($formData['availability']) ? $formData['availability'] : [];
-$availabilityData = [];
-foreach ($availability as $day) {
-    $availabilityData[$day['day_of_week']] = $day;
-}
-
 // Handle form display for errors
 $showCreateUserForm = false;
-<<<<<<< HEAD
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POST['form_type'] === 'save_lawyer' && !empty($_POST['new_username'])) {
-    $showCreateUserForm = true;
-=======
 $showEditModalOnPost = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POST['form_type'] === 'save_lawyer') {
     if (!empty($_POST['new_username'])) {
@@ -923,7 +694,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
     if (!empty($_POST['lawyer_id']) && $messageType === 'danger') {
         $showEditModalOnPost = true;
     }
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 $replacements = [
@@ -945,31 +715,6 @@ $replacements = [
     '{IS_ACTIVE_CHECKED}' => $formData['is_active'] ? 'checked' : '',
     '{CURRENT_USERNAME}' => htmlspecialchars($formData['username']),
     '{CURRENT_USERNAME_DISPLAY}' => htmlspecialchars($formData['username']) ?: 'Not set',
-    '{MONDAY_CHECKED}' => isset($availabilityData['monday']) ? 'checked' : '',
-    '{MONDAY_START}' => isset($availabilityData['monday']['start_time']) ? $availabilityData['monday']['start_time'] : '09:00',
-    '{MONDAY_END}' => isset($availabilityData['monday']['end_time']) ? $availabilityData['monday']['end_time'] : '17:00',
-    '{TUESDAY_CHECKED}' => isset($availabilityData['tuesday']) ? 'checked' : '',
-    '{TUESDAY_START}' => isset($availabilityData['tuesday']['start_time']) ? $availabilityData['tuesday']['start_time'] : '09:00',
-    '{TUESDAY_END}' => isset($availabilityData['tuesday']['end_time']) ? $availabilityData['tuesday']['end_time'] : '17:00',
-    '{WEDNESDAY_CHECKED}' => isset($availabilityData['wednesday']) ? 'checked' : '',
-    '{WEDNESDAY_START}' => isset($availabilityData['wednesday']['start_time']) ? $availabilityData['wednesday']['start_time'] : '09:00',
-    '{WEDNESDAY_END}' => isset($availabilityData['wednesday']['end_time']) ? $availabilityData['wednesday']['end_time'] : '17:00',
-    '{THURSDAY_CHECKED}' => isset($availabilityData['thursday']) ? 'checked' : '',
-    '{THURSDAY_START}' => isset($availabilityData['thursday']['start_time']) ? $availabilityData['thursday']['start_time'] : '09:00',
-    '{THURSDAY_END}' => isset($availabilityData['thursday']['end_time']) ? $availabilityData['thursday']['end_time'] : '17:00',
-    '{FRIDAY_CHECKED}' => isset($availabilityData['friday']) ? 'checked' : '',
-    '{FRIDAY_START}' => isset($availabilityData['friday']['start_time']) ? $availabilityData['friday']['start_time'] : '09:00',
-    '{FRIDAY_END}' => isset($availabilityData['friday']['end_time']) ? $availabilityData['friday']['end_time'] : '17:00',
-    '{SATURDAY_CHECKED}' => isset($availabilityData['saturday']) ? 'checked' : '',
-    '{SATURDAY_START}' => isset($availabilityData['saturday']['start_time']) ? $availabilityData['saturday']['start_time'] : '09:00',
-    '{SATURDAY_END}' => isset($availabilityData['saturday']['end_time']) ? $availabilityData['saturday']['end_time'] : '17:00',
-    '{SUNDAY_CHECKED}' => isset($availabilityData['sunday']) ? 'checked' : '',
-    '{SUNDAY_START}' => isset($availabilityData['sunday']['start_time']) ? $availabilityData['sunday']['start_time'] : '09:00',
-    '{SUNDAY_END}' => isset($availabilityData['sunday']['end_time']) ? $availabilityData['sunday']['end_time'] : '17:00',
-<<<<<<< HEAD
-    '{SHOW_EDIT_MODAL}' => $isEditing ? 'setTimeout(function() { new bootstrap.Modal(document.getElementById("lawyerModal")).show(); showEditSections(); }, 100);' : '',
-    '{SHOW_CREATE_USER_FORM}' => $showCreateUserForm ? 'setTimeout(function() { showCreateUserForm(); }, 100);' : '',
-=======
     '{SHOW_EDIT_MODAL}' => ($isEditing || $showEditModalOnPost) ? 'setTimeout(function() { new bootstrap.Modal(document.getElementById("lawyerModal")).show(); showEditSections(); }, 100);' : '',
     '{SHOW_CREATE_USER_FORM}' => $showCreateUserForm ? 'setTimeout(function() { showCreateUserForm(); }, 100);' : '',
     '{PASSWORD_REQUIREMENTS}' => legalpro_password_requirements_html(),
@@ -981,7 +726,6 @@ $replacements = [
     '{NEW_CONFIRM_INVALID}' => $newConfirmInvalidClass,
     '{UPDATE_PASSWORD_INVALID}' => $updatePasswordInvalidClass,
     '{UPDATE_CONFIRM_INVALID}' => $updateConfirmInvalidClass,
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);
@@ -999,8 +743,4 @@ $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
 
 echo $html;
-<<<<<<< HEAD
 ?>
-=======
-?>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd

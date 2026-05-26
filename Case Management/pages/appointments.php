@@ -384,10 +384,19 @@ if (empty($appointments)) {
             </td>
             <td class="text-end pe-3">
                 <div class="d-flex gap-1 justify-content-end">
+<<<<<<< HEAD
                     <div class="btn-actions">
                     <a href="javascript:void(0)" class="btn btn-sm btn-dark mb-0" title="Edit" onclick="window.location.href=\'appointments.php?id=' . (int)$appointment['id'] . '#appointment-form\'; return false;">Edit</a>
                     <a href="javascript:void(0)" class="btn btn-sm btn-danger mb-0" title="Delete" onclick="deleteAppointment(' . (int)$appointment['id'] . ', \'' . addslashes($caseDisplay) . '\'); return false;">Delete</a>
                     </div>
+=======
+                    <a href="javascript:void(0)" class="btn btn-sm btn-dark mb-0" title="Edit" onclick="window.location.href=\'appointments.php?id=' . (int)$appointment['id'] . '#appointment-form\'; return false;">
+                        <i class="ni ni-ruler-pencil"></i>
+                    </a>
+                    <a href="javascript:void(0)" class="btn btn-sm btn-danger mb-0" title="Delete" onclick="deleteAppointment(' . (int)$appointment['id'] . ', \'' . addslashes($caseDisplay) . '\'); return false;">
+                        <i class="ni ni-fat-remove"></i>
+                    </a>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </div>
             </td>
         </tr>';
@@ -397,16 +406,28 @@ if (empty($appointments)) {
 // Render message block
 $messageHtml = '';
 if ($message) {
+<<<<<<< HEAD
     $messageHtml = '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">
         ' . htmlspecialchars($message) . '
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+=======
+    $alertExtraClass = ($messageType === 'success') ? ' text-white' : '';
+    $closeBtnClass = ($messageType === 'success') ? 'btn-close btn-close-white' : 'btn-close';
+    $messageHtml = '<div class="alert alert-' . htmlspecialchars($messageType) . $alertExtraClass . ' alert-dismissible fade show" role="alert">
+        ' . htmlspecialchars($message) . '
+        <button type="button" class="' . $closeBtnClass . '" data-bs-dismiss="alert" aria-label="Close"></button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     </div>';
 }
 
 $isEditing = !empty($formData['appointment_id']);
 $formTitle = $isEditing ? 'Update Appointment' : 'Book Appointment';
 $submitLabel = $isEditing ? 'Save Changes' : 'Submit Request';
+<<<<<<< HEAD
 $cancelLink = $isEditing ? '<a href="appointments.php" class="btn btn-outline-secondary btn-sm mb-0" title="Cancel editing">Cancel</a>' : '';
+=======
+$cancelLink = $isEditing ? '<a href="appointments.php" class="btn btn-outline-secondary btn-sm mb-0" title="Cancel editing"><i class="ni ni-fat-remove me-1"></i> Cancel</a>' : '';
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 $html = <<<'HTML'
 <!DOCTYPE html>

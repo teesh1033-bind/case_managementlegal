@@ -392,7 +392,20 @@ $clientOptions = '<option value="">Select existing client</option>';
 foreach ($clientsList as $client) {
     $fullName = trim($client['first_name'] . ' ' . $client['last_name']);
     $selected = ((int)$formData['client_id'] === (int)$client['id']) ? ' selected' : '';
+<<<<<<< HEAD
     $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName) . '</option>';
+=======
+    $hint = '';
+    if (!empty($client['username'])) {
+        $hint = ' — login: ' . $client['username'];
+    } elseif (!empty($client['email'])) {
+        $hint = ' — ' . $client['email'];
+    }
+    if (empty($client['user_id'])) {
+        $hint .= ' (no client portal account)';
+    }
+    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName . $hint) . '</option>';
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 $lawyerCheckboxes = '';
@@ -562,7 +575,13 @@ $html = <<<'HTML'
 											<tfoot>
 												<tr>
 													<td colspan="3">
+<<<<<<< HEAD
 														<button type="button" class="btn btn-sm btn-primary mb-0" id="add-service-row">Add Service</button>
+=======
+														<button type="button" class="btn btn-sm btn-outline-primary" id="add-service-row">
+															<i class="fas fa-plus"></i> Add Service
+														</button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 													</td>
 												</tr>
 											</tfoot>
@@ -632,7 +651,13 @@ $html = <<<'HTML'
 						step="0.01" min="0" placeholder="0.00" value="${escapeHtml(price)}" required>
 				</td>
 				<td>
+<<<<<<< HEAD
 					<button type="button" class="btn btn-sm btn-danger mb-0 remove-service-row">Delete</button>
+=======
+					<button type="button" class="btn btn-sm btn-danger remove-service-row">
+						<i class="fas fa-trash"></i>
+					</button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 				</td>
 			`;
 			tbody.appendChild(row);
@@ -659,11 +684,16 @@ $html = <<<'HTML'
 		}
 		
 		function escapeHtml(text) {
+<<<<<<< HEAD
 			if (text === null || text === undefined) {
 				return '';
 			}
 			const div = document.createElement('div');
 			div.textContent = String(text);
+=======
+			const div = document.createElement('div');
+			div.textContent = text;
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 			return div.innerHTML;
 		}
 		
@@ -672,9 +702,13 @@ $html = <<<'HTML'
 			// Add existing services if editing
 			if (existingServices && existingServices.length > 0) {
 				existingServices.forEach(function(service) {
+<<<<<<< HEAD
 					const name = service.service_name || service.name || '';
 					const price = service.price != null ? service.price : '';
 					addServiceRow(name, price);
+=======
+					addServiceRow(service.service_name || service.name, service.price || '');
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 				});
 			} else {
 				// Add one empty row by default

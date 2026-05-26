@@ -159,7 +159,11 @@ foreach ($cases as $case) {
         <td class="text-center">' . ($paymentCount ? $paymentCount : '—') . '</td>
         <td class="text-center">' . ($lastPayment !== '—' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
         <td class="text-end">
+<<<<<<< HEAD
             <button class="btn btn-sm btn-primary mb-0" data-case="' . $caseId . '" onclick="showPaymentHistory(' . $caseId . ')">View</button>
+=======
+            <button class="btn btn-sm btn-dark" data-case="' . $caseId . '" onclick="showPaymentHistory(' . $caseId . ')">History</button>
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         </td>
     </tr>';
 
@@ -429,7 +433,11 @@ $html = <<<'HTML'
                     for (var i = 0; i < payments.length; i++) {
                         var p = payments[i];
                         var receiptLink = p.payment_id
+<<<<<<< HEAD
                             ? '<a class="btn btn-sm btn-secondary mb-0" href="payment-receipt.php?id=' + encodeURIComponent(p.payment_id) + '" target="_blank" rel="noopener">Receipt</a>'
+=======
+                            ? '<a class="btn btn-sm btn-outline-dark" href="payment-receipt.php?id=' + encodeURIComponent(p.payment_id) + '" target="_blank" rel="noopener">Receipt</a>'
+>>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             : '<span class="text-muted">—</span>';
                         list += '<tr>' +
                             '<td>' + p.date + '</td>' +
