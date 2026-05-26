@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /**
  * LegalPro client portal — full-page gradient (matches top header strip).
  */
@@ -15,50 +14,6 @@ body.client-payments-page,
 body.client-portal-page {
     background: var(--client-portal-gradient) fixed !important;
     background-color: var(--client-portal-bg-fallback) !important;
-=======
-﻿/**
- * LegalPro client portal ΓÇö full-page gradient (aligned with lawyer/admin portals).
- */
-:root {
-    --client-portal-gradient: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
-    --client-portal-bg-fallback: #2d3f6f;
-}
-
-.bg-legalpro-client {
-    background: var(--client-portal-gradient) !important;
-    background-color: var(--client-portal-bg-fallback) !important;
-}
-
-body.client-dashboard-page,
-body.client-dashboard-page.bg-gray-100,
-body.client-cases-page,
-body.client-cases-page.bg-gray-100,
-body.client-appointments-page,
-body.client-appointments-page.bg-gray-100,
-body.client-court-tracking-page,
-body.client-court-tracking-page.bg-gray-100,
-body.client-payments-page,
-body.client-payments-page.bg-gray-100,
-body.client-portal-page,
-body.client-portal-page.bg-gray-100,
-body.g-sidenav-show.client-dashboard-page,
-body.g-sidenav-show.client-dashboard-page.bg-gray-100,
-body.g-sidenav-show.client-cases-page,
-body.g-sidenav-show.client-cases-page.bg-gray-100,
-body.g-sidenav-show.client-appointments-page,
-body.g-sidenav-show.client-appointments-page.bg-gray-100,
-body.g-sidenav-show.client-court-tracking-page,
-body.g-sidenav-show.client-court-tracking-page.bg-gray-100,
-body.g-sidenav-show.client-payments-page,
-body.g-sidenav-show.client-payments-page.bg-gray-100,
-body.g-sidenav-show.client-portal-page,
-body.g-sidenav-show.client-portal-page.bg-gray-100 {
-    background: var(--client-portal-gradient) fixed !important;
-    background-color: var(--client-portal-bg-fallback) !important;
-    background-image: var(--client-portal-gradient) !important;
-    background-repeat: no-repeat !important;
-    background-size: cover !important;
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     min-height: 100vh;
 }
 
@@ -84,12 +39,9 @@ body.client-court-tracking-page .main-content > .container-fluid,
 body.client-payments-page .main-content > .container-fluid,
 body.client-portal-page .main-content > .container-fluid {
     background: transparent !important;
-<<<<<<< HEAD
-=======
     background-color: transparent !important;
     background-image: none !important;
     box-shadow: none !important;
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 body.client-dashboard-page .main-content.border-radius-lg,
@@ -110,110 +62,15 @@ body.client-portal-page .main-content .card:not([class*="-hero"]) {
     background-color: #fff !important;
 }
 
-<<<<<<< HEAD
+body.client-dashboard-page .navbar-main,
+body.client-cases-page .navbar-main,
+body.client-appointments-page .navbar-main,
+body.client-court-tracking-page .navbar-main,
+body.client-payments-page .navbar-main,
 body.client-portal-page .navbar-main {
     backdrop-filter: blur(8px);
     background: rgba(255, 255, 255, 0.86) !important;
     border: 1px solid rgba(255, 255, 255, 0.6) !important;
     box-shadow: 0 0.35rem 1.25rem rgba(52, 71, 103, 0.08) !important;
     margin-top: 20px;
-=======
-body.client-dashboard-page .navbar-main,
-body.client-dashboard-page .navbar-main.blur,
-body.client-dashboard-page .navbar-main.shadow-blur,
-body.client-dashboard-page #navbarBlur,
-body.client-dashboard-page #navbarBlur.blur,
-body.client-cases-page .navbar-main,
-body.client-cases-page .navbar-main.blur,
-body.client-cases-page .navbar-main.shadow-blur,
-body.client-cases-page #navbarBlur,
-body.client-cases-page #navbarBlur.blur,
-body.client-appointments-page .navbar-main,
-body.client-appointments-page .navbar-main.blur,
-body.client-appointments-page .navbar-main.shadow-blur,
-body.client-appointments-page #navbarBlur,
-body.client-appointments-page #navbarBlur.blur,
-body.client-court-tracking-page .navbar-main,
-body.client-court-tracking-page .navbar-main.blur,
-body.client-court-tracking-page .navbar-main.shadow-blur,
-body.client-court-tracking-page #navbarBlur,
-body.client-court-tracking-page #navbarBlur.blur,
-body.client-payments-page .navbar-main,
-body.client-payments-page .navbar-main.blur,
-body.client-payments-page .navbar-main.shadow-blur,
-body.client-payments-page #navbarBlur,
-body.client-payments-page #navbarBlur.blur,
-body.client-portal-page .navbar-main,
-body.client-portal-page .navbar-main.blur,
-body.client-portal-page .navbar-main.shadow-blur,
-body.client-portal-page #navbarBlur,
-body.client-portal-page #navbarBlur.blur {
-    background: transparent !important;
-    background-color: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-}
-
-body.client-dashboard-page .navbar-main .breadcrumb .breadcrumb-item,
-body.client-dashboard-page .navbar-main .breadcrumb .breadcrumb-item a,
-body.client-dashboard-page .navbar-main .breadcrumb .breadcrumb-item.active,
-body.client-dashboard-page .navbar-main .breadcrumb .text-dark,
-body.client-dashboard-page .navbar-main .breadcrumb h5,
-body.client-dashboard-page .navbar-main .breadcrumb h6,
-body.client-cases-page .navbar-main .breadcrumb .breadcrumb-item,
-body.client-cases-page .navbar-main .breadcrumb .breadcrumb-item a,
-body.client-cases-page .navbar-main .breadcrumb .breadcrumb-item.active,
-body.client-cases-page .navbar-main .breadcrumb .text-dark,
-body.client-cases-page .navbar-main .breadcrumb h5,
-body.client-cases-page .navbar-main .breadcrumb h6,
-body.client-appointments-page .navbar-main .breadcrumb .breadcrumb-item,
-body.client-appointments-page .navbar-main .breadcrumb .breadcrumb-item a,
-body.client-appointments-page .navbar-main .breadcrumb .breadcrumb-item.active,
-body.client-appointments-page .navbar-main .breadcrumb .text-dark,
-body.client-appointments-page .navbar-main .breadcrumb h5,
-body.client-appointments-page .navbar-main .breadcrumb h6,
-body.client-court-tracking-page .navbar-main .breadcrumb .breadcrumb-item,
-body.client-court-tracking-page .navbar-main .breadcrumb .breadcrumb-item a,
-body.client-court-tracking-page .navbar-main .breadcrumb .breadcrumb-item.active,
-body.client-court-tracking-page .navbar-main .breadcrumb .text-dark,
-body.client-court-tracking-page .navbar-main .breadcrumb h5,
-body.client-court-tracking-page .navbar-main .breadcrumb h6,
-body.client-payments-page .navbar-main .breadcrumb .breadcrumb-item,
-body.client-payments-page .navbar-main .breadcrumb .breadcrumb-item a,
-body.client-payments-page .navbar-main .breadcrumb .breadcrumb-item.active,
-body.client-payments-page .navbar-main .breadcrumb .text-dark,
-body.client-payments-page .navbar-main .breadcrumb h5,
-body.client-payments-page .navbar-main .breadcrumb h6,
-body.client-portal-page .navbar-main .breadcrumb .breadcrumb-item,
-body.client-portal-page .navbar-main .breadcrumb .breadcrumb-item a,
-body.client-portal-page .navbar-main .breadcrumb .breadcrumb-item.active,
-body.client-portal-page .navbar-main .breadcrumb .text-dark,
-body.client-portal-page .navbar-main .breadcrumb h5,
-body.client-portal-page .navbar-main .breadcrumb h6 {
-    color: #fff !important;
-}
-
-body.client-dashboard-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link,
-body.client-dashboard-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link span,
-body.client-dashboard-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link i,
-body.client-cases-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link,
-body.client-cases-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link span,
-body.client-cases-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link i,
-body.client-appointments-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link,
-body.client-appointments-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link span,
-body.client-appointments-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link i,
-body.client-court-tracking-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link,
-body.client-court-tracking-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link span,
-body.client-court-tracking-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link i,
-body.client-payments-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link,
-body.client-payments-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link span,
-body.client-payments-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link i,
-body.client-portal-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link,
-body.client-portal-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link span,
-body.client-portal-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link i {
-    color: #fff !important;
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }

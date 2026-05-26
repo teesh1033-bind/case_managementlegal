@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 
@@ -158,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Client and case title are required.';
             $messageType = 'danger';
         } else {
-            // Portal user linked to this client (for cases.user_id — not a lawyer id)
+            // Portal user linked to this client (for cases.user_id ΓÇö not a lawyer id)
             $stmt = $pdo->prepare("SELECT user_id FROM clients WHERE id = ?");
             $stmt->execute([$clientId]);
             $clientRow = $stmt->fetch();
@@ -392,20 +392,16 @@ $clientOptions = '<option value="">Select existing client</option>';
 foreach ($clientsList as $client) {
     $fullName = trim($client['first_name'] . ' ' . $client['last_name']);
     $selected = ((int)$formData['client_id'] === (int)$client['id']) ? ' selected' : '';
-<<<<<<< HEAD
-    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName) . '</option>';
-=======
     $hint = '';
     if (!empty($client['username'])) {
-        $hint = ' — login: ' . $client['username'];
+        $hint = ' ΓÇö login: ' . $client['username'];
     } elseif (!empty($client['email'])) {
-        $hint = ' — ' . $client['email'];
+        $hint = ' ΓÇö ' . $client['email'];
     }
     if (empty($client['user_id'])) {
         $hint .= ' (no client portal account)';
     }
     $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName . $hint) . '</option>';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 $lawyerCheckboxes = '';
@@ -575,13 +571,9 @@ $html = <<<'HTML'
 											<tfoot>
 												<tr>
 													<td colspan="3">
-<<<<<<< HEAD
-														<button type="button" class="btn btn-sm btn-primary mb-0" id="add-service-row">Add Service</button>
-=======
 														<button type="button" class="btn btn-sm btn-outline-primary" id="add-service-row">
 															<i class="fas fa-plus"></i> Add Service
 														</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 													</td>
 												</tr>
 											</tfoot>
@@ -617,7 +609,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+								┬⌐ <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
 							</div>
 						</div>
 					</div>
@@ -651,13 +643,9 @@ $html = <<<'HTML'
 						step="0.01" min="0" placeholder="0.00" value="${escapeHtml(price)}" required>
 				</td>
 				<td>
-<<<<<<< HEAD
-					<button type="button" class="btn btn-sm btn-danger mb-0 remove-service-row">Delete</button>
-=======
 					<button type="button" class="btn btn-sm btn-danger remove-service-row">
 						<i class="fas fa-trash"></i>
 					</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 				</td>
 			`;
 			tbody.appendChild(row);
@@ -684,16 +672,8 @@ $html = <<<'HTML'
 		}
 		
 		function escapeHtml(text) {
-<<<<<<< HEAD
-			if (text === null || text === undefined) {
-				return '';
-			}
-			const div = document.createElement('div');
-			div.textContent = String(text);
-=======
 			const div = document.createElement('div');
 			div.textContent = text;
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 			return div.innerHTML;
 		}
 		
@@ -702,13 +682,7 @@ $html = <<<'HTML'
 			// Add existing services if editing
 			if (existingServices && existingServices.length > 0) {
 				existingServices.forEach(function(service) {
-<<<<<<< HEAD
-					const name = service.service_name || service.name || '';
-					const price = service.price != null ? service.price : '';
-					addServiceRow(name, price);
-=======
 					addServiceRow(service.service_name || service.name, service.price || '');
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 				});
 			} else {
 				// Add one empty row by default

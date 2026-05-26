@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
 
@@ -57,7 +57,7 @@ try {
         $seedStmt->execute([
             'Affidavit Template',
             'Sworn statement placeholder',
-            "I, {{client_name}}, being duly sworn, depose and state:\n1. {{statement_one}}\n2. {{statement_two}}\n\nDated: {{today}}\nCase: {{case_number}} – {{case_title}}"
+            "I, {{client_name}}, being duly sworn, depose and state:\n1. {{statement_one}}\n2. {{statement_two}}\n\nDated: {{today}}\nCase: {{case_number}} ΓÇô {{case_title}}"
         ]);
         $seedStmt->execute([
             'Invoice Cover Letter',
@@ -222,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $previewContent = nl2br(htmlspecialchars($generated));
-                $previewTitle = $outputTitle ?: ($template['name'] . ' · Draft');
+                $previewTitle = $outputTitle ?: ($template['name'] . ' ┬╖ Draft');
                 $message = 'Document generated below. Copy, print, or download as needed.';
                 $messageType = 'success';
             }
@@ -301,7 +301,7 @@ $caseOptions = '<option value="">Select case</option>';
 foreach ($cases as $case) {
     $caseId = (int)$case['id'];
     $caseNumber = 'C-' . str_pad($caseId, 4, '0', STR_PAD_LEFT);
-    $caseOptions .= '<option value="' . $caseId . '">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</option>';
+    $caseOptions .= '<option value="' . $caseId . '">' . htmlspecialchars($caseNumber . ' ┬╖ ' . $case['title']) . '</option>';
 }
 
 $templateOptions = '<option value="">Select template</option>';
@@ -333,7 +333,7 @@ if (empty($cases)) {
         }
 
         $caseRows .= '
-        <div class="case-item border-bottom p-3 hover-shadow" style="cursor: pointer;" data-case-attach="' . $caseId . '" data-case-label="' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '">
+        <div class="case-item border-bottom p-3 hover-shadow" style="cursor: pointer;" data-case-attach="' . $caseId . '" data-case-label="' . htmlspecialchars($caseNumber . ' ┬╖ ' . $case['title']) . '">
             <div class="d-flex justify-content-between align-items-start">
                 <div class="flex-grow-1 me-3">
                     <div class="d-flex align-items-center mb-1">
@@ -347,7 +347,7 @@ if (empty($cases)) {
                     <div class="mb-2">
                         ' . ($docsCount > 0 ? '<span class="badge bg-gradient-info">' . $docsCount . ' files</span>' : '<span class="badge bg-gradient-secondary">No files</span>') . '
                     </div>
-                    <button class="btn btn-sm btn-primary attach-btn" data-case-attach="' . $caseId . '" data-case-label="' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '">
+                    <button class="btn btn-sm btn-primary attach-btn" data-case-attach="' . $caseId . '" data-case-label="' . htmlspecialchars($caseNumber . ' ┬╖ ' . $case['title']) . '">
                         <i class="ni ni-cloud-upload-96 me-1"></i>Attach File
                     </button>
                 </div>
@@ -409,17 +409,10 @@ if (empty($cases)) {
                         </div>
                     </div>
                     <div class="d-flex gap-2">
-<<<<<<< HEAD
-                        <a class="btn btn-sm btn-primary mb-0" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" title="View Document">
-                            <i class="ni ni-zoom-split-in me-1"></i>View
-                        </a>
-                        <a class="btn btn-sm btn-secondary mb-0" href="' . htmlspecialchars($downloadUrl) . '" download title="Download Document">
-=======
                         <a class="btn btn-sm btn-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" title="View Document">
                             <i class="ni ni-zoom-split-in me-1"></i>View
                         </a>
                         <a class="btn btn-sm btn-success" href="' . htmlspecialchars($downloadUrl) . '" download title="Download Document">
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             <i class="ni ni-cloud-download-95 me-1"></i>Download
                         </a>
                     </div>
@@ -434,7 +427,7 @@ if (empty($cases)) {
                 <button class="accordion-button d-flex justify-content-between align-items-center' . ($collapseIndex === 0 ? '' : ' collapsed') . '" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-' . $collapseIndex . '" aria-expanded="' . ($collapseIndex === 0 ? 'true' : 'false') . '">
                     <div>
                         <span class="badge bg-gradient-info me-2">' . $docsCount . '</span>
-                        ' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '
+                        ' . htmlspecialchars($caseNumber . ' ┬╖ ' . $case['title']) . '
                     </div>
                     <small class="text-muted">' . htmlspecialchars($case['client_name']) . '</small>
                 </button>
@@ -507,21 +500,14 @@ if (empty($recentDocuments)) {
                 </div>
                 <div>
                     <h6 class="mb-0 text-sm">' . htmlspecialchars($displayName) . '</h6>
-                    <p class="text-xs text-muted mb-0">' . htmlspecialchars($caseTitle) . ' • ' . htmlspecialchars($uploadedAt) . '</p>
+                    <p class="text-xs text-muted mb-0">' . htmlspecialchars($caseTitle) . ' ΓÇó ' . htmlspecialchars($uploadedAt) . '</p>
                 </div>
             </div>
             <div class="d-flex gap-2">
-<<<<<<< HEAD
-                <a class="btn btn-sm btn-primary mb-0" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" title="View Document">
-                    <i class="ni ni-zoom-split-in me-1"></i>View
-                </a>
-                <a class="btn btn-sm btn-secondary mb-0" href="' . htmlspecialchars($downloadUrl) . '" download title="Download Document">
-=======
                 <a class="btn btn-sm btn-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" title="View Document">
                     <i class="ni ni-zoom-split-in me-1"></i>View
                 </a>
                 <a class="btn btn-sm btn-success" href="' . htmlspecialchars($downloadUrl) . '" download title="Download Document">
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                     <i class="ni ni-cloud-download-95 me-1"></i>Download
                 </a>
             </div>
@@ -543,11 +529,7 @@ if (!empty($previewContent)) {
     <div class="card mt-4">
         <div class="card-header pb-0 d-flex justify-content-between align-items-center">
             <h6 class="mb-0">' . htmlspecialchars($previewTitle) . '</h6>
-<<<<<<< HEAD
-            <button class="btn btn-sm btn-dark mb-0" onclick="window.print()">Print</button>
-=======
             <button class="btn btn-sm btn-outline-dark" onclick="window.print()">Print</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         </div>
         <div class="card-body">
             <div class="border rounded p-3 bg-white" style="min-height: 200px;">
@@ -575,7 +557,7 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro · Documents</title>
+    <title>LegalPro ┬╖ Documents</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -844,7 +826,7 @@ $html = <<<'HTML'
                     <div class="row align-items-center justify-content-lg-between">
                         <div class="col-lg-6 mb-lg-0 mb-4">
                             <div class="text-center text-sm text-muted text-lg-start">
-                                © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+                                ┬⌐ <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
                             </div>
                         </div>
                     </div>

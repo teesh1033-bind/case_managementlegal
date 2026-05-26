@@ -10,28 +10,14 @@ if (!isset($_SESSION['lawyer_id'])) {
 
 $lawyerId = $_SESSION['lawyer_id'];
 $lawyerName = $_SESSION['lawyer_name'];
-<<<<<<< HEAD
-=======
 $message = '';
 $messageType = '';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 // Handle appointment status updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])) {
     $appointmentId = (int)$_POST['appointment_id'];
     $action = $_POST['appointment_action'];
 
-<<<<<<< HEAD
-    if (in_array($action, ['accept', 'reject'])) {
-        $status = ($action === 'accept') ? 'accepted' : 'rejected';
-
-        try {
-            $stmt = $pdo->prepare("UPDATE appointments SET status = ? WHERE id = ? AND lawyer_id = ?");
-            $stmt->execute([$status, $appointmentId, $lawyerId]);
-
-            $message = "Appointment " . ($action === 'accept' ? 'accepted' : 'rejected') . ' successfully.';
-            $messageType = 'success';
-=======
     if (in_array($action, ['accept', 'reject', 'pending', 'reschedule'], true)) {
         $status = 'pending';
         if ($action === 'accept') {
@@ -82,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])
         } catch (RuntimeException $e) {
             $message = $e->getMessage();
             $messageType = 'danger';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         } catch (PDOException $e) {
             $message = 'Error updating appointment: ' . htmlspecialchars($e->getMessage());
             $messageType = 'danger';
@@ -185,33 +170,17 @@ if (empty($appointments)) {
             <td>' . htmlspecialchars($appointment['notes'] ?: 'No notes') . '</td>
             <td class="text-center">' . $statusBadge . '</td>
             <td class="text-end">
-<<<<<<< HEAD
-                <div class="btn-actions">
-                <a href="lawyer-case-view.php?id=' . (int)$appointment['case_id'] . '" class="btn btn-sm btn-primary mb-0">View</a>';
-                if ($appointment['status'] === 'pending') {
-=======
                 <a href="lawyer-case-view.php?id=' . (int)$appointment['case_id'] . '" class="btn btn-sm btn-primary me-1">View Case</a>';
                 if (!$isPast) {
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                     $appointmentsTable .= '
                 <form method="post" class="d-inline">
                     <input type="hidden" name="appointment_id" value="' . (int)$appointment['id'] . '">
                     <input type="hidden" name="appointment_action" value="accept">
-<<<<<<< HEAD
-                    <button type="submit" class="btn btn-sm btn-success mb-0" onclick="return confirm(\'Accept this appointment?\')">Accept</button>
-=======
                     <button type="submit" class="btn btn-sm btn-success me-1" onclick="return confirm(\'Accept this appointment?\')">Accept</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </form>
                 <form method="post" class="d-inline">
                     <input type="hidden" name="appointment_id" value="' . (int)$appointment['id'] . '">
                     <input type="hidden" name="appointment_action" value="reject">
-<<<<<<< HEAD
-                    <button type="submit" class="btn btn-sm btn-danger mb-0" onclick="return confirm(\'Reject this appointment?\')">Reject</button>
-                </form>';
-                }
-            $appointmentsTable .= '</div></td>
-=======
                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Reject this appointment?\')">Reject</button>
                 </form>
                 <form method="post" class="d-inline">
@@ -227,7 +196,6 @@ if (empty($appointments)) {
                 </form>';
                 }
             $appointmentsTable .= '</td>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         </tr>';
     }
 }
@@ -350,10 +318,7 @@ $html = <<<'HTML'
         </nav>
 
         <div class="container-fluid py-4">
-<<<<<<< HEAD
-=======
             {MESSAGE}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             <!-- Filters -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -447,10 +412,7 @@ HTML;
 
 $replacements = [
     '{NAVIGATION}' => $navHtml,
-<<<<<<< HEAD
-=======
     '{MESSAGE}' => $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '',
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
     '{STATUS_ACCEPTED}' => $statusFilter === 'accepted' ? ' selected' : '',

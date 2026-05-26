@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 
 $html = <<<'HTML'
@@ -53,7 +53,7 @@ $html = <<<'HTML'
 						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="../pages/tables.php">Cases</a></li>
 						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Case Detail</li>
 					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">C-1029 · Contract Dispute</h6>
+					<h6 class="font-weight-bolder text-white mb-0">C-1029 ┬╖ Contract Dispute</h6>
 				</nav>
 			</div>
 		</nav>
@@ -168,11 +168,7 @@ $html = <<<'HTML'
 											<h6>$1,300</h6>
 										</div>
 									</div>
-<<<<<<< HEAD
-									<a href="billing.html" class="btn btn-sm btn-primary mb-0 mt-2">Generate Invoice</a>
-=======
 									<a href="billing.html" class="btn btn-sm btn-outline-primary mt-2">Generate Invoice</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 								</div>
 								<div class="tab-pane" id="documents" role="tabpanel">
 									<div class="mb-2">
@@ -182,13 +178,8 @@ $html = <<<'HTML'
 										<li class="list-group-item d-flex justify-content-between align-items-center">
 											Affidavit.pdf
 											<div>
-<<<<<<< HEAD
-												<button class="btn btn-sm btn-primary mb-0">View</button>
-												<button class="btn btn-sm btn-danger mb-0">Delete</button>
-=======
 												<button class="btn btn-sm btn-outline-dark">View</button>
 												<button class="btn btn-sm btn-outline-danger">Delete</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 											</div>
 										</li>
 									</ul>
@@ -219,7 +210,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
+								┬⌐ <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
 							</div>
 						</div>
 					</div>

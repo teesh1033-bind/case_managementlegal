@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 
@@ -8,19 +8,6 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 
-<<<<<<< HEAD
-require_once __DIR__ . '/../inc/ensure-court-dates-table.php';
-
-$tableExists = ensureCourtDatesTable($pdo);
-if (!$tableExists) {
-    $_SESSION['error_message'] = 'Could not initialize court dates storage. Check database permissions or run sql/create_court_dates_table.sql manually.';
-}
-
-// Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!ensureCourtDatesTable($pdo)) {
-        $_SESSION['error_message'] = 'Court dates table is not available.';
-=======
 // Check if court_dates table exists
 $tableExists = false;
 try {
@@ -42,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->query("SHOW TABLES LIKE 'court_dates'");
     if (!$stmt->fetch()) {
         $_SESSION['error_message'] = "Court dates table not found. Please create the table first.";
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         header('Location: court-tracking.php');
         exit;
     }
@@ -62,18 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
             $stmt->execute([$case_id, $court_date, $title, $description, $location, $created_by]);
 
-<<<<<<< HEAD
-            try {
-                require_once __DIR__ . '/../lib/case_events.php';
-                CaseEvents::trackCourtDateCreated($case_id, $title, $court_date);
-            } catch (Throwable $e) {
-                error_log('Court date event log: ' . $e->getMessage());
-            }
-=======
             // Log the event
             require_once __DIR__ . '/../lib/case_events.php';
             CaseEvents::trackCourtDateCreated($case_id, $title, $court_date);
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
             $_SESSION['success_message'] = "Court date added successfully!";
         } catch (PDOException $e) {
@@ -143,12 +120,6 @@ try {
     $court_dates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $court_dates = [];
-<<<<<<< HEAD
-    if (empty($_SESSION['error_message'])) {
-        $_SESSION['error_message'] = 'Could not load court dates: ' . $e->getMessage();
-    }
-=======
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 // Get cases for dropdown
@@ -167,14 +138,8 @@ try {
 // Prepare calendar events for FullCalendar
 $calendar_events = [];
 foreach ($court_dates as $date) {
-<<<<<<< HEAD
-    $status = $date['status'] ?? 'scheduled';
-    $status_color = '';
-    switch ($status) {
-=======
     $status_color = '';
     switch ($date['status']) {
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         case 'scheduled': $status_color = '#17a2b8'; break;
         case 'completed': $status_color = '#28a745'; break;
         case 'cancelled': $status_color = '#dc3545'; break;
@@ -192,11 +157,7 @@ foreach ($court_dates as $date) {
         'extendedProps' => [
             'description' => $date['description'],
             'location' => $date['location'],
-<<<<<<< HEAD
-            'status' => $status,
-=======
             'status' => $date['status'],
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             'client_name' => $date['client_name'],
             'created_by_name' => $date['created_by_name'],
             'creator_role' => $date['creator_role']
@@ -285,7 +246,7 @@ foreach ($court_dates as $date) {
                     <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="Search…" value="" autocomplete="off" maxlength="200" aria-label="Search">
+                            <input type="search" name="q" class="form-control" placeholder="SearchΓÇª" value="" autocomplete="off" maxlength="200" aria-label="Search">
                         </div>
                     </form>
                     <ul class="navbar-nav justify-content-end">
@@ -323,13 +284,9 @@ foreach ($court_dates as $date) {
                         <div class="card-header pb-0">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Court Dates Calendar</h6>
-<<<<<<< HEAD
-                                <button type="button" class="btn btn-sm btn-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">Add Court Date</button>
-=======
                                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
                                     <i class="fas fa-plus me-2"></i>Add Court Date
                                 </button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             </div>
                         </div>
                         <div class="card-body">
@@ -360,39 +317,6 @@ foreach ($court_dates as $date) {
                                         </tr>
                                     </thead>
                                     <tbody>
-<<<<<<< HEAD
-                                        <?php if (empty($court_dates)): ?>
-                                            <tr>
-                                                <td colspan="6" class="text-center text-muted py-4">No court dates scheduled yet.</td>
-                                            </tr>
-                                        <?php else: ?>
-                                        <?php foreach ($court_dates as $date):
-                                            $rowStatus = $date['status'] ?? 'scheduled';
-                                            $caseTitle = $date['case_title'] ?? '—';
-                                            $clientName = $date['client_name'] ?? '—';
-                                            $courtTs = !empty($date['court_date']) ? strtotime($date['court_date']) : false;
-                                        ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($caseTitle); ?></td>
-                                                <td><?php echo htmlspecialchars($clientName); ?></td>
-                                                <td><?php echo $courtTs ? date('M d, Y g:i A', $courtTs) : '—'; ?></td>
-                                                <td><?php echo htmlspecialchars($date['title'] ?? ''); ?></td>
-                                                <td>
-                                                    <span class="status-badge status-<?php echo htmlspecialchars($rowStatus); ?>">
-                                                        <?php echo htmlspecialchars(ucfirst($rowStatus)); ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <div class="btn-actions">
-                                                    <button type="button" class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo (int)$date['id']; ?>)" title="View Details">View</button>
-                                                    <button type="button" class="btn btn-sm btn-dark mb-0" onclick="editCourtDate(<?php echo (int)$date['id']; ?>)" title="Edit Court Date">Edit</button>
-                                                    <button type="button" class="btn btn-sm btn-danger mb-0" onclick="deleteCourtDate(<?php echo (int)$date['id']; ?>)" title="Delete Court Date">Delete</button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <?php endif; ?>
-=======
                                         <?php foreach ($court_dates as $date): ?>
                                             <tr>
                                                 <td><?php echo htmlspecialchars($date['case_title']); ?></td>
@@ -417,7 +341,6 @@ foreach ($court_dates as $date) {
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                     </tbody>
                                 </table>
                             </div>
@@ -584,124 +507,11 @@ foreach ($court_dates as $date) {
         </div>
     </div>
 
-<<<<<<< HEAD
-=======
     <script src="../assets/js/core/jquery.min.js"></script>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-<<<<<<< HEAD
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
-    <script src="../assets/js/fullcalendar/fallback.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.js"></script>
-    <script>
-        const courtDatesData = <?php echo json_encode($court_dates, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-        const calendarEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-        let courtCalendarInstance = null;
-        let courtCalendarRendered = false;
-
-        function initCourtCalendar() {
-            if (courtCalendarRendered) {
-                return;
-            }
-            const calendarEl = document.getElementById('calendar');
-            if (!calendarEl) {
-                return;
-            }
-
-            if (typeof FullCalendar !== 'undefined') {
-                try {
-                    courtCalendarInstance = new FullCalendar.Calendar(calendarEl, {
-                        initialView: 'dayGridMonth',
-                        headerToolbar: {
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                        },
-                        events: calendarEvents,
-                        eventClick: function(info) {
-                            viewCourtDate(info.event.id);
-                        },
-                        height: 'auto',
-                        eventDisplay: 'block'
-                    });
-                    courtCalendarInstance.render();
-                    courtCalendarRendered = true;
-                    return;
-                } catch (error) {
-                    console.error('FullCalendar init failed:', error);
-                }
-            }
-
-            if (typeof SimpleCalendar !== 'undefined') {
-                try {
-                    window.simpleCalendar = new SimpleCalendar(calendarEl, { events: calendarEvents });
-                    courtCalendarRendered = true;
-                    return;
-                } catch (error) {
-                    console.error('SimpleCalendar init failed:', error);
-                }
-            }
-
-            calendarEl.innerHTML = '<div class="alert alert-warning mb-0">Calendar could not be loaded. Use the table below to manage court dates.</div>';
-            courtCalendarRendered = true;
-        }
-
-        function viewCourtDate(id) {
-            const eventData = courtDatesData.find(function(e) { return String(e.id) === String(id); });
-            if (!eventData) {
-                return;
-            }
-            const status = eventData.status || 'scheduled';
-            document.getElementById('view_case_title').textContent = eventData.case_title || '—';
-            document.getElementById('view_client_name').textContent = eventData.client_name || '—';
-            document.getElementById('view_datetime').textContent = eventData.court_date
-                ? new Date(eventData.court_date).toLocaleString()
-                : '—';
-            document.getElementById('view_status').textContent = status.charAt(0).toUpperCase() + status.slice(1);
-            document.getElementById('view_status').className = 'status-badge status-' + status;
-            document.getElementById('view_title').textContent = eventData.title || '';
-            document.getElementById('view_description').textContent = eventData.description || 'No description';
-            document.getElementById('view_location').textContent = eventData.location || 'Not specified';
-            document.getElementById('view_created_by').textContent = eventData.created_by_name || 'Unknown';
-            document.getElementById('view_creator_role').textContent = eventData.creator_role
-                ? eventData.creator_role.charAt(0).toUpperCase() + eventData.creator_role.slice(1)
-                : 'Unknown';
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('viewCourtDateModal')).show();
-        }
-
-        function editCourtDate(id) {
-            const eventData = courtDatesData.find(function(e) { return String(e.id) === String(id); });
-            if (!eventData) {
-                return;
-            }
-            document.getElementById('edit_id').value = eventData.id;
-            document.getElementById('edit_case_id').value = eventData.case_id;
-            const dateTime = eventData.court_date ? new Date(eventData.court_date) : new Date();
-            document.getElementById('edit_court_date').value = dateTime.toISOString().split('T')[0];
-            document.getElementById('edit_court_time').value = dateTime.toTimeString().split(' ')[0].substring(0, 5);
-            document.getElementById('edit_title').value = eventData.title || '';
-            document.getElementById('edit_description').value = eventData.description || '';
-            document.getElementById('edit_location').value = eventData.location || '';
-            document.getElementById('edit_status').value = eventData.status || 'scheduled';
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('editCourtDateModal')).show();
-        }
-
-        function deleteCourtDate(id) {
-            if (!confirm('Are you sure you want to delete this court date?')) {
-                return;
-            }
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.innerHTML = '<input type="hidden" name="id" value="' + id + '"><input type="hidden" name="delete_court_date" value="1">';
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        document.addEventListener('DOMContentLoaded', initCourtCalendar);
-=======
     <script src="../assets/js/fullcalendar/fallback.js"></script>
     <script>
         // Try FullCalendar first, fallback to simple calendar
@@ -881,7 +691,6 @@ foreach ($court_dates as $date) {
                 form.submit();
             }
         }
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     </script>
 </body>
 </html>

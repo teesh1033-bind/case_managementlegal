@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 
@@ -165,7 +165,7 @@ if (empty($cases)) {
                         <i class="ni ni-collection text-white text-xs opacity-10"></i>
                     </div>
                     <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">' . $caseNumber . ' · ' . $title . '</h6>
+                        <h6 class="mb-0 text-sm">' . $caseNumber . ' ┬╖ ' . $title . '</h6>
                         <p class="text-xs text-secondary mb-0">' . htmlspecialchars($clientName) . '</p>
                     </div>
                 </div>
@@ -181,17 +181,6 @@ if (empty($cases)) {
                 <span class="text-secondary text-xs font-weight-bold">' . $dueDate . '</span>
             </td>
             <td class="align-middle">
-<<<<<<< HEAD
-                <div class="btn-actions case-actions">
-                    <a class="btn btn-sm btn-primary mb-0" href="case-view.php?id=' . $caseId . '" title="View Details">View</a>
-                    <a class="btn btn-sm btn-dark mb-0" href="case-edit.php?id=' . $caseId . '" title="Edit Case">Edit</a>
-                    <form method="post" class="d-inline-block mb-0" onsubmit="return confirm(\'Are you sure you want to delete case ' . $caseNumber . '? This action cannot be undone.\');" onclick="event.stopPropagation();">
-                        <input type="hidden" name="form_type" value="delete">
-                        <input type="hidden" name="case_id" value="' . $caseId . '">
-                        <button class="btn btn-sm btn-danger mb-0" type="submit" title="Delete Case">Delete</button>
-                    </form>
-                    <a class="btn btn-sm btn-info mb-0" href="case-contract.php?id=' . $caseId . '" target="_blank" onclick="event.stopPropagation();" title="Generate Contract">Contract</a>
-=======
                 <div class="d-flex gap-1">
                     <a class="btn btn-sm btn-outline-primary mb-0" href="case-view.php?id=' . $caseId . '" title="View Details">
                         <i class="ni ni-zoom-split-in"></i> View
@@ -209,7 +198,6 @@ if (empty($cases)) {
                     <a class="btn btn-sm btn-outline-info mb-0" href="case-contract.php?id=' . $caseId . '" target="_blank" onclick="event.stopPropagation();" title="Generate Contract">
                         <i class="ni ni-single-copy-04"></i> Contract
                     </a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </div>
             </td>
         </tr>';
@@ -271,13 +259,9 @@ $html = <<<'HTML'
 									<p class="text-sm text-muted mb-0">View and manage all cases</p>
 								</div>
 								<div class="col-lg-4 text-end">
-<<<<<<< HEAD
-									<a href="case-new.php" class="btn btn-sm btn-primary mb-0">New Case</a>
-=======
 									<a href="case-new.php" class="btn btn-dark btn-sm mb-0">
 										<i class="ni ni-fat-add me-1"></i> New Case
 									</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 								</div>
 							</div>
 						</div>
@@ -320,7 +304,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+								┬⌐ <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
 							</div>
 						</div>
 					</div>

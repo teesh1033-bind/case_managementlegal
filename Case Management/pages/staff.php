@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 
 $html = <<<'HTML'
@@ -115,20 +115,16 @@ $html = <<<'HTML'
 					<div class="card">
 						<div class="card-header pb-0 d-flex justify-content-between align-items-center">
 							<h6>Assigned Tasks</h6>
-<<<<<<< HEAD
-							<a href="tables.php#tasks" class="btn btn-sm btn-primary mb-0">View All</a>
-=======
 							<a href="tables.php#tasks" class="btn btn-sm btn-outline-dark">View All</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 						</div>
 						<div class="card-body">
 							<ul class="list-group">
 								<li class="list-group-item d-flex justify-content-between align-items-center">
-									Draft reply to notice · A. Smith
+									Draft reply to notice ┬╖ A. Smith
 									<span class="badge bg-gradient-warning">Due Today</span>
 								</li>
 								<li class="list-group-item d-flex justify-content-between align-items-center">
-									Client meeting · M. Levi
+									Client meeting ┬╖ M. Levi
 									<span class="badge bg-gradient-info">Tomorrow</span>
 								</li>
 							</ul>
@@ -143,11 +139,7 @@ $html = <<<'HTML'
 						<div class="card-body">
 							<div class="d-grid gap-2">
 								<button class="btn btn-dark">Clock In</button>
-<<<<<<< HEAD
-								<button class="btn btn-dark mb-0">Clock Out</button>
-=======
 								<button class="btn btn-outline-dark">Clock Out</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 							</div>
 							<hr class="horizontal dark">
 							<p class="text-sm mb-0">Today: 6h 20m</p>
@@ -162,11 +154,7 @@ $html = <<<'HTML'
 							<p class="text-sm mb-1">Salary: <strong>$3,200</strong></p>
 							<p class="text-sm mb-1">Bonuses: <strong>$400</strong></p>
 							<p class="text-sm mb-3">Deductions: <strong>$120</strong></p>
-<<<<<<< HEAD
-							<a href="#" class="btn btn-sm btn-secondary mb-0">Download Salary Slip (PDF)</a>
-=======
 							<a href="#" class="btn btn-sm btn-outline-primary">Download Salary Slip (PDF)</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 						</div>
 					</div>
 				</div>
@@ -176,7 +164,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
+								┬⌐ <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
 							</div>
 						</div>
 					</div>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 
 $message = '';
@@ -116,7 +116,7 @@ foreach ($cases as $case) {
     $status = isset($case['status']) && $case['status'] ? $case['status'] : 'open';
     $clientName = isset($case['client_name']) && $case['client_name'] ? $case['client_name'] : 'Unknown Client';
     $paymentCount = isset($case['payment_count']) ? (int)$case['payment_count'] : 0;
-    $lastPayment = isset($case['last_payment']) && $case['last_payment'] ? $case['last_payment'] : '—';
+    $lastPayment = isset($case['last_payment']) && $case['last_payment'] ? $case['last_payment'] : 'ΓÇö';
     $category = isset($case['category']) && $case['category'] ? $case['category'] : 'General';
 
     $totalFees += $estimated;
@@ -140,8 +140,8 @@ foreach ($cases as $case) {
         <tr>
             <td>
                 <div class="d-flex flex-column">
-                    <span class="text-sm fw-bold">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</span>
-                    <small class="text-muted">' . htmlspecialchars($clientName) . ' · ' . htmlspecialchars(ucfirst($category)) . '</small>
+                    <span class="text-sm fw-bold">' . htmlspecialchars($caseNumber . ' ┬╖ ' . $case['title']) . '</span>
+                    <small class="text-muted">' . htmlspecialchars($clientName) . ' ┬╖ ' . htmlspecialchars(ucfirst($category)) . '</small>
                 </div>
             </td>
             <td class="text-center">' . formatCurrency($estimated) . '</td>
@@ -156,14 +156,10 @@ foreach ($cases as $case) {
             </div>
         </td>
         <td class="text-center"><span class="badge ' . $badgeClass . '">' . htmlspecialchars(ucfirst($status)) . '</span></td>
-        <td class="text-center">' . ($paymentCount ? $paymentCount : '—') . '</td>
-        <td class="text-center">' . ($lastPayment !== '—' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
+        <td class="text-center">' . ($paymentCount ? $paymentCount : 'ΓÇö') . '</td>
+        <td class="text-center">' . ($lastPayment !== 'ΓÇö' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
         <td class="text-end">
-<<<<<<< HEAD
-            <button class="btn btn-sm btn-primary mb-0" data-case="' . $caseId . '" onclick="showPaymentHistory(' . $caseId . ')">View</button>
-=======
             <button class="btn btn-sm btn-dark" data-case="' . $caseId . '" onclick="showPaymentHistory(' . $caseId . ')">History</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         </td>
     </tr>';
 
@@ -178,7 +174,7 @@ foreach ($cases as $case) {
         'category' => $category,
         'priority' => isset($case['priority']) ? $case['priority'] : '',
         'last_payment' => $lastPayment,
-        'first_payment' => isset($case['first_payment']) && $case['first_payment'] ? $case['first_payment'] : '—'
+        'first_payment' => isset($case['first_payment']) && $case['first_payment'] ? $case['first_payment'] : 'ΓÇö'
     ];
 }
 
@@ -215,10 +211,10 @@ try {
         $historyData[$caseId][] = [
             'amount' => formatCurrency((float)$payment['amount']),
             'method' => ucfirst($payment['method']),
-            'reference' => $payment['reference'] ? $payment['reference'] : '—',
+            'reference' => $payment['reference'] ? $payment['reference'] : 'ΓÇö',
             'notes' => $payment['notes'] ? $payment['notes'] : '',
             'date' => $payment['payment_date'],
-            'recorded_by' => $payment['recorded_by'] ? $payment['recorded_by'] : '—',
+            'recorded_by' => $payment['recorded_by'] ? $payment['recorded_by'] : 'ΓÇö',
             'payment_id' => isset($payment['id']) ? (int)$payment['id'] : null
         ];
     }
@@ -244,7 +240,7 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro · Financial Summary</title>
+    <title>LegalPro ┬╖ Financial Summary</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -417,8 +413,8 @@ $html = <<<'HTML'
                 var header = '';
                 if (caseInfo) {
                     header = '<div class="mb-3">' +
-                        '<h6 class="mb-1">' + caseInfo.case_number + ' · ' + caseInfo.title + '</h6>' +
-                        '<p class="text-sm text-muted mb-0">' + caseInfo.client + ' · ' + caseInfo.category + '</p>' +
+                        '<h6 class="mb-1">' + caseInfo.case_number + ' ┬╖ ' + caseInfo.title + '</h6>' +
+                        '<p class="text-sm text-muted mb-0">' + caseInfo.client + ' ┬╖ ' + caseInfo.category + '</p>' +
                         '<div class="d-flex gap-3 text-sm mt-2">' +
                             '<span><strong>Total:</strong> ' + caseInfo.estimated + '</span>' +
                             '<span class="text-success"><strong>Paid:</strong> ' + caseInfo.paid + '</span>' +
@@ -433,19 +429,15 @@ $html = <<<'HTML'
                     for (var i = 0; i < payments.length; i++) {
                         var p = payments[i];
                         var receiptLink = p.payment_id
-<<<<<<< HEAD
-                            ? '<a class="btn btn-sm btn-secondary mb-0" href="payment-receipt.php?id=' + encodeURIComponent(p.payment_id) + '" target="_blank" rel="noopener">Receipt</a>'
-=======
                             ? '<a class="btn btn-sm btn-outline-dark" href="payment-receipt.php?id=' + encodeURIComponent(p.payment_id) + '" target="_blank" rel="noopener">Receipt</a>'
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
-                            : '<span class="text-muted">—</span>';
+                            : '<span class="text-muted">ΓÇö</span>';
                         list += '<tr>' +
                             '<td>' + p.date + '</td>' +
                             '<td>' + p.amount + '</td>' +
                             '<td>' + p.method + '</td>' +
-                            '<td>' + (p.reference || '—') + '</td>' +
-                            '<td>' + (p.notes ? p.notes : '—') + '</td>' +
-                            '<td>' + (p.recorded_by || '—') + '</td>' +
+                            '<td>' + (p.reference || 'ΓÇö') + '</td>' +
+                            '<td>' + (p.notes ? p.notes : 'ΓÇö') + '</td>' +
+                            '<td>' + (p.recorded_by || 'ΓÇö') + '</td>' +
                             '<td>' + receiptLink + '</td>' +
                         '</tr>';
                     }

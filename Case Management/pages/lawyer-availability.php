@@ -54,13 +54,9 @@ try {
     $timeSlots = [];
 }
 
-<<<<<<< HEAD
-$messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
-=======
 $alertExtraClass = ($messageType === 'success') ? ' text-white' : '';
 $closeBtnClass = ($messageType === 'success') ? 'btn-close btn-close-white' : 'btn-close';
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . $alertExtraClass . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="' . $closeBtnClass . '" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
@@ -128,18 +124,12 @@ $html = <<<'HTML'
             margin: 0;
         }
         .time-slot-delete-btn {
-<<<<<<< HEAD
             min-width: 68px;
             height: 30px;
-=======
-            width: 28px;
-            height: 28px;
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             display: inline-flex;
             align-items: center;
             justify-content: center;
             line-height: 1 !important;
-<<<<<<< HEAD
             padding: 0 10px !important;
             margin: 0;
             border-radius: 6px;
@@ -147,13 +137,6 @@ $html = <<<'HTML'
             font-weight: 700;
             white-space: nowrap;
             flex-shrink: 0;
-=======
-            padding: 0;
-            margin: 0;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 700;
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         }
         .time-slot.available {
             background: #d4edda;
@@ -372,11 +355,7 @@ foreach ($daysOfWeek as $day) {
             $slotClass = $slot['slot_type'] === 'available' ? 'available' : 'unavailable';
             $deleteBtn = '<form method="POST" class="time-slot-delete-form">
                             <input type="hidden" name="slot_id" value="' . $slot['id'] . '">
-<<<<<<< HEAD
                             <button type="submit" name="delete_slot" class="btn btn-sm btn-danger mb-0 time-slot-delete-btn" onclick="return confirm(\'Delete this time slot?\')" aria-label="Delete time slot">Delete</button>
-=======
-                            <button type="submit" name="delete_slot" class="btn btn-sm btn-danger btn-color-danger time-slot-delete-btn" onclick="return confirm(\'Delete this time slot?\')" aria-label="Delete time slot">&times;</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                           </form>';
 
             $scheduleHtml .= '<div class="time-slot ' . $slotClass . '">

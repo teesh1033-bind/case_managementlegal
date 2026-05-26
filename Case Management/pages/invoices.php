@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 
 $message = '';
@@ -238,7 +238,7 @@ foreach ($clients as $client) {
 $caseOptions = '<option value="">Linked case (optional)</option>';
 foreach ($casesList as $caseRow) {
     $selected = $formData['case_id'] == $caseRow['id'] ? ' selected' : '';
-    $caseOptions .= '<option value="' . (int)$caseRow['id'] . '"' . $selected . '>' . htmlspecialchars($caseRow['case_number'] . ' · ' . $caseRow['title'] . ' (' . $caseRow['client_name'] . ')') . '</option>';
+    $caseOptions .= '<option value="' . (int)$caseRow['id'] . '"' . $selected . '>' . htmlspecialchars($caseRow['case_number'] . ' ┬╖ ' . $caseRow['title'] . ' (' . $caseRow['client_name'] . ')') . '</option>';
 }
 
 try {
@@ -259,11 +259,7 @@ try {
 
 $invoiceRows = '';
 if (empty($invoices)) {
-<<<<<<< HEAD
-    $invoiceRows = '<tr><td colspan="6" class="text-center text-muted py-4">No invoices recorded yet.</td></tr>';
-=======
     $invoiceRows = '<tr><td colspan="7" class="text-center text-muted py-4">No invoices recorded yet.</td></tr>';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 } else {
     foreach ($invoices as $invoice) {
         $statusLabel = isset($statusOptions[strtolower($invoice['status'])]) ? $statusOptions[strtolower($invoice['status'])] : ucfirst($invoice['status']);
@@ -289,22 +285,6 @@ if (empty($invoices)) {
                     <small class="text-muted">' . ($invoice['issue_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['issue_date']))) : 'N/A') . '</small>
                 </div>
             </td>
-<<<<<<< HEAD
-            <td class="text-sm">' . htmlspecialchars($invoice['client_name'] ?: '—') . '</td>
-            <td class="text-center text-sm fw-semibold">' . htmlspecialchars(formatCurrency($invoice['amount'])) . '</td>
-            <td class="text-center">
-                <span class="badge ' . $badgeClass . ' text-uppercase" style="font-size: 0.65rem;">' . htmlspecialchars($statusLabel) . '</span>
-            </td>
-            <td class="text-center text-sm">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
-            <td class="text-end invoice-actions-cell">
-                <div class="btn-actions invoice-actions">
-                    <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>
-                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary mb-0" target="_blank">Download</a>
-                    <form method="post" class="d-inline-block mb-0" onsubmit="return confirm(\'Delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This cannot be undone.\');">
-                        <input type="hidden" name="form_type" value="delete">
-                        <input type="hidden" name="invoice_id" value="' . (int)$invoice['id'] . '">
-                        <button class="btn btn-sm btn-danger mb-0" type="submit">Delete</button>
-=======
             <td>
                 <p class="text-sm mb-0">' . htmlspecialchars($invoice['client_name'] ?: 'Client') . '</p>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($invoice['case_title'] ?: 'No case linked') . '</p>
@@ -324,7 +304,6 @@ if (empty($invoices)) {
                         <button class="btn btn-sm btn-danger" type="submit" title="Delete Invoice">
                             <i class="ni ni-fat-remove"></i>
                         </button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                     </form>
                 </div>
             </td>
@@ -357,7 +336,7 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro · Invoices</title>
+    <title>LegalPro ┬╖ Invoices</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -435,11 +414,7 @@ $html = <<<'HTML'
                                     <label class="form-label">Notes</label>
                                     <textarea class="form-control" rows="3" name="notes" placeholder="Payment terms, highlights...">{FORM_NOTES}</textarea>
                                 </div>
-<<<<<<< HEAD
-                                <button class="btn btn-primary w-100 mb-0">{FORM_BUTTON}</button>
-=======
                                 <button class="btn btn-dark w-100">{FORM_BUTTON}</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             </form>
                         </div>
                     </div>
@@ -451,19 +426,11 @@ $html = <<<'HTML'
                         </div>
                         <div class="card-body px-0 pt-0 pb-2">
                             <div class="table-responsive">
-<<<<<<< HEAD
-                                <table class="table align-items-center mb-0 invoice-list-table">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Invoice</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
-=======
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Invoice</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client / Case</th>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Amount</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Status</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Due</th>
@@ -484,7 +451,7 @@ $html = <<<'HTML'
                     <div class="row align-items-center justify-content-lg-between">
                         <div class="col-lg-6 mb-lg-0 mb-4">
                             <div class="text-center text-sm text-muted text-lg-start">
-                                © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+                                ┬⌐ <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
                             </div>
                         </div>
                     </div>

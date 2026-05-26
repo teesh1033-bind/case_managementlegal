@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
 
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : '';
         $expectedCompletion = isset($_POST['expected_completion']) ? $_POST['expected_completion'] : '';
 
-        // cases.user_id = client's portal user (not lawyer — lawyers use case_lawyers)
+        // cases.user_id = client's portal user (not lawyer ΓÇö lawyers use case_lawyers)
         $clientUserId = null;
         $stmt = $pdo->prepare("SELECT user_id FROM clients WHERE id = ?");
         $stmt->execute([$clientId]);
@@ -479,20 +479,16 @@ $clientOptions = '<option value="">Select client</option>';
 foreach ($clients as $client) {
     $fullName = trim($client['first_name'] . ' ' . $client['last_name']);
     $selected = ((int)$case['client_id'] === (int)$client['id']) ? ' selected' : '';
-<<<<<<< HEAD
-    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName) . '</option>';
-=======
     $hint = '';
     if (!empty($client['username'])) {
-        $hint = ' — login: ' . $client['username'];
+        $hint = ' ΓÇö login: ' . $client['username'];
     } elseif (!empty($client['email'])) {
-        $hint = ' — ' . $client['email'];
+        $hint = ' ΓÇö ' . $client['email'];
     }
     if (empty($client['user_id'])) {
         $hint .= ' (no client portal account)';
     }
     $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName . $hint) . '</option>';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 // Build lawyer checkboxes
@@ -537,13 +533,9 @@ foreach ($existingServices as $service) {
             <form method="post" class="d-inline" onsubmit="return confirm(\'Delete this service?\');">
                 <input type="hidden" name="form_type" value="delete_service">
                 <input type="hidden" name="service_id" value="' . (int)$service['id'] . '">
-<<<<<<< HEAD
-                <button class="btn btn-sm btn-danger mb-0" type="submit" title="Delete Service">Delete</button>
-=======
                 <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete Service">
                     <i class="ni ni-fat-remove"></i>
                 </button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             </form>
         </div>
     </div>';
@@ -629,13 +621,9 @@ if (!empty($tasks)) {
                 <form method="post" style="display: inline;" onsubmit="return confirm(\'Are you sure you want to delete this task? This will remove it from the assigned lawyer\'s task list.\')">
                     <input type="hidden" name="form_type" value="delete_task">
                     <input type="hidden" name="task_id" value="' . $task['id'] . '">
-<<<<<<< HEAD
-                    <button type="submit" class="btn btn-sm btn-danger mb-0">Delete</button>
-=======
                     <button type="submit" class="btn btn-sm btn-outline-danger">
                         <i class="ni ni-fat-remove"></i>
                     </button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </form>
             </td>
         </tr>';
@@ -657,13 +645,6 @@ foreach ($existingStages as $stage) {
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Stage ' . (int)$stage['stage_number'] . ': ' . htmlspecialchars($stage['title']) . '</h6>
             <div class="d-flex gap-2">
-<<<<<<< HEAD
-                <button class="btn btn-sm btn-dark mb-0" onclick="editStage(' . (int)$stage['id'] . ', ' . (int)$stage['stage_number'] . ', \'' . addslashes($stage['title']) . '\', \'' . addslashes($stage['description']) . '\', \'' . addslashes($stage['result']) . '\', \'' . (!empty($stage['start_date']) ? $stage['start_date'] : '') . '\', \'' . (!empty($stage['expected_end_date']) ? $stage['expected_end_date'] : '') . '\', \'' . (!empty($stage['actual_end_date']) ? $stage['actual_end_date'] : '') . '\')">Edit</button>
-                <form method="post" class="d-inline" onsubmit="return confirm(\'Delete this stage?\');">
-                    <input type="hidden" name="form_type" value="delete_stage">
-                    <input type="hidden" name="stage_id" value="' . (int)$stage['id'] . '">
-                    <button class="btn btn-sm btn-danger mb-0" type="submit">Delete</button>
-=======
                 <button class="btn btn-sm btn-outline-primary" onclick="editStage(' . (int)$stage['id'] . ', ' . (int)$stage['stage_number'] . ', \'' . addslashes($stage['title']) . '\', \'' . addslashes($stage['description']) . '\', \'' . addslashes($stage['result']) . '\', \'' . (!empty($stage['start_date']) ? $stage['start_date'] : '') . '\', \'' . (!empty($stage['expected_end_date']) ? $stage['expected_end_date'] : '') . '\', \'' . (!empty($stage['actual_end_date']) ? $stage['actual_end_date'] : '') . '\')">Edit</button>
                 <form method="post" class="d-inline" onsubmit="return confirm(\'Delete this stage?\');">
                     <input type="hidden" name="form_type" value="delete_stage">
@@ -671,7 +652,6 @@ foreach ($existingStages as $stage) {
                     <button class="btn btn-sm btn-outline-danger" type="submit">
                         <i class="ni ni-fat-remove"></i>
                     </button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </form>
             </div>
         </div>
@@ -700,11 +680,7 @@ foreach ($existingStages as $stage) {
                     <p class="text-sm">' . ($stage['actual_end_date'] ? date('M j, Y', strtotime($stage['actual_end_date'])) : 'Not set') . '</p>
                 </div>
             </div>
-<<<<<<< HEAD
-            ' . ($stage['file_path'] ? '<div class="mt-3"><a href="../' . htmlspecialchars($stage['file_path']) . '" target="_blank" class="btn btn-sm btn-primary mb-0">View Attached File</a></div>' : '') . '
-=======
             ' . ($stage['file_path'] ? '<div class="mt-3"><a href="../' . htmlspecialchars($stage['file_path']) . '" target="_blank" class="btn btn-sm btn-outline-primary">View Attached File</a></div>' : '') . '
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         </div>
     </div>';
 }
@@ -742,7 +718,7 @@ $html = <<<'HTML'
                         <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="case-view.php?id={CASE_ID}">Case View</a></li>
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">Edit Case</li>
                     </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">{CASE_NUMBER} · Edit Case</h6>
+                    <h6 class="font-weight-bolder text-white mb-0">{CASE_NUMBER} ┬╖ Edit Case</h6>
                 </nav>
             </div>
         </nav>
@@ -888,7 +864,7 @@ $html = <<<'HTML'
                     <div class="row align-items-center justify-content-lg-between">
                         <div class="col-lg-6 mb-lg-0 mb-4">
                             <div class="copyright text-center text-sm text-muted text-lg-start">
-                                © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+                                ┬⌐ <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
                             </div>
                         </div>
                     </div>

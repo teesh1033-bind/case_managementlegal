@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 
 $html = <<<'HTML'
@@ -149,7 +149,7 @@ $html = <<<'HTML'
 					<form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
 						<div class="input-group">
 							<span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-							<input type="search" name="q" class="form-control" placeholder="Search cases…" value="" autocomplete="off" maxlength="200" aria-label="Search">
+							<input type="search" name="q" class="form-control" placeholder="Search casesΓÇª" value="" autocomplete="off" maxlength="200" aria-label="Search">
 						</div>
 					</form>
 					<ul class="navbar-nav  justify-content-end">
@@ -371,11 +371,7 @@ $html = <<<'HTML'
 									<h6 class="mb-0">Invoices</h6>
 								</div>
 								<div class="col-6 text-end">
-<<<<<<< HEAD
-									<button class="btn btn-primary btn-sm mb-0">View All</button>
-=======
 									<button class="btn btn-outline-primary btn-sm mb-0">View All</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 								</div>
 							</div>
 						</div>
@@ -383,8 +379,8 @@ $html = <<<'HTML'
 							<ul class="list-group">
 								<li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
 									<div class="d-flex flex-column">
-										<h6 class="mb-1 text-dark font-weight-bold text-sm">Jane Doe · C-1013</h6>
-										<span class="text-xs">#INV-000234 · Due 15 Nov</span>
+										<h6 class="mb-1 text-dark font-weight-bold text-sm">Jane Doe ┬╖ C-1013</h6>
+										<span class="text-xs">#INV-000234 ┬╖ Due 15 Nov</span>
 									</div>
 									<div class="d-flex align-items-center text-sm">
 										$1,200
@@ -393,8 +389,8 @@ $html = <<<'HTML'
 								</li>
 								<li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
 									<div class="d-flex flex-column">
-										<h6 class="text-dark mb-1 font-weight-bold text-sm">Acme Ltd. · C-1029</h6>
-										<span class="text-xs">#INV-000235 · Due 20 Nov</span>
+										<h6 class="text-dark mb-1 font-weight-bold text-sm">Acme Ltd. ┬╖ C-1029</h6>
+										<span class="text-xs">#INV-000235 ┬╖ Due 20 Nov</span>
 									</div>
 									<div class="d-flex align-items-center text-sm">
 										$2,540
@@ -411,11 +407,7 @@ $html = <<<'HTML'
 					<div class="card">
 						<div class="card-header pb-0 px-3 d-flex justify-content-between align-items-center">
 							<h6 class="mb-0">Expenses</h6>
-<<<<<<< HEAD
-							<a class="btn btn-sm btn-dark mb-0" href="javascript:;">Add Expense</a>
-=======
 							<a class="btn btn-sm btn-outline-dark" href="javascript:;">Add Expense</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 						</div>
 						<div class="card-body pt-4 p-3">
 							<div class="table-responsive">
@@ -470,7 +462,7 @@ $html = <<<'HTML'
 									<div class="d-flex align-items-center">
 										<button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 btn-sm d-flex align-items-center justify-content-center"><i class="fas fa-arrow-up"></i></button>
 										<div class="d-flex flex-column">
-											<h6 class="mb-1 text-dark text-sm">Payment Received · Jane Doe</h6>
+											<h6 class="mb-1 text-dark text-sm">Payment Received ┬╖ Jane Doe</h6>
 											<span class="text-xs">11 Nov 2025, at 12:30 PM</span>
 										</div>
 									</div>
@@ -483,7 +475,7 @@ $html = <<<'HTML'
 									<div class="d-flex align-items-center">
 										<button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 btn-sm d-flex align-items-center justify-content-center"><i class="fas fa-arrow-up"></i></button>
 										<div class="d-flex flex-column">
-											<h6 class="mb-1 text-dark text-sm">Payment Received · Acme Ltd.</h6>
+											<h6 class="mb-1 text-dark text-sm">Payment Received ┬╖ Acme Ltd.</h6>
 											<span class="text-xs">10 Nov 2025, at 04:30 PM</span>
 										</div>
 									</div>
@@ -499,7 +491,7 @@ $html = <<<'HTML'
 									<div class="d-flex align-items-center">
 										<button class="btn btn-icon-only btn-rounded btn-outline-danger mb-0 me-3 btn-sm d-flex align-items-center justify-content-center"><i class="fas fa-arrow-down"></i></button>
 										<div class="d-flex flex-column">
-											<h6 class="mb-1 text-dark text-sm">Expense · Court Fees</h6>
+											<h6 class="mb-1 text-dark text-sm">Expense ┬╖ Court Fees</h6>
 											<span class="text-xs">09 Nov 2025, at 13:45 PM</span>
 										</div>
 									</div>
@@ -511,7 +503,7 @@ $html = <<<'HTML'
 									<div class="d-flex align-items-center">
 										<button class="btn btn-icon-only btn-rounded btn-outline-danger mb-0 me-3 btn-sm d-flex align-items-center justify-content-center"><i class="fas fa-arrow-down"></i></button>
 										<div class="d-flex flex-column">
-											<h6 class="mb-1 text-dark text-sm">Expense · Salary</h6>
+											<h6 class="mb-1 text-dark text-sm">Expense ┬╖ Salary</h6>
 											<span class="text-xs">09 Nov 2025, at 12:30 PM</span>
 										</div>
 									</div>
@@ -523,7 +515,7 @@ $html = <<<'HTML'
 									<div class="d-flex align-items-center">
 										<button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 btn-sm d-flex align-items-center justify-content-center"><i class="fas fa-arrow-up"></i></button>
 										<div class="d-flex flex-column">
-											<h6 class="mb-1 text-dark text-sm">Payment Received · Retainer</h6>
+											<h6 class="mb-1 text-dark text-sm">Payment Received ┬╖ Retainer</h6>
 											<span class="text-xs">09 Nov 2025, at 08:30 AM</span>
 										</div>
 									</div>
@@ -535,7 +527,7 @@ $html = <<<'HTML'
 									<div class="d-flex align-items-center">
 										<button class="btn btn-icon-only btn-rounded btn-outline-dark mb-0 me-3 btn-sm d-flex align-items-center justify-content-center"><i class="fas fa-exclamation"></i></button>
 										<div class="d-flex flex-column">
-											<h6 class="mb-1 text-dark text-sm">Pending · Bank Transfer</h6>
+											<h6 class="mb-1 text-dark text-sm">Pending ┬╖ Bank Transfer</h6>
 											<span class="text-xs">09 Nov 2025, at 05:00 AM</span>
 										</div>
 									</div>
@@ -553,7 +545,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>
+								┬⌐ <script>
 									document.write(new Date().getFullYear())
 								</script>,
 								made with <i class="fa fa-heart"></i> by

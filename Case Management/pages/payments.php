@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
 
@@ -235,12 +235,12 @@ foreach ($cases as $case) {
     $estimated = isset($case['estimated_fees']) ? (float)$case['estimated_fees'] : 0;
     $paid = isset($case['paid_total']) ? (float)$case['paid_total'] : 0;
     $balance = max($estimated - $paid, 0);
-    $lastPayment = isset($case['last_payment']) && $case['last_payment'] ? $case['last_payment'] : '—';
+    $lastPayment = isset($case['last_payment']) && $case['last_payment'] ? $case['last_payment'] : 'ΓÇö';
     $clientName = isset($case['client_name']) && $case['client_name'] ? $case['client_name'] : 'Unknown Client';
 
     $selectedAttr = $formData['case_id'] == $caseId ? ' selected' : '';
-    $caseOptions .= '<option value="' . $caseId . '"' . $selectedAttr . '>' . htmlspecialchars($caseNumber . ' · ' . $case['title'] . ' (' . $clientName . ')') . '</option>';
-    $ledgerOptions .= '<option value="' . $caseId . '">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</option>';
+    $caseOptions .= '<option value="' . $caseId . '"' . $selectedAttr . '>' . htmlspecialchars($caseNumber . ' ┬╖ ' . $case['title'] . ' (' . $clientName . ')') . '</option>';
+    $ledgerOptions .= '<option value="' . $caseId . '">' . htmlspecialchars($caseNumber . ' ┬╖ ' . $case['title']) . '</option>';
 
     $caseLedger[$caseId] = [
         'case_number' => $caseNumber,
@@ -259,19 +259,6 @@ foreach ($cases as $case) {
     if ($balance > 0.01) {
         $outstandingCount++;
         $totalOutstanding += $balance;
-<<<<<<< HEAD
-        $caseLabel = $caseNumber . ' · ' . $case['title'];
-
-        $outstandingRows .= '
-        <tr>
-            <td class="pw-case">
-                <span class="text-sm fw-semibold d-block text-truncate" title="' . htmlspecialchars($caseLabel) . '">' . htmlspecialchars($caseLabel) . '</span>
-                <span class="text-xs text-muted d-block text-truncate">' . htmlspecialchars($clientName) . '</span>
-            </td>
-            <td class="text-sm pw-fee">' . formatCurrency($estimated) . '</td>
-            <td class="text-sm text-success pw-paid">' . formatCurrency($paid) . '</td>
-            <td class="text-sm fw-bold text-warning pw-balance">' . formatCurrency($balance) . '</td>
-=======
         $badgeClass = 'badge bg-gradient-warning';
         if ($balance <= ($estimated * 0.2)) {
             $badgeClass = 'badge bg-gradient-success';
@@ -281,7 +268,7 @@ foreach ($cases as $case) {
         <tr>
             <td>
                 <div class="d-flex flex-column">
-                    <span class="text-sm fw-bold">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</span>
+                    <span class="text-sm fw-bold">' . htmlspecialchars($caseNumber . ' ┬╖ ' . $case['title']) . '</span>
                     <small class="text-muted">' . htmlspecialchars($clientName) . '</small>
                 </div>
             </td>
@@ -290,18 +277,13 @@ foreach ($cases as $case) {
             <td class="text-center">
                 <span class="' . $badgeClass . '">' . formatCurrency($balance) . '</span>
             </td>
-            <td class="text-end text-xs">' . ($lastPayment !== '—' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
+            <td class="text-end text-xs">' . ($lastPayment !== 'ΓÇö' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
         </tr>';
     }
 }
 
 if (!$outstandingRows) {
-<<<<<<< HEAD
-    $outstandingRows = '<tr><td colspan="4" class="text-center py-4 text-muted">All cases are fully paid.</td></tr>';
-=======
     $outstandingRows = '<tr><td colspan="5" class="text-center py-4 text-muted">All cases are fully paid.</td></tr>';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 // Totals
@@ -345,45 +327,23 @@ if (empty($recentPayments)) {
     $recentPaymentsRows = '<tr><td colspan="5" class="text-center py-4 text-muted">No payments recorded yet.</td></tr>';
 } else {
     foreach ($recentPayments as $payment) {
-<<<<<<< HEAD
-        $clientName = isset($payment['client_name']) && $payment['client_name'] ? $payment['client_name'] : 'Unknown Client';
-        $methodLabel = isset($allowedMethods[$payment['method']]) ? $allowedMethods[$payment['method']] : ucfirst($payment['method']);
-        $payDate = !empty($payment['payment_date'])
-            ? date('d M Y', strtotime($payment['payment_date']))
-            : '—';
-        $notesRaw = isset($payment['notes']) && $payment['notes'] ? trim($payment['notes']) : '';
-        if ($notesRaw !== '') {
-            $notesCell = '<span class="text-xs text-muted payments-notes-cell d-block text-truncate" title="' . htmlspecialchars($notesRaw) . '">' . htmlspecialchars($notesRaw) . '</span>';
-        } else {
-            $notesCell = '<span class="text-muted">—</span>';
-        }
-
-        $recentPaymentsRows .= '
-        <tr>
-            <td class="text-sm fw-semibold pw-client">' . htmlspecialchars($clientName) . '</td>
-            <td class="text-sm fw-semibold pw-amount">' . formatCurrency($payment['amount']) . '</td>
-            <td class="pw-method"><span class="badge bg-gradient-secondary">' . htmlspecialchars($methodLabel) . '</span></td>
-            <td class="text-sm text-muted pw-date">' . htmlspecialchars($payDate) . '</td>
-            <td class="pw-notes">' . $notesCell . '</td>
-=======
         $caseNumber = 'C-' . str_pad($payment['case_id'], 4, '0', STR_PAD_LEFT);
         $clientName = isset($payment['client_name']) && $payment['client_name'] ? $payment['client_name'] : 'Unknown Client';
         $methodLabel = isset($allowedMethods[$payment['method']]) ? $allowedMethods[$payment['method']] : ucfirst($payment['method']);
-        $notesPreview = isset($payment['notes']) && $payment['notes'] ? htmlspecialchars($payment['notes']) : '<span class="text-muted">—</span>';
+        $notesPreview = isset($payment['notes']) && $payment['notes'] ? htmlspecialchars($payment['notes']) : '<span class="text-muted">ΓÇö</span>';
 
         $recentPaymentsRows .= '
         <tr>
             <td>
                 <div class="d-flex flex-column">
                     <span class="text-sm fw-bold">' . htmlspecialchars($clientName) . '</span>
-                    <small class="text-muted">' . htmlspecialchars($caseNumber . ' · ' . $payment['case_title']) . '</small>
+                    <small class="text-muted">' . htmlspecialchars($caseNumber . ' ┬╖ ' . $payment['case_title']) . '</small>
                 </div>
             </td>
             <td class="text-center">' . formatCurrency($payment['amount']) . '</td>
             <td class="text-center"><span class="badge bg-gradient-dark">' . htmlspecialchars($methodLabel) . '</span></td>
             <td class="text-center">' . htmlspecialchars($payment['payment_date']) . '</td>
             <td class="text-end text-xs">' . $notesPreview . '</td>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         </tr>';
     }
 }
@@ -410,18 +370,13 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro · Payments</title>
+    <title>LegalPro ┬╖ Payments</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<<<<<<< HEAD
-<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-<link href="../assets/css/legalpro-buttons.css?v=5" rel="stylesheet" />
-=======
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -583,11 +538,7 @@ $html = <<<'HTML'
                                 <select class="form-select form-select-sm" id="ledger_case_select">
                                     {LEDGER_OPTIONS}
                                 </select>
-<<<<<<< HEAD
-                                <a href="financial-summary.php" class="btn btn-sm btn-dark mb-0">Financial Summary</a>
-=======
                                 <a href="financial-summary.php" class="btn btn-sm btn-outline-dark">Financial Summary</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             </div>
                         </div>
                         <div class="card-body">
@@ -595,31 +546,19 @@ $html = <<<'HTML'
                                 <div class="col-md-4">
                                     <div class="border rounded p-3 text-center mb-3">
                                         <p class="text-xs text-muted mb-1">Total Fee</p>
-<<<<<<< HEAD
-                                        <h5 class="mb-0" id="ledger-fee">{CURRENCY_ZERO}</h5>
-=======
                                         <h5 class="mb-0" id="ledger-fee">$0.00</h5>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="border rounded p-3 text-center mb-3">
                                         <p class="text-xs text-muted mb-1">Paid</p>
-<<<<<<< HEAD
-                                        <h5 class="mb-0 text-success" id="ledger-paid">{CURRENCY_ZERO}</h5>
-=======
                                         <h5 class="mb-0 text-success" id="ledger-paid">$0.00</h5>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="border rounded p-3 text-center mb-3">
                                         <p class="text-xs text-muted mb-1">Balance</p>
-<<<<<<< HEAD
-                                        <h5 class="mb-0 text-warning" id="ledger-balance">{CURRENCY_ZERO}</h5>
-=======
                                         <h5 class="mb-0 text-warning" id="ledger-balance">$0.00</h5>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                     </div>
                                 </div>
                             </div>
@@ -631,10 +570,10 @@ $html = <<<'HTML'
                             </div>
                             <div class="d-flex justify-content-between text-sm">
                                 <div>
-                                    <strong>Status:</strong> <span id="ledger-status">—</span>
+                                    <strong>Status:</strong> <span id="ledger-status">ΓÇö</span>
                                 </div>
                                 <div>
-                                    <strong>Last payment:</strong> <span id="ledger-last-payment">—</span>
+                                    <strong>Last payment:</strong> <span id="ledger-last-payment">ΓÇö</span>
                                 </div>
                             </div>
                         </div>
@@ -643,22 +582,6 @@ $html = <<<'HTML'
             </div>
             <div class="row mt-4">
                 <div class="col-lg-7">
-<<<<<<< HEAD
-                    <div class="card payments-widget-card">
-                        <div class="card-header pb-0">
-                            <h6>Recent Payments</h6>
-                        </div>
-                        <div class="card-body px-3 pt-0 pb-2">
-                            <div class="table-responsive">
-                                <table class="table align-items-center mb-0 payments-widget-table">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-client">Client</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-amount">Amount</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-method">Method</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-date">Date</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-notes">Notes</th>
-=======
                     <div class="card">
                         <div class="card-header pb-0">
                             <h6>Recent Payments</h6>
@@ -673,7 +596,6 @@ $html = <<<'HTML'
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Method</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Date</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end opacity-7">Notes</th>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -685,22 +607,6 @@ $html = <<<'HTML'
                     </div>
                 </div>
                 <div class="col-lg-5 mt-4 mt-lg-0">
-<<<<<<< HEAD
-                    <div class="card h-100 payments-widget-card">
-                        <div class="card-header pb-0">
-                            <h6>Outstanding Balances</h6>
-                            <p class="text-sm text-muted mb-0">Cases with a remaining balance.</p>
-                        </div>
-                        <div class="card-body px-3 pt-0 pb-2">
-                            <div class="table-responsive">
-                                <table class="table align-items-center mb-0 payments-widget-table payments-widget-table--outstanding">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-case">Case</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-fee">Fee</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-paid">Paid</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pw-balance">Balance</th>
-=======
                     <div class="card h-100">
                         <div class="card-header pb-0">
                             <h6>Outstanding Balances</h6>
@@ -716,7 +622,6 @@ $html = <<<'HTML'
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Paid</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Balance</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end opacity-7">Last Payment</th>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -756,9 +661,9 @@ $html = <<<'HTML'
                     feeEl.textContent = data.estimated;
                     paidEl.textContent = data.paid;
                     balanceEl.textContent = data.balance;
-                    statusEl.textContent = data.status ? data.status.toUpperCase() : '—';
-                    lastEl.textContent = data.last_payment && data.last_payment !== '—' ? data.last_payment : 'No payments';
-                    labelEl.textContent = data.case_number + ' · ' + data.title + ' (' + data.client + ')';
+                    statusEl.textContent = data.status ? data.status.toUpperCase() : 'ΓÇö';
+                    lastEl.textContent = data.last_payment && data.last_payment !== 'ΓÇö' ? data.last_payment : 'No payments';
+                    labelEl.textContent = data.case_number + ' ┬╖ ' + data.title + ' (' + data.client + ')';
                     var fee = parseFloat(data.estimated_raw || 0);
                     var paid = parseFloat(data.paid_raw || 0);
                     var percent = fee ? Math.min(100, Math.round((paid / fee) * 100)) : 0;
@@ -767,8 +672,8 @@ $html = <<<'HTML'
                     feeEl.textContent = currencyZero;
                     paidEl.textContent = currencyZero;
                     balanceEl.textContent = currencyZero;
-                    statusEl.textContent = '—';
-                    lastEl.textContent = '—';
+                    statusEl.textContent = 'ΓÇö';
+                    lastEl.textContent = 'ΓÇö';
                     labelEl.textContent = 'Select a case to view its balance.';
                     setProgress(0);
                 }

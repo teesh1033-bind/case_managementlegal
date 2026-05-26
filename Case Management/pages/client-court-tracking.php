@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-<?php
-=======
 ﻿<?php
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 
@@ -119,26 +115,11 @@ if (!empty($_SESSION['error_message'])) {
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<<<<<<< HEAD
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-=======
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     <link rel="stylesheet" href="../assets/css/simple-calendar.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.css" />
     <style>
         .client-court-tracking-page { --cct-radius: 1.15rem; }
-<<<<<<< HEAD
-        .client-court-tracking-page .navbar-main {
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.9) !important;
-            border: 1px solid rgba(255, 255, 255, 0.6) !important;
-            box-shadow: 0 0.35rem 1.25rem rgba(52, 71, 103, 0.08) !important;
-            margin-top: 20px;
-        }
-        .client-court-tracking-page .breadcrumb .text-dark { color: #344767 !important; }
-=======
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         .client-court-tracking-page .cct-hero {
             border-radius: var(--cct-radius);
             background: #fff;
@@ -285,13 +266,8 @@ if (!empty($_SESSION['error_message'])) {
         .status-postponed { background-color: #fb6340; color: #fff; }
     </style>
 </head>
-<<<<<<< HEAD
-<body class="g-sidenav-show bg-gray-100 client-court-tracking-page">
-    <div class="min-height-300 bg-primary position-absolute w-100"></div>
-=======
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal client-court-tracking-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
@@ -359,36 +335,21 @@ if (!empty($_SESSION['error_message'])) {
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-<<<<<<< HEAD
-                        <li class="breadcrumb-item text-sm"><a class="opacity-6 text-dark" href="client-dashboard.php">Client</a></li>
-                        <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Court tracking</li>
-                    </ol>
-                    <h5 class="font-weight-bolder mb-0 text-dark">Court tracking</h5>
-=======
                         <li class="breadcrumb-item text-sm"><a class="opacity-6 text-white" href="client-dashboard.php">Client</a></li>
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">Court tracking</li>
                     </ol>
                     <h5 class="font-weight-bolder mb-0 text-white">Court tracking</h5>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-<<<<<<< HEAD
-                            <input type="search" name="q" class="form-control" placeholder="Search hearings & cases…" value="" autocomplete="off" maxlength="200" aria-label="Search">
-=======
                             <input type="search" name="q" class="form-control" placeholder="Search hearings & casesΓÇª" value="" autocomplete="off" maxlength="200" aria-label="Search">
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                         </div>
                     </form>
                     <ul class="navbar-nav justify-content-end">
                         <li class="nav-item d-flex align-items-center">
-<<<<<<< HEAD
-                            <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
-=======
                             <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                 <i class="fa fa-user me-sm-1"></i>
                                 <span class="d-sm-inline d-none">Welcome, <?php echo htmlspecialchars($clientName); ?></span>
                             </a>
@@ -453,15 +414,9 @@ if (!empty($_SESSION['error_message'])) {
                         <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2">
                             <div>
                                 <h5 class="text-dark">Calendar</h5>
-<<<<<<< HEAD
-                                <p class="text-sm text-muted mb-0">Month, week, or day — click an entry to open details.</p>
-                            </div>
-                            <a href="client-dashboard.php" class="btn btn-sm btn-primary mb-0">Dashboard</a>
-=======
                                 <p class="text-sm text-muted mb-0">Month, week, or day ΓÇö click an entry to open details.</p>
                             </div>
                             <a href="client-dashboard.php" class="btn btn-sm btn-outline-primary mb-0">Dashboard</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                         </div>
                         <div class="cct-cal-wrap">
                             <div id="calendar"></div>
@@ -478,11 +433,7 @@ if (!empty($_SESSION['error_message'])) {
                                 <h5 class="text-dark">All court dates</h5>
                                 <p class="text-sm text-muted mb-0">Sorted by date, earliest first.</p>
                             </div>
-<<<<<<< HEAD
-                            <a href="client-cases.php" class="btn btn-sm btn-primary mb-0">My cases</a>
-=======
                             <a href="client-cases.php" class="btn btn-sm btn-outline-primary mb-0">My cases</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                         </div>
                         <div class="card-body px-0 pt-0 pb-0">
                             <?php if (empty($court_dates)): ?>
@@ -552,11 +503,7 @@ if (!empty($_SESSION['error_message'])) {
                                                         <?php echo $rowStatusBadge; ?>
                                                     </td>
                                                     <td class="align-middle text-end pe-4">
-<<<<<<< HEAD
-                                                        <button type="button" class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View details">
-=======
                                                         <button type="button" class="btn btn-sm btn-outline-primary mb-0" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View details">
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                                             Details
                                                         </button>
                                                     </td>

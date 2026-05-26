@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Case Events Tracking System
  * Tracks all activities and changes for cases
@@ -169,25 +169,17 @@ class CaseEvents {
             'service_added',
             "Added service: {$serviceData['service_name']}",
             null,
-<<<<<<< HEAD
-            formatCurrency($serviceData['price'])
-=======
             '$' . number_format($serviceData['price'], 2)
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         );
     }
 
     public static function trackServiceUpdated($caseId, $serviceId, $oldData, $newData) {
         $changes = [];
         if ($oldData['service_name'] != $newData['service_name']) {
-            $changes[] = "Name: '{$oldData['service_name']}' → '{$newData['service_name']}'";
+            $changes[] = "Name: '{$oldData['service_name']}' ΓåÆ '{$newData['service_name']}'";
         }
         if ($oldData['price'] != $newData['price']) {
-<<<<<<< HEAD
-            $changes[] = "Price: " . formatCurrency($oldData['price']) . " → " . formatCurrency($newData['price']);
-=======
-            $changes[] = "Price: $" . number_format($oldData['price'], 2) . " → $" . number_format($newData['price'], 2);
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
+            $changes[] = "Price: $" . number_format($oldData['price'], 2) . " ΓåÆ $" . number_format($newData['price'], 2);
         }
 
         if (!empty($changes)) {
@@ -206,11 +198,7 @@ class CaseEvents {
             $caseId,
             'service_deleted',
             "Removed service: {$serviceData['service_name']}",
-<<<<<<< HEAD
-            formatCurrency($serviceData['price']),
-=======
             '$' . number_format($serviceData['price'], 2),
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             null
         );
     }
@@ -224,11 +212,7 @@ class CaseEvents {
             'payment_added',
             "Payment recorded",
             null,
-<<<<<<< HEAD
-            formatCurrency($paymentData['amount']) . " ({$paymentData['method']})"
-=======
             '$' . number_format($paymentData['amount'], 2) . " ({$paymentData['method']})"
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         );
     }
 
@@ -368,10 +352,10 @@ class CaseEvents {
     public static function trackAppointmentUpdated($caseId, $oldData, $newData) {
         $changes = [];
         if ($oldData['starts_at'] != $newData['starts_at']) {
-            $changes[] = "Time: " . date('M j, Y g:i A', strtotime($oldData['starts_at'])) . " → " . date('M j, Y g:i A', strtotime($newData['starts_at']));
+            $changes[] = "Time: " . date('M j, Y g:i A', strtotime($oldData['starts_at'])) . " ΓåÆ " . date('M j, Y g:i A', strtotime($newData['starts_at']));
         }
         if ($oldData['status'] != $newData['status']) {
-            $changes[] = "Status: " . ucfirst($oldData['status']) . " → " . ucfirst($newData['status']);
+            $changes[] = "Status: " . ucfirst($oldData['status']) . " ΓåÆ " . ucfirst($newData['status']);
         }
 
         if (!empty($changes)) {

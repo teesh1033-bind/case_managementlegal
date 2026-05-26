@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
@@ -280,15 +280,8 @@ if (empty($documents)) {
             <td class="text-center">' . htmlspecialchars($fileType) . '</td>
             <td class="text-center">' . $fileSizeFormatted . '</td>
             <td class="text-end">
-<<<<<<< HEAD
-                <div class="btn-actions">
-                <a href="' . htmlspecialchars($fileUrl) . '" target="_blank" class="btn btn-sm btn-primary mb-0">View</a>
-                <a href="' . htmlspecialchars($fileUrl) . '" download class="btn btn-sm btn-secondary mb-0">Download</a>
-                </div>
-=======
                 <a href="' . htmlspecialchars($fileUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
                 <a href="' . htmlspecialchars($fileUrl) . '" download class="btn btn-sm btn-outline-secondary">Download</a>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             </td>
         </tr>';
     }
@@ -637,7 +630,7 @@ $html = <<<'HTML'
                 <div class="row align-items-center justify-content-lg-between">
                     <div class="col-lg-6 mb-lg-0 mb-4">
                         <div class="copyright text-center text-sm text-muted text-lg-start">
-                            © <script>document.write(new Date().getFullYear())</script>, LegalPro Lawyer Portal.
+                            ┬⌐ <script>document.write(new Date().getFullYear())</script>, LegalPro Lawyer Portal.
                         </div>
                     </div>
                 </div>

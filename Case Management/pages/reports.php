@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 
 $html = <<<'HTML'
@@ -89,11 +89,7 @@ $html = <<<'HTML'
 								<input class="form-control" type="text" placeholder="Search...">
 							</div>
 							<button class="btn btn-dark">Generate</button>
-<<<<<<< HEAD
-							<button class="btn btn-dark ms-2 mb-0">Export PDF</button>
-=======
 							<button class="btn btn-outline-dark ms-2">Export PDF</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 						</div>
 					</div>
 				</div>
@@ -136,7 +132,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
+								┬⌐ <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
 							</div>
 						</div>
 					</div>

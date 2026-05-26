@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 
@@ -10,19 +10,6 @@ if (!isset($_SESSION['lawyer_id'])) {
 
 $lawyerId = $_SESSION['lawyer_id'];
 
-<<<<<<< HEAD
-require_once __DIR__ . '/../inc/ensure-court-dates-table.php';
-
-$tableExists = ensureCourtDatesTable($pdo);
-if (!$tableExists) {
-    $_SESSION['error_message'] = 'Could not initialize court dates storage.';
-}
-
-// Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!ensureCourtDatesTable($pdo)) {
-        $_SESSION['error_message'] = 'Court dates table is not available.';
-=======
 // Check if court_dates table exists
 $tableExists = false;
 try {
@@ -44,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->query("SHOW TABLES LIKE 'court_dates'");
     if (!$stmt->fetch()) {
         $_SESSION['error_message'] = "Court dates table not found. Please create the table first.";
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         header('Location: lawyer-court-tracking.php');
         exit;
     }
@@ -55,11 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $title = trim($_POST['title']);
         $description = trim($_POST['description']);
         $location = trim($_POST['location']);
-<<<<<<< HEAD
-        $created_by = (int)($_SESSION['lawyer_user_id'] ?? $_SESSION['lawyer_id'] ?? 0);
-=======
         $created_by = (int)$_SESSION['lawyer_id'];
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
         // Verify the case is assigned to this lawyer
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM case_lawyers WHERE case_id = ? AND lawyer_id = ?");
@@ -388,7 +370,7 @@ NAV;
                     <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="Search…" value="" autocomplete="off" maxlength="200" aria-label="Search">
+                            <input type="search" name="q" class="form-control" placeholder="SearchΓÇª" value="" autocomplete="off" maxlength="200" aria-label="Search">
                         </div>
                     </form>
                     <ul class="navbar-nav justify-content-end">
@@ -471,19 +453,6 @@ NAV;
                                                     </span>
                                                 </td>
                                                 <td>
-<<<<<<< HEAD
-                                                    <div class="btn-actions">
-                                                    <button class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo $date['id']; ?>)" title="View Details">
-                                                        <i class="fas fa-eye"></i> View
-                                                    </button>
-                                                    <button class="btn btn-sm btn-dark mb-0" onclick="editCourtDate(<?php echo $date['id']; ?>)" title="Edit Court Date">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger mb-0" onclick="deleteCourtDate(<?php echo $date['id']; ?>)" title="Delete Court Date">
-                                                        <i class="fas fa-trash"></i> Delete
-                                                    </button>
-                                                    </div>
-=======
                                                     <button class="btn btn-info btn-sm me-1" onclick="viewCourtDate(<?php echo $date['id']; ?>)" title="View Details">
                                                         <i class="fas fa-eye"></i> View
                                                     </button>
@@ -493,7 +462,6 @@ NAV;
                                                     <button class="btn btn-danger btn-sm" onclick="deleteCourtDate(<?php echo $date['id']; ?>)" title="Delete Court Date">
                                                         <i class="fas fa-trash"></i> Delete
                                                     </button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>

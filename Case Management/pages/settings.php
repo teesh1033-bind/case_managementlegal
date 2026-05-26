@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 
 $message = '';
@@ -173,19 +173,11 @@ $html = <<<'HTML'
 							<ul class="list-group">
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Contract Law
-<<<<<<< HEAD
-									<button class="btn btn-sm btn-danger mb-0">Remove</button>
-								</li>
-								<li class="list-group-item d-flex justify-content-between align-items-center">
-									Family Law
-									<button class="btn btn-sm btn-danger mb-0">Remove</button>
-=======
 									<button class="btn btn-sm btn-danger">Remove</button>
 								</li>
 								<li class="list-group-item d-flex justify-content-between align-items-center">
 									Family Law
 									<button class="btn btn-sm btn-danger">Remove</button>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 								</li>
 							</ul>
 						</div>
@@ -215,7 +207,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
+								┬⌐ <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
 							</div>
 						</div>
 					</div>

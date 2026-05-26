@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-<?php
-session_start();
-require_once __DIR__ . '/../inc/db.php';
-=======
 ﻿<?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
-require_once __DIR__ . '/../inc/password-validation.php';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -18,17 +11,6 @@ if (!isset($_SESSION['admin_id'])) {
 $message = '';
 $messageType = '';
 $editLawyer = null;
-<<<<<<< HEAD
-=======
-$newPasswordErrorHtml = '';
-$newConfirmErrorHtml = '';
-$updatePasswordErrorHtml = '';
-$updateConfirmErrorHtml = '';
-$newPasswordInvalidClass = '';
-$newConfirmInvalidClass = '';
-$updatePasswordInvalidClass = '';
-$updateConfirmInvalidClass = '';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 // Ensure lawyer tables exist
 try {
@@ -71,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newRole = isset($_POST['new_role']) ? $_POST['new_role'] : 'lawyer';
 
             // Validate new user data
-<<<<<<< HEAD
             if (empty($newUsername) || empty($newPassword)) {
                 $message = 'Username and password are required for new user account.';
                 $messageType = 'danger';
@@ -82,24 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Password must be at least 6 characters long.';
                 $messageType = 'danger';
             } else {
-=======
-            if (empty($newUsername)) {
-                $message = 'Username is required for new user account.';
-                $messageType = 'danger';
-            } else {
-                $passwordCheck = legalpro_validate_password_pair($newPassword, $newPasswordConfirm);
-                if (!$passwordCheck['valid']) {
-                    $message = legalpro_password_form_message($passwordCheck);
-                    $messageType = 'danger';
-                    $newPasswordErrorHtml = legalpro_password_field_error_html($passwordCheck['password_errors']);
-                    $newConfirmErrorHtml = legalpro_password_field_error_html($passwordCheck['confirm_error']);
-                    $newPasswordInvalidClass = legalpro_password_input_invalid_class($passwordCheck['password_errors']);
-                    $newConfirmInvalidClass = legalpro_password_input_invalid_class($passwordCheck['confirm_error']);
-                }
-            }
-
-            if ($messageType !== 'danger') {
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 // Check if username already exists
                 $checkStmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
                 $checkStmt->execute([$newUsername]);
@@ -128,7 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'danger';
         } elseif ($createNewUser && !empty($message)) {
             // Error message already set above
-<<<<<<< HEAD
         } elseif (!empty($updatePassword) && $updatePassword !== $confirmPassword) {
             $message = 'Passwords do not match.';
             $messageType = 'danger';
@@ -136,22 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Password must be at least 6 characters long.';
             $messageType = 'danger';
         } else {
-=======
-        } else {
-            if (!empty($updatePassword) || !empty($confirmPassword)) {
-                $passwordCheck = legalpro_validate_optional_password_update($updatePassword, $confirmPassword);
-                if (!$passwordCheck['valid']) {
-                    $message = legalpro_password_form_message($passwordCheck);
-                    $messageType = 'danger';
-                    $updatePasswordErrorHtml = legalpro_password_field_error_html($passwordCheck['password_errors']);
-                    $updateConfirmErrorHtml = legalpro_password_field_error_html($passwordCheck['confirm_error']);
-                    $updatePasswordInvalidClass = legalpro_password_input_invalid_class($passwordCheck['password_errors']);
-                    $updateConfirmInvalidClass = legalpro_password_input_invalid_class($passwordCheck['confirm_error']);
-                }
-            }
-
-            if ($messageType !== 'danger') {
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             try {
                 if ($lawyerId) {
                     // Update existing lawyer
@@ -234,10 +180,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Error saving lawyer: ' . htmlspecialchars($e->getMessage());
                 $messageType = 'danger';
             }
-<<<<<<< HEAD
-=======
-            }
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         }
     } elseif ($formType === 'delete_lawyer') {
         $lawyerId = isset($_POST['lawyer_id']) ? (int)$_POST['lawyer_id'] : 0;
@@ -331,11 +273,7 @@ foreach ($availableUsers as $user) {
 
 $lawyersTable = '';
 if (empty($lawyers)) {
-<<<<<<< HEAD
-    $lawyersTable = '<tr><td colspan="6" class="text-center text-muted py-4">No lawyers added yet.</td></tr>';
-=======
     $lawyersTable = '<tr><td colspan="5" class="text-center text-muted py-4">No lawyers added yet.</td></tr>';
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 } else {
     foreach ($lawyers as $lawyer) {
         $statusBadge = $lawyer['is_active'] ? '<span class="badge bg-gradient-success">Active</span>' : '<span class="badge bg-gradient-secondary">Inactive</span>';
@@ -363,10 +301,6 @@ if (empty($lawyers)) {
                 <span class="text-sm font-weight-bold">' . $activeCases . '</span>
                 <p class="text-xs text-muted mb-0">active cases</p>
             </td>
-<<<<<<< HEAD
-            <td class="text-center">
-                <p class="text-sm mb-0">' . htmlspecialchars($lawyer['available_days'] ?: 'Not set') . '</p>
-            </td>
             <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
                     <div class="btn-actions">
@@ -377,16 +311,6 @@ if (empty($lawyers)) {
                         <button class="btn btn-sm btn-danger mb-0" type="submit">Delete</button>
                     </form>
                     </div>
-=======
-            <td class="text-end">
-                <div class="d-flex gap-1 justify-content-end">
-                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-dark">Edit</a>
-                    <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete ' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '? This action cannot be undone.\');">
-                        <input type="hidden" name="form_type" value="delete_lawyer">
-                        <input type="hidden" name="lawyer_id" value="' . (int)$lawyer['id'] . '">
-                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
-                    </form>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </div>
             </td>
         </tr>';
@@ -500,10 +424,6 @@ $html = <<<'HTML'
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Specialization</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cases</th>
-<<<<<<< HEAD
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Availability</th>
-=======
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
@@ -522,11 +442,7 @@ $html = <<<'HTML'
                     <div class="row align-items-center justify-content-lg-between">
                         <div class="col-lg-6 mb-lg-0 mb-4">
                             <div class="copyright text-center text-sm text-muted text-lg-start">
-<<<<<<< HEAD
                                 © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
-=======
-                                ┬⌐ <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             </div>
                         </div>
                     </div>
@@ -576,11 +492,6 @@ $html = <<<'HTML'
 
                         <!-- User Account Update Section (for existing lawyers) -->
                         <div id="user_update_section" style="display: none;">
-<<<<<<< HEAD
-=======
-                            <p class="text-xs text-muted mb-2">Leave password fields empty to keep the current password.</p>
-                            {PASSWORD_REQUIREMENTS}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Username</label>
@@ -589,25 +500,14 @@ $html = <<<'HTML'
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">New Password</label>
-<<<<<<< HEAD
                                     <input type="password" class="form-control" name="update_password" id="update_password">
                                     <small class="text-muted">Leave empty to keep current password</small>
-=======
-                                    <input type="password" class="form-control{UPDATE_PASSWORD_INVALID}" name="update_password" id="update_password" minlength="8" maxlength="128" autocomplete="new-password">
-                                    <small class="text-muted">Leave empty to keep current password</small>
-                                    {UPDATE_PASSWORD_ERROR}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Confirm New Password</label>
-<<<<<<< HEAD
                                     <input type="password" class="form-control" name="confirm_password" id="confirm_password">
-=======
-                                    <input type="password" class="form-control{UPDATE_CONFIRM_INVALID}" name="confirm_password" id="confirm_password" minlength="8" maxlength="128" autocomplete="new-password">
-                                    {UPDATE_CONFIRM_ERROR}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                 </div>
                             </div>
                             <div class="alert alert-warning">
@@ -618,12 +518,7 @@ $html = <<<'HTML'
                         <!-- New User Account Creation Form (hidden by default) -->
                         <div id="create_user_form" style="display: none;" class="border border-primary border-2 rounded p-3 mb-3 bg-light">
                             <h6 class="mb-1 text-primary fw-bold">Create New User Account</h6>
-<<<<<<< HEAD
                             <p class="text-xs text-muted mb-3">Fill in the fields below, then save the lawyer at the bottom of this form.</p>
-=======
-                            <p class="text-xs text-muted mb-2">Fill in the fields below, then save the lawyer at the bottom of this form.</p>
-                            {PASSWORD_REQUIREMENTS}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Username <span class="text-danger">*</span></label>
@@ -637,21 +532,11 @@ $html = <<<'HTML'
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Password <span class="text-danger">*</span></label>
-<<<<<<< HEAD
                                     <input type="password" class="form-control" name="new_password" id="new_password">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
                                     <input type="password" class="form-control" name="new_password_confirm" id="new_password_confirm">
-=======
-                                    <input type="password" class="form-control{NEW_PASSWORD_INVALID}" name="new_password" id="new_password" minlength="8" maxlength="128" autocomplete="new-password">
-                                    {NEW_PASSWORD_ERROR}
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control{NEW_CONFIRM_INVALID}" name="new_password_confirm" id="new_password_confirm" minlength="8" maxlength="128" autocomplete="new-password">
-                                    {NEW_CONFIRM_ERROR}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                                 </div>
                             </div>
                             <div class="mb-3">
@@ -814,10 +699,6 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
-<<<<<<< HEAD
-=======
-    <script src="../assets/js/legalpro-password-validation.js?v=1"></script>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     <script>
         function showLawyerForm() {
             document.getElementById('lawyerModalLabel').textContent = 'Add New Lawyer';
@@ -836,17 +717,8 @@ $html = <<<'HTML'
         // Show create user form if needed
         {SHOW_CREATE_USER_FORM}
 
-<<<<<<< HEAD
         // Handle availability checkboxes
         document.addEventListener('DOMContentLoaded', function() {
-=======
-        document.addEventListener('DOMContentLoaded', function() {
-            var lawyerForm = document.querySelector('#lawyerModal form');
-            if (lawyerForm && window.LegalProPassword) {
-                LegalProPassword.attachLawyerSaveForm(lawyerForm);
-            }
-
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             document.querySelectorAll('.day-checkbox').forEach(function(checkbox) {
                 checkbox.addEventListener('change', function() {
                     var timeInputs = this.parentElement.nextElementSibling;
@@ -911,19 +783,8 @@ foreach ($availability as $day) {
 
 // Handle form display for errors
 $showCreateUserForm = false;
-<<<<<<< HEAD
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POST['form_type'] === 'save_lawyer' && !empty($_POST['new_username'])) {
     $showCreateUserForm = true;
-=======
-$showEditModalOnPost = false;
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POST['form_type'] === 'save_lawyer') {
-    if (!empty($_POST['new_username'])) {
-        $showCreateUserForm = true;
-    }
-    if (!empty($_POST['lawyer_id']) && $messageType === 'danger') {
-        $showEditModalOnPost = true;
-    }
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 }
 
 $replacements = [
@@ -966,22 +827,8 @@ $replacements = [
     '{SUNDAY_CHECKED}' => isset($availabilityData['sunday']) ? 'checked' : '',
     '{SUNDAY_START}' => isset($availabilityData['sunday']['start_time']) ? $availabilityData['sunday']['start_time'] : '09:00',
     '{SUNDAY_END}' => isset($availabilityData['sunday']['end_time']) ? $availabilityData['sunday']['end_time'] : '17:00',
-<<<<<<< HEAD
     '{SHOW_EDIT_MODAL}' => $isEditing ? 'setTimeout(function() { new bootstrap.Modal(document.getElementById("lawyerModal")).show(); showEditSections(); }, 100);' : '',
     '{SHOW_CREATE_USER_FORM}' => $showCreateUserForm ? 'setTimeout(function() { showCreateUserForm(); }, 100);' : '',
-=======
-    '{SHOW_EDIT_MODAL}' => ($isEditing || $showEditModalOnPost) ? 'setTimeout(function() { new bootstrap.Modal(document.getElementById("lawyerModal")).show(); showEditSections(); }, 100);' : '',
-    '{SHOW_CREATE_USER_FORM}' => $showCreateUserForm ? 'setTimeout(function() { showCreateUserForm(); }, 100);' : '',
-    '{PASSWORD_REQUIREMENTS}' => legalpro_password_requirements_html(),
-    '{NEW_PASSWORD_ERROR}' => $newPasswordErrorHtml,
-    '{NEW_CONFIRM_ERROR}' => $newConfirmErrorHtml,
-    '{UPDATE_PASSWORD_ERROR}' => $updatePasswordErrorHtml,
-    '{UPDATE_CONFIRM_ERROR}' => $updateConfirmErrorHtml,
-    '{NEW_PASSWORD_INVALID}' => $newPasswordInvalidClass,
-    '{NEW_CONFIRM_INVALID}' => $newConfirmInvalidClass,
-    '{UPDATE_PASSWORD_INVALID}' => $updatePasswordInvalidClass,
-    '{UPDATE_CONFIRM_INVALID}' => $updateConfirmInvalidClass,
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);
@@ -999,8 +846,5 @@ $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
 
 echo $html;
-<<<<<<< HEAD
 ?>
-=======
-?>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
+

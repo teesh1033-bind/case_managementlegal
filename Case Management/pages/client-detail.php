@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-<?php
-require_once __DIR__ . '/../inc/db.php';
-
-$message = '';
-$messageType = '';
-=======
 ﻿<?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/password-validation.php';
@@ -20,7 +13,6 @@ $updateConfirmInvalidClass = '';
 $createPasswordInvalidClass = '';
 $createConfirmInvalidClass = '';
 $showCreateUserFields = false;
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -37,18 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $update_password = isset($_POST['update_password']) ? $_POST['update_password'] : '';
     $confirm_password = isset($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
     
-<<<<<<< HEAD
-    if (empty($first_name) || empty($last_name)) {
-        $message = 'First name and last name are required.';
-        $messageType = 'danger';
-    } elseif (!empty($update_password) && $update_password !== $confirm_password) {
-        $message = 'Passwords do not match.';
-        $messageType = 'danger';
-    } elseif (!empty($update_password) && strlen($update_password) < 6) {
-        $message = 'Password must be at least 6 characters long.';
-        $messageType = 'danger';
-    } else {
-=======
     $createUser = isset($_POST['create_user_account']) && $_POST['create_user_account'] == '1';
     $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
     $password = isset($_POST['password']) ? $_POST['password'] : '';
@@ -92,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($messageType !== 'danger') {
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         try {
             if ($client_id) {
                 // Update existing client
@@ -146,14 +125,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$first_name, $last_name, $email, $phone]);
                 $newClientId = $pdo->lastInsertId();
 
-<<<<<<< HEAD
-                // Create user account for client if username and password provided
-                $createUser = isset($_POST['create_user_account']) && $_POST['create_user_account'] == '1';
-                $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
-                $password = isset($_POST['password']) ? $_POST['password'] : '';
-
-=======
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 if ($createUser && !empty($username) && !empty($password)) {
                     try {
                         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
@@ -184,10 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Error saving client: ' . htmlspecialchars($e->getMessage());
             $messageType = 'danger';
         }
-<<<<<<< HEAD
-=======
         }
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
     }
 }
 
@@ -272,11 +240,7 @@ if ($client_id) {
             
             $linkedCasesRows .= '
             <tr>
-<<<<<<< HEAD
-                <td>' . $caseNumber . ' · ' . $title . '</td>
-=======
                 <td>' . $caseNumber . ' ┬╖ ' . $title . '</td>
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 <td><span class="badge badge-sm ' . $badgeClass . '">' . $statusLabel . '</span></td>
                 <td class="text-center">' . $lawyerName . '</td>
                 <td class="text-end">
@@ -435,11 +399,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-<<<<<<< HEAD
-								© <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
-=======
 								┬⌐ <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 							</div>
 						</div>
 					</div>
@@ -452,9 +412,6 @@ $html = <<<'HTML'
 	<script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
 	<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
 	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
-<<<<<<< HEAD
-	<script>
-=======
 	<script src="../assets/js/legalpro-password-validation.js?v=1"></script>
 	<script>
 		document.addEventListener('DOMContentLoaded', function () {
@@ -465,37 +422,27 @@ $html = <<<'HTML'
 			{SHOW_CREATE_USER_FIELDS}
 		});
 
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 		function toggleUserAccountFields() {
 			const checkbox = document.getElementById('create_user_account');
 			const fields = document.getElementById('user_account_fields');
 			const usernameField = document.querySelector('input[name="username"]');
 			const passwordField = document.querySelector('input[name="password"]');
-<<<<<<< HEAD
-=======
 			const confirmField = document.querySelector('input[name="password_confirm"]');
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 			if (checkbox.checked) {
 				fields.style.display = 'block';
 				usernameField.required = true;
 				passwordField.required = true;
-<<<<<<< HEAD
-=======
 				if (confirmField) {
 					confirmField.required = true;
 				}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 			} else {
 				fields.style.display = 'none';
 				usernameField.required = false;
 				passwordField.required = false;
-<<<<<<< HEAD
-=======
 				if (confirmField) {
 					confirmField.required = false;
 				}
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 			}
 		}
 	</script>
@@ -521,12 +468,8 @@ if ($client_id && $client && $client['user_id'] && $userData) {
     $userAccountUpdateSection = '
     <div class="mt-4">
         <h6>Update User Account</h6>
-<<<<<<< HEAD
-        <p class="text-sm text-muted mb-3">Update the client\'s login credentials. Leave fields empty to keep current values.</p>
-=======
         <p class="text-sm text-muted mb-2">Update the client\'s login credentials. Leave password fields empty to keep current values.</p>
         ' . legalpro_password_requirements_html() . '
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group">
@@ -538,14 +481,9 @@ if ($client_id && $client && $client['user_id'] && $userData) {
             <div class="col-md-6">
                 <div class="form-group">
                     <label class="form-control-label">New Password</label>
-<<<<<<< HEAD
-                    <input class="form-control" type="password" name="update_password" placeholder="New password">
-                    <small class="form-text text-muted">Leave empty to keep current password</small>
-=======
                     <input class="form-control' . $updatePasswordInvalidClass . '" type="password" name="update_password" placeholder="New password" minlength="8" maxlength="128" autocomplete="new-password">
                     <small class="form-text text-muted">Leave empty to keep current password</small>
                     ' . $updatePasswordErrorHtml . '
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </div>
             </div>
         </div>
@@ -553,12 +491,8 @@ if ($client_id && $client && $client['user_id'] && $userData) {
             <div class="col-md-6">
                 <div class="form-group">
                     <label class="form-control-label">Confirm New Password</label>
-<<<<<<< HEAD
-                    <input class="form-control" type="password" name="confirm_password" placeholder="Confirm new password">
-=======
                     <input class="form-control' . $updateConfirmInvalidClass . '" type="password" name="confirm_password" placeholder="Confirm new password" minlength="8" maxlength="128" autocomplete="new-password">
                     ' . $updateConfirmErrorHtml . '
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </div>
             </div>
         </div>
@@ -568,33 +502,21 @@ if ($client_id && $client && $client['user_id'] && $userData) {
     </div>';
 } elseif (!$client_id) {
     // New client - show creation section
-<<<<<<< HEAD
-    $newUserAccountSection = '
-    <div class="mt-4">
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="create_user_account" name="create_user_account" value="1" onchange="toggleUserAccountFields()">
-=======
     $createUserChecked = $showCreateUserFields ? ' checked' : '';
     $createUserDisplay = $showCreateUserFields ? 'block' : 'none';
     $newUserAccountSection = '
     <div class="mt-4">
         <div class="form-check">
             <input class="form-check-input" type="checkbox" id="create_user_account" name="create_user_account" value="1"' . $createUserChecked . ' onchange="toggleUserAccountFields()">
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
             <label class="form-check-label" for="create_user_account">
                 Create user account for client login
             </label>
         </div>
     </div>
 
-<<<<<<< HEAD
-    <div id="user_account_fields" style="display: none;" class="mt-3 p-3 border rounded bg-light">
-        <h6>User Account Details</h6>
-=======
     <div id="user_account_fields" style="display: ' . $createUserDisplay . ';" class="mt-3 p-3 border rounded bg-light">
         <h6>User Account Details</h6>
         ' . legalpro_password_requirements_html() . '
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group">
@@ -606,10 +528,6 @@ if ($client_id && $client && $client['user_id'] && $userData) {
             <div class="col-md-6">
                 <div class="form-group">
                     <label class="form-control-label">Password <span class="text-danger">*</span></label>
-<<<<<<< HEAD
-                    <input class="form-control" type="password" name="password" placeholder="Password" value="">
-                    <small class="form-text text-muted">Minimum 6 characters</small>
-=======
                     <input class="form-control' . $createPasswordInvalidClass . '" type="password" name="password" placeholder="Password" minlength="8" maxlength="128" autocomplete="new-password">
                     ' . $createPasswordErrorHtml . '
                 </div>
@@ -621,7 +539,6 @@ if ($client_id && $client && $client['user_id'] && $userData) {
                     <label class="form-control-label">Confirm Password <span class="text-danger">*</span></label>
                     <input class="form-control' . $createConfirmInvalidClass . '" type="password" name="password_confirm" placeholder="Confirm password" minlength="8" maxlength="128" autocomplete="new-password">
                     ' . $createConfirmErrorHtml . '
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
                 </div>
             </div>
         </div>
@@ -639,13 +556,10 @@ $html = str_replace('{TYPE_CORPORATE}', $type === 'Corporate' ? 'selected' : '',
 $html = str_replace('{USER_ACCOUNT_UPDATE_SECTION}', $userAccountUpdateSection, $html);
 $html = str_replace('{NEW_USER_ACCOUNT_SECTION}', $newUserAccountSection, $html);
 $html = str_replace('{LINKED_CASES_ROWS}', $linkedCasesRows, $html);
-<<<<<<< HEAD
-=======
 $showCreateUserFieldsJs = $showCreateUserFields
     ? "if (typeof toggleUserAccountFields === 'function') { toggleUserAccountFields(); }"
     : '';
 $html = str_replace('{SHOW_CREATE_USER_FIELDS}', $showCreateUserFieldsJs, $html);
->>>>>>> ac2cdddeafa742e6db4c37a5d32f4040c35f85fd
 
 // Add message display
 $messageHtml = '';
