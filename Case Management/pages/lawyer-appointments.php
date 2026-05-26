@@ -10,21 +10,64 @@ if (!isset($_SESSION['lawyer_id'])) {
 
 $lawyerId = $_SESSION['lawyer_id'];
 $lawyerName = $_SESSION['lawyer_name'];
+$message = '';
+$messageType = '';
 
 // Handle appointment status updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])) {
     $appointmentId = (int)$_POST['appointment_id'];
     $action = $_POST['appointment_action'];
 
-    if (in_array($action, ['accept', 'reject'])) {
-        $status = ($action === 'accept') ? 'accepted' : 'rejected';
+    if (in_array($action, ['accept', 'reject', 'pending', 'reschedule'], true)) {
+        $status = 'pending';
+        if ($action === 'accept') {
+            $status = 'accepted';
+        } elseif ($action === 'reject') {
+            $status = 'rejected';
+        }
 
         try {
-            $stmt = $pdo->prepare("UPDATE appointments SET status = ? WHERE id = ? AND lawyer_id = ?");
-            $stmt->execute([$status, $appointmentId, $lawyerId]);
+            if ($action === 'reschedule') {
+                $newStartsAtRaw = isset($_POST['reschedule_starts_at']) ? trim($_POST['reschedule_starts_at']) : '';
+                $newStartsAt = DateTime::createFromFormat('Y-m-d\TH:i', $newStartsAtRaw);
+                if (!$newStartsAt) {
+                    throw new RuntimeException('Please provide a valid reschedule date and time.');
+                }
 
-            $message = "Appointment " . ($action === 'accept' ? 'accepted' : 'rejected') . ' successfully.';
+                $newEndsAt = clone $newStartsAt;
+                $newEndsAt->modify('+1 hour');
+
+                $stmt = $pdo->prepare("
+                    UPDATE appointments
+                    SET starts_at = ?, ends_at = ?, status = 'pending'
+                    WHERE id = ? AND lawyer_id = ?
+                ");
+                $stmt->execute([
+                    $newStartsAt->format('Y-m-d H:i:s'),
+                    $newEndsAt->format('Y-m-d H:i:s'),
+                    $appointmentId,
+                    $lawyerId
+                ]);
+                $message = 'Appointment rescheduled and moved to pending.';
+            } else {
+                $stmt = $pdo->prepare("UPDATE appointments SET status = ? WHERE id = ? AND lawyer_id = ?");
+                $stmt->execute([$status, $appointmentId, $lawyerId]);
+                if ($action === 'accept') {
+                    $message = 'Appointment accepted successfully.';
+                } elseif ($action === 'reject') {
+                    $message = 'Appointment rejected successfully.';
+                } else {
+                    $message = 'Appointment marked as pending.';
+                }
+            }
             $messageType = 'success';
+            if ($stmt->rowCount() === 0) {
+                $message = 'No appointment updated. It may not belong to you.';
+                $messageType = 'warning';
+            }
+        } catch (RuntimeException $e) {
+            $message = $e->getMessage();
+            $messageType = 'danger';
         } catch (PDOException $e) {
             $message = 'Error updating appointment: ' . htmlspecialchars($e->getMessage());
             $messageType = 'danger';
@@ -128,7 +171,7 @@ if (empty($appointments)) {
             <td class="text-center">' . $statusBadge . '</td>
             <td class="text-end">
                 <a href="lawyer-case-view.php?id=' . (int)$appointment['case_id'] . '" class="btn btn-sm btn-primary me-1">View Case</a>';
-                if ($appointment['status'] === 'pending') {
+                if (!$isPast) {
                     $appointmentsTable .= '
                 <form method="post" class="d-inline">
                     <input type="hidden" name="appointment_id" value="' . (int)$appointment['id'] . '">
@@ -139,6 +182,17 @@ if (empty($appointments)) {
                     <input type="hidden" name="appointment_id" value="' . (int)$appointment['id'] . '">
                     <input type="hidden" name="appointment_action" value="reject">
                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Reject this appointment?\')">Reject</button>
+                </form>
+                <form method="post" class="d-inline">
+                    <input type="hidden" name="appointment_id" value="' . (int)$appointment['id'] . '">
+                    <input type="hidden" name="appointment_action" value="pending">
+                    <button type="submit" class="btn btn-sm btn-warning me-1" onclick="return confirm(\'Keep this appointment as pending?\')">Pending</button>
+                </form>
+                <form method="post" class="d-inline-flex align-items-center gap-1">
+                    <input type="hidden" name="appointment_id" value="' . (int)$appointment['id'] . '">
+                    <input type="hidden" name="appointment_action" value="reschedule">
+                    <input type="datetime-local" name="reschedule_starts_at" class="form-control form-control-sm" value="' . date('Y-m-d\TH:i', strtotime($appointment['starts_at'])) . '" required>
+                    <button type="submit" class="btn btn-sm btn-info" onclick="return confirm(\'Reschedule this appointment?\')">Reschedule</button>
                 </form>';
                 }
             $appointmentsTable .= '</td>
@@ -264,6 +318,7 @@ $html = <<<'HTML'
         </nav>
 
         <div class="container-fluid py-4">
+            {MESSAGE}
             <!-- Filters -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -357,6 +412,7 @@ HTML;
 
 $replacements = [
     '{NAVIGATION}' => $navHtml,
+    '{MESSAGE}' => $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '',
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
     '{STATUS_ACCEPTED}' => $statusFilter === 'accepted' ? ' selected' : '',

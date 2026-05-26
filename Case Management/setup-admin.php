@@ -1,10 +1,5 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/inc/db.php';
-<<<<<<< HEAD
-
-$message = '';
-$messageType = '';
-=======
 require_once __DIR__ . '/inc/password-validation.php';
 
 $message = '';
@@ -21,7 +16,6 @@ $resetPasswordInvalidClass = '';
 $resetConfirmInvalidClass = '';
 $updatePasswordInvalidClass = '';
 $updateConfirmInvalidClass = '';
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = isset($_POST['action']) ? $_POST['action'] : '';
@@ -33,12 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = trim($_POST['email']);
             $role = $_POST['role'];
 
-<<<<<<< HEAD
-            if (empty($username) || empty($password)) {
-                $message = 'Username and password are required.';
-                $messageType = 'danger';
-            } else {
-=======
             $passwordConfirm = isset($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
 
             if (empty($username)) {
@@ -57,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($messageType !== 'danger') {
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 // Check if user already exists
                 $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
                 $stmt->execute([$username]);
@@ -77,13 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'reset_password') {
             $username = trim($_POST['reset_username']);
             $newPassword = $_POST['reset_password'];
-<<<<<<< HEAD
-
-            if (empty($username) || empty($newPassword)) {
-                $message = 'Username and new password are required.';
-                $messageType = 'danger';
-            } else {
-=======
             $resetConfirm = isset($_POST['reset_password_confirm']) ? $_POST['reset_password_confirm'] : '';
 
             if (empty($username)) {
@@ -102,7 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($messageType !== 'danger') {
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 // Check if user exists
                 $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
                 $stmt->execute([$username]);
@@ -124,18 +103,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($action === 'update_admin') {
             $username = trim($_POST['existing_username']);
             $newPassword = $_POST['new_password'];
-<<<<<<< HEAD
-=======
             $newPasswordConfirm = isset($_POST['new_password_confirm']) ? $_POST['new_password_confirm'] : '';
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
             $newRole = $_POST['new_role'];
 
             if (empty($username)) {
                 $message = 'Please specify which user to update.';
                 $messageType = 'danger';
-<<<<<<< HEAD
-            } else {
-=======
             } elseif (!empty($newPassword) || !empty($newPasswordConfirm)) {
                 $passwordCheck = legalpro_validate_optional_password_update($newPassword, $newPasswordConfirm);
                 if (!$passwordCheck['valid']) {
@@ -149,7 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($messageType !== 'danger' && !empty($username)) {
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 // Check if user exists
                 $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
                 $stmt->execute([$username]);
@@ -257,19 +229,13 @@ $html = <<<'HTML'
                                     <div class="card-body">
                                         <form method="post">
                                             <input type="hidden" name="action" value="create_admin">
-<<<<<<< HEAD
-=======
                                             {PASSWORD_REQUIREMENTS}
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                                             <div class="mb-3">
                                                 <label class="form-label">Username *</label>
                                                 <input type="text" class="form-control" name="username" required>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Password *</label>
-<<<<<<< HEAD
-                                                <input type="password" class="form-control" name="password" required>
-=======
                                                 <input type="password" class="form-control{CREATE_PASSWORD_INVALID}" name="password" minlength="8" maxlength="128" autocomplete="new-password" required>
                                                 {CREATE_PASSWORD_ERROR}
                                             </div>
@@ -277,7 +243,6 @@ $html = <<<'HTML'
                                                 <label class="form-label">Confirm Password *</label>
                                                 <input type="password" class="form-control{CREATE_CONFIRM_INVALID}" name="password_confirm" minlength="8" maxlength="128" autocomplete="new-password" required>
                                                 {CREATE_CONFIRM_ERROR}
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Email</label>
@@ -309,11 +274,6 @@ $html = <<<'HTML'
                                                 <label class="form-label">Username to Update *</label>
                                                 <input type="text" class="form-control" name="existing_username" required>
                                             </div>
-<<<<<<< HEAD
-                                            <div class="mb-3">
-                                                <label class="form-label">New Password (leave empty to keep current)</label>
-                                                <input type="password" class="form-control" name="new_password">
-=======
                                             {PASSWORD_REQUIREMENTS}
                                             <div class="mb-3">
                                                 <label class="form-label">New Password (leave empty to keep current)</label>
@@ -324,7 +284,6 @@ $html = <<<'HTML'
                                                 <label class="form-label">Confirm New Password</label>
                                                 <input type="password" class="form-control{UPDATE_CONFIRM_INVALID}" name="new_password_confirm" minlength="8" maxlength="128" autocomplete="new-password">
                                                 {UPDATE_CONFIRM_ERROR}
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">New Role</label>
@@ -361,23 +320,12 @@ $html = <<<'HTML'
                                     <div class="card-body">
                                         <form method="post">
                                             <input type="hidden" name="action" value="reset_password">
-<<<<<<< HEAD
-                                            <div class="row">
-=======
                                             {PASSWORD_REQUIREMENTS}
                                             <div class="row align-items-end">
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                                                 <div class="col-md-4">
                                                     <label class="form-label">Username</label>
                                                     <input type="text" class="form-control" name="reset_username" placeholder="admin" required>
                                                 </div>
-<<<<<<< HEAD
-                                                <div class="col-md-4">
-                                                    <label class="form-label">New Password</label>
-                                                    <input type="password" class="form-control" name="reset_password" placeholder="admin123" required>
-                                                </div>
-                                                <div class="col-md-4">
-=======
                                                 <div class="col-md-3">
                                                     <label class="form-label">New Password</label>
                                                     <input type="password" class="form-control{RESET_PASSWORD_INVALID}" name="reset_password" minlength="8" maxlength="128" autocomplete="new-password" required>
@@ -389,7 +337,6 @@ $html = <<<'HTML'
                                                     {RESET_CONFIRM_ERROR}
                                                 </div>
                                                 <div class="col-md-3">
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                                                     <label class="form-label">&nbsp;</label>
                                                     <button type="submit" class="btn btn-danger w-100">Reset Password</button>
                                                 </div>
@@ -410,8 +357,6 @@ $html = <<<'HTML'
 
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
-<<<<<<< HEAD
-=======
     <script src="../assets/js/legalpro-password-validation.js?v=1"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -433,7 +378,6 @@ $html = <<<'HTML'
             });
         });
     </script>
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
 </body>
 </html>
 HTML;
@@ -452,9 +396,6 @@ if (empty($existingUsers)) {
     }
 }
 
-<<<<<<< HEAD
-$html = str_replace(['{MESSAGE}', '{USER_ROWS}'], [$messageHtml, $userRows], $html);
-=======
 $html = str_replace(
     [
         '{MESSAGE}',
@@ -492,6 +433,5 @@ $html = str_replace(
     ],
     $html
 );
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
 echo $html;
 ?>

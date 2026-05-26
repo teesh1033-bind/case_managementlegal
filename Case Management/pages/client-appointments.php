@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 
@@ -150,6 +150,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $availabilityCheckPassed = true;
 
                 if (!empty($lawyer_id)) {
+                    $dayOfWeek = strtolower(date('l', strtotime($appointment_date)));
+                    $requestedTime = $appointment_time . ':00';
+
+                    // Hard block: if lawyer marked this slot unavailable, booking is not allowed.
+                    $stmt = $pdo->prepare("
+                        SELECT COUNT(*) FROM lawyer_time_slots
+                        WHERE lawyer_id = ? AND day_of_week = ? AND slot_type = 'unavailable'
+                        AND start_time <= ? AND end_time > ?
+                    ");
+                    $stmt->execute([$lawyer_id, $dayOfWeek, $requestedTime, $requestedTime]);
+                    $hasUnavailableBlock = (int) $stmt->fetchColumn() > 0;
+                    if ($hasUnavailableBlock) {
+                        $availabilityCheckPassed = false;
+                        $message = 'Selected time is marked unavailable by the lawyer. Please choose another slot.';
+                        $messageType = 'danger';
+                    }
+
+                    if (!$availabilityCheckPassed) {
+                        // Skip further checks once unavailable is confirmed.
+                    } else {
                     $stmt = $pdo->prepare("
                         SELECT COUNT(*) FROM lawyer_time_slots
                         WHERE lawyer_id = ? AND slot_type = 'available'
@@ -158,9 +178,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $hasAvailabilitySlots = (int) $stmt->fetchColumn() > 0;
 
                     if ($hasAvailabilitySlots) {
-                        $dayOfWeek = strtolower(date('l', strtotime($appointment_date)));
-                        $requestedTime = $appointment_time . ':00';
-
                         $stmt = $pdo->prepare("
                             SELECT * FROM lawyer_time_slots
                             WHERE lawyer_id = ? AND day_of_week = ? AND slot_type = 'available'
@@ -175,6 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $message = 'Lawyer not available at the selected date and time. Please choose a different time.';
                             $messageType = 'danger';
                         }
+                    }
                     }
                 }
 
@@ -286,7 +304,7 @@ if (empty($appointments)) {
         }
 
         $notesRaw = isset($apt['notes']) ? trim((string) $apt['notes']) : '';
-        $notesDisp = $notesRaw === '' ? '—' : (strlen($notesRaw) > 64 ? htmlspecialchars(substr($notesRaw, 0, 64)) . '…' : htmlspecialchars($notesRaw));
+        $notesDisp = $notesRaw === '' ? 'ΓÇö' : (strlen($notesRaw) > 64 ? htmlspecialchars(substr($notesRaw, 0, 64)) . 'ΓÇª' : htmlspecialchars($notesRaw));
 
         $appointmentsRows .= '<tr class="ca-appt-row">
             <td class="ps-4">
@@ -296,7 +314,7 @@ if (empty($appointments)) {
                     </div>
                     <div class="min-width-0">
                         <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 14rem;">' . htmlspecialchars($apt['case_title'] ?: 'Appointment') . '</h6>
-                        <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointmentDate) . ' · ' . htmlspecialchars($appointmentTime) . '</p>
+                        <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointmentDate) . ' ┬╖ ' . htmlspecialchars($appointmentTime) . '</p>
                     </div>
                 </div>
             </td>
@@ -417,25 +435,10 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<<<<<<< HEAD
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-
-    <style>
-        .client-appointments-page { --ca-radius: 1.15rem; }
-        .client-appointments-page .navbar-main {
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.9) !important;
-            border: 1px solid rgba(255, 255, 255, 0.6) !important;
-            box-shadow: 0 0.35rem 1.25rem rgba(52, 71, 103, 0.08) !important;
-            margin-top: 20px;
-        }
-        .client-appointments-page .breadcrumb .text-dark { color: #344767 !important; }
-=======
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
 
     <style>
         .client-appointments-page { --ca-radius: 1.15rem; }
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
         .client-appointments-page .ca-hero {
             border-radius: var(--ca-radius);
             background: #fff;
@@ -523,13 +526,8 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<<<<<<< HEAD
-<body class="g-sidenav-show bg-gray-100 client-appointments-page">
-    <div class="min-height-300 bg-primary position-absolute w-100"></div>
-=======
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal client-appointments-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
@@ -597,32 +595,21 @@ $html = <<<'HTML'
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-<<<<<<< HEAD
-                        <li class="breadcrumb-item text-sm"><a class="opacity-6 text-dark" href="client-dashboard.php">Client</a></li>
-                        <li class="breadcrumb-item text-sm text-dark active" aria-current="page">Appointments</li>
-                    </ol>
-                    <h5 class="font-weight-bolder mb-0 text-dark">Appointments</h5>
-=======
                         <li class="breadcrumb-item text-sm"><a class="opacity-6 text-white" href="client-dashboard.php">Client</a></li>
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">Appointments</li>
                     </ol>
                     <h5 class="font-weight-bolder mb-0 text-white">Appointments</h5>
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="Search appointments…" value="" autocomplete="off" maxlength="200" aria-label="Search">
+                            <input type="search" name="q" class="form-control" placeholder="Search appointmentsΓÇª" value="" autocomplete="off" maxlength="200" aria-label="Search">
                         </div>
                     </form>
                     <ul class="navbar-nav justify-content-end">
                         <li class="nav-item d-flex align-items-center">
-<<<<<<< HEAD
-                            <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
-=======
                             <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                                 <i class="fa fa-user me-sm-1"></i>
                                 <span class="d-sm-inline d-none">Welcome, {CLIENT_NAME}</span>
                             </a>
@@ -745,11 +732,11 @@ $html = <<<'HTML'
                                         <option value="16:00" class="time-option">4:00 PM</option>
                                         <option value="17:00" class="time-option">5:00 PM</option>
                                     </select>
-                                    <small class="text-muted">Green slots match the lawyer’s published availability.</small>
+                                    <small class="text-muted">Green slots match the lawyerΓÇÖs published availability.</small>
                                 </div>
                                 <div class="form-group mb-3">
                                     <label class="form-control-label">Notes <span class="text-muted font-weight-normal">(optional)</span></label>
-                                    <textarea class="form-control" name="notes" rows="3" placeholder="Topics you want to cover…"></textarea>
+                                    <textarea class="form-control" name="notes" rows="3" placeholder="Topics you want to coverΓÇª"></textarea>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100 mb-0 font-weight-bold border-radius-lg">Request appointment</button>
                             </form>
@@ -820,7 +807,7 @@ $html = <<<'HTML'
                         '</div>' +
                         '<div class="col-sm-6">' +
                             '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Requested</p>' +
-                            '<p class="text-sm mb-0">' + escapeHtml(data.requested_at || '—') + '</p>' +
+                            '<p class="text-sm mb-0">' + escapeHtml(data.requested_at || 'ΓÇö') + '</p>' +
                         '</div>' +
                         '<div class="col-sm-6">' +
                             '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Starts</p>' +
@@ -828,7 +815,7 @@ $html = <<<'HTML'
                         '</div>' +
                         '<div class="col-sm-6">' +
                             '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Ends</p>' +
-                            '<p class="text-sm mb-0">' + escapeHtml(data.ends_at || '—') + '</p>' +
+                            '<p class="text-sm mb-0">' + escapeHtml(data.ends_at || 'ΓÇö') + '</p>' +
                         '</div>' +
                     '</div>' +
                     '<div>' +
@@ -844,7 +831,7 @@ $html = <<<'HTML'
             detailsEl.innerHTML =
                 '<div class="text-center py-4">' +
                     '<span class="spinner-border spinner-border-sm text-primary" role="status"></span>' +
-                    '<p class="text-sm text-muted mt-2 mb-0">Loading appointment…</p>' +
+                    '<p class="text-sm text-muted mt-2 mb-0">Loading appointmentΓÇª</p>' +
                 '</div>';
             getAppointmentModal().show();
 
@@ -910,18 +897,35 @@ $html = <<<'HTML'
             const lawyerSlots = lawyerAvailability[lawyerId] || lawyerAvailability[String(lawyerId)] || {};
             const daySlots = lawyerSlots[dayOfWeek] || [];
             const availableSlots = daySlots.filter(function(slot) { return slot.type === 'available'; });
+            const unavailableSlots = daySlots.filter(function(slot) { return slot.type === 'unavailable'; });
 
                 // If no availability slots are set up for this lawyer, allow all times
                 // This ensures backward compatibility if time slots haven't been configured
                 if (availableSlots.length === 0) {
-                    // No availability slots configured - allow all times (backward compatibility)
+                    // No explicit "available" slots configured - allow times except "unavailable" blocks.
                     dateMessageDiv.style.display = 'block';
-                    dateMessageDiv.innerHTML = '<div class="alert alert-info py-2"><i class="ni ni-info-16"></i> Lawyer availability not configured - all times shown.</div>';
+                    dateMessageDiv.innerHTML = '<div class="alert alert-info py-2"><i class="ni ni-info-16"></i> No specific available slots are configured; unavailable blocks are still enforced.</div>';
 
-                    // Enable all time options
+                    // Enable all time options first.
                     timeOptions.forEach(option => {
                         option.classList.remove('text-success', 'font-weight-bold');
                         option.disabled = false;
+                    });
+
+                    // Then disable blocked unavailable slots.
+                    timeOptions.forEach(option => {
+                        if (option.value) {
+                            const optionTime = option.value + ':00';
+                            let isBlocked = false;
+                            unavailableSlots.forEach(slot => {
+                                if (optionTime >= slot.start && optionTime < slot.end) {
+                                    isBlocked = true;
+                                }
+                            });
+                            if (isBlocked) {
+                                option.disabled = true;
+                            }
+                        }
                     });
                     return;
                 }
@@ -940,7 +944,14 @@ $html = <<<'HTML'
                         }
                     });
 
-                    if (isAvailable) {
+                    let isBlocked = false;
+                    unavailableSlots.forEach(slot => {
+                        if (optionTime >= slot.start && optionTime < slot.end) {
+                            isBlocked = true;
+                        }
+                    });
+
+                    if (isAvailable && !isBlocked) {
                         option.classList.add('text-success', 'font-weight-bold');
                         option.disabled = false;
                         hasAvailableTimes = true;

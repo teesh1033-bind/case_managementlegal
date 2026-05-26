@@ -399,9 +399,11 @@ if (empty($appointments)) {
 // Render message block
 $messageHtml = '';
 if ($message) {
-    $messageHtml = '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">
+    $alertExtraClass = ($messageType === 'success') ? ' text-white' : '';
+    $closeBtnClass = ($messageType === 'success') ? 'btn-close btn-close-white' : 'btn-close';
+    $messageHtml = '<div class="alert alert-' . htmlspecialchars($messageType) . $alertExtraClass . ' alert-dismissible fade show" role="alert">
         ' . htmlspecialchars($message) . '
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="' . $closeBtnClass . '" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>';
 }
 

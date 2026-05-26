@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 
@@ -137,23 +137,9 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<<<<<<< HEAD
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <style>
-        .client-cases-page { --cc-radius: 1.15rem; }
-        .client-cases-page .navbar-main {
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.9) !important;
-            border: 1px solid rgba(255, 255, 255, 0.6) !important;
-            box-shadow: 0 0.35rem 1.25rem rgba(52, 71, 103, 0.08) !important;
-            margin-top: 20px;
-        }
-        .client-cases-page .breadcrumb .text-dark { color: #344767 !important; }
-=======
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <style>
         .client-cases-page { --cc-radius: 1.15rem; }
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
         .client-cases-page .cc-hero {
             border-radius: var(--cc-radius);
             background: #fff;
@@ -232,13 +218,8 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<<<<<<< HEAD
-<body class="g-sidenav-show bg-gray-100 client-cases-page">
-    <div class="min-height-300 bg-primary position-absolute w-100"></div>
-=======
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal client-cases-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <div class="sidenav-header">
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
@@ -307,32 +288,21 @@ $html = <<<'HTML'
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-<<<<<<< HEAD
-                        <li class="breadcrumb-item text-sm"><a class="opacity-6 text-dark" href="client-dashboard.php">Client</a></li>
-                        <li class="breadcrumb-item text-sm text-dark active" aria-current="page">My Cases</li>
-                    </ol>
-                    <h5 class="font-weight-bolder mb-0 text-dark">My Cases</h5>
-=======
                         <li class="breadcrumb-item text-sm"><a class="opacity-6 text-white" href="client-dashboard.php">Client</a></li>
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Cases</li>
                     </ol>
                     <h5 class="font-weight-bolder mb-0 text-white">My Cases</h5>
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
                     <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="Search cases…" value="" autocomplete="off" maxlength="200" aria-label="Search">
+                            <input type="search" name="q" class="form-control" placeholder="Search casesΓÇª" value="" autocomplete="off" maxlength="200" aria-label="Search">
                         </div>
                     </form>
                     <ul class="navbar-nav justify-content-end">
                         <li class="nav-item d-flex align-items-center">
-<<<<<<< HEAD
-                            <a href="javascript:;" class="nav-link text-body font-weight-bold px-0">
-=======
                             <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
                                 <i class="fa fa-user me-sm-1"></i>
                                 <span class="d-sm-inline d-none">Welcome, {CLIENT_NAME}</span>
                             </a>

@@ -1,22 +1,5 @@
-/**
-<<<<<<< HEAD
- * LegalPro client portal — full-page gradient (matches top header strip).
- */
-:root {
-    --client-portal-gradient: linear-gradient(125deg, #5e72e4 0%, #324cdd 42%, #172b4d 100%);
-    --client-portal-bg-fallback: #324cdd;
-}
-
-body.client-dashboard-page,
-body.client-cases-page,
-body.client-appointments-page,
-body.client-court-tracking-page,
-body.client-payments-page,
-body.client-portal-page {
-    background: var(--client-portal-gradient) fixed !important;
-    background-color: var(--client-portal-bg-fallback) !important;
-=======
- * LegalPro client portal — full-page gradient (aligned with lawyer/admin portals).
+﻿/**
+ * LegalPro client portal ΓÇö full-page gradient (aligned with lawyer/admin portals).
  */
 :root {
     --client-portal-gradient: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
@@ -57,7 +40,6 @@ body.g-sidenav-show.client-portal-page.bg-gray-100 {
     background-image: var(--client-portal-gradient) !important;
     background-repeat: no-repeat !important;
     background-size: cover !important;
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
     min-height: 100vh;
 }
 
@@ -83,12 +65,9 @@ body.client-court-tracking-page .main-content > .container-fluid,
 body.client-payments-page .main-content > .container-fluid,
 body.client-portal-page .main-content > .container-fluid {
     background: transparent !important;
-<<<<<<< HEAD
-=======
     background-color: transparent !important;
     background-image: none !important;
     box-shadow: none !important;
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
 }
 
 body.client-dashboard-page .main-content.border-radius-lg,
@@ -109,14 +88,6 @@ body.client-portal-page .main-content .card:not([class*="-hero"]) {
     background-color: #fff !important;
 }
 
-<<<<<<< HEAD
-body.client-portal-page .navbar-main {
-    backdrop-filter: blur(8px);
-    background: rgba(255, 255, 255, 0.86) !important;
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
-    box-shadow: 0 0.35rem 1.25rem rgba(52, 71, 103, 0.08) !important;
-    margin-top: 20px;
-=======
 body.client-dashboard-page .navbar-main,
 body.client-dashboard-page .navbar-main.blur,
 body.client-dashboard-page .navbar-main.shadow-blur,
@@ -214,5 +185,4 @@ body.client-portal-page .navbar-main .navbar-nav > .nav-item:first-child .nav-li
 body.client-portal-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link span,
 body.client-portal-page .navbar-main .navbar-nav > .nav-item:first-child .nav-link i {
     color: #fff !important;
->>>>>>> f827a933538474659c1629f07f5a4af06a073209
 }
