@@ -113,25 +113,62 @@ try {
     $recentCases = [];
 }
 
-// ==========================================
-// NEW CALENDAR DATA QUERY PIPELINE
-// ==========================================
+// Appointments for dashboard calendar (same joins as appointments.php)
 $calendarEvents = [];
 try {
-    // Queries data out from your existing active appointments list schema fields
-    $calStmt = $pdo->query("SELECT id, title, client_name, starts_at, notes FROM appointments");
+    $calStmt = $pdo->query("
+        SELECT
+            a.id,
+            a.case_id,
+            a.starts_at,
+            a.ends_at,
+            a.notes,
+            a.status,
+            cs.title AS case_title,
+            CONCAT('C-', LPAD(cs.id, 4, '0'), ' · ', cs.title) AS case_display,
+            TRIM(CONCAT(cl.first_name, ' ', cl.last_name)) AS client_name,
+            TRIM(CONCAT(l.first_name, ' ', l.last_name)) AS lawyer_name
+        FROM appointments a
+        LEFT JOIN cases cs ON cs.id = a.case_id
+        LEFT JOIN clients cl ON cl.id = cs.client_id
+        LEFT JOIN lawyers l ON l.id = a.lawyer_id
+        WHERE a.starts_at IS NOT NULL
+        ORDER BY a.starts_at ASC
+    ");
     $appointmentsList = $calStmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     foreach ($appointmentsList as $row) {
-        $calendarEvents[] = [
-            'id'    => $row['id'],
-            'title' => $row['title'],
-            'start' => $row['starts_at'], // Links map data structure straight to key layout grids
+        $status = isset($row['status']) ? strtolower($row['status']) : 'pending';
+        $colors = ['bg' => '#fff3cd', 'border' => '#fb6340'];
+        if (in_array($status, ['accepted', 'approved'], true)) {
+            $colors = ['bg' => '#d4edda', 'border' => '#2dce89'];
+        } elseif ($status === 'rejected') {
+            $colors = ['bg' => '#f8d7da', 'border' => '#f5365c'];
+        }
+
+        $title = !empty($row['case_display']) ? $row['case_display'] : 'General appointment';
+        if (!empty($row['case_title']) && empty($row['case_display'])) {
+            $title = $row['case_title'];
+        }
+
+        $event = [
+            'id' => (string) $row['id'],
+            'title' => $title,
+            'start' => $row['starts_at'],
+            'backgroundColor' => $colors['bg'],
+            'borderColor' => $colors['border'],
             'extendedProps' => [
-                'client' => $row['client_name'] ?? 'Unassigned Client',
-                'notes'  => $row['notes'] ?? ''
-            ]
+                'client' => $row['client_name'] !== '' ? $row['client_name'] : 'Unknown client',
+                'lawyer' => $row['lawyer_name'] !== '' ? $row['lawyer_name'] : 'Unassigned',
+                'notes' => $row['notes'] ?? '',
+                'status' => ucfirst($status),
+                'appointmentId' => (int) $row['id'],
+            ],
         ];
+        if (!empty($row['ends_at'])) {
+            $event['end'] = $row['ends_at'];
+        }
+        $calendarEvents[] = $event;
     }
 } catch (PDOException $e) {
     $calendarEvents = [];
@@ -181,15 +218,31 @@ $html = <<<'HTML'
         .fc-event {
             cursor: pointer;
             padding: 3px 6px;
-            background-color: #e8eaf6 !important;
-            color: #5e72e4 !important;
-            border-left: 4px solid #5e72e4 !important;
+            border-left-width: 4px !important;
             border-top: none !important;
             border-right: none !important;
             border-bottom: none !important;
             font-weight: 600;
             font-size: 0.8rem;
             border-radius: 4px;
+            color: #344767 !important;
+        }
+        #dashboardCalendar {
+            min-height: 520px;
+        }
+        .calendar-legend span {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75rem;
+            margin-right: 1rem;
+            color: #67748e;
+        }
+        .calendar-legend i {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 0.35rem;
+            display: inline-block;
         }
     </style>
 </head>
@@ -344,9 +397,17 @@ $html = <<<'HTML'
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card p-4 border-0 shadow-sm" style="border-radius: 1rem; background: #ffffff;">
-                        <div class="mb-3">
-                            <h6 class="text-capitalize mb-0 font-weight-bold" style="color: #344767;">Appointments Schedule</h6>
-                            <p class="text-sm mb-0 text-muted">Review localized monthly calendars, custom court assignments, and direct target metrics</p>
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                            <div>
+                                <h6 class="text-capitalize mb-0 font-weight-bold" style="color: #344767;">Appointments Calendar</h6>
+                                <p class="text-sm mb-0 text-muted">All scheduled appointments from your database — click an event for details</p>
+                                <div class="calendar-legend mt-2">
+                                    <span><i style="background:#fff3cd;border-left:3px solid #fb6340;"></i> Pending</span>
+                                    <span><i style="background:#d4edda;border-left:3px solid #2dce89;"></i> Accepted</span>
+                                    <span><i style="background:#f8d7da;border-left:3px solid #f5365c;"></i> Rejected</span>
+                                </div>
+                            </div>
+                            <a href="appointments.php" class="btn btn-sm bg-gradient-primary mb-0">Manage appointments</a>
                         </div>
                         <div id="dashboardCalendar"></div>
                     </div>
@@ -376,17 +437,26 @@ $html = <<<'HTML'
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="text-xs font-weight-bold text-uppercase opacity-7">Client / Case Reference</label>
+                        <label class="text-xs font-weight-bold text-uppercase opacity-7">Client</label>
                         <p id="modalClient" class="text-sm font-weight-bold text-dark mb-0"></p>
                     </div>
                     <div class="mb-3">
-                        <label class="text-xs font-weight-bold text-uppercase opacity-7">Scheduled Time (DD/MM/YYYY)</label>
+                        <label class="text-xs font-weight-bold text-uppercase opacity-7">Lawyer</label>
+                        <p id="modalLawyer" class="text-sm font-weight-bold text-dark mb-0"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-xs font-weight-bold text-uppercase opacity-7">Status</label>
+                        <p id="modalStatus" class="text-sm font-weight-bold text-dark mb-0"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-xs font-weight-bold text-uppercase opacity-7">Scheduled time</label>
                         <p id="modalTime" class="text-sm font-weight-bold text-dark mb-0"></p>
                     </div>
-                    <div>
-                        <label class="text-xs font-weight-bold text-uppercase opacity-7">Details & Notes</label>
+                    <div class="mb-3">
+                        <label class="text-xs font-weight-bold text-uppercase opacity-7">Notes</label>
                         <div id="modalNotes" class="p-3 bg-gray-100 border-radius-lg text-sm text-secondary" style="white-space: pre-wrap; min-height: 60px;"></div>
                     </div>
+                    <a id="modalEditLink" href="appointments.php" class="btn btn-sm bg-gradient-dark mb-0 w-100">Edit appointment</a>
                 </div>
             </div>
         </div>
@@ -481,32 +551,58 @@ $html = <<<'HTML'
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('dashboardCalendar');
+            var appointmentEvents = {CALENDAR_EVENTS_JSON};
+
+            function formatDateTime(date) {
+                if (!date) return '—';
+                var day = String(date.getDate()).padStart(2, '0');
+                var month = String(date.getMonth() + 1).padStart(2, '0');
+                var year = date.getFullYear();
+                var hours = String(date.getHours()).padStart(2, '0');
+                var minutes = String(date.getMinutes()).padStart(2, '0');
+                return day + '/' + month + '/' + year + ' at ' + hours + ':' + minutes;
+            }
+
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                height: 'auto',
+                firstDay: 1,
+                navLinks: true,
+                nowIndicator: true,
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
                 },
-                // Direct interpolation of the pre-fetched events array
-                events: {CALENDAR_EVENTS_JSON},
+                events: appointmentEvents,
                 eventClick: function(info) {
-                    document.getElementById('modalTitle').innerText = info.event.title;
-                    document.getElementById('modalClient').innerText = info.event.extendedProps.client;
-                    
-                    // Format timestamp properties directly to target DD/MM/YYYY layouts
-                    const date = info.event.start;
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    const hours = String(date.getHours()).padStart(2, '0');
-                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    info.jsEvent.preventDefault();
+                    var props = info.event.extendedProps || {};
 
-                    document.getElementById('modalTime').innerText = `${day}/${month}/${year} at ${hours}:${minutes}`;
-                    document.getElementById('modalNotes').innerText = info.event.extendedProps.notes || 'No extra descriptive details added.';
-                    
-                    var appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'));
-                    appointmentModal.show();
+                    document.getElementById('modalTitle').innerText = info.event.title;
+                    document.getElementById('modalClient').innerText = props.client || '—';
+                    document.getElementById('modalLawyer').innerText = props.lawyer || '—';
+                    document.getElementById('modalStatus').innerText = props.status || 'Pending';
+                    document.getElementById('modalNotes').innerText = props.notes || 'No notes added.';
+
+                    var timeText = formatDateTime(info.event.start);
+                    if (info.event.end) {
+                        timeText += ' — ' + formatDateTime(info.event.end);
+                    }
+                    document.getElementById('modalTime').innerText = timeText;
+
+                    var editId = props.appointmentId || info.event.id;
+                    document.getElementById('modalEditLink').href = 'appointments.php?id=' + editId + '#appointment-form';
+
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('appointmentModal')).show();
+                },
+                eventDidMount: function(info) {
+                    var tip = info.event.title;
+                    var p = info.event.extendedProps;
+                    if (p.client) tip += '\nClient: ' + p.client;
+                    if (p.lawyer) tip += '\nLawyer: ' + p.lawyer;
+                    info.el.setAttribute('title', tip);
                 }
             });
             calendar.render();
