@@ -345,18 +345,7 @@ if (empty($appointments)) {
             </td>
             <td class="align-middle text-end pe-4">
                 <div class="d-flex flex-wrap gap-2 justify-content-end">
-                    <button type="button" class="btn btn-sm btn-outline-primary mb-0" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>';
-        if ($apt['status'] === 'rejected') {
-            $appointmentsRows .= '
-                    <form method="POST" class="d-inline" onsubmit="return confirm(\'Delete this rejected appointment request permanently?\')">
-                        <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="appointment_id" value="' . $aid . '">
-                        <button type="submit" class="btn btn-sm btn-outline-danger mb-0" title="Delete rejected appointment">
-                            <i class="fas fa-trash" aria-hidden="true"></i>
-                        </button>
-                    </form>';
-        }
-        $appointmentsRows .= '
+                    <button type="button" class="btn btn-sm btn-outline-primary mb-0" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
                 </div>
             </td>
         </tr>';
@@ -557,6 +546,35 @@ $html = <<<'HTML'
         .client-appointments-page .time-option:disabled {
             color: #6c757d !important;
             background-color: #f8f9fa;
+        }
+        .client-appointments-page #bookAppointmentBtn {
+            transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+        .client-appointments-page #bookAppointmentBtn:hover,
+        .client-appointments-page #bookAppointmentBtn:focus {
+            background-color: #324cdd !important;
+            border-color: #324cdd !important;
+            box-shadow: 0 0.4rem 1rem rgba(50, 76, 221, 0.22);
+        }
+        .client-appointments-page .ca-appt-row .btn-outline-primary {
+            transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+        }
+        .client-appointments-page .ca-appt-row .btn-outline-primary:hover,
+        .client-appointments-page .ca-appt-row .btn-outline-primary:focus {
+            background-color: #324cdd !important;
+            border-color: #324cdd !important;
+            color: #fff !important;
+            box-shadow: 0 0.35rem 0.9rem rgba(50, 76, 221, 0.2);
+        }
+        .client-appointments-page .ca-panel .card-header .btn-outline-primary {
+            transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+        }
+        .client-appointments-page .ca-panel .card-header .btn-outline-primary:hover,
+        .client-appointments-page .ca-panel .card-header .btn-outline-primary:focus {
+            background-color: #324cdd !important;
+            border-color: #324cdd !important;
+            color: #fff !important;
+            box-shadow: 0 0.35rem 0.9rem rgba(50, 76, 221, 0.2);
         }
     </style>
 </head>

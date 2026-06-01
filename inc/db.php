@@ -296,19 +296,11 @@ function addCaseCategory($name) {
 
 function resolveSubmittedCaseCategory($fallback = 'Civil') {
     $select = trim((string) ($_POST['category_select'] ?? ''));
-    $custom = trim((string) ($_POST['category_custom'] ?? ''));
-
-    if ($select === '__other__') {
-        $category = $custom !== '' ? $custom : $fallback;
-    } elseif ($select !== '') {
+    if ($select !== '') {
         $category = $select;
     } else {
         $legacy = trim((string) ($_POST['category'] ?? ''));
         $category = $legacy !== '' ? $legacy : $fallback;
-    }
-
-    if ($category !== '') {
-        addCaseCategory($category);
     }
 
     return $category;
@@ -321,23 +313,20 @@ function buildCaseCategoryFieldHtml($currentCategory, $fallback = 'Civil') {
         $currentCategory = $fallback;
     }
 
-    $isOther = !in_array($currentCategory, $categories, true);
-
     $optionsHtml = '';
     foreach ($categories as $name) {
-        $selected = ($currentCategory === $name && !$isOther) ? ' selected' : '';
+        $selected = ($currentCategory === $name) ? ' selected' : '';
         $optionsHtml .= '<option value="' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '"' . $selected . '>'
             . htmlspecialchars($name) . '</option>';
     }
-    $optionsHtml .= '<option value="__other__"' . ($isOther ? ' selected' : '') . '>Add new category...</option>';
-
-    $customClass = $isOther ? '' : 'd-none';
-    $customValue = $isOther ? htmlspecialchars($currentCategory, ENT_QUOTES, 'UTF-8') : '';
+    if ($currentCategory !== '' && !in_array($currentCategory, $categories, true)) {
+        $optionsHtml .= '<option value="' . htmlspecialchars($currentCategory, ENT_QUOTES, 'UTF-8') . '" selected>'
+            . htmlspecialchars($currentCategory) . '</option>';
+    }
 
     return '
         <select class="form-control" name="category_select" id="category_select">' . $optionsHtml . '</select>
-        <input type="text" class="form-control mt-2 ' . $customClass . '" name="category_custom" id="category_custom" value="' . $customValue . '" placeholder="Enter new category name">
-        <small class="text-muted d-block mt-1">Choose an existing category or pick "Add new category..." to create one.</small>';
+        <small class="text-muted d-block mt-1"><a href="settings.php">Manage categories in Settings</a>.</small>';
 }
 
 require_once __DIR__ . '/../lib/branding.php';

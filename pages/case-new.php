@@ -776,22 +776,6 @@ $html = <<<'HTML'
 			// Calculate total on page load
 			calculateTotal();
 
-			var categorySelect = document.getElementById('category_select');
-			if (categorySelect) {
-				var categoryCustom = document.getElementById('category_custom');
-				function syncCategoryField() {
-					if (!categoryCustom) return;
-					if (categorySelect.value === '__other__') {
-						categoryCustom.classList.remove('d-none');
-					} else {
-						categoryCustom.classList.add('d-none');
-						categoryCustom.value = '';
-					}
-				}
-				categorySelect.addEventListener('change', syncCategoryField);
-				syncCategoryField();
-			}
-
 			// No limit on lawyer selection - multiple lawyers can be selected
 		});
 	</script>

@@ -66,6 +66,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: settings.php?msg=' . urlencode('Service removed successfully.') . '&type=success');
             exit;
         }
+    } elseif ($formType === 'add_case_category') {
+        $categoryName = isset($_POST['category_name']) ? trim($_POST['category_name']) : '';
+        if ($categoryName === '') {
+            $message = 'Category name is required.';
+            $messageType = 'danger';
+        } else {
+            $categories = getCaseCategoriesFromSettings();
+            if (in_array($categoryName, $categories, true) || in_array($categoryName, getDefaultCaseCategories(), true)) {
+                $message = 'That category already exists.';
+                $messageType = 'warning';
+            } else {
+                $categories[] = $categoryName;
+                sort($categories, SORT_NATURAL | SORT_FLAG_CASE);
+                setSetting('case_categories', json_encode($categories, JSON_UNESCAPED_UNICODE));
+                header('Location: settings.php?msg=' . urlencode('Category added successfully.') . '&type=success');
+                exit;
+            }
+        }
+    } elseif ($formType === 'remove_case_category') {
+        $categoryIndex = isset($_POST['category_index']) ? (int) $_POST['category_index'] : -1;
+        $categories = getCaseCategoriesFromSettings();
+        if (!isset($categories[$categoryIndex])) {
+            $message = 'Category not found.';
+            $messageType = 'danger';
+        } else {
+            array_splice($categories, $categoryIndex, 1);
+            setSetting('case_categories', json_encode($categories, JSON_UNESCAPED_UNICODE));
+            header('Location: settings.php?msg=' . urlencode('Category removed successfully.') . '&type=success');
+            exit;
+        }
     }
 }
 
@@ -80,6 +110,22 @@ if (empty($offeredServices)) {
             . '<form method="post" class="d-inline mb-0" onsubmit="return confirm(\'Remove this service?\');">'
             . '<input type="hidden" name="form_type" value="remove_service">'
             . '<input type="hidden" name="service_index" value="' . (int) $index . '">'
+            . '<button type="submit" class="btn btn-sm btn-danger">Remove</button>'
+            . '</form></li>';
+    }
+}
+
+$caseCategories = getCaseCategoriesFromSettings();
+$categoriesListHtml = '';
+if (empty($caseCategories)) {
+    $categoriesListHtml = '<li class="list-group-item text-center text-muted">No custom categories added yet</li>';
+} else {
+    foreach ($caseCategories as $index => $categoryName) {
+        $categoriesListHtml .= '<li class="list-group-item d-flex justify-content-between align-items-center">'
+            . htmlspecialchars($categoryName)
+            . '<form method="post" class="d-inline mb-0" onsubmit="return confirm(\'Remove this category?\');">'
+            . '<input type="hidden" name="form_type" value="remove_case_category">'
+            . '<input type="hidden" name="category_index" value="' . (int) $index . '">'
             . '<button type="submit" class="btn btn-sm btn-danger">Remove</button>'
             . '</form></li>';
     }
@@ -242,6 +288,39 @@ $html = <<<'HTML'
 							</div>
 						</div>
 					</div>
+                    <div class="card mt-4">
+                        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                            <h6>Case Categories</h6>
+                            <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#addCategoryModal">Add Category</button>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-xs text-muted mb-2">Default categories (Civil, Criminal, Corporate, Family) are always available. Add extra categories below.</p>
+                            <ul class="list-group">
+                                {CATEGORIES_LIST}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post">
+                                    <input type="hidden" name="form_type" value="add_case_category">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="addCategoryModalLabel">Add Case Category</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label class="form-control-label">Category Name</label>
+                                        <input type="text" class="form-control" name="category_name" required placeholder="e.g. Immigration">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-dark">Add Category</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
 				</div>
 				<div class="col-lg-4">
 					<div class="card">
@@ -293,6 +372,7 @@ $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CURRENCY_OPTIONS}', $currencyOptionsHtml, $html);
 $html = str_replace('{SERVICES_LIST}', $servicesListHtml, $html);
+$html = str_replace('{CATEGORIES_LIST}', $categoriesListHtml, $html);
 $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name']), $html);
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
