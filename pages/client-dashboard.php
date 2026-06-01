@@ -87,7 +87,7 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=5" rel="stylesheet" />
 <link href="../assets/css/legalpro-client-portal.css?v=8" rel="stylesheet" />
 
     <style>
@@ -189,6 +189,43 @@ $html = <<<'HTML'
         }
         .client-dashboard-page .cd-list-item .flex-grow-1 { min-width: 0; }
         .client-dashboard-page .cd-list-item:last-child { margin-bottom: 0 !important; }
+        .client-dashboard-page .legalpro-navbar-search .input-group {
+            position: relative;
+        }
+        .client-dashboard-page .legalpro-navbar-search input[type="search"].form-control {
+            padding-right: 2.25rem !important;
+        }
+        .client-dashboard-page .navbar-search-clear {
+            position: absolute;
+            top: 50%;
+            right: 0.45rem;
+            transform: translateY(-50%);
+            z-index: 5;
+            width: 1.35rem;
+            height: 1.35rem;
+            border: 0;
+            border-radius: 50%;
+            background: transparent;
+            color: #8392ab;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+            padding: 0;
+        }
+        .client-dashboard-page .navbar-search-clear.is-visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .client-dashboard-page .navbar-search-clear:hover,
+        .client-dashboard-page .navbar-search-clear:focus {
+            color: #5e72e4;
+            background: rgba(94, 114, 228, 0.08);
+            outline: none;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 client-dashboard-page">
@@ -210,6 +247,9 @@ $html = <<<'HTML'
                         <div class="input-group">
                             <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
                             <input type="search" name="q" class="form-control" placeholder="Search cases or appointments…" value="" autocomplete="off" maxlength="200" aria-label="Search">
+                            <button type="button" class="navbar-search-clear" aria-label="Clear search">
+                                <i class="fas fa-times" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </form>
                     <ul class="navbar-nav justify-content-end">
@@ -361,6 +401,28 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var searchInput = document.querySelector('.legalpro-navbar-search input[name="q"]');
+            var clearBtn = document.querySelector('.legalpro-navbar-search .navbar-search-clear');
+            if (!searchInput || !clearBtn) return;
+
+            function syncClearButton() {
+                var hasValue = String(searchInput.value || '').length > 0;
+                clearBtn.classList.toggle('is-visible', hasValue);
+                clearBtn.hidden = !hasValue;
+            }
+
+            clearBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                searchInput.focus();
+                syncClearButton();
+            });
+
+            searchInput.addEventListener('input', syncClearButton);
+            syncClearButton();
+        });
+    </script>
 </body>
 </html>
 HTML;

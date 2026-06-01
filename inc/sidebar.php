@@ -32,11 +32,6 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="../pages/case-new.php">
-          <span class="nav-link-text ms-1">New Case</span>
-        </a>
-      </li>
-      <li class="nav-item">
         <a class="nav-link" href="../pages/tables.php">
           <span class="nav-link-text ms-1">Cases</span>
         </a>

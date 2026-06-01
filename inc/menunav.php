@@ -26,12 +26,6 @@ $menuItems = [
         'id' => 'tables'
     ],
     [
-        'title' => 'New Case',
-        'url' => 'case-new.php',
-        'icon' => 'ni ni-fat-add',
-        'id' => 'case-new'
-    ],
-    [
         'title' => 'Clients',
         'url' => 'clients.php',
         'icon' => 'ni ni-circle-08',
