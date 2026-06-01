@@ -152,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description = trim(isset($_POST['description']) ? $_POST['description'] : '');
         $status = isset($_POST['status']) ? strtolower(trim($_POST['status'])) : 'open';
         $priority = isset($_POST['priority']) ? $_POST['priority'] : 'Normal';
-        $category = isset($_POST['category']) ? $_POST['category'] : 'Civil';
+        $category = resolveSubmittedCaseCategory('Civil');
         $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : '';
         $expectedCompletion = isset($_POST['expected_completion']) ? $_POST['expected_completion'] : '';
 
@@ -902,12 +902,7 @@ $html = <<<'HTML'
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label class="form-control-label text-sm font-weight-bold">Category</label>
-                                        <select class="form-control" name="category">
-                                            <option value="Civil" {CATEGORY_CIVIL}>Civil</option>
-                                            <option value="Criminal" {CATEGORY_CRIMINAL}>Criminal</option>
-                                            <option value="Corporate" {CATEGORY_CORPORATE}>Corporate</option>
-                                            <option value="Family" {CATEGORY_FAMILY}>Family</option>
-                                        </select>
+                                        {CATEGORY_FIELD}
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label class="form-control-label text-sm font-weight-bold">Total Fees</label>
@@ -1311,6 +1306,22 @@ $html = <<<'HTML'
                     });
                 }
             }
+
+            var categorySelect = document.getElementById('category_select');
+            if (categorySelect) {
+                var categoryCustom = document.getElementById('category_custom');
+                function syncCategoryField() {
+                    if (!categoryCustom) return;
+                    if (categorySelect.value === '__other__') {
+                        categoryCustom.classList.remove('d-none');
+                    } else {
+                        categoryCustom.classList.add('d-none');
+                        categoryCustom.value = '';
+                    }
+                }
+                categorySelect.addEventListener('change', syncCategoryField);
+                syncCategoryField();
+            }
         });
     </script>
 </body>
@@ -1318,6 +1329,7 @@ $html = <<<'HTML'
 HTML;
 
 // Template replacements
+$categoryFieldHtml = buildCaseCategoryFieldHtml(isset($case['category']) ? $case['category'] : 'Civil', 'Civil');
 $replacements = [
     '{MESSAGE}' => $messageHtml,
     '{CASE_ID}' => $caseId,
@@ -1332,10 +1344,7 @@ $replacements = [
     '{PRIORITY_NORMAL}' => ($case['priority'] === 'Normal') ? 'selected' : '',
     '{PRIORITY_HIGH}' => ($case['priority'] === 'High') ? 'selected' : '',
     '{PRIORITY_URGENT}' => ($case['priority'] === 'Urgent') ? 'selected' : '',
-    '{CATEGORY_CIVIL}' => ($case['category'] === 'Civil') ? 'selected' : '',
-    '{CATEGORY_CRIMINAL}' => ($case['category'] === 'Criminal') ? 'selected' : '',
-    '{CATEGORY_CORPORATE}' => ($case['category'] === 'Corporate') ? 'selected' : '',
-    '{CATEGORY_FAMILY}' => ($case['category'] === 'Family') ? 'selected' : '',
+    '{CATEGORY_FIELD}' => $categoryFieldHtml,
     '{TOTAL_FEES}' => formatCurrency(isset($case['estimated_fees']) ? $case['estimated_fees'] : 0),
     '{START_DATE}' => isset($case['start_date']) ? $case['start_date'] : '',
     '{EXPECTED_COMPLETION}' => isset($case['expected_completion']) ? $case['expected_completion'] : '',

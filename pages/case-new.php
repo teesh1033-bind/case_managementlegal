@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description = isset($_POST['description']) ? trim($_POST['description']) : '';
         $status = isset($_POST['status']) ? trim($_POST['status']) : 'open';
         $priority = isset($_POST['priority']) ? trim($_POST['priority']) : 'Normal';
-        $category = isset($_POST['category']) ? trim($_POST['category']) : 'Civil';
+        $category = resolveSubmittedCaseCategory('Civil');
         $startDate = isset($_POST['start_date']) ? trim($_POST['start_date']) : null;
         $expectedCompletion = isset($_POST['expected_completion']) ? trim($_POST['expected_completion']) : null;
         
@@ -420,6 +420,7 @@ foreach ($lawyersList as $lawyer) {
 }
 
 $offeredServices = getOfferedServices();
+$categoryFieldHtml = buildCaseCategoryFieldHtml($formData['category'], 'Civil');
 $offeredServicesHint = !empty($offeredServices)
     ? '<small class="text-muted d-block mb-2">Choose from your firm\'s offered services, or pick Other for a custom name.</small>'
     : '<small class="text-muted d-block mb-2"><a href="settings.php">Add services in Settings</a> to enable quick-select here.</small>';
@@ -546,12 +547,7 @@ $html = <<<'HTML'
 									<div class="col-md-4">
 										<div class="form-group">
 											<label class="form-control-label">Category</label>
-											<select class="form-control" name="category">
-												<option value="Civil"{CATEGORY_CIVIL}>Civil</option>
-												<option value="Criminal"{CATEGORY_CRIMINAL}>Criminal</option>
-												<option value="Corporate"{CATEGORY_CORPORATE}>Corporate</option>
-												<option value="Family"{CATEGORY_FAMILY}>Family</option>
-											</select>
+											{CATEGORY_FIELD}
 										</div>
 									</div>
 									<div class="col-md-4">
@@ -780,6 +776,22 @@ $html = <<<'HTML'
 			// Calculate total on page load
 			calculateTotal();
 
+			var categorySelect = document.getElementById('category_select');
+			if (categorySelect) {
+				var categoryCustom = document.getElementById('category_custom');
+				function syncCategoryField() {
+					if (!categoryCustom) return;
+					if (categorySelect.value === '__other__') {
+						categoryCustom.classList.remove('d-none');
+					} else {
+						categoryCustom.classList.add('d-none');
+						categoryCustom.value = '';
+					}
+				}
+				categorySelect.addEventListener('change', syncCategoryField);
+				syncCategoryField();
+			}
+
 			// No limit on lawyer selection - multiple lawyers can be selected
 		});
 	</script>
@@ -826,11 +838,7 @@ $html = str_replace('{PRIORITY_NORMAL}', ($formData['priority'] === 'Normal') ? 
 $html = str_replace('{PRIORITY_HIGH}', ($formData['priority'] === 'High') ? ' selected' : '', $html);
 $html = str_replace('{PRIORITY_URGENT}', ($formData['priority'] === 'Urgent') ? ' selected' : '', $html);
 
-// Category selected
-$html = str_replace('{CATEGORY_CIVIL}', ($formData['category'] === 'Civil') ? ' selected' : '', $html);
-$html = str_replace('{CATEGORY_CRIMINAL}', ($formData['category'] === 'Criminal') ? ' selected' : '', $html);
-$html = str_replace('{CATEGORY_CORPORATE}', ($formData['category'] === 'Corporate') ? ' selected' : '', $html);
-$html = str_replace('{CATEGORY_FAMILY}', ($formData['category'] === 'Family') ? ' selected' : '', $html);
+$html = str_replace('{CATEGORY_FIELD}', $categoryFieldHtml, $html);
 
 // rewrite internal links from .html to .php
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);

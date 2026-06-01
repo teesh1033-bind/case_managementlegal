@@ -159,6 +159,187 @@ function setOfferedServices(array $services) {
     setSetting('offered_services', json_encode($normalized, JSON_UNESCAPED_UNICODE));
 }
 
+function getLawyerSpecializationsFromSettings() {
+    $raw = getSetting('lawyer_specializations', null);
+    if ($raw === null || $raw === '') {
+        return [];
+    }
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        return [];
+    }
+    $specializations = [];
+    foreach ($decoded as $name) {
+        $name = trim((string) $name);
+        if ($name !== '') {
+            $specializations[] = $name;
+        }
+    }
+    return $specializations;
+}
+
+function getLawyerSpecializations() {
+    global $pdo;
+
+    $specializations = getLawyerSpecializationsFromSettings();
+
+    try {
+        $stmt = $pdo->query("
+            SELECT DISTINCT specialization
+            FROM lawyers
+            WHERE specialization IS NOT NULL AND TRIM(specialization) != ''
+            ORDER BY specialization
+        ");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $name = trim((string) ($row['specialization'] ?? ''));
+            if ($name !== '' && !in_array($name, $specializations, true)) {
+                $specializations[] = $name;
+            }
+        }
+    } catch (PDOException $e) {
+        // Continue with settings-only list.
+    }
+
+    sort($specializations, SORT_NATURAL | SORT_FLAG_CASE);
+
+    return $specializations;
+}
+
+function addLawyerSpecialization($name) {
+    $name = trim((string) $name);
+    if ($name === '') {
+        return;
+    }
+
+    $specializations = getLawyerSpecializationsFromSettings();
+    if (in_array($name, $specializations, true)) {
+        return;
+    }
+
+    $specializations[] = $name;
+    sort($specializations, SORT_NATURAL | SORT_FLAG_CASE);
+    setSetting('lawyer_specializations', json_encode($specializations, JSON_UNESCAPED_UNICODE));
+}
+
+function getDefaultCaseCategories() {
+    return ['Civil', 'Criminal', 'Corporate', 'Family'];
+}
+
+function getCaseCategoriesFromSettings() {
+    $raw = getSetting('case_categories', null);
+    if ($raw === null || $raw === '') {
+        return [];
+    }
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        return [];
+    }
+    $categories = [];
+    foreach ($decoded as $name) {
+        $name = trim((string) $name);
+        if ($name !== '') {
+            $categories[] = $name;
+        }
+    }
+    return $categories;
+}
+
+function getCaseCategories() {
+    global $pdo;
+
+    $categories = array_merge(getDefaultCaseCategories(), getCaseCategoriesFromSettings());
+
+    try {
+        $stmt = $pdo->query("
+            SELECT DISTINCT category
+            FROM cases
+            WHERE category IS NOT NULL AND TRIM(category) != ''
+            ORDER BY category
+        ");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $name = trim((string) ($row['category'] ?? ''));
+            if ($name !== '' && !in_array($name, $categories, true)) {
+                $categories[] = $name;
+            }
+        }
+    } catch (PDOException $e) {
+        // Continue with defaults/settings only.
+    }
+
+    $unique = [];
+    foreach ($categories as $name) {
+        if (!in_array($name, $unique, true)) {
+            $unique[] = $name;
+        }
+    }
+
+    sort($unique, SORT_NATURAL | SORT_FLAG_CASE);
+
+    return $unique;
+}
+
+function addCaseCategory($name) {
+    $name = trim((string) $name);
+    if ($name === '') {
+        return;
+    }
+
+    $categories = getCaseCategoriesFromSettings();
+    if (in_array($name, $categories, true) || in_array($name, getDefaultCaseCategories(), true)) {
+        return;
+    }
+
+    $categories[] = $name;
+    sort($categories, SORT_NATURAL | SORT_FLAG_CASE);
+    setSetting('case_categories', json_encode($categories, JSON_UNESCAPED_UNICODE));
+}
+
+function resolveSubmittedCaseCategory($fallback = 'Civil') {
+    $select = trim((string) ($_POST['category_select'] ?? ''));
+    $custom = trim((string) ($_POST['category_custom'] ?? ''));
+
+    if ($select === '__other__') {
+        $category = $custom !== '' ? $custom : $fallback;
+    } elseif ($select !== '') {
+        $category = $select;
+    } else {
+        $legacy = trim((string) ($_POST['category'] ?? ''));
+        $category = $legacy !== '' ? $legacy : $fallback;
+    }
+
+    if ($category !== '') {
+        addCaseCategory($category);
+    }
+
+    return $category;
+}
+
+function buildCaseCategoryFieldHtml($currentCategory, $fallback = 'Civil') {
+    $categories = getCaseCategories();
+    $currentCategory = trim((string) $currentCategory);
+    if ($currentCategory === '') {
+        $currentCategory = $fallback;
+    }
+
+    $isOther = !in_array($currentCategory, $categories, true);
+
+    $optionsHtml = '';
+    foreach ($categories as $name) {
+        $selected = ($currentCategory === $name && !$isOther) ? ' selected' : '';
+        $optionsHtml .= '<option value="' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '"' . $selected . '>'
+            . htmlspecialchars($name) . '</option>';
+    }
+    $optionsHtml .= '<option value="__other__"' . ($isOther ? ' selected' : '') . '>Add new category...</option>';
+
+    $customClass = $isOther ? '' : 'd-none';
+    $customValue = $isOther ? htmlspecialchars($currentCategory, ENT_QUOTES, 'UTF-8') : '';
+
+    return '
+        <select class="form-control" name="category_select" id="category_select">' . $optionsHtml . '</select>
+        <input type="text" class="form-control mt-2 ' . $customClass . '" name="category_custom" id="category_custom" value="' . $customValue . '" placeholder="Enter new category name">
+        <small class="text-muted d-block mt-1">Choose an existing category or pick "Add new category..." to create one.</small>';
+}
+
 require_once __DIR__ . '/../lib/branding.php';
 
 ?>
