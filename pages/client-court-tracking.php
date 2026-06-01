@@ -47,33 +47,67 @@ try {
     $court_dates = [];
 }
 
-// Prepare calendar events for FullCalendar
+// Prepare calendar events for FullCalendar (dashboard-style dots)
 $calendar_events = [];
 foreach ($court_dates as $date) {
-    $status_color = '';
-    switch ($date['status']) {
-        case 'scheduled': $status_color = '#17a2b8'; break;
-        case 'completed': $status_color = '#28a745'; break;
-        case 'cancelled': $status_color = '#dc3545'; break;
-        case 'postponed': $status_color = '#ffc107'; break;
-        default: $status_color = '#6c757d';
+    $caseId = (int) ($date['case_id'] ?? 0);
+    $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+    $status = strtolower((string) ($date['status'] ?? 'scheduled'));
+    $displayTitle = $caseNumber . ' · ' . ($date['title'] ?? 'Court date');
+    if (!empty($date['case_title'])) {
+        $displayTitle = $caseNumber . ' · ' . $date['case_title'];
     }
 
     $calendar_events[] = [
-        'id' => $date['id'],
-        'title' => $date['case_title'] . ' - ' . $date['title'],
+        'id' => (string) $date['id'],
+        'title' => $displayTitle,
         'start' => $date['court_date'],
-        'backgroundColor' => $status_color,
-        'borderColor' => $status_color,
-        'textColor' => '#fff',
+        'backgroundColor' => 'transparent',
+        'borderColor' => 'transparent',
+        'textColor' => '#344767',
         'extendedProps' => [
+            'status' => $status,
             'description' => $date['description'],
             'location' => $date['location'],
-            'status' => $date['status'],
             'created_by_name' => $date['created_by_name'],
-            'creator_role' => $date['creator_role']
+            'creator_role' => $date['creator_role'],
+            'case_title' => $date['case_title'] ?? '',
+            'case_id' => $caseId,
         ]
     ];
+}
+
+$upcomingCourtDatesHtml = '';
+$upcomingCourtDates = array_values(array_filter($court_dates, function ($row) {
+    $status = strtolower((string) ($row['status'] ?? ''));
+    return strtotime((string) ($row['court_date'] ?? '')) >= time()
+        && ($status === 'scheduled' || $status === 'postponed');
+}));
+if (empty($upcomingCourtDates)) {
+    $upcomingCourtDatesHtml = '<div class="dashboard-upcoming-empty"><i class="ni ni-calendar-grid-58"></i>No upcoming court dates</div>';
+} else {
+    usort($upcomingCourtDates, function ($a, $b) {
+        return strtotime((string) ($a['court_date'] ?? '')) <=> strtotime((string) ($b['court_date'] ?? ''));
+    });
+    foreach (array_slice($upcomingCourtDates, 0, 8) as $row) {
+        $status = strtolower((string) ($row['status'] ?? 'scheduled'));
+        if (!in_array($status, ['scheduled', 'completed', 'postponed', 'cancelled'], true)) {
+            $status = 'scheduled';
+        }
+        $caseId = (int) ($row['case_id'] ?? 0);
+        $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+        $title = htmlspecialchars($caseNumber . ' · ' . ($row['title'] ?? 'Court date'));
+        $hourLabel = date('g:i A', strtotime((string) $row['court_date']));
+        $dayLabel = date('M j', strtotime((string) $row['court_date']));
+        $upcomingCourtDatesHtml .= '
+        <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . '" data-court-date-id="' . (int) $row['id'] . '">
+            <span class="dashboard-upcoming-item__time">' . htmlspecialchars($hourLabel) . '<br><small style="font-weight:500;opacity:.8">' . htmlspecialchars($dayLabel) . '</small></span>
+            <span class="flex-grow-1">
+                <p class="dashboard-upcoming-item__title">' . $title . '</p>
+                <p class="dashboard-upcoming-item__sub">' . htmlspecialchars((string) ($row['case_title'] ?? '')) . '</p>
+            </span>
+        </button>';
+    }
 }
 
 $ctTotal = count($court_dates);
@@ -117,8 +151,8 @@ if (!empty($_SESSION['error_message'])) {
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
 <link href="../assets/css/legalpro-client-portal.css?v=1" rel="stylesheet" />
-    <link rel="stylesheet" href="../assets/css/simple-calendar.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.css" />
+<link href="../assets/css/dashboard-enhancements.css?v=4" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
     <style>
         .client-court-tracking-page { --cct-radius: 1.15rem; }
         .client-court-tracking-page .cct-hero {
@@ -174,68 +208,10 @@ if (!empty($_SESSION['error_message'])) {
         .client-court-tracking-page .cct-cal-wrap {
             padding: 0 1rem 1.25rem;
         }
-        .client-court-tracking-page .cct-cal-wrap #calendar {
+        .client-court-tracking-page .cct-cal-wrap #courtTrackingCalendar {
             min-height: 28rem;
         }
-        .client-court-tracking-page .fc .fc-toolbar.fc-header-toolbar {
-            margin-bottom: 1rem;
-            gap: 0.5rem;
-        }
-        .client-court-tracking-page .fc .fc-toolbar.fc-header-toolbar {
-            background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
-            border-radius: 0.5rem;
-            padding: 0.65rem 1rem;
-        }
-        .client-court-tracking-page .fc .fc-toolbar-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #fff !important;
-        }
-        .client-court-tracking-page .fc .fc-button {
-            background-color: #5e72e4 !important;
-            border-color: #5e72e4 !important;
-            color: #fff !important;
-            opacity: 1 !important;
-            text-transform: capitalize;
-            font-weight: 600;
-            padding: 0.45rem 0.85rem;
-            box-shadow: none;
-        }
-        .client-court-tracking-page .fc .fc-button:hover,
-        .client-court-tracking-page .fc .fc-button:focus,
-        .client-court-tracking-page .fc .fc-button:active {
-            background-color: #324cdd !important;
-            border-color: #324cdd !important;
-            color: #fff !important;
-            box-shadow: none;
-        }
-        .client-court-tracking-page .fc .fc-button:disabled {
-            opacity: 0.5 !important;
-        }
-        .client-court-tracking-page .fc .fc-button-primary:not(:disabled).fc-button-active,
-        .client-court-tracking-page .fc .fc-button-primary:not(:disabled):active {
-            background-color: #172b4d !important;
-            border-color: #172b4d !important;
-        }
-        .client-court-tracking-page .fc .fc-icon {
-            color: #fff !important;
-        }
-        .client-court-tracking-page .fc .fc-icon-chevron-left,
-        .client-court-tracking-page .fc .fc-icon-chevron-right {
-            color: #fff !important;
-        }
-        .client-court-tracking-page .simple-calendar .calendar-header .btn {
-            color: #5e72e4 !important;
-            background-color: #fff !important;
-            border-color: #fff !important;
-            font-weight: 700;
-            min-width: 2.25rem;
-        }
-        .client-court-tracking-page .simple-calendar .calendar-header .btn:hover {
-            background-color: #f8f9fa !important;
-            color: #324cdd !important;
-        }
-        .client-court-tracking-page .fc-event { cursor: pointer; border-radius: 0.35rem; }
+        .client-court-tracking-page .fc-event { cursor: pointer; }
         .client-court-tracking-page .cct-panel .table thead th {
             font-size: 0.65rem;
             letter-spacing: 0.06em;
@@ -356,16 +332,32 @@ if (!empty($_SESSION['error_message'])) {
 
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card cct-panel cct-panel-calendar mb-0">
-                        <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2">
+                    <div class="dashboard-calendar-hub">
+                        <div class="dashboard-calendar-hub__head">
                             <div>
-                                <h5 class="text-dark">Calendar</h5>
-                                <p class="text-sm text-muted mb-0">Month, week, or day — click an entry to open details.</p>
+                                <h6 class="text-capitalize mb-0 font-weight-bold" style="color: #344767;">Court Dates Calendar</h6>
+                                <p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
+                                <div class="dashboard-legend-pills">
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
+                                </div>
                             </div>
-                            <a href="client-dashboard.php" class="btn btn-sm btn-outline-primary mb-0">Dashboard</a>
                         </div>
-                        <div class="cct-cal-wrap">
-                            <div id="calendar"></div>
+                        <div class="dashboard-calendar-hub__body">
+                            <div class="dashboard-calendar-layout">
+                                <div id="courtTrackingCalendar"></div>
+                                <aside class="dashboard-upcoming-panel">
+                                    <div class="dashboard-upcoming-panel__title">
+                                        <span>Upcoming</span>
+                                        <a href="#courtDatesTable" class="text-xs text-primary font-weight-bold">View all</a>
+                                    </div>
+                                    <div class="dashboard-upcoming-list" id="upcomingCourtDatesList">
+                                        <?php echo $upcomingCourtDatesHtml; ?>
+                                    </div>
+                                </aside>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -507,89 +499,76 @@ if (!empty($_SESSION['error_message'])) {
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
-    <script src="../assets/js/fullcalendar/fallback.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script>
-        // Try FullCalendar first, fallback to simple calendar
-        let calendarLoaded = false;
-
-        try {
-            // Load FullCalendar from CDN
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.js';
-            script.onload = function() {
-                calendarLoaded = true;
-                console.log('FullCalendar loaded successfully');
-                initFullCalendar();
-            };
-            script.onerror = function() {
-                console.warn('FullCalendar CDN failed, using fallback');
-                initSimpleCalendar();
-            };
-            document.head.appendChild(script);
-        } catch (e) {
-            console.error('Error loading FullCalendar:', e);
-            initSimpleCalendar();
-        }
-
-        function initFullCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            if (!calendarEl) return;
-
-            try {
-                const calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    headerToolbar: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                    },
-                    events: <?php echo json_encode($calendar_events); ?>,
-                    eventClick: function(info) {
-                        console.log('Event clicked:', info.event.id);
-                        viewCourtDate(info.event.id);
-                    },
-                    height: 'auto',
-                    eventDisplay: 'block'
-                });
-                calendar.render();
-                console.log('FullCalendar rendered successfully');
-            } catch (error) {
-                console.error('Error initializing FullCalendar:', error);
-                initSimpleCalendar();
-            }
-        }
-
-        function initSimpleCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            if (!calendarEl) return;
-
-            try {
-                simpleCalendar = new SimpleCalendar(calendarEl, {
-                    events: <?php echo json_encode($calendar_events); ?>
-                });
-                console.log('Simple calendar rendered successfully');
-            } catch (error) {
-                console.error('Error initializing simple calendar:', error);
-                calendarEl.innerHTML = '<div class="alert alert-danger">Failed to load calendar. Please contact administrator.</div>';
-            }
-        }
-
-        // Initialize on DOM load if FullCalendar is already loaded
         document.addEventListener('DOMContentLoaded', function() {
-            if (typeof FullCalendar !== 'undefined') {
-                calendarLoaded = true;
-                initFullCalendar();
-            } else {
-                // Wait a bit for CDN to load
-                setTimeout(function() {
-                    if (!calendarLoaded) {
-                        initSimpleCalendar();
-                    }
-                }, 2000);
+            var calendarEl = document.getElementById('courtTrackingCalendar');
+            var courtEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
+
+            function courtStatusKey(status) {
+                var value = String(status || 'scheduled').toLowerCase();
+                if (['scheduled', 'completed', 'cancelled', 'postponed'].indexOf(value) === -1) {
+                    return 'scheduled';
+                }
+                return value;
             }
+
+            function renderCourtEvent(arg) {
+                var props = arg.event.extendedProps || {};
+                var statusKey = courtStatusKey(props.status);
+                var timeText = arg.timeText || '';
+                var title = arg.event.title || 'Court date';
+                if (title.length > 22) {
+                    title = title.slice(0, 19) + '...';
+                }
+                var wrap = document.createElement('div');
+                wrap.className = 'dashboard-cal-event';
+                wrap.innerHTML =
+                    '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
+                    '<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
+                return { domNodes: [wrap] };
+            }
+
+            var upcomingList = document.getElementById('upcomingCourtDatesList');
+            if (upcomingList) {
+                upcomingList.addEventListener('click', function(e) {
+                    var btn = e.target.closest('[data-court-date-id]');
+                    if (!btn) return;
+                    viewCourtDate(btn.getAttribute('data-court-date-id'));
+                });
+            }
+
+            if (!calendarEl || typeof FullCalendar === 'undefined') {
+                return;
+            }
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+                height: 'auto',
+                firstDay: 1,
+                navLinks: true,
+                nowIndicator: true,
+                fixedWeekCount: false,
+                dayMaxEvents: 3,
+                moreLinkClick: 'day',
+                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                dayHeaderFormat: { weekday: 'short' },
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                events: courtEvents,
+                eventContent: renderCourtEvent,
+                eventClick: function(info) {
+                    info.jsEvent.preventDefault();
+                    viewCourtDate(info.event.id);
+                }
+            });
+            calendar.render();
         });
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 
     <script>
         // View court date details
@@ -609,8 +588,7 @@ if (!empty($_SESSION['error_message'])) {
                 document.getElementById('view_created_by').textContent = eventData.created_by_name || 'Unknown';
                 document.getElementById('view_creator_role').textContent = eventData.creator_role ? eventData.creator_role.charAt(0).toUpperCase() + eventData.creator_role.slice(1) : 'Unknown';
 
-                var modal = new bootstrap.Modal(document.getElementById('viewCourtDateModal'));
-                modal.show();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('viewCourtDateModal')).show();
             }
         }
     </script>
