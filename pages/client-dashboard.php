@@ -193,7 +193,7 @@ $html = <<<'HTML'
             position: relative;
         }
         .client-dashboard-page .legalpro-navbar-search input[type="search"].form-control {
-            padding-right: 2.25rem !important;
+            padding-right: 2.35rem !important;
         }
         .client-dashboard-page .navbar-search-clear {
             position: absolute;
@@ -211,14 +211,8 @@ $html = <<<'HTML'
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+            transition: color 0.15s ease, background-color 0.15s ease;
             padding: 0;
-        }
-        .client-dashboard-page .navbar-search-clear.is-visible {
-            opacity: 1;
-            visibility: visible;
         }
         .client-dashboard-page .navbar-search-clear:hover,
         .client-dashboard-page .navbar-search-clear:focus {
@@ -407,20 +401,11 @@ $html = <<<'HTML'
             var clearBtn = document.querySelector('.legalpro-navbar-search .navbar-search-clear');
             if (!searchInput || !clearBtn) return;
 
-            function syncClearButton() {
-                var hasValue = String(searchInput.value || '').length > 0;
-                clearBtn.classList.toggle('is-visible', hasValue);
-                clearBtn.hidden = !hasValue;
-            }
-
             clearBtn.addEventListener('click', function () {
                 searchInput.value = '';
                 searchInput.focus();
-                syncClearButton();
+                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
             });
-
-            searchInput.addEventListener('input', syncClearButton);
-            syncClearButton();
         });
     </script>
 </body>

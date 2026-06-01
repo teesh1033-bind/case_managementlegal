@@ -161,8 +161,36 @@ if (empty($clientDocuments)) {
     $documentsHtml = '<tr><td colspan="4" class="text-center text-muted py-3">No documents uploaded by this client</td></tr>';
 } else {
     foreach ($clientDocuments as $document) {
-        $fileSize = filesize('../uploads/' . $document['file_path']);
-        $fileSizeFormatted = $fileSize ? round($fileSize / 1024, 1) . ' KB' : 'Unknown';
+        $filePath = isset($document['file_path']) ? trim((string) $document['file_path']) : '';
+        $fileType = isset($document['file_type']) ? trim((string) $document['file_type']) : '';
+        $fileLabel = isset($document['label']) ? trim((string) $document['label']) : '';
+        $caseTitle = isset($document['case_title']) ? (string) $document['case_title'] : '';
+
+        $absoluteUploadPath = $filePath !== '' ? (__DIR__ . '/../uploads/' . ltrim($filePath, '/\\')) : '';
+        $fileExists = $absoluteUploadPath !== '' && is_file($absoluteUploadPath);
+        $fileSize = $fileExists ? @filesize($absoluteUploadPath) : false;
+        $fileSizeFormatted = $fileSize !== false ? round($fileSize / 1024, 1) . ' KB' : 'Unknown';
+
+        if ($fileType === '' && $filePath !== '') {
+            $fileType = strtoupper((string) pathinfo($filePath, PATHINFO_EXTENSION));
+        }
+        if ($fileType === '') {
+            $fileType = 'Unknown';
+        }
+
+        $fallbackName = $filePath !== '' ? basename($filePath) : 'Untitled document';
+        $displayName = $fileLabel !== '' ? $fileLabel : $fallbackName;
+        $safeDisplayName = htmlspecialchars($displayName);
+        $safeCaseTitle = htmlspecialchars($caseTitle !== '' ? $caseTitle : 'Unknown case');
+        $safeFileType = htmlspecialchars($fileType);
+
+        $documentActionsHtml = '<span class="text-xs text-muted">File unavailable</span>';
+        if ($filePath !== '') {
+            $safeFilePath = htmlspecialchars($filePath);
+            $documentActionsHtml = '
+                <a href="../uploads/' . $safeFilePath . '" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="../uploads/' . $safeFilePath . '" download class="btn btn-sm btn-outline-secondary">Download</a>';
+        }
 
         $documentsHtml .= '
         <tr>
@@ -172,17 +200,16 @@ if (empty($clientDocuments)) {
                         <i class="ni ni-single-copy-04 text-white text-xs opacity-10"></i>
                     </div>
                     <div>
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($document['label'] ?: basename($document['file_path'])) . '</h6>
-                        <p class="text-xs text-muted mb-0">' . htmlspecialchars($document['case_title']) . '</p>
+                        <h6 class="mb-0 text-sm">' . $safeDisplayName . '</h6>
+                        <p class="text-xs text-muted mb-0">' . $safeCaseTitle . '</p>
                     </div>
                 </div>
             </td>
-            <td class="text-center">' . htmlspecialchars($document['file_type']) . '</td>
+            <td class="text-center">' . $safeFileType . '</td>
             <td class="text-center">' . $fileSizeFormatted . '</td>
             <td class="text-center">' . date('M d, Y', strtotime($document['uploaded_at'])) . '</td>
             <td class="text-end">
-                <a href="../uploads/' . htmlspecialchars($document['file_path']) . '" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
-                <a href="../uploads/' . htmlspecialchars($document['file_path']) . '" download class="btn btn-sm btn-outline-secondary">Download</a>
+                ' . $documentActionsHtml . '
             </td>
         </tr>';
     }
