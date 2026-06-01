@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../lib/mail.php';
 
 $message = '';
 $messageType = '';
@@ -96,8 +97,91 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: settings.php?msg=' . urlencode('Category removed successfully.') . '&type=success');
             exit;
         }
+    } elseif ($formType === 'mail') {
+        $smtpUsername = legalpro_normalize_smtp_username((string) ($_POST['smtp_username'] ?? ''));
+        $newPassword = legalpro_normalize_smtp_password((string) ($_POST['smtp_password'] ?? ''));
+        $existingPassword = legalpro_normalize_smtp_password((string) getSetting('smtp_password', ''));
+
+        if ($smtpUsername !== '' && $newPassword === '' && $existingPassword === '') {
+            $message = 'Le mot de passe d\'application Google est obligatoire la première fois.';
+            $messageType = 'danger';
+        } elseif ($newPassword !== '' && legalpro_is_gmail_smtp([
+            'host' => (string) ($_POST['smtp_host'] ?? 'smtp.gmail.com'),
+            'username' => $smtpUsername,
+        ])) {
+            $pwdLen = legalpro_gmail_app_password_length($newPassword);
+            if ($pwdLen !== 16) {
+                $message = 'Le mot de passe d\'application doit contenir exactement 16 lettres/chiffres après collage '
+                    . '(actuellement ' . $pwdLen . '). Copiez les 4 blocs de 4 caractères affichés par Google.';
+                $messageType = 'danger';
+            }
+        }
+
+        if ($messageType !== 'danger') {
+            $enable = isset($_POST['smtp_enabled']) || ($smtpUsername !== '' && ($newPassword !== '' || $existingPassword !== ''));
+            setSetting('smtp_enabled', $enable ? '1' : '0');
+            setSetting('smtp_host', trim((string) ($_POST['smtp_host'] ?? 'smtp.gmail.com')));
+            setSetting('smtp_port', trim((string) ($_POST['smtp_port'] ?? '587')));
+            $enc = strtolower(trim((string) ($_POST['smtp_encryption'] ?? 'tls')));
+            setSetting('smtp_encryption', in_array($enc, ['tls', 'ssl', 'none'], true) ? $enc : 'tls');
+            setSetting('smtp_username', $smtpUsername);
+            if ($newPassword !== '') {
+                setSetting('smtp_password', $newPassword);
+            }
+            if ($smtpUsername !== '' && legalpro_is_gmail_smtp(['host' => trim((string) ($_POST['smtp_host'] ?? '')), 'username' => $smtpUsername])) {
+                setSetting('mail_from_address', $smtpUsername);
+            } else {
+                setSetting('mail_from_address', trim((string) ($_POST['mail_from_address'] ?? '')));
+            }
+            setSetting('app_base_url', trim((string) ($_POST['app_base_url'] ?? '')));
+            header('Location: settings.php?msg=' . urlencode('Paramètres email enregistrés.') . '&type=success');
+            exit;
+        }
+    } elseif ($formType === 'test_mail') {
+        $testTo = trim((string) ($_POST['test_email'] ?? ''));
+        if ($testTo === '') {
+            $testTo = trim((string) getSetting('smtp_username', ''));
+        }
+        if (!filter_var($testTo, FILTER_VALIDATE_EMAIL)) {
+            $message = 'Adresse email de test invalide.';
+            $messageType = 'danger';
+        } else {
+            $cfg = legalpro_get_smtp_config();
+            $authTest = legalpro_smtp_test_connection($cfg);
+            if (!$authTest['ok']) {
+                $message = $authTest['message'];
+                $messageType = 'danger';
+            } else {
+                $result = legalpro_send_email($testTo, getCompanyName() . ' — Test', '<p>Email de test OK.</p>');
+                $message = $authTest['message'] . ' ' . $result['message'];
+                $messageType = $result['ok'] ? 'success' : 'danger';
+            }
+        }
     }
 }
+
+$smtpEnabled = (string) getSetting('smtp_enabled', '0') === '1';
+$smtpHost = (string) getSetting('smtp_host', 'smtp.gmail.com');
+$smtpPort = (string) getSetting('smtp_port', '587');
+$smtpEncryption = (string) getSetting('smtp_encryption', 'tls');
+$smtpUsername = (string) getSetting('smtp_username', '');
+$mailFromAddress = (string) getSetting('mail_from_address', '');
+$appBaseUrl = (string) getSetting('app_base_url', '');
+$smtpStoredPassword = legalpro_normalize_smtp_password((string) getSetting('smtp_password', ''));
+$smtpHasPassword = $smtpStoredPassword !== '';
+$smtpPasswordLen = strlen($smtpStoredPassword);
+if (!$smtpHasPassword) {
+    $smtpPasswordStatusHtml = '<p class="text-xs text-warning mb-2">Aucun mot de passe d\'application enregistré.</p>';
+} elseif ($smtpPasswordLen === 16) {
+    $smtpPasswordStatusHtml = '<p class="text-xs text-success mb-2">Mot de passe enregistré : 16 caractères — OK.</p>';
+} else {
+    $smtpPasswordStatusHtml = '<p class="text-xs text-danger mb-2"><strong>Attention :</strong> mot de passe enregistré = '
+        . $smtpPasswordLen . ' caractères (il en faut 16). Collez un nouveau mot de passe d\'application ci-dessous.</p>';
+}
+$smtpEnabledChecked = ($smtpEnabled || ($smtpUsername !== '' && $smtpHasPassword)) ? ' checked' : '';
+$smtpTlsSelected = $smtpEncryption === 'tls' ? ' selected' : '';
+$smtpSslSelected = $smtpEncryption === 'ssl' ? ' selected' : '';
+$smtpNoneSelected = $smtpEncryption === 'none' ? ' selected' : '';
 
 $offeredServices = getOfferedServices();
 $servicesListHtml = '';
@@ -325,18 +409,54 @@ $html = <<<'HTML'
 				<div class="col-lg-4">
 					<div class="card">
 						<div class="card-header pb-0">
-							<h6>Security</h6>
+							<h6>Email (Gmail)</h6>
 						</div>
 						<div class="card-body">
-							<div class="form-check form-switch mb-3">
-								<input class="form-check-input" type="checkbox" id="twoFA">
-								<label class="form-check-label" for="twoFA">Enable Two-Factor Authentication</label>
-							</div>
-							<div class="form-group mb-3">
-								<label class="form-control-label">Password Reset Email</label>
-								<input class="form-control" type="email" placeholder="admin@firm.com">
-							</div>
-							<button class="btn btn-dark">Update Security Settings</button>
+							<p class="text-xs text-muted">Pour envoyer les identifiants aux clients. Utilisez un <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">mot de passe d\'application</a> Google (16 caractères).</p>
+							{SMTP_PASSWORD_STATUS}
+							<form method="post">
+								<input type="hidden" name="form_type" value="mail">
+								<div class="form-check form-switch mb-2">
+									<input class="form-check-input" type="checkbox" name="smtp_enabled" value="1" id="smtp_enabled"{SMTP_ENABLED_CHECKED}>
+									<label class="form-check-label" for="smtp_enabled">Activer SMTP</label>
+								</div>
+								<div class="form-group mb-2">
+									<label class="form-control-label text-xs">Serveur</label>
+									<input class="form-control form-control-sm" type="text" name="smtp_host" value="{SMTP_HOST}">
+								</div>
+								<div class="row g-2">
+									<div class="col-6">
+										<label class="form-control-label text-xs">Port</label>
+										<input class="form-control form-control-sm" type="number" name="smtp_port" value="{SMTP_PORT}">
+									</div>
+									<div class="col-6">
+										<label class="form-control-label text-xs">Chiffrement</label>
+										<select class="form-control form-control-sm" name="smtp_encryption">
+											<option value="tls"{SMTP_TLS_SELECTED}>TLS</option>
+											<option value="ssl"{SMTP_SSL_SELECTED}>SSL</option>
+										</select>
+									</div>
+								</div>
+								<div class="form-group mb-2 mt-2">
+									<label class="form-control-label text-xs">Gmail</label>
+									<input class="form-control form-control-sm" type="email" name="smtp_username" value="{SMTP_USERNAME}">
+								</div>
+								<div class="form-group mb-2">
+									<label class="form-control-label text-xs">Mot de passe d\'application</label>
+									<input class="form-control form-control-sm" type="text" name="smtp_password" placeholder="{SMTP_PASSWORD_PLACEHOLDER}" autocomplete="off" spellcheck="false" inputmode="text">
+									<small class="text-muted">Collez tel quel : <code>abcd efgh ijkl mnop</code> (espaces acceptés).</small>
+								</div>
+								<div class="form-group mb-2">
+									<label class="form-control-label text-xs">URL du site (optionnel)</label>
+									<input class="form-control form-control-sm" type="url" name="app_base_url" value="{APP_BASE_URL}" placeholder="http://case-management-system.test">
+								</div>
+								<button type="submit" class="btn btn-dark btn-sm w-100 mb-2">Enregistrer</button>
+							</form>
+							<form method="post">
+								<input type="hidden" name="form_type" value="test_mail">
+								<input class="form-control form-control-sm mb-2" type="email" name="test_email" placeholder="Email de test">
+								<button type="submit" class="btn btn-outline-primary btn-sm w-100">Envoyer un email de test</button>
+							</form>
 						</div>
 					</div>
 				</div>
@@ -376,5 +496,16 @@ $html = str_replace('{CATEGORIES_LIST}', $categoriesListHtml, $html);
 $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name']), $html);
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
+$html = str_replace('{SMTP_ENABLED_CHECKED}', $smtpEnabledChecked, $html);
+$html = str_replace('{SMTP_HOST}', htmlspecialchars($smtpHost), $html);
+$html = str_replace('{SMTP_PORT}', htmlspecialchars($smtpPort), $html);
+$html = str_replace('{SMTP_TLS_SELECTED}', $smtpTlsSelected, $html);
+$html = str_replace('{SMTP_SSL_SELECTED}', $smtpSslSelected, $html);
+$html = str_replace('{SMTP_NONE_SELECTED}', $smtpNoneSelected, $html);
+$html = str_replace('{SMTP_USERNAME}', htmlspecialchars($smtpUsername), $html);
+$html = str_replace('{MAIL_FROM_ADDRESS}', htmlspecialchars($mailFromAddress), $html);
+$html = str_replace('{APP_BASE_URL}', htmlspecialchars($appBaseUrl), $html);
+$html = str_replace('{SMTP_PASSWORD_PLACEHOLDER}', $smtpHasPassword ? 'Laisser vide pour conserver' : '16 caractères', $html);
+$html = str_replace('{SMTP_PASSWORD_STATUS}', $smtpPasswordStatusHtml, $html);
 echo $html;
 ?>

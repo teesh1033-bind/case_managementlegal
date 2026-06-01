@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/password-validation.php';
+require_once __DIR__ . '/../lib/mail.php';
 
 function ensureClientProfileColumns(PDO $pdo) {
     static $ready = false;
@@ -43,6 +44,7 @@ $updateConfirmInvalidClass = '';
 $createPasswordInvalidClass = '';
 $createConfirmInvalidClass = '';
 $showCreateUserFields = false;
+$sendCredentialsEmail = false;
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -76,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirm_password = isset($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
     
     $createUser = isset($_POST['create_user_account']) && $_POST['create_user_account'] == '1';
+    $sendCredentialsEmail = isset($_POST['send_credentials_email']) && $_POST['send_credentials_email'] === '1';
     $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
     $password = isset($_POST['password']) ? $_POST['password'] : '';
     $password_confirm = isset($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
@@ -213,18 +216,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $linkStmt->execute([$newUserId, $newClientId]);
 
                         $message = 'Client added successfully with user account!';
+                        $redirectType = 'success';
+
+                        if ($sendCredentialsEmail) {
+                            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                                $message .= ' Email non envoyé : indiquez une adresse email valide pour le client.';
+                                $redirectType = 'warning';
+                            } else {
+                                $mailResult = legalpro_send_client_credentials_email(
+                                    $email,
+                                    $first_name,
+                                    $last_name,
+                                    $username,
+                                    $password
+                                );
+                                if ($mailResult['ok']) {
+                                    $message .= ' Identifiants envoyés à ' . $email . '.';
+                                } else {
+                                    $message .= ' ' . $mailResult['message'];
+                                    $redirectType = 'warning';
+                                }
+                            }
+                        }
                     } catch (PDOException $e) {
-                        // If user creation fails, still keep the client but show warning
                         $message = 'Client added successfully! However, user account creation failed: ' . htmlspecialchars($e->getMessage());
                         $messageType = 'warning';
+                        $redirectType = 'warning';
                     }
                 } else {
                     $message = 'Client added successfully!';
+                    $redirectType = 'success';
                 }
 
-                $messageType = 'success';
-                // Redirect to clients list after successful add
-                header('Location: clients.php?msg=' . urlencode($message) . '&type=success');
+                if ($messageType !== 'warning') {
+                    $messageType = $redirectType ?? 'success';
+                }
+                header('Location: clients.php?msg=' . urlencode($message) . '&type=' . urlencode($messageType));
                 exit;
             }
         } catch (PDOException $e) {
@@ -574,6 +601,7 @@ $html = <<<'HTML'
 			const usernameField = document.querySelector('input[name="username"]');
 			const passwordField = document.querySelector('input[name="password"]');
 			const confirmField = document.querySelector('input[name="password_confirm"]');
+			const sendEmailField = document.getElementById('send_credentials_email');
 
 			if (checkbox.checked) {
 				fields.style.display = 'block';
@@ -582,12 +610,19 @@ $html = <<<'HTML'
 				if (confirmField) {
 					confirmField.required = true;
 				}
+				if (sendEmailField) {
+					sendEmailField.disabled = false;
+				}
 			} else {
 				fields.style.display = 'none';
 				usernameField.required = false;
 				passwordField.required = false;
 				if (confirmField) {
 					confirmField.required = false;
+				}
+				if (sendEmailField) {
+					sendEmailField.checked = false;
+					sendEmailField.disabled = true;
 				}
 			}
 		}
@@ -673,6 +708,7 @@ if ($client_id && $client && $client['user_id'] && $userData) {
     // New client - show creation section
     $createUserChecked = $showCreateUserFields ? ' checked' : '';
     $createUserDisplay = $showCreateUserFields ? 'block' : 'none';
+    $sendCredentialsEmailChecked = ($_SERVER['REQUEST_METHOD'] !== 'POST' || $sendCredentialsEmail) ? ' checked' : '';
     $newUserAccountSection = '
     <div class="mt-4">
         <div class="form-check">
@@ -710,6 +746,13 @@ if ($client_id && $client && $client['user_id'] && $userData) {
                     ' . $createConfirmErrorHtml . '
                 </div>
             </div>
+        </div>
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="send_credentials_email" name="send_credentials_email" value="1"' . $sendCredentialsEmailChecked . '>
+            <label class="form-check-label" for="send_credentials_email">
+                Envoyer les identifiants par email (nom, utilisateur, mot de passe)
+            </label>
+            <small class="form-text text-muted d-block">Nécessite l\'email du client ci-dessus et la configuration Gmail dans Paramètres → Email.</small>
         </div>
     </div>';
 }
