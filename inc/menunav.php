@@ -118,7 +118,7 @@ function isActive($itemId, $currentPage) {
 }
 ?>
 
-<link href="../assets/css/legalpro-admin-portal.css?v=4" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=5" rel="stylesheet" />
 <style>
     .legalpro-nav .nav-link {
         display: flex;

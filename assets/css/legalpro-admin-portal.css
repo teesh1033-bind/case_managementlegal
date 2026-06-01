@@ -116,3 +116,9 @@ body.legalpro-lawyer-portal #navbarBlur.blur,
     border: none !important;
     border-radius: 0 !important;
 }
+
+/* Footer copyright — white on gradient portal background */
+body.legalpro-admin-portal .footer .col-lg-6 > div,
+body.legalpro-lawyer-portal .footer .col-lg-6 > div {
+    color: #fff !important;
+}
