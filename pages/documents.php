@@ -424,12 +424,14 @@ if (empty($cases)) {
         $documentAccordion .= '
         <div class="accordion-item border">
             <h2 class="accordion-header" id="heading-' . $collapseIndex . '">
-                <button class="accordion-button d-flex justify-content-between align-items-center' . ($collapseIndex === 0 ? '' : ' collapsed') . '" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-' . $collapseIndex . '" aria-expanded="' . ($collapseIndex === 0 ? 'true' : 'false') . '">
-                    <div>
-                        <span class="badge bg-gradient-info me-2">' . $docsCount . '</span>
-                        ' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '
+                <button class="accordion-button doc-case-accordion-btn' . ($collapseIndex === 0 ? '' : ' collapsed') . '" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-' . $collapseIndex . '" aria-expanded="' . ($collapseIndex === 0 ? 'true' : 'false') . '">
+                    <div class="doc-case-accordion-meta">
+                        <div class="doc-case-accordion-title">
+                            <span class="badge bg-gradient-info me-2">' . $docsCount . '</span>
+                            <span class="text-sm font-weight-bold">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</span>
+                        </div>
+                        <small class="text-muted doc-case-accordion-client">' . htmlspecialchars($case['client_name']) . '</small>
                     </div>
-                    <small class="text-muted">' . htmlspecialchars($case['client_name']) . '</small>
                 </button>
             </h2>
             <div id="collapse-' . $collapseIndex . '" class="accordion-collapse collapse' . ($collapseIndex === 0 ? ' show' : '') . '" aria-labelledby="heading-' . $collapseIndex . '" data-bs-parent="#documentsAccordion">
@@ -493,10 +495,10 @@ if (empty($recentDocuments)) {
         }
 
         $recentDocsList .= '
-        <div class="document-item d-flex justify-content-between align-items-center p-3 border-bottom">
+        <div class="document-item recent-document-item d-flex justify-content-between align-items-center p-3 border-bottom">
             <div class="d-flex align-items-center">
-                <div class="icon-shape icon-sm bg-gradient-success shadow text-center rounded-circle me-3">
-                    <i class="ni ' . $iconClass . ' text-white text-xs"></i>
+                <div class="icon-shape document-item-icon bg-gradient-success shadow text-center rounded-circle me-3">
+                    <i class="ni ' . $iconClass . ' text-white"></i>
                 </div>
                 <div>
                     <h6 class="mb-0 text-sm">' . htmlspecialchars($displayName) . '</h6>
@@ -597,6 +599,49 @@ $html = <<<'HTML'
         }
         .document-item .btn {
             white-space: nowrap;
+        }
+        .recent-document-item .document-item-icon {
+            width: 2.35rem;
+            height: 2.35rem;
+            min-width: 2.35rem;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .recent-document-item .document-item-icon i {
+            font-size: 0.85rem;
+            line-height: 1;
+            position: static;
+            top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+        .doc-case-accordion-btn {
+            align-items: flex-start;
+        }
+        .doc-case-accordion-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            min-width: 0;
+            padding-right: 1.5rem;
+        }
+        .doc-case-accordion-title {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+        .doc-case-accordion-client {
+            display: block;
+            margin-top: 0.15rem;
+            padding-left: 0.1rem;
         }
         .attach-btn:hover {
             transform: translateY(-1px);
