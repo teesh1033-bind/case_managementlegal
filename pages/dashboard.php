@@ -729,7 +729,7 @@ $html = <<<'HTML'
                 nowIndicator: true,
                 fixedWeekCount: false,
                 dayMaxEvents: 3,
-                moreLinkClick: 'day',
+                moreLinkClick: 'popover',
                 buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
                 eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 dayHeaderFormat: { weekday: 'short' },
