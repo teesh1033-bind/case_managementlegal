@@ -164,22 +164,27 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=5" rel="stylesheet" />
-    <link href="../assets/css/legalpro-client-portal.css?v=8" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100">
-    <div class="bg-legalpro-client position-fixed top-0 start-0 w-100 h-100"></div>
+<body class="g-sidenav-show bg-gray-100 client-profile-page">
+    <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-6 text-white" href="client-dashboard.php">Client</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Profile</li>
-                    </ol>
-                    <h5 class="font-weight-bolder mb-0 text-white">My Profile</h5>
-                </nav>
+        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
+            <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <a href="javascript:;" class="nav-link text-body p-0 d-xl-none" id="iconNavbarSidenav">
+                        <div class="sidenav-toggler-inner">
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                        </div>
+                    </a>
+                    <div>
+                        <h6 class="font-weight-bolder mb-0">My Profile</h6>
+                        <p class="dashboard-welcome-sub mb-0 mt-1">Manage your account details</p>
+                    </div>
+                </div>
             </div>
         </nav>
 
