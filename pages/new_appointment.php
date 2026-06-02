@@ -91,6 +91,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
             $message = 'Invalid date or time format.';
             $messageType = 'danger';
         } else {
+            $now = new DateTime();
+            // Inputs are minute-level; normalize current time to minute precision.
+            $now->setTime((int) $now->format('H'), (int) $now->format('i'), 0);
+            if ($dateTime < $now) {
+                $message = 'Appointment date and time cannot be in the past.';
+                $messageType = 'danger';
+            }
+        }
+
+        if ($messageType !== 'danger' && $dateTime) {
             $startsAt = $dateTime->format('Y-m-d H:i:s');
             $endsAt = $dateTime->modify('+1 hour')->format('Y-m-d H:i:s');
 
@@ -406,13 +416,13 @@ $html = <<<'HTML'
 									<div class="col-md-6">
 										<div class="form-group mb-3">
 											<label class="form-control-label text-sm font-weight-bold">Date <span class="text-danger">*</span></label>
-											<input class="form-control" type="date" name="date" value="{DATE_VALUE}" required>
+											<input class="form-control" type="date" name="date" id="appointment_date" value="{DATE_VALUE}" required>
 										</div>
 									</div>
 									<div class="col-md-6">
 										<div class="form-group mb-3">
 											<label class="form-control-label text-sm font-weight-bold">Time <span class="text-danger">*</span></label>
-											<input class="form-control" type="time" name="time" value="{TIME_VALUE}" required>
+											<input class="form-control" type="time" name="time" id="appointment_time" value="{TIME_VALUE}" required>
 										</div>
 									</div>
 								</div>
@@ -507,6 +517,64 @@ $html = <<<'HTML'
 					syncCaseDependentFields(false);
 				}
 			}
+
+            var dateInput = document.getElementById('appointment_date');
+            var timeInput = document.getElementById('appointment_time');
+            var appointmentForm = document.getElementById('appointmentForm');
+
+            function nowParts() {
+                var now = new Date();
+                var yyyy = now.getFullYear();
+                var mm = String(now.getMonth() + 1).padStart(2, '0');
+                var dd = String(now.getDate()).padStart(2, '0');
+                var hh = String(now.getHours()).padStart(2, '0');
+                var mi = String(now.getMinutes()).padStart(2, '0');
+                return {
+                    date: yyyy + '-' + mm + '-' + dd,
+                    time: hh + ':' + mi
+                };
+            }
+
+            function syncAppointmentMinDateTime() {
+                if (!dateInput || !timeInput) {
+                    return;
+                }
+
+                var now = nowParts();
+                dateInput.setAttribute('min', now.date);
+
+                if (dateInput.value === now.date) {
+                    timeInput.setAttribute('min', now.time);
+                    if (timeInput.value && timeInput.value < now.time) {
+                        timeInput.setCustomValidity('Appointment time cannot be in the past.');
+                    } else {
+                        timeInput.setCustomValidity('');
+                    }
+                } else {
+                    timeInput.removeAttribute('min');
+                    timeInput.setCustomValidity('');
+                }
+            }
+
+            if (dateInput && timeInput) {
+                dateInput.addEventListener('change', syncAppointmentMinDateTime);
+                timeInput.addEventListener('input', syncAppointmentMinDateTime);
+                syncAppointmentMinDateTime();
+            }
+
+            if (appointmentForm && dateInput && timeInput) {
+                appointmentForm.addEventListener('submit', function(event) {
+                    syncAppointmentMinDateTime();
+                    var now = nowParts();
+                    if (dateInput.value && timeInput.value && dateInput.value === now.date && timeInput.value < now.time) {
+                        event.preventDefault();
+                        timeInput.setCustomValidity('Appointment time cannot be in the past.');
+                        timeInput.reportValidity();
+                        return;
+                    }
+                    timeInput.setCustomValidity('');
+                });
+            }
 		});
 	</script>
 </body>

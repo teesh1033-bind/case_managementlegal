@@ -189,34 +189,66 @@ try {
     $cases = [];
 }
 
-// Prepare calendar events for FullCalendar
+// Prepare calendar events for FullCalendar (dashboard-style dots)
 $calendar_events = [];
 foreach ($court_dates as $date) {
-    $status_color = '';
-    switch ($date['status']) {
-        case 'scheduled': $status_color = '#17a2b8'; break;
-        case 'completed': $status_color = '#28a745'; break;
-        case 'cancelled': $status_color = '#dc3545'; break;
-        case 'postponed': $status_color = '#ffc107'; break;
-        default: $status_color = '#6c757d';
+    $caseId = (int) ($date['case_id'] ?? 0);
+    $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+    $status = strtolower((string) ($date['status'] ?? 'scheduled'));
+    $displayTitle = $caseNumber . ' · ' . ($date['title'] ?? 'Court date');
+    if (!empty($date['case_title'])) {
+        $displayTitle = $caseNumber . ' · ' . $date['case_title'];
     }
 
     $calendar_events[] = [
-        'id' => $date['id'],
-        'title' => $date['case_title'] . ' - ' . $date['title'],
+        'id' => (string) $date['id'],
+        'title' => $displayTitle,
         'start' => $date['court_date'],
-        'backgroundColor' => $status_color,
-        'borderColor' => $status_color,
-        'textColor' => '#fff',
+        'backgroundColor' => 'transparent',
+        'borderColor' => 'transparent',
+        'textColor' => '#344767',
         'extendedProps' => [
-            'description' => $date['description'],
-            'location' => $date['location'],
-            'status' => $date['status'],
-            'client_name' => $date['client_name'],
-            'created_by_name' => $date['created_by_name'],
-            'creator_role' => $date['creator_role']
-        ]
+            'status' => $status,
+            'description' => $date['description'] ?? '',
+            'location' => $date['location'] ?? '',
+            'client_name' => $date['client_name'] ?? '',
+            'case_title' => $date['case_title'] ?? '',
+            'court_title' => $date['title'] ?? '',
+            'created_by_name' => $date['created_by_name'] ?? '',
+            'creator_role' => $date['creator_role'] ?? '',
+            'case_id' => $caseId,
+        ],
     ];
+}
+
+$upcomingCourtDatesHtml = '';
+$upcomingCourtDates = array_values(array_filter($court_dates, function ($row) {
+    return strtotime($row['court_date']) >= time()
+        && strtolower((string) ($row['status'] ?? '')) === 'scheduled';
+}));
+if (empty($upcomingCourtDates)) {
+    $upcomingCourtDatesHtml = '<div class="dashboard-upcoming-empty"><i class="ni ni-calendar-grid-58"></i>No upcoming court dates</div>';
+} else {
+    usort($upcomingCourtDates, function ($a, $b) {
+        return strtotime($a['court_date']) <=> strtotime($b['court_date']);
+    });
+    foreach (array_slice($upcomingCourtDates, 0, 8) as $row) {
+        $status = strtolower((string) ($row['status'] ?? 'scheduled'));
+        $caseId = (int) ($row['case_id'] ?? 0);
+        $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+        $title = htmlspecialchars($caseNumber . ' · ' . ($row['title'] ?? 'Court date'));
+        $client = !empty($row['client_name']) ? htmlspecialchars($row['client_name']) : '—';
+        $hourLabel = date('g:i A', strtotime($row['court_date']));
+        $dayLabel = date('M j', strtotime($row['court_date']));
+        $upcomingCourtDatesHtml .= '
+        <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . '" data-court-date-id="' . (int) $row['id'] . '">
+            <span class="dashboard-upcoming-item__time">' . htmlspecialchars($hourLabel) . '<br><small style="font-weight:500;opacity:.8">' . htmlspecialchars($dayLabel) . '</small></span>
+            <span class="flex-grow-1">
+                <p class="dashboard-upcoming-item__title">' . $title . '</p>
+                <p class="dashboard-upcoming-item__sub">' . $client . '</p>
+            </span>
+        </button>';
+    }
 }
 ?>
 
@@ -234,8 +266,8 @@ foreach ($court_dates as $date) {
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link rel="stylesheet" href="../assets/css/simple-calendar.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.css" />
+    <link href="../assets/css/dashboard-enhancements.css?v=3" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
         .fc .fc-toolbar.fc-header-toolbar {
             background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
@@ -264,33 +296,6 @@ foreach ($court_dates as $date) {
             padding-left: 0.25rem;
             padding-right: 0.25rem;
             text-align: center;
-        }
-        /* Only previous/next month buttons */
-        .fc .fc-prev-button,
-        .fc .fc-next-button {
-            background: #ffffff !important;
-            border-color: #ffffff !important;
-            color: #344767 !important;
-        }
-        .fc .fc-prev-button:hover,
-        .fc .fc-next-button:hover,
-        .fc .fc-prev-button:focus,
-        .fc .fc-next-button:focus {
-            background: #f8f9fa !important;
-            border-color: #f8f9fa !important;
-            color: #1f2b4d !important;
-            box-shadow: none !important;
-        }
-        .fc .fc-prev-button .fc-icon,
-        .fc .fc-next-button .fc-icon {
-            color: #344767 !important;
-        }
-        /* Fallback simple calendar prev/next controls */
-        .simple-calendar .calendar-header .btn:first-of-type,
-        .simple-calendar .calendar-header .btn:last-of-type {
-            background: #ffffff !important;
-            border-color: #ffffff !important;
-            color: #344767 !important;
         }
     </style>
 </head>
@@ -346,24 +351,44 @@ foreach ($court_dates as $date) {
 
             <div class="row">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Court Dates Calendar</h6>
-                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
-                                    <i class="fas fa-plus me-2"></i>Add Court Date
+                    <div class="dashboard-calendar-hub">
+                        <div class="dashboard-calendar-hub__head">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                                <div>
+                                    <h6 class="text-capitalize mb-0 font-weight-bold" style="color: #344767;">Court Dates Calendar</h6>
+                                    <p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
+                                    <div class="dashboard-legend-pills">
+                                        <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
+                                        <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
+                                        <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
+                                        <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm bg-gradient-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
+                                    <i class="fas fa-plus me-1"></i>Add Court Date
                                 </button>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <div id="calendar"></div>
+                        <div class="dashboard-calendar-hub__body">
+                            <div class="dashboard-calendar-layout">
+                                <div id="courtTrackingCalendar"></div>
+                                <aside class="dashboard-upcoming-panel">
+                                    <div class="dashboard-upcoming-panel__title">
+                                        <span>Upcoming</span>
+                                        <a href="#courtDatesTable" class="text-xs text-primary font-weight-bold">View all</a>
+                                    </div>
+                                    <div class="dashboard-upcoming-list" id="upcomingCourtDatesList">
+                                        <?php echo $upcomingCourtDatesHtml; ?>
+                                    </div>
+                                </aside>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Court Dates List -->
-            <div class="row mt-4">
+            <div class="row mt-4" id="courtDatesTable">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header pb-0">
@@ -567,111 +592,83 @@ foreach ($court_dates as $date) {
         </div>
     </div>
 
-    <script src="../assets/js/core/jquery.min.js"></script>
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/fullcalendar/fallback.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script>
-        // Try FullCalendar first, fallback to simple calendar
-        let calendarLoaded = false;
-
-        try {
-            // Load FullCalendar from CDN
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.js';
-            script.onload = function() {
-                calendarLoaded = true;
-                console.log('FullCalendar loaded successfully');
-                initFullCalendar();
-            };
-            script.onerror = function() {
-                console.warn('FullCalendar CDN failed, using fallback');
-                initSimpleCalendar();
-            };
-            document.head.appendChild(script);
-        } catch (e) {
-            console.error('Error loading FullCalendar:', e);
-            initSimpleCalendar();
-        }
-
-        function initFullCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            if (!calendarEl) return;
-
-            try {
-                const calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    headerToolbar: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                    },
-                    events: <?php echo json_encode($calendar_events); ?>,
-                    eventClick: function(info) {
-                        console.log('Event clicked:', info.event.id);
-                        viewCourtDate(info.event.id);
-                    },
-                    height: 'auto',
-                    eventDisplay: 'block'
-                });
-                calendar.render();
-                console.log('FullCalendar rendered successfully');
-            } catch (error) {
-                console.error('Error initializing FullCalendar:', error);
-                initSimpleCalendar();
-            }
-        }
-
-        function initSimpleCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            if (!calendarEl) return;
-
-            try {
-                simpleCalendar = new SimpleCalendar(calendarEl, {
-                    events: <?php echo json_encode($calendar_events); ?>
-                });
-                console.log('Simple calendar rendered successfully');
-            } catch (error) {
-                console.error('Error initializing simple calendar:', error);
-                calendarEl.innerHTML = '<div class="alert alert-danger">Failed to load calendar. Please contact administrator.</div>';
-            }
-        }
-
-        // Initialize on DOM load if FullCalendar is already loaded
         document.addEventListener('DOMContentLoaded', function() {
-            if (typeof FullCalendar !== 'undefined') {
-                calendarLoaded = true;
-                initFullCalendar();
-            } else {
-                // Wait a bit for CDN to load
-                setTimeout(function() {
-                    if (!calendarLoaded) {
-                        initSimpleCalendar();
-                    }
-                }, 2000);
-            }
-        });
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+            var calendarEl = document.getElementById('courtTrackingCalendar');
+            var courtEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 
-    <script>
-        // Initialize FullCalendar
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
+            function courtStatusKey(status) {
+                var value = String(status || 'scheduled').toLowerCase();
+                if (['scheduled', 'completed', 'cancelled', 'postponed'].indexOf(value) === -1) {
+                    return 'scheduled';
+                }
+                return value;
+            }
+
+            function renderCourtEvent(arg) {
+                var props = arg.event.extendedProps || {};
+                var statusKey = courtStatusKey(props.status);
+                var timeText = arg.timeText || '';
+                var title = arg.event.title || 'Court date';
+                if (title.length > 22) {
+                    title = title.slice(0, 19) + '...';
+                }
+                var wrap = document.createElement('div');
+                wrap.className = 'dashboard-cal-event';
+                wrap.innerHTML =
+                    '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
+                    '<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
+                return { domNodes: [wrap] };
+            }
+
+            var upcomingList = document.getElementById('upcomingCourtDatesList');
+            if (upcomingList) {
+                upcomingList.addEventListener('click', function(e) {
+                    var btn = e.target.closest('[data-court-date-id]');
+                    if (!btn) return;
+                    viewCourtDate(btn.getAttribute('data-court-date-id'));
+                });
+            }
+
+            if (!calendarEl || typeof FullCalendar === 'undefined') {
+                return;
+            }
+
             var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
+                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+                height: 'auto',
+                firstDay: 1,
+                navLinks: true,
+                nowIndicator: true,
+                fixedWeekCount: false,
+                dayMaxEvents: 3,
+                moreLinkClick: 'day',
+                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                dayHeaderFormat: { weekday: 'short' },
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
                 },
-                events: <?php echo json_encode($calendar_events); ?>,
+                events: courtEvents,
+                eventContent: renderCourtEvent,
                 eventClick: function(info) {
+                    info.jsEvent.preventDefault();
                     viewCourtDate(info.event.id);
                 },
-                height: 'auto'
+                eventDidMount: function(info) {
+                    var tip = info.event.title;
+                    var p = info.event.extendedProps || {};
+                    if (p.client_name) tip += '\nClient: ' + p.client_name;
+                    if (p.location) tip += '\nLocation: ' + p.location;
+                    info.el.setAttribute('title', tip);
+                }
             });
             calendar.render();
         });
@@ -707,8 +704,7 @@ foreach ($court_dates as $date) {
                 document.getElementById('view_created_by').textContent = eventData.created_by_name || 'Unknown';
                 document.getElementById('view_creator_role').textContent = eventData.creator_role ? eventData.creator_role.charAt(0).toUpperCase() + eventData.creator_role.slice(1) : 'Unknown';
 
-                var modal = new bootstrap.Modal(document.getElementById('viewCourtDateModal'));
-                modal.show();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('viewCourtDateModal')).show();
             }
         }
 
@@ -729,8 +725,7 @@ foreach ($court_dates as $date) {
                 document.getElementById('edit_location').value = eventData.location || '';
                 document.getElementById('edit_status').value = eventData.status;
 
-                var modal = new bootstrap.Modal(document.getElementById('editCourtDateModal'));
-                modal.show();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('editCourtDateModal')).show();
             }
         }
 
@@ -745,5 +740,6 @@ foreach ($court_dates as $date) {
             }
         }
     </script>
+    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>

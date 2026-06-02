@@ -240,14 +240,10 @@ $heroLabelClass = $portal === 'client'
 $heroSubmitClass = $portal === 'client'
     ? 'btn bg-gradient-primary btn-lg mb-0 px-4 font-weight-bold btn-search-submit text-white'
     : 'btn btn-white btn-lg mb-0 px-4 font-weight-bold btn-search-submit';
-$resultsTitleClass = $portal === 'client'
-    ? 'font-weight-bolder text-white mb-1 mt-5'
-    : 'font-weight-bolder text-dark mb-1 mt-5';
-$resultsSummaryClass = $portal === 'client'
-    ? 'text-sm text-white mb-0'
-    : 'text-sm text-muted mb-0';
-$resultsSummaryStyle = $portal === 'client' ? ' style="opacity: 0.9;"' : '';
-$resultsQueryClass = $portal === 'client' ? 'text-white' : 'text-dark';
+$resultsTitleClass = 'font-weight-bolder text-white mb-1 mt-5';
+$resultsSummaryClass = 'text-sm text-white mb-0';
+$resultsSummaryStyle = ' style="opacity: 0.9;"';
+$resultsQueryClass = 'text-white';
 
 ?>
 <!DOCTYPE html>
