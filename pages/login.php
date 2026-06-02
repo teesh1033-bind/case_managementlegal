@@ -153,246 +153,288 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <style>
-        html {
-            height: 100%;
-            background-color: var(--bs-primary);
+        html, body {
+            min-height: 100%;
+            margin: 0;
+            background: #f3f4f7;
         }
         body.login-page {
-            margin: 0;
-            min-height: 100%;
-            background-color: var(--bs-primary);
-            color: var(--bs-body-color);
+            color: #344767;
         }
-        .login-page .login-shell {
+        .login-layout {
             min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+        }
+        .login-brand-panel {
+            position: relative;
+            background: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem 1rem;
+            padding: 3rem;
+            overflow: hidden;
+        }
+        .login-brand-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+            background-size: 18px 18px;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        .login-brand-content {
+            position: relative;
+            max-width: 420px;
+            z-index: 1;
+        }
+        .login-brand-logo {
+            width: 52px;
+            height: 52px;
+            object-fit: contain;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 6px;
+            margin-bottom: 1.25rem;
+        }
+        .login-brand-content h1 {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.85rem;
+        }
+        .login-brand-content p {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.65;
+            margin-bottom: 1.35rem;
+        }
+        .login-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            color: rgba(255, 255, 255, 0.96);
+            font-size: 0.92rem;
+            margin-bottom: 0.75rem;
+        }
+        .login-feature i {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.82rem;
+        }
+        .login-form-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: #f3f4f7;
         }
         .auth-card {
             width: 100%;
-            max-width: 440px;
-            margin: 0 auto;
-            border: none;
-            border-radius: 0.75rem;
+            max-width: 430px;
+            border: 1px solid #e8e9ef;
+            border-radius: 1rem;
+            background: #fff;
+            box-shadow: 0 12px 30px rgba(52, 71, 103, 0.08);
             overflow: hidden;
-            box-shadow: var(--bs-box-shadow);
-            background: var(--bs-body-bg);
         }
         .login-page .auth-card > .card-header {
             background: transparent;
-            color: var(--bs-heading-color);
-            padding: 1.5rem 1.5rem 0.25rem;
+            color: #344767;
+            padding: 1.6rem 1.5rem 0.5rem;
+            border: 0;
         }
         .login-page .auth-card > .card-header h3 {
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: var(--bs-heading-color);
-            font-size: 1.5rem;
+            font-size: 2rem;
+            line-height: 1;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
         }
         .login-page .auth-card > .card-header p {
-            margin: 0.5rem 0 0;
-            font-size: 0.875rem;
-            color: var(--bs-secondary-color);
-            line-height: 1.5;
+            margin: 0;
+            color: #8392ab;
+            font-size: 0.9rem;
         }
         .auth-body {
-            padding: 1.75rem 1.5rem 1.5rem;
+            padding: 1.5rem;
         }
         .login-type-selector {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.55rem;
+            margin-bottom: 1.25rem;
         }
         .login-type-option {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.35rem;
-            padding: 0.65rem 0.4rem;
-            border: 1px solid var(--bs-border-color);
-            border-radius: 0.65rem;
+            border: 1px solid #e2e6ef;
+            border-radius: 0.75rem;
+            padding: 0.65rem 0.45rem;
             cursor: pointer;
-            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-            background: var(--bs-body-bg);
+            transition: all 0.18s ease;
+            background: #fff;
+            text-align: center;
         }
         .login-type-option:hover {
-            border-color: rgba(var(--bs-primary-rgb), 0.35);
-            background: rgba(var(--bs-primary-rgb), 0.04);
+            border-color: rgba(94, 114, 228, 0.55);
+            background: rgba(94, 114, 228, 0.04);
         }
         .login-type-option.active {
-            border-color: var(--bs-primary);
-            background-color: rgba(var(--bs-primary-rgb), 0.08);
-            box-shadow: 0 0 0 1px rgba(var(--bs-primary-rgb), 0.2);
+            border-color: #5e72e4;
+            box-shadow: 0 0 0 2px rgba(94, 114, 228, 0.12);
+            background: rgba(94, 114, 228, 0.08);
         }
         .login-type-option .login-type-icon-wrap {
-            width: 2.25rem;
-            height: 2.25rem;
-            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            margin: 0 auto 0.4rem;
+            border-radius: 999px;
+            background: #f7f8fb;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--bs-body-bg);
-            border: 1px solid var(--bs-border-color);
-            transition: inherit;
-        }
-        .login-type-option.active .login-type-icon-wrap {
-            border-color: var(--bs-primary);
-            background: var(--bs-body-bg);
-            color: var(--bs-primary);
+            color: #5e72e4;
         }
         .login-type-option i {
-            font-size: 1rem;
-            line-height: 1;
-            margin: 0;
-            color: var(--bs-secondary-color);
-        }
-        .login-type-option.active i {
-            color: var(--bs-primary);
+            font-size: 0.9rem;
+            color: inherit;
         }
         .login-type-option h6 {
             margin: 0;
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.74rem;
+            letter-spacing: 0.02em;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: var(--bs-secondary-color);
-            line-height: 1.25;
-            text-align: center;
-        }
-        .login-type-option.active h6 {
-            color: var(--bs-primary);
+            color: #67748e;
+            font-weight: 700;
         }
         .login-page .input-group {
-            border-radius: 0.5rem;
+            border-radius: 0.65rem;
+            border: 1px solid #dde2ec;
             overflow: hidden;
-            border: 1px solid var(--bs-border-color);
-            transition: box-shadow 0.15s ease, border-color 0.15s ease;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
         .login-page .input-group:focus-within {
-            border-color: rgba(var(--bs-primary-rgb), 0.55);
-            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15);
+            border-color: #5e72e4;
+            box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.12);
         }
         .login-page .input-group .input-group-text {
             border: none;
-            background: var(--bs-gray-100);
-            color: var(--bs-body-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 3rem;
-            padding: 0.75rem 0.85rem;
-        }
-        .login-page .input-group .input-group-text i {
-            font-size: 1.1rem;
-            line-height: 1;
-            vertical-align: middle;
+            background: #f7f8fb;
+            min-width: 2.6rem;
+            color: #8392ab;
         }
         .login-page .input-group .form-control {
             border: none;
             box-shadow: none;
             padding-top: 0.75rem;
             padding-bottom: 0.75rem;
-        }
-        .login-page .input-group .form-control:focus {
-            box-shadow: none;
+            font-size: 0.92rem;
         }
         .login-page .password-toggle {
             border: none;
-            background: var(--bs-gray-100);
-            color: var(--bs-secondary-color);
-            min-width: 3rem;
-            padding: 0.75rem 0.85rem;
+            border-left: 1px solid #e4e7ef;
+            background: #f7f8fb;
+            color: #8392ab;
+            min-width: 2.6rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            border-left: 1px solid var(--bs-border-color);
-            transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
         }
         .login-page .password-toggle:hover,
         .login-page .password-toggle:focus {
-            color: var(--bs-primary);
-            background: rgba(var(--bs-primary-rgb), 0.08);
+            background: rgba(94, 114, 228, 0.09);
+            color: #5e72e4;
             outline: none;
-        }
-        .login-page .password-toggle:active {
-            transform: scale(0.97);
         }
         .login-page .password-toggle .eye-icon {
             width: 18px;
             height: 18px;
-            display: inline-block;
             color: currentColor;
         }
         .login-page .password-toggle .eye-icon.is-hidden {
             display: none;
         }
-        .login-page .password-toggle.is-visible {
-            color: var(--bs-primary);
-            background: rgba(var(--bs-primary-rgb), 0.12);
+        .login-meta {
+            margin-top: 0.6rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.84rem;
+            color: #8392ab;
         }
-        .login-help {
-            margin-top: 1.5rem;
-            padding-top: 1.25rem;
-            border-top: 1px solid var(--bs-border-color);
-        }
-        .login-help-title {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--bs-secondary-color);
-            margin-bottom: 0.75rem;
-            text-align: center;
-        }
-        .login-help dl {
-            margin: 0;
-            font-size: 0.8125rem;
-            color: var(--bs-secondary-color);
-            line-height: 1.5;
-        }
-        .login-help dt {
+        .login-meta a {
+            color: #5e72e4;
+            text-decoration: none;
             font-weight: 600;
-            color: var(--bs-heading-color);
-            margin-top: 0.65rem;
         }
-        .login-help dt:first-child {
-            margin-top: 0;
-        }
-        .login-help dd {
-            margin: 0.2rem 0 0 0;
-            padding-left: 0;
-        }
-        .login-page .form-control-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--bs-heading-color);
-            margin-bottom: 0.35rem;
+        .login-meta a:hover {
+            text-decoration: underline;
         }
         .login-page .btn-primary {
-            border-radius: 0.5rem;
-            font-weight: 600;
-            padding-top: 0.75rem;
-            padding-bottom: 0.75rem;
+            border: none;
+            border-radius: 0.6rem;
+            font-weight: 700;
+            padding: 0.72rem 1rem;
+            background: linear-gradient(135deg, #5e72e4, #825ee4);
+            box-shadow: 0 8px 20px rgba(94, 114, 228, 0.25);
+        }
+        .login-security {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #8392ab;
+            text-align: center;
+        }
+        .login-page .form-control-label {
+            font-size: 0.78rem;
+            color: #67748e;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 0.3rem;
+        }
+        @media (max-width: 991.98px) {
+            .login-layout {
+                grid-template-columns: 1fr;
+            }
+            .login-brand-panel {
+                min-height: 280px;
+                padding: 2rem 1.5rem;
+            }
+            .login-form-panel {
+                padding: 1.25rem;
+            }
+            .login-page .auth-card > .card-header h3 {
+                font-size: 1.65rem;
+            }
         }
     </style>
 </head>
 <body class="login-page">
-    <div class="login-shell">
-        <div class="w-100" style="max-width: 440px;">
-                <div class="card auth-card">
-                    <div class="card-header pb-0 text-center border-0">
-                        <img src="{COMPANY_LOGO_URL}" alt="{COMPANY_NAME} logo" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 0.75rem;">
-                        <h3 class="mb-0 font-weight-bolder">{LOGIN_PORTAL_TITLE}</h3>
-                        <p class="mb-0">Choose how you sign in, then enter your credentials.</p>
-                    </div>
-                    <div class="card-body auth-body">
-                        {MESSAGE}
+    <div class="login-layout">
+        <section class="login-brand-panel">
+            <div class="login-brand-content">
+                <img src="{COMPANY_LOGO_URL}" alt="{COMPANY_NAME} logo" class="login-brand-logo">
+                <h1>{COMPANY_NAME}</h1>
+                <p>Secure portal for managing legal operations, clients, cases, and appointments.</p>
+                <div class="login-feature"><i class="ni ni-lock-circle-open"></i><span>Enterprise-grade security</span></div>
+                <div class="login-feature"><i class="ni ni-chart-bar-32"></i><span>Real-time analytics</span></div>
+                <div class="login-feature"><i class="ni ni-single-copy-04"></i><span>Client and case management</span></div>
+            </div>
+        </section>
+        <section class="login-form-panel">
+            <div class="card auth-card">
+                <div class="card-header border-0">
+                    <h3 class="mb-0">Welcome back</h3>
+                    <p>Sign in to your account</p>
+                </div>
+                <div class="card-body auth-body">
+                    {MESSAGE}
 
                         <div class="login-type-selector mb-4" role="tablist" aria-label="Login type">
                             <div class="login-type-option active" role="button" tabindex="0" onclick="selectLoginType('admin')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectLoginType('admin');}">
@@ -436,26 +478,23 @@ $html = <<<'HTML'
                                     </button>
                                 </div>
                             </div>
+                            <div class="login-meta">
+                                <label class="mb-0 d-flex align-items-center gap-2">
+                                    <input type="checkbox" class="form-check-input m-0" style="width: 1rem; height: 1rem;">
+                                    <span>Remember me</span>
+                                </label>
+                                <a href="javascript:void(0)">Forgot password?</a>
+                            </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg" id="loginButton">
+                                <button type="submit" class="btn btn-primary" id="loginButton">
                                     <span id="loginText">Sign in as Admin</span>
                                 </button>
                             </div>
                         </form>
 
-                        <div class="login-help">
-                            <div class="login-help-title">Who uses each portal</div>
-                            <dl>
-                                <dt>Admin</dt>
-                                <dd>Administrators and staff who manage the system.</dd>
-                                <dt>Lawyer</dt>
-                                <dd>Attorneys with assigned matters and firm tools.</dd>
-                                <dt>Client</dt>
-                                <dd>Clients viewing cases, billing, and appointments.</dd>
-                            </dl>
-                        </div>
-                    </div>
+                    <div class="login-security">Protected by secure authentication and encryption</div>
                 </div>
+            </div>
         </div>
     </div>
 

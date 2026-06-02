@@ -320,9 +320,7 @@ if (empty($invoices)) {
                     <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete">
                         <input type="hidden" name="invoice_id" value="' . (int)$invoice['id'] . '">
-                        <button class="btn btn-sm btn-danger" type="submit" title="Delete Invoice">
-                            <i class="ni ni-fat-remove"></i>
-                        </button>
+                        <button class="btn btn-sm btn-danger" type="submit" title="Delete Invoice">Delete</button>
                     </form>
                 </div>
             </td>

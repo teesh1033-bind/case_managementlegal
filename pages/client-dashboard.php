@@ -88,7 +88,6 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=5" rel="stylesheet" />
-<link href="../assets/css/legalpro-client-portal.css?v=8" rel="stylesheet" />
 
     <style>
         .client-dashboard-page { --cd-radius: 1rem; --cd-radius-lg: 1.25rem; }
@@ -226,47 +225,29 @@ $html = <<<'HTML'
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
     <main class="main-content position-relative border-radius-lg">
-        <!-- Navbar -->
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-6 text-white" href="client-dashboard.php">Client</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Dashboard</li>
-                    </ol>
-                    <h5 class="font-weight-bolder mb-0 text-white">Dashboard</h5>
-                </nav>
-                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
-                        <div class="input-group">
-                            <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="Search cases or appointments…" value="" autocomplete="off" maxlength="200" aria-label="Search">
-                            <button type="button" class="navbar-search-clear" aria-label="Clear search">
-                                <i class="fas fa-times" aria-hidden="true"></i>
-                            </button>
+        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
+            <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <a href="javascript:;" class="nav-link text-body p-0 d-xl-none" id="iconNavbarSidenav">
+                        <div class="sidenav-toggler-inner">
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
+                            <i class="sidenav-toggler-line"></i>
                         </div>
-                    </form>
-                    <ul class="navbar-nav justify-content-end">
-                        <li class="nav-item d-flex align-items-center">
-                            <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
-                                <i class="fa fa-user me-sm-1"></i>
-                                <span class="d-sm-inline d-none">Welcome, {CLIENT_NAME}</span>
-                            </a>
-                        </li>
-                        <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
-                            <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
-                                <div class="sidenav-toggler-inner">
-                                    <i class="sidenav-toggler-line"></i>
-                                    <i class="sidenav-toggler-line"></i>
-                                    <i class="sidenav-toggler-line"></i>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
+                    </a>
+                    <div>
+                        <h6 class="font-weight-bolder mb-0">Dashboard</h6>
+                        <p class="dashboard-welcome-sub mb-0 mt-1">Welcome back, {CLIENT_NAME}</p>
+                    </div>
                 </div>
+                <form class="legalpro-navbar-search flex-grow-1 flex-md-grow-0" method="get" action="search.php" role="search" style="max-width: 300px;">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text text-body border-end-0"><i class="fas fa-search" aria-hidden="true"></i></span>
+                        <input type="search" name="q" class="form-control border-start-0" placeholder="Search cases…" value="" autocomplete="off" maxlength="200" aria-label="Search">
+                    </div>
+                </form>
             </div>
         </nav>
-        <!-- End Navbar -->
         <div class="container-fluid py-4">
             {MESSAGE}
 

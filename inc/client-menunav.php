@@ -1,6 +1,7 @@
 <?php
-// inc/client-menunav.php — Client portal sidebar (original colored icons)
-// Usage from pages/: include __DIR__ . '/../inc/client-menunav.php';
+// inc/client-menunav.php — Client portal sidebar + header utilities
+
+require_once __DIR__ . '/admin-layout.php';
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
@@ -20,42 +21,71 @@ if (!function_exists('clientNavIsActive')) {
         if ($itemId === 'client-cases' && in_array($currentPage, ['client-cases', 'client-case-view'], true)) {
             return true;
         }
+        if ($itemId === 'chatbot' && $currentPage === 'chatbot') {
+            return true;
+        }
+
         return $itemId === $currentPage;
     }
 }
 
-$clientDisplayName = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'] : 'Client';
 $companyBranding = getCompanyBranding();
 $companyName = $companyBranding['name'];
 $companyLogoUrl = $companyBranding['logo_url'];
+
+global $pdo;
+$headerUtilities = legalpro_render_client_header_utilities(isset($pdo) ? $pdo : null);
 ?>
 
-<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl fixed-start ms-4 legalpro-client-sidenav" id="sidenav-main">
-    <div class="sidenav-header">
-        <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
-        <a class="navbar-brand m-0" href="client-dashboard.php">
-            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="26" height="26" class="navbar-brand-img h-100" alt="<?php echo htmlspecialchars($companyName); ?> logo" style="object-fit: contain;">
-            <span class="ms-1 font-weight-bold"><?php echo htmlspecialchars($companyName); ?></span>
+<link href="../assets/css/legalpro-client-portal.css?v=9" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=1" rel="stylesheet" />
+
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-portal-sidebar legalpro-client-sidebar" id="sidenav-main">
+    <div class="legalpro-sidebar-brand">
+        <a href="client-dashboard.php" class="legalpro-sidebar-brand__link">
+            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="32" height="32" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
+            <span class="legalpro-sidebar-brand__text">
+                <span class="legalpro-sidebar-brand__name"><?php echo htmlspecialchars($companyName); ?></span>
+                <span class="legalpro-sidebar-brand__role">CLIENT</span>
+            </span>
         </a>
+        <button type="button" class="legalpro-sidebar-collapse btn btn-link p-0 d-none d-xl-inline-flex" id="legalproSidebarCollapse" aria-label="Collapse sidebar">
+            <i class="ni ni-bold-left"></i>
+        </button>
+        <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
-    <hr class="horizontal dark mt-0 mb-0">
-    <div class="collapse navbar-collapse w-auto legalpro-client-sidenav__nav" id="sidenav-collapse-main">
-        <ul class="navbar-nav">
+
+    <div class="collapse navbar-collapse w-auto legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
+        <ul class="navbar-nav legalpro-sidebar-nav">
             <?php foreach ($clientMenuItems as $item): ?>
+                <?php $active = clientNavIsActive($item['id'], $currentPage); ?>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo clientNavIsActive($item['id'], $currentPage) ? 'active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
-                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center legalpro-client-nav-icon">
-                            <i class="<?php echo htmlspecialchars($item['icon']); ?> text-dark text-xs opacity-10"></i>
-                        </div>
-                        <span class="nav-link-text ms-1"><?php echo htmlspecialchars($item['title']); ?></span>
+                    <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
+                        <span class="legalpro-sidebar-nav__icon"><i class="<?php echo htmlspecialchars($item['icon']); ?>"></i></span>
+                        <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
                     </a>
                 </li>
             <?php endforeach; ?>
         </ul>
     </div>
-    <div class="sidenav-footer legalpro-client-sidenav__footer">
-        <p class="text-xs text-muted mb-1">Logged in as</p>
-        <p class="text-sm font-weight-bold mb-2"><?php echo htmlspecialchars($clientDisplayName); ?></p>
-        <a href="client-logout.php" class="btn btn-sm btn-outline-danger mb-0">Logout</a>
+
+    <div class="legalpro-sidebar-footer">
+        <a href="client-logout.php" class="legalpro-sidebar-signout">
+            <i class="ni ni-button-power"></i>
+            <span>Sign Out</span>
+        </a>
     </div>
 </aside>
+
+<?php echo $headerUtilities; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var collapseBtn = document.getElementById('legalproSidebarCollapse');
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', function() {
+            document.body.classList.toggle('legalpro-sidebar-collapsed');
+        });
+    }
+});
+</script>

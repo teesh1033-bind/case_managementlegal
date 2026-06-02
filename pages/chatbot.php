@@ -76,8 +76,10 @@ $html = <<<'HTML'
 		.chat-message-user { justify-content: flex-end; }
 		.chat-message-user .chat-bubble { background: #5e72e4; color: #fff; border-radius: 1rem 1rem 0.25rem 1rem; }
 		.chat-message-bot .chat-bubble { background: #f8f9fe; color: #344767; border-radius: 1rem 1rem 1rem 0.25rem; border: 1px solid #e9ecef; }
-		.chat-bubble { max-width: 85%; padding: 0.75rem 1rem; font-size: 0.875rem; line-height: 1.5; white-space: pre-wrap; }
+		.chat-bubble { max-width: 85%; padding: 0.75rem 1rem; font-size: 0.875rem; line-height: 1.5; white-space: normal; }
 		.chat-bubble strong { font-weight: 700; }
+		.chat-bubble-label { display: block; font-weight: 700; margin-bottom: 0.1rem; line-height: 1.25; }
+		.chat-bubble-body { text-align: left; white-space: pre-wrap; margin: 0; }
 		.chat-links { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; }
 		.chat-links a { font-size: 0.75rem; }
 		.card-body .chat-compose {
@@ -134,8 +136,8 @@ $html = <<<'HTML'
 								<div class="d-flex mb-3 chat-message-bot">
 									<div class="icon icon-shape icon-sm me-2 bg-gradient-dark shadow text-center"><i class="ni ni-chat-round text-white opacity-10"></i></div>
 									<div class="chat-bubble">
-										<strong>{ASSISTANT_NAME}:</strong> Hello {DISPLAY_NAME}! I can answer questions using live data from your account — cases, appointments, documents, payments, and court dates.
-										{WELCOME_TEXT}
+										<span class="chat-bubble-label">{ASSISTANT_NAME}:</span>
+										<div class="chat-bubble-body">Hello {DISPLAY_NAME}! I can answer questions using live data from your account — cases, appointments, documents, payments, and court dates.{WELCOME_TEXT}</div>
 									</div>
 								</div>
 							</div>
@@ -189,9 +191,9 @@ $html = <<<'HTML'
 				}).join('') + '</div>';
 			}
 			if (sender === 'You') {
-				row.innerHTML = '<div class="chat-bubble ms-auto"><strong>You:</strong> ' + escapeHtml(html) + '</div>';
+				row.innerHTML = '<div class="chat-bubble ms-auto"><span class="chat-bubble-label">You:</span><div class="chat-bubble-body">' + escapeHtml(html) + '</div></div>';
 			} else {
-				row.innerHTML = '<div class="icon icon-shape icon-sm me-2 bg-gradient-dark shadow text-center"><i class="ni ni-chat-round text-white opacity-10"></i></div><div class="chat-bubble"><strong>' + escapeHtml(assistantName) + ':</strong> ' + formatReply(html) + linksHtml + '</div>';
+				row.innerHTML = '<div class="icon icon-shape icon-sm me-2 bg-gradient-dark shadow text-center"><i class="ni ni-chat-round text-white opacity-10"></i></div><div class="chat-bubble"><span class="chat-bubble-label">' + escapeHtml(assistantName) + ':</span><div class="chat-bubble-body">' + formatReply(html) + linksHtml + '</div></div>';
 			}
 			chatWindow.appendChild(row);
 			chatWindow.scrollTop = chatWindow.scrollHeight;

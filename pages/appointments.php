@@ -213,6 +213,22 @@ if ($message) {
     </div>';
 }
 
+$upcomingCount = 0;
+foreach ($appointments as $apt) {
+    if (!empty($apt['starts_at']) && strtotime($apt['starts_at']) >= time()) {
+        $upcomingCount++;
+    }
+}
+$appointmentsSubtitle = $upcomingCount === 1
+    ? '1 upcoming'
+    : $upcomingCount . ' upcoming';
+
+require_once __DIR__ . '/../inc/admin-layout.php';
+$pageToolbar = legalpro_render_page_toolbar(
+    'Appointment list',
+    'View appointments on the calendar or in the list below.',
+    '<a href="new_appointment.php" class="btn btn-sm btn-primary mb-0"><i class="ni ni-fat-add me-1"></i> Schedule Appointment</a>'
+);
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -232,79 +248,28 @@ $html = <<<'HTML'
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
-	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
-		<div class="sidenav-header">
-			<i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
-			<a class="navbar-brand m-0" href="../pages/dashboard.php">
-				<img src="../assets/img/logo-ct-dark.png" width="26" height="26" class="navbar-brand-img h-100" alt="LegalPro logo">
-				<span class="ms-1 font-weight-bold">LegalPro Case Manager</span>
-			</a>
-		</div>
-		<hr class="horizontal dark mt-0">
-		<div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
-			<ul class="navbar-nav">
-				<li class="nav-item"><a class="nav-link" href="../pages/dashboard.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-tv-2 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Dashboard</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/tables.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-collection text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Cases</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/clients.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-circle-08 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Clients</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/staff.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-badge text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Staff</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/billing.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-credit-card text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Finance</span></a></li>
-				<li class="nav-item"><a class="nav-link active" href="../pages/appointments.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-time-alarm text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Appointments</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/reports.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-chart-bar-32 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Reports</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/settings.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-settings text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Settings</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/chatbot.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-chat-round text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Chatbot</span></a></li>
-			</ul>
-		</div>
-	</aside>
+	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
+		<nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
 			<div class="container-fluid py-1 px-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
-						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Appointments</li>
-					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">Appointments</h6>
-				</nav>
+				<div>
+					<h6 class="font-weight-bolder mb-0"><i class="ni ni-calendar-grid-58 me-2 text-primary"></i>Appointments</h6>
+					<p class="dashboard-welcome-sub mb-0 mt-1">{APPOINTMENTS_SUBTITLE}</p>
+				</div>
 			</div>
 		</nav>
 		<div class="container-fluid py-4">
 			{MESSAGE}
-			
-			<!-- Page Header with Stats -->
-			<div class="row mb-4">
-				<div class="col-12">
-					<div class="card">
-						<div class="card-body p-3">
-							<div class="row align-items-center">
-								<div class="col-lg-8">
-									<h5 class="mb-0">Appointment Management</h5>
-									<p class="text-sm text-muted mb-0">Schedule and manage client appointments</p>
-								</div>
-								<div class="col-lg-4 text-end">
-									<a href="new_appointment.php" class="btn btn-dark btn-sm mb-0">
-										<i class="ni ni-fat-add me-1"></i> New Appointment
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+			{PAGE_TOOLBAR}
 
-			<!-- Appointments List -->
 			<div class="row">
 				<div class="col-12">
 					<div class="card">
-						<div class="card-header pb-0 pt-3">
-							<div class="d-flex justify-content-between align-items-center">
-								<div class="d-flex align-items-center">
-									<div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-md me-3">
-										<i class="ni ni-time-alarm text-white text-lg opacity-10"></i>
-									</div>
-							<div>
-										<h6 class="mb-0">All Appointments</h6>
-										<p class="text-xs text-muted mb-0">View and manage scheduled appointments</p>
-									</div>
+						<div class="card-header pb-3 pt-3 lp-card-header-primary">
+							<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+								<div>
+									<h6 class="mb-0 text-white">All Appointments</h6>
+									<p class="text-xs mb-0 opacity-8">View and manage scheduled appointments</p>
 								</div>
 							</div>
 						</div>
@@ -364,6 +329,8 @@ $html = <<<'HTML'
 HTML;
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{PAGE_TOOLBAR}', $pageToolbar, $html);
+$html = str_replace('{APPOINTMENTS_SUBTITLE}', htmlspecialchars($appointmentsSubtitle), $html);
 $html = str_replace('{APPOINTMENT_ROWS}', $appointmentsRows, $html);
 
 // rewrite internal links from .html to .php (fallback if any remain)
