@@ -13,18 +13,49 @@ if (!isset($_SESSION['client_id'])) {
 $client_id = $_SESSION['client_id'];
 $client_name = $_SESSION['client_name'];
 
+function clientAppointmentStatusMeta(string $status, int $startsAt, ?int $endsAt): array
+{
+    $now = time();
+    if ($status === 'pending') {
+        return ['key' => 'pending', 'label' => 'Pending approval', 'class' => 'warning'];
+    }
+    if ($status === 'accepted') {
+        if ($startsAt > $now) {
+            return ['key' => 'upcoming', 'label' => 'Upcoming', 'class' => 'info'];
+        }
+        if ($endsAt && $endsAt < $now) {
+            return ['key' => 'completed', 'label' => 'Completed', 'class' => 'success'];
+        }
+        return ['key' => 'in_progress', 'label' => 'In progress', 'class' => 'primary'];
+    }
+    if ($status === 'rejected') {
+        return ['key' => 'rejected', 'label' => 'Rejected', 'class' => 'danger'];
+    }
+    return ['key' => 'unknown', 'label' => ucfirst($status ?: 'unknown'), 'class' => 'secondary'];
+}
+
 // AJAX: appointment details for modal
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
     header('Content-Type: application/json; charset=utf-8');
 
-    $appointmentId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
-    if ($appointmentId <= 0) {
+    $appointmentIds = [];
+    if (!empty($_GET['ids'])) {
+        $appointmentIds = array_values(array_filter(array_map('intval', explode(',', (string) $_GET['ids']))));
+    } elseif (isset($_GET['id'])) {
+        $id = (int) $_GET['id'];
+        if ($id > 0) {
+            $appointmentIds = [$id];
+        }
+    }
+
+    if (empty($appointmentIds)) {
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid appointment ID']);
+        echo json_encode(['error' => 'Invalid appointment ID(s)']);
         exit;
     }
 
     try {
+        $placeholders = implode(',', array_fill(0, count($appointmentIds), '?'));
         $stmt = $pdo->prepare("
             SELECT
                 a.*,
@@ -33,53 +64,61 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
             FROM appointments a
             LEFT JOIN cases c ON c.id = a.case_id
             LEFT JOIN lawyers l ON l.id = a.lawyer_id
-            WHERE a.id = ? AND a.client_id = ?
+            WHERE a.client_id = ?
+              AND a.id IN ($placeholders)
+            ORDER BY a.created_at DESC
         ");
-        $stmt->execute([$appointmentId, $client_id]);
-        $apt = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->execute(array_merge([$client_id], $appointmentIds));
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (!$apt) {
+        if (!$rows) {
             http_response_code(404);
             echo json_encode(['error' => 'Appointment not found']);
             exit;
         }
 
+        $apt = $rows[0];
         $startsAt = strtotime($apt['starts_at']);
         $endsAt = !empty($apt['ends_at']) ? strtotime($apt['ends_at']) : null;
-        $now = time();
-
-        $statusLabel = ucfirst($apt['status'] ?? 'unknown');
-        $statusClass = 'secondary';
-        if (($apt['status'] ?? '') === 'pending') {
-            $statusLabel = 'Pending approval';
-            $statusClass = 'warning';
-        } elseif (($apt['status'] ?? '') === 'accepted') {
-            if ($startsAt > $now) {
-                $statusLabel = 'Upcoming';
-                $statusClass = 'info';
-            } elseif ($endsAt && $endsAt < $now) {
-                $statusLabel = 'Completed';
-                $statusClass = 'success';
-            } else {
-                $statusLabel = 'In progress';
-                $statusClass = 'primary';
+        $lawyerNames = [];
+        $statusValues = [];
+        $requestedAtTs = !empty($apt['created_at']) ? strtotime($apt['created_at']) : null;
+        foreach ($rows as $row) {
+            $name = trim((string) ($row['lawyer_name'] ?? ''));
+            if ($name !== '' && !in_array($name, $lawyerNames, true)) {
+                $lawyerNames[] = $name;
             }
-        } elseif (($apt['status'] ?? '') === 'rejected') {
-            $statusLabel = 'Rejected';
-            $statusClass = 'danger';
+            $statusValue = strtolower((string) ($row['status'] ?? ''));
+            if ($statusValue !== '' && !in_array($statusValue, $statusValues, true)) {
+                $statusValues[] = $statusValue;
+            }
+            if (!empty($row['created_at'])) {
+                $rowTs = strtotime($row['created_at']);
+                if ($requestedAtTs === null || $rowTs < $requestedAtTs) {
+                    $requestedAtTs = $rowTs;
+                }
+            }
+        }
+
+        if (count($statusValues) === 1) {
+            $meta = clientAppointmentStatusMeta($statusValues[0], $startsAt, $endsAt);
+        } else {
+            $meta = ['key' => 'mixed', 'label' => 'Mixed status', 'class' => 'secondary'];
         }
 
         echo json_encode([
             'id' => (int) $apt['id'],
+            'ids' => array_map('intval', array_column($rows, 'id')),
             'case_title' => $apt['case_title'] ?: 'Appointment',
-            'lawyer_name' => $apt['lawyer_name'] ?: 'TBD',
+            'lawyer_name' => !empty($lawyerNames) ? implode(', ', $lawyerNames) : 'TBD',
+            'lawyer_names' => !empty($lawyerNames) ? implode(', ', $lawyerNames) : 'TBD',
             'starts_at' => date('M j, Y g:i A', $startsAt),
             'ends_at' => $endsAt ? date('M j, Y g:i A', $endsAt) : null,
-            'status' => $apt['status'],
-            'status_label' => $statusLabel,
-            'status_class' => $statusClass,
+            'status' => count($statusValues) === 1 ? $statusValues[0] : 'mixed',
+            'status_label' => $meta['label'],
+            'status_class' => $meta['class'],
             'notes' => trim((string) ($apt['notes'] ?? '')),
-            'requested_at' => !empty($apt['created_at']) ? date('M j, Y g:i A', strtotime($apt['created_at'])) : null,
+            'requested_at' => $requestedAtTs ? date('M j, Y g:i A', $requestedAtTs) : null,
         ]);
     } catch (PDOException $e) {
         http_response_code(500);
@@ -251,7 +290,35 @@ try {
         ORDER BY a.created_at DESC
     ");
     $stmt->execute([$client_id]);
-    $appointments = $stmt->fetchAll();
+    $rawAppointments = $stmt->fetchAll();
+
+    // Group duplicate records created per-lawyer for same appointment slot.
+    $groupedMap = [];
+    foreach ($rawAppointments as $apt) {
+        $groupKey = implode('|', [
+            (int) ($apt['case_id'] ?? 0),
+            (string) ($apt['starts_at'] ?? ''),
+            (string) ($apt['ends_at'] ?? ''),
+            trim((string) ($apt['notes'] ?? '')),
+        ]);
+        if (!isset($groupedMap[$groupKey])) {
+            $groupedMap[$groupKey] = $apt;
+            $groupedMap[$groupKey]['ids'] = [];
+            $groupedMap[$groupKey]['lawyer_names'] = [];
+            $groupedMap[$groupKey]['status_values'] = [];
+        }
+
+        $groupedMap[$groupKey]['ids'][] = (int) ($apt['id'] ?? 0);
+        $name = trim((string) ($apt['lawyer_name'] ?? ''));
+        if ($name !== '' && !in_array($name, $groupedMap[$groupKey]['lawyer_names'], true)) {
+            $groupedMap[$groupKey]['lawyer_names'][] = $name;
+        }
+        $statusValue = strtolower((string) ($apt['status'] ?? ''));
+        if ($statusValue !== '' && !in_array($statusValue, $groupedMap[$groupKey]['status_values'], true)) {
+            $groupedMap[$groupKey]['status_values'][] = $statusValue;
+        }
+    }
+    $appointments = array_values($groupedMap);
 
 } catch (PDOException $e) {
     $message = 'Error loading appointments: ' . htmlspecialchars($e->getMessage());
@@ -264,10 +331,11 @@ $apptTotal = count($appointments);
 $apptPending = 0;
 $apptUpcoming = 0;
 foreach ($appointments as $_apt) {
-    if (($_apt['status'] ?? '') === 'pending') {
+    $statusValues = isset($_apt['status_values']) && is_array($_apt['status_values']) ? $_apt['status_values'] : [strtolower((string) ($_apt['status'] ?? ''))];
+    if (count($statusValues) === 1 && $statusValues[0] === 'pending') {
         $apptPending++;
     }
-    if (($_apt['status'] ?? '') === 'accepted' && !empty($_apt['starts_at']) && strtotime($_apt['starts_at']) > time()) {
+    if (count($statusValues) === 1 && $statusValues[0] === 'accepted' && !empty($_apt['starts_at']) && strtotime($_apt['starts_at']) > time()) {
         $apptUpcoming++;
     }
 }
@@ -293,30 +361,20 @@ if (empty($appointments)) {
     </td></tr>';
 } else {
     foreach ($appointments as $apt) {
-        $aid = (int) $apt['id'];
+        $groupIds = isset($apt['ids']) && is_array($apt['ids']) ? array_values(array_filter(array_map('intval', $apt['ids']))) : [(int) $apt['id']];
+        $groupIdsStr = implode(',', $groupIds);
         $appointmentDate = date('M j, Y', strtotime($apt['starts_at']));
         $appointmentTime = date('g:i A', strtotime($apt['starts_at']));
-        $lawyerName = $apt['lawyer_name'] ?: 'TBD';
+        $lawyerNames = isset($apt['lawyer_names']) && is_array($apt['lawyer_names']) && !empty($apt['lawyer_names'])
+            ? implode(', ', $apt['lawyer_names'])
+            : ($apt['lawyer_name'] ?: 'TBD');
 
-        $statusBadge = '';
-        switch ($apt['status']) {
-            case 'pending':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
-                break;
-            case 'accepted':
-                if (strtotime($apt['starts_at']) > time()) {
-                    $statusBadge = '<span class="badge badge-sm bg-gradient-info">Upcoming</span>';
-                } elseif (strtotime($apt['ends_at']) < time()) {
-                    $statusBadge = '<span class="badge badge-sm bg-gradient-success">Completed</span>';
-                } else {
-                    $statusBadge = '<span class="badge badge-sm bg-gradient-primary">In progress</span>';
-                }
-                break;
-            case 'rejected':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-danger">Rejected</span>';
-                break;
-            default:
-                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($apt['status']) . '</span>';
+        $statusValues = isset($apt['status_values']) && is_array($apt['status_values']) ? $apt['status_values'] : [strtolower((string) ($apt['status'] ?? ''))];
+        if (count($statusValues) === 1) {
+            $statusMeta = clientAppointmentStatusMeta($statusValues[0], strtotime($apt['starts_at']), !empty($apt['ends_at']) ? strtotime($apt['ends_at']) : null);
+            $statusBadge = '<span class="badge badge-sm bg-gradient-' . htmlspecialchars($statusMeta['class']) . '">' . htmlspecialchars($statusMeta['label']) . '</span>';
+        } else {
+            $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">Mixed</span>';
         }
 
         $notesRaw = isset($apt['notes']) ? trim((string) $apt['notes']) : '';
@@ -335,7 +393,7 @@ if (empty($appointments)) {
                 </div>
             </td>
             <td>
-                <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 9rem;" title="' . htmlspecialchars($lawyerName) . '">' . htmlspecialchars($lawyerName) . '</p>
+                <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 12rem;" title="' . htmlspecialchars($lawyerNames) . '">' . htmlspecialchars($lawyerNames) . '</p>
             </td>
             <td class="align-middle text-center">
                 ' . $statusBadge . '
@@ -345,7 +403,7 @@ if (empty($appointments)) {
             </td>
             <td class="align-middle text-end pe-4">
                 <div class="d-flex flex-wrap gap-2 justify-content-end">
-                    <button type="button" class="btn btn-sm btn-outline-primary mb-0" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary mb-0" onclick="viewAppointmentDetails(\'' . htmlspecialchars($groupIdsStr, ENT_QUOTES, 'UTF-8') . '\')">Details</button>
                 </div>
             </td>
         </tr>';
@@ -830,8 +888,8 @@ $html = <<<'HTML'
                     '</div>' +
                     '<div class="row g-3">' +
                         '<div class="col-sm-6">' +
-                            '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Lawyer</p>' +
-                            '<p class="text-sm font-weight-bold mb-0">' + escapeHtml(data.lawyer_name) + '</p>' +
+                            '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Lawyers</p>' +
+                            '<p class="text-sm font-weight-bold mb-0">' + escapeHtml(data.lawyer_names || data.lawyer_name) + '</p>' +
                         '</div>' +
                         '<div class="col-sm-6">' +
                             '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Requested</p>' +
@@ -854,7 +912,7 @@ $html = <<<'HTML'
             );
         }
 
-        function viewAppointmentDetails(appointmentId) {
+        function viewAppointmentDetails(appointmentIds) {
             const detailsEl = document.getElementById('appointmentDetails');
             detailsEl.innerHTML =
                 '<div class="text-center py-4">' +
@@ -863,7 +921,11 @@ $html = <<<'HTML'
                 '</div>';
             getAppointmentModal().show();
 
-            fetch('client-appointments.php?ajax=appointment_details&id=' + encodeURIComponent(appointmentId), {
+            const idsParam = String(appointmentIds || '').trim();
+            const url = idsParam.indexOf(',') !== -1
+                ? 'client-appointments.php?ajax=appointment_details&ids=' + encodeURIComponent(idsParam)
+                : 'client-appointments.php?ajax=appointment_details&id=' + encodeURIComponent(idsParam);
+            fetch(url, {
                 headers: { 'Accept': 'application/json' },
                 credentials: 'same-origin'
             })

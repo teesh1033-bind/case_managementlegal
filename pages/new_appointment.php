@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
 
     $clientId = 0;
     $clientName = '';
+    $assignedCaseLawyerIds = [];
     if ($caseId) {
         $caseStmt = $pdo->prepare("SELECT c.client_id, cl.first_name, cl.last_name FROM cases c LEFT JOIN clients cl ON cl.id = c.client_id WHERE c.id = ?");
         $caseStmt->execute([$caseId]);
@@ -53,6 +54,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
             $clientId = $caseInfo['client_id'];
             $clientName = trim($caseInfo['first_name'] . ' ' . $caseInfo['last_name']);
         }
+
+        $caseLawyerStmt = $pdo->prepare("
+            SELECT cl.lawyer_id
+            FROM case_lawyers cl
+            INNER JOIN lawyers l ON l.id = cl.lawyer_id
+            WHERE cl.case_id = ? AND l.is_active = 1
+            ORDER BY cl.is_primary DESC, cl.assigned_at ASC
+        ");
+        $caseLawyerStmt->execute([$caseId]);
+        $assignedCaseLawyerIds = array_values(array_unique(array_map('intval', array_column($caseLawyerStmt->fetchAll(), 'lawyer_id'))));
     }
 
     $formData = [
@@ -65,26 +76,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         'notes' => $notes
     ];
 
-    if (empty($caseId) || empty($lawyerId) || empty($date) || empty($time)) {
-        $message = 'Case, lawyer, date, and time are required.';
+    if (empty($caseId) || empty($date) || empty($time)) {
+        $message = 'Case, date, and time are required.';
+        $messageType = 'danger';
+    } elseif ($appointmentId && empty($lawyerId)) {
+        $message = 'Lawyer is required when updating an appointment.';
+        $messageType = 'danger';
+    } elseif (!$appointmentId && empty($assignedCaseLawyerIds) && empty($lawyerId)) {
+        $message = 'Please select a valid lawyer from the list.';
         $messageType = 'danger';
     } else {
-        $lawyerCheck = $pdo->prepare("SELECT id FROM lawyers WHERE id = ? AND is_active = 1");
-        $lawyerCheck->execute([$lawyerId]);
-        if (!$lawyerCheck->fetch()) {
-            $message = 'Please select a valid lawyer from the list.';
+        $dateTime = DateTime::createFromFormat('Y-m-d H:i', $date . ' ' . $time);
+        if (!$dateTime) {
+            $message = 'Invalid date or time format.';
             $messageType = 'danger';
         } else {
-            $dateTime = DateTime::createFromFormat('Y-m-d H:i', $date . ' ' . $time);
-            if (!$dateTime) {
-                $message = 'Invalid date or time format.';
-                $messageType = 'danger';
-            } else {
-                $startsAt = $dateTime->format('Y-m-d H:i:s');
-                $endsAt = $dateTime->modify('+1 hour')->format('Y-m-d H:i:s');
+            $startsAt = $dateTime->format('Y-m-d H:i:s');
+            $endsAt = $dateTime->modify('+1 hour')->format('Y-m-d H:i:s');
 
-                try {
-                    if ($appointmentId) {
+            try {
+                if ($appointmentId) {
+                    $lawyerCheck = $pdo->prepare("SELECT id FROM lawyers WHERE id = ? AND is_active = 1");
+                    $lawyerCheck->execute([$lawyerId]);
+                    if (!$lawyerCheck->fetch()) {
+                        $message = 'Please select a valid lawyer from the list.';
+                        $messageType = 'danger';
+                    } else {
                         $stmt = $pdo->prepare("SELECT * FROM appointments WHERE id = ?");
                         $stmt->execute([$appointmentId]);
                         $oldAppointment = $stmt->fetch();
@@ -121,21 +138,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                         }
 
                         $msg = 'Appointment updated successfully.';
+                    }
+                } else {
+                    $targetLawyerIds = !empty($assignedCaseLawyerIds) ? $assignedCaseLawyerIds : [(int) $lawyerId];
+                    $targetLawyerIds = array_values(array_filter(array_unique(array_map('intval', $targetLawyerIds))));
+
+                    if (empty($targetLawyerIds)) {
+                        $message = 'No valid assigned lawyers were found for this case.';
+                        $messageType = 'danger';
                     } else {
                         $stmt = $pdo->prepare("
                             INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status)
                             VALUES (?, ?, ?, ?, ?, ?, 'pending')
                         ");
-                        $stmt->execute([$clientId, $caseId, $lawyerId, $startsAt, $endsAt, $notes]);
-                        $newAppointmentId = (int) $pdo->lastInsertId();
 
-                        syncAppointmentAvailabilitySlot($pdo, [
-                            'id' => $newAppointmentId,
-                            'lawyer_id' => $lawyerId,
-                            'starts_at' => $startsAt,
-                            'ends_at' => $endsAt,
-                            'status' => 'pending',
-                        ]);
+                        foreach ($targetLawyerIds as $targetLawyerId) {
+                            $stmt->execute([$clientId, $caseId, $targetLawyerId, $startsAt, $endsAt, $notes]);
+                            $newAppointmentId = (int) $pdo->lastInsertId();
+
+                            syncAppointmentAvailabilitySlot($pdo, [
+                                'id' => $newAppointmentId,
+                                'lawyer_id' => $targetLawyerId,
+                                'starts_at' => $startsAt,
+                                'ends_at' => $endsAt,
+                                'status' => 'pending',
+                            ]);
+
+                            ensureLawyerAssignedToCase($pdo, $caseId, $targetLawyerId);
+                        }
 
                         CaseEvents::trackAppointmentCreated($caseId, [
                             'starts_at' => $startsAt,
@@ -143,17 +173,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                             'notes' => $notes
                         ]);
 
-                        $msg = 'Appointment booked successfully.';
+                        $createdCount = count($targetLawyerIds);
+                        $msg = $createdCount > 1
+                            ? 'Appointments booked successfully for ' . $createdCount . ' assigned lawyers.'
+                            : 'Appointment booked successfully.';
                     }
+                }
 
-                    ensureLawyerAssignedToCase($pdo, $caseId, $lawyerId);
-
+                if ($messageType !== 'danger') {
                     header('Location: appointments.php?msg=' . urlencode($msg) . '&type=success');
                     exit;
-                } catch (PDOException $e) {
-                    $message = 'Error saving appointment: ' . htmlspecialchars($e->getMessage());
-                    $messageType = 'danger';
                 }
+            } catch (PDOException $e) {
+                $message = 'Error saving appointment: ' . htmlspecialchars($e->getMessage());
+                $messageType = 'danger';
             }
         }
     }
@@ -366,7 +399,7 @@ $html = <<<'HTML'
 									<select class="form-control" name="lawyer_id" id="lawyer_select" required>
 										{LAWYER_OPTIONS}
 									</select>
-									<small class="text-muted">Shows lawyers assigned to the selected case and selects the primary lawyer by default</small>
+									<small class="text-muted">New appointments are created for all lawyers assigned to the selected case. This field is mainly used when editing.</small>
 								</div>
 
 								<div class="row">

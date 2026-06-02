@@ -345,8 +345,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $startDate = isset($_POST['stage_start_date']) ? $_POST['stage_start_date'] : '';
         $expectedEndDate = isset($_POST['stage_expected_end_date']) ? $_POST['stage_expected_end_date'] : '';
         $actualEndDate = isset($_POST['stage_actual_end_date']) ? $_POST['stage_actual_end_date'] : '';
+        $hasInvalidStageExpectedDate = !empty($startDate) && !empty($expectedEndDate)
+            && strtotime($expectedEndDate) <= strtotime($startDate);
+        $hasInvalidStageActualDate = !empty($startDate) && !empty($actualEndDate)
+            && strtotime($actualEndDate) < strtotime($startDate);
 
-        if (empty($title) || empty($stageNumber)) {
+        if ($hasInvalidStageExpectedDate) {
+            $message = 'Stage expected end date must be later than stage start date.';
+            $messageType = 'danger';
+        } elseif ($hasInvalidStageActualDate) {
+            $message = 'Stage actual end date cannot be earlier than stage start date.';
+            $messageType = 'danger';
+        } elseif (empty($title) || empty($stageNumber)) {
             $message = 'Stage title and number are required.';
             $messageType = 'danger';
         } else {
@@ -794,44 +804,59 @@ $stagesHtml = '';
 foreach ($existingStages as $stage) {
     $stageFileJs = htmlspecialchars(json_encode((string)(isset($stage['file_path']) ? $stage['file_path'] : '')), ENT_QUOTES, 'UTF-8');
     $stagesHtml .= '
-    <div class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">Stage ' . (int)$stage['stage_number'] . ': ' . htmlspecialchars($stage['title']) . '</h6>
-            <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-sm btn-primary mb-0" onclick="editStage(' . (int)$stage['id'] . ', ' . (int)$stage['stage_number'] . ', \'' . addslashes($stage['title']) . '\', \'' . addslashes($stage['description']) . '\', \'' . addslashes($stage['result']) . '\', \'' . (!empty($stage['start_date']) ? $stage['start_date'] : '') . '\', \'' . (!empty($stage['expected_end_date']) ? $stage['expected_end_date'] : '') . '\', \'' . (!empty($stage['actual_end_date']) ? $stage['actual_end_date'] : '') . '\', ' . $stageFileJs . ')">Edit</button>
-                <form method="post" class="mb-0" onsubmit="return confirm(\'Delete this stage?\');">
-                    <input type="hidden" name="form_type" value="delete_stage">
-                    <input type="hidden" name="stage_id" value="' . (int)$stage['id'] . '">
-                    <button class="btn btn-sm btn-danger mb-0" type="submit">Delete</button>
-                </form>
+    <div class="card mb-3 border">
+        <div class="card-header py-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                <div>
+                    <h6 class="mb-0">Stage ' . (int)$stage['stage_number'] . ': ' . htmlspecialchars($stage['title']) . '</h6>
+                    <p class="text-xs text-muted mb-0 mt-1">Event timeline summary</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-primary mb-0" onclick="editStage(' . (int)$stage['id'] . ', ' . (int)$stage['stage_number'] . ', \'' . addslashes($stage['title']) . '\', \'' . addslashes($stage['description']) . '\', \'' . addslashes($stage['result']) . '\', \'' . (!empty($stage['start_date']) ? $stage['start_date'] : '') . '\', \'' . (!empty($stage['expected_end_date']) ? $stage['expected_end_date'] : '') . '\', \'' . (!empty($stage['actual_end_date']) ? $stage['actual_end_date'] : '') . '\', ' . $stageFileJs . ')">Edit</button>
+                    <form method="post" class="mb-0" onsubmit="return confirm(\'Delete this stage?\');">
+                        <input type="hidden" name="form_type" value="delete_stage">
+                        <input type="hidden" name="stage_id" value="' . (int)$stage['id'] . '">
+                        <button class="btn btn-sm btn-danger mb-0" type="submit">Delete</button>
+                    </form>
+                </div>
             </div>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p class="mb-1"><strong>Description:</strong></p>
-                    <p class="text-sm">' . nl2br(htmlspecialchars(!empty($stage['description']) ? $stage['description'] : 'No description')) . '</p>
+            <div class="row g-3 align-items-start">
+                <div class="col-lg-7">
+                    <div class="mb-3">
+                        <p class="text-xs text-uppercase text-muted mb-1">Description</p>
+                        <p class="text-sm mb-0">' . nl2br(htmlspecialchars(!empty($stage['description']) ? $stage['description'] : 'No description')) . '</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-uppercase text-muted mb-1">Result</p>
+                        <p class="text-sm mb-0">' . nl2br(htmlspecialchars(!empty($stage['result']) ? $stage['result'] : 'No result')) . '</p>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <p class="mb-1"><strong>Result:</strong></p>
-                    <p class="text-sm">' . nl2br(htmlspecialchars(!empty($stage['result']) ? $stage['result'] : 'No result')) . '</p>
+                <div class="col-lg-5">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <div class="border rounded px-3 py-2 h-100">
+                                <p class="text-xs text-uppercase text-muted mb-1">Start Date</p>
+                                <p class="text-sm mb-0">' . ($stage['start_date'] ? date('M j, Y', strtotime($stage['start_date'])) : 'Not set') . '</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded px-3 py-2 h-100">
+                                <p class="text-xs text-uppercase text-muted mb-1">Expected End</p>
+                                <p class="text-sm mb-0">' . ($stage['expected_end_date'] ? date('M j, Y', strtotime($stage['expected_end_date'])) : 'Not set') . '</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded px-3 py-2 h-100">
+                                <p class="text-xs text-uppercase text-muted mb-1">Actual End</p>
+                                <p class="text-sm mb-0">' . ($stage['actual_end_date'] ? date('M j, Y', strtotime($stage['actual_end_date'])) : 'Not set') . '</p>
+                            </div>
+                        </div>
+                    </div>
+                    ' . ($stage['file_path'] ? '<div class="mt-3"><a href="../' . htmlspecialchars($stage['file_path']) . '" target="_blank" class="btn btn-sm btn-outline-primary w-100">View Attached File</a></div>' : '') . '
                 </div>
             </div>
-            <div class="row mt-3">
-                <div class="col-md-4">
-                    <p class="mb-1"><strong>Start Date:</strong></p>
-                    <p class="text-sm">' . ($stage['start_date'] ? date('M j, Y', strtotime($stage['start_date'])) : 'Not set') . '</p>
-                </div>
-                <div class="col-md-4">
-                    <p class="mb-1"><strong>Expected End:</strong></p>
-                    <p class="text-sm">' . ($stage['expected_end_date'] ? date('M j, Y', strtotime($stage['expected_end_date'])) : 'Not set') . '</p>
-                </div>
-                <div class="col-md-4">
-                    <p class="mb-1"><strong>Actual End:</strong></p>
-                    <p class="text-sm">' . ($stage['actual_end_date'] ? date('M j, Y', strtotime($stage['actual_end_date'])) : 'Not set') . '</p>
-                </div>
-            </div>
-            ' . ($stage['file_path'] ? '<div class="mt-3"><a href="../' . htmlspecialchars($stage['file_path']) . '" target="_blank" class="btn btn-sm btn-outline-primary">View Attached File</a></div>' : '') . '
         </div>
     </div>';
 }
@@ -1273,6 +1298,10 @@ $html = <<<'HTML'
             var caseStartInput = document.getElementById('case_start_date');
             var caseExpectedInput = document.getElementById('case_expected_completion');
             var caseUpdateForm = document.querySelector('form input[name="form_type"][value="update_case"]')?.closest('form');
+            var stageStartInput = document.getElementById('stage_start_date');
+            var stageExpectedInput = document.getElementById('stage_expected_end_date');
+            var stageActualInput = document.getElementById('stage_actual_end_date');
+            var stageForm = document.querySelector('#stageModal form');
 
             function syncCaseExpectedMin() {
                 if (!caseStartInput || !caseExpectedInput) {
@@ -1304,6 +1333,68 @@ $html = <<<'HTML'
                     if (!caseExpectedInput.checkValidity()) {
                         event.preventDefault();
                         caseExpectedInput.reportValidity();
+                    }
+                });
+            }
+
+            function syncStageExpectedMin() {
+                if (!stageStartInput || !stageExpectedInput) {
+                    return;
+                }
+                if (!stageStartInput.value) {
+                    stageExpectedInput.removeAttribute('min');
+                    stageExpectedInput.setCustomValidity('');
+                    return;
+                }
+                var minDate = new Date(stageStartInput.value + 'T00:00:00');
+                minDate.setDate(minDate.getDate() + 1);
+                stageExpectedInput.setAttribute('min', minDate.toISOString().slice(0, 10));
+                if (stageExpectedInput.value && stageExpectedInput.value <= stageStartInput.value) {
+                    stageExpectedInput.setCustomValidity('Expected end date must be later than start date.');
+                } else {
+                    stageExpectedInput.setCustomValidity('');
+                }
+            }
+
+            function syncStageActualMin() {
+                if (!stageStartInput || !stageActualInput) {
+                    return;
+                }
+                if (!stageStartInput.value) {
+                    stageActualInput.removeAttribute('min');
+                    stageActualInput.setCustomValidity('');
+                    return;
+                }
+                stageActualInput.setAttribute('min', stageStartInput.value);
+                if (stageActualInput.value && stageActualInput.value < stageStartInput.value) {
+                    stageActualInput.setCustomValidity('Actual end date cannot be earlier than start date.');
+                } else {
+                    stageActualInput.setCustomValidity('');
+                }
+            }
+
+            if (stageStartInput && stageExpectedInput) {
+                stageStartInput.addEventListener('change', syncStageExpectedMin);
+                stageExpectedInput.addEventListener('input', syncStageExpectedMin);
+                syncStageExpectedMin();
+            }
+            if (stageStartInput && stageActualInput) {
+                stageStartInput.addEventListener('change', syncStageActualMin);
+                stageActualInput.addEventListener('input', syncStageActualMin);
+                syncStageActualMin();
+            }
+            if (stageForm && stageExpectedInput) {
+                stageForm.addEventListener('submit', function(event) {
+                    syncStageExpectedMin();
+                    syncStageActualMin();
+                    if (!stageExpectedInput.checkValidity()) {
+                        event.preventDefault();
+                        stageExpectedInput.reportValidity();
+                        return;
+                    }
+                    if (stageActualInput && !stageActualInput.checkValidity()) {
+                        event.preventDefault();
+                        stageActualInput.reportValidity();
                     }
                 });
             }

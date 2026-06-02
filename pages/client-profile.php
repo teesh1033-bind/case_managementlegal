@@ -167,7 +167,7 @@ $html = <<<'HTML'
     <link href="../assets/css/legalpro-client-portal.css?v=8" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100">
-    <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
+    <div class="bg-legalpro-client position-fixed top-0 start-0 w-100 h-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
