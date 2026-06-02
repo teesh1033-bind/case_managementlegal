@@ -36,6 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])
             if (!$appointment) {
                 $message = 'Appointment not found or you do not have permission to update it.';
                 $messageType = 'danger';
+            } elseif (strtolower((string) ($appointment['status'] ?? 'pending')) === 'accepted') {
+                $message = 'Accepted appointments cannot be modified.';
+                $messageType = 'danger';
             } elseif ($action === 'reschedule') {
                 $newDate = trim((string) ($_POST['reschedule_date'] ?? ''));
                 $newTime = trim((string) ($_POST['reschedule_time'] ?? ''));
@@ -179,6 +182,12 @@ function buildLawyerAppointmentActions(array $appointment): string
     $html = '<div class="lawyer-appointment-actions">';
 
     $html .= '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-dark mb-0">Case</a>';
+
+    if ($status === 'accepted') {
+        $html .= '<span class="badge bg-success">Locked</span>';
+        $html .= '</div>';
+        return $html;
+    }
 
     if ($status !== 'accepted') {
         $html .= '

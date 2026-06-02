@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
+require_once __DIR__ . '/../lib/case_lawyers.php';
 
 $message = '';
 $messageType = '';
@@ -66,6 +67,115 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $message = 'Invalid appointment status update.';
             $messageType = 'danger';
+        }
+    }
+
+    if ($formType === 'reassign_rejected') {
+        $appointmentId = isset($_POST['appointment_id']) ? (int) $_POST['appointment_id'] : 0;
+        if ($appointmentId <= 0) {
+            $message = 'Invalid appointment selected for reassignment.';
+            $messageType = 'danger';
+        } else {
+            try {
+                $stmt = $pdo->prepare("SELECT * FROM appointments WHERE id = ?");
+                $stmt->execute([$appointmentId]);
+                $appointment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$appointment) {
+                    $message = 'Appointment not found.';
+                    $messageType = 'danger';
+                } elseif (strtolower((string) ($appointment['status'] ?? 'pending')) !== 'rejected') {
+                    $message = 'Only rejected appointments can be reassigned automatically.';
+                    $messageType = 'danger';
+                } else {
+                    $reassignMarker = '[Auto-reassigned from rejected appointment #' . $appointmentId . ']';
+                    $stmt = $pdo->prepare("
+                        SELECT id
+                        FROM appointments
+                        WHERE notes LIKE ?
+                        LIMIT 1
+                    ");
+                    $stmt->execute(['%' . $reassignMarker . '%']);
+                    $alreadyReassignedId = (int) ($stmt->fetchColumn() ?: 0);
+                    if ($alreadyReassignedId > 0) {
+                        $message = 'This rejected appointment has already been reassigned.';
+                        $messageType = 'warning';
+                        goto reassign_done;
+                    }
+
+                    $currentLawyerId = (int) ($appointment['lawyer_id'] ?? 0);
+                    $targetLawyerId = 0;
+
+                    // Priority 1: another active lawyer already assigned to this case.
+                    $stmt = $pdo->prepare("
+                        SELECT cl.lawyer_id
+                        FROM case_lawyers cl
+                        INNER JOIN lawyers l ON l.id = cl.lawyer_id AND l.is_active = 1
+                        WHERE cl.case_id = ? AND cl.lawyer_id <> ?
+                        ORDER BY cl.is_primary DESC, cl.assigned_at ASC
+                        LIMIT 1
+                    ");
+                    $stmt->execute([(int) $appointment['case_id'], $currentLawyerId]);
+                    $targetLawyerId = (int) ($stmt->fetchColumn() ?: 0);
+
+                    // Priority 2: any other active lawyer in the firm.
+                    if ($targetLawyerId <= 0) {
+                        $stmt = $pdo->prepare("
+                            SELECT id
+                            FROM lawyers
+                            WHERE is_active = 1 AND id <> ?
+                            ORDER BY last_name ASC, first_name ASC
+                            LIMIT 1
+                        ");
+                        $stmt->execute([$currentLawyerId]);
+                        $targetLawyerId = (int) ($stmt->fetchColumn() ?: 0);
+                    }
+
+                    if ($targetLawyerId <= 0) {
+                        $message = 'No other active lawyer is available for reassignment.';
+                        $messageType = 'danger';
+                    } else {
+                        $notes = (string) ($appointment['notes'] ?? '');
+                        $notes = trim($notes . ($notes !== '' ? "\n\n" : '') . $reassignMarker);
+
+                        $stmt = $pdo->prepare("
+                            INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status)
+                            VALUES (?, ?, ?, ?, ?, ?, 'pending')
+                        ");
+                        $stmt->execute([
+                            (int) $appointment['client_id'],
+                            (int) $appointment['case_id'],
+                            $targetLawyerId,
+                            (string) $appointment['starts_at'],
+                            (string) $appointment['ends_at'],
+                            $notes,
+                        ]);
+                        $newAppointmentId = (int) $pdo->lastInsertId();
+
+                        syncAppointmentAvailabilitySlot($pdo, [
+                            'id' => $newAppointmentId,
+                            'lawyer_id' => $targetLawyerId,
+                            'starts_at' => (string) $appointment['starts_at'],
+                            'ends_at' => (string) $appointment['ends_at'],
+                            'status' => 'pending',
+                        ]);
+
+                        ensureLawyerAssignedToCase($pdo, (int) $appointment['case_id'], $targetLawyerId);
+                        CaseEvents::trackAppointmentCreated((int) $appointment['case_id'], [
+                            'starts_at' => (string) $appointment['starts_at'],
+                            'ends_at' => (string) $appointment['ends_at'],
+                            'notes' => $notes,
+                        ]);
+
+                        $message = 'Rejected appointment reassigned automatically to another lawyer.';
+                        $messageType = 'success';
+                    }
+                }
+                reassign_done:
+            } catch (PDOException $e) {
+                $message = 'Unable to reassign rejected appointment: ' . htmlspecialchars($e->getMessage());
+                $messageType = 'danger';
+            }
         }
     }
 
@@ -142,6 +252,16 @@ if (empty($appointments)) {
         </div>
     </td></tr>';
 } else {
+    $alreadyReassignedSourceIds = [];
+    foreach ($appointments as $row) {
+        $rowNotes = (string) ($row['notes'] ?? '');
+        if ($rowNotes !== '' && preg_match_all('/\[Auto-reassigned from rejected appointment #(\d+)\]/', $rowNotes, $matches)) {
+            foreach ($matches[1] as $sourceId) {
+                $alreadyReassignedSourceIds[(int) $sourceId] = true;
+            }
+        }
+    }
+
     foreach ($appointments as $appointment) {
         // Determine display based on available data
         $caseDisplay = isset($appointment['case_display']) && !empty($appointment['case_display'])
@@ -156,6 +276,19 @@ if (empty($appointments)) {
 
         $startsAt = $appointment['starts_at'] ? date('m/d/y · H:i', strtotime($appointment['starts_at'])) : 'TBD';
         $status = isset($appointment['status']) ? strtolower($appointment['status']) : 'pending';
+        $editActionHtml = $status === 'accepted'
+            ? '<button type="button" class="btn btn-sm btn-secondary mb-0" disabled title="Accepted appointments cannot be edited">Edit</button>'
+            : '<a href="new_appointment.php?id=' . (int)$appointment['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>';
+        $appointmentIdInt = (int) $appointment['id'];
+        if ($status === 'rejected') {
+            if (isset($alreadyReassignedSourceIds[$appointmentIdInt])) {
+                $reassignActionHtml = '<button type="button" class="btn btn-sm btn-secondary mb-0" disabled title="Already reassigned">Reassigned</button>';
+            } else {
+                $reassignActionHtml = '<a href="javascript:void(0)" class="btn btn-sm btn-info mb-0" onclick="reassignRejectedAppointment(' . $appointmentIdInt . ', \'' . addslashes($caseDisplay) . '\'); return false;">Reassign</a>';
+            }
+        } else {
+            $reassignActionHtml = '';
+        }
         switch ($status) {
             case 'accepted':
                 $badgeClass = 'bg-gradient-success';
@@ -196,7 +329,8 @@ if (empty($appointments)) {
             </td>
             <td class="text-end pe-3">
                 <div class="d-flex gap-1 justify-content-end">
-                    <a href="new_appointment.php?id=' . (int)$appointment['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>
+                    ' . $editActionHtml . '
+                    ' . $reassignActionHtml . '
                     <a href="javascript:void(0)" class="btn btn-sm btn-danger mb-0" onclick="deleteAppointment(' . (int)$appointment['id'] . ', \'' . addslashes($caseDisplay) . '\'); return false;">Delete</a>
                 </div>
             </td>
@@ -354,6 +488,15 @@ $html = <<<'HTML'
 				var form = document.createElement('form');
 				form.method = 'POST';
 				form.innerHTML = '<input type="hidden" name="delete_appointment" value="1"><input type="hidden" name="appointment_id" value="' + appointmentId + '">';
+				document.body.appendChild(form);
+				form.submit();
+			}
+		}
+		function reassignRejectedAppointment(appointmentId, caseDisplay) {
+			if (confirm('Generate a new pending appointment for another lawyer for "' + caseDisplay + '"?')) {
+				var form = document.createElement('form');
+				form.method = 'POST';
+				form.innerHTML = '<input type="hidden" name="form_type" value="reassign_rejected"><input type="hidden" name="appointment_id" value="' + appointmentId + '">';
 				document.body.appendChild(form);
 				form.submit();
 			}

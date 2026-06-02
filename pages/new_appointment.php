@@ -116,38 +116,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                         $stmt->execute([$appointmentId]);
                         $oldAppointment = $stmt->fetch();
 
-                        $stmt = $pdo->prepare("
-                            UPDATE appointments
-                            SET client_id = ?, case_id = ?, lawyer_id = ?, starts_at = ?, ends_at = ?, notes = ?
-                            WHERE id = ?
-                        ");
-                        $stmt->execute([$clientId, $caseId, $lawyerId, $startsAt, $endsAt, $notes, $appointmentId]);
-
-                        if ($oldAppointment && (int) $oldAppointment['lawyer_id'] !== $lawyerId) {
-                            removeAppointmentAvailabilitySlot($pdo, $appointmentId, (int) $oldAppointment['lawyer_id']);
+                        if ($oldAppointment && strtolower((string) ($oldAppointment['status'] ?? 'pending')) === 'accepted') {
+                            $message = 'Accepted appointments cannot be modified.';
+                            $messageType = 'danger';
                         }
 
-                        syncAppointmentAvailabilitySlot($pdo, [
-                            'id' => $appointmentId,
-                            'lawyer_id' => $lawyerId,
-                            'starts_at' => $startsAt,
-                            'ends_at' => $endsAt,
-                            'status' => $oldAppointment['status'] ?? 'pending',
-                        ]);
+                        if ($messageType !== 'danger') {
+                            $updatedStatus = (isset($oldAppointment['status']) ? strtolower((string) $oldAppointment['status']) : 'pending');
+                            if ($updatedStatus === '') {
+                                $updatedStatus = 'pending';
+                            }
+                            // If a rejected appointment is reassigned to another lawyer,
+                            // restart the review cycle for the new lawyer.
+                            if ((int) $oldAppointment['lawyer_id'] !== $lawyerId && $updatedStatus === 'rejected') {
+                                $updatedStatus = 'pending';
+                            }
 
-                        if ($oldAppointment) {
-                            CaseEvents::trackAppointmentUpdated($caseId, $oldAppointment, [
-                                'client_id' => $clientId,
-                                'case_id' => $caseId,
+                            $stmt = $pdo->prepare("
+                                UPDATE appointments
+                                SET client_id = ?, case_id = ?, lawyer_id = ?, starts_at = ?, ends_at = ?, notes = ?, status = ?
+                                WHERE id = ?
+                            ");
+                            $stmt->execute([$clientId, $caseId, $lawyerId, $startsAt, $endsAt, $notes, $updatedStatus, $appointmentId]);
+
+                            if ($oldAppointment && (int) $oldAppointment['lawyer_id'] !== $lawyerId) {
+                                removeAppointmentAvailabilitySlot($pdo, $appointmentId, (int) $oldAppointment['lawyer_id']);
+                            }
+
+                            syncAppointmentAvailabilitySlot($pdo, [
+                                'id' => $appointmentId,
                                 'lawyer_id' => $lawyerId,
                                 'starts_at' => $startsAt,
                                 'ends_at' => $endsAt,
-                                'notes' => $notes,
-                                'status' => $oldAppointment['status']
+                                'status' => $updatedStatus,
                             ]);
-                        }
 
-                        $msg = 'Appointment updated successfully.';
+                            if ($oldAppointment) {
+                                CaseEvents::trackAppointmentUpdated($caseId, $oldAppointment, [
+                                    'client_id' => $clientId,
+                                    'case_id' => $caseId,
+                                    'lawyer_id' => $lawyerId,
+                                    'starts_at' => $startsAt,
+                                    'ends_at' => $endsAt,
+                                    'notes' => $notes,
+                                    'status' => $updatedStatus
+                                ]);
+                            }
+
+                            $msg = 'Appointment updated successfully.';
+                        }
                     }
                 } else {
                     $targetLawyerIds = !empty($assignedCaseLawyerIds) ? $assignedCaseLawyerIds : [(int) $lawyerId];
@@ -216,6 +233,10 @@ if (empty($formData['appointment_id']) && isset($_GET['id']) && ctype_digit($_GE
     $appointment = $stmt->fetch();
 
     if ($appointment) {
+        if (strtolower((string) ($appointment['status'] ?? 'pending')) === 'accepted') {
+            header('Location: appointments.php?msg=' . urlencode('Accepted appointments cannot be edited.') . '&type=danger');
+            exit;
+        }
         $startsAt = $appointment['starts_at'] ? new DateTime($appointment['starts_at']) : null;
         $clientName = trim((isset($appointment['first_name']) ? $appointment['first_name'] : '') . ' ' . (isset($appointment['last_name']) ? $appointment['last_name'] : ''));
         $formData = [
@@ -491,7 +512,10 @@ $html = <<<'HTML'
 
 					var lawyerIdsRaw = selectedOption.getAttribute('data-lawyer-ids') || '';
 					var allowedLawyerIds = lawyerIdsRaw ? lawyerIdsRaw.split(',').filter(Boolean) : [];
-					filterLawyerOptions(allowedLawyerIds, !updateLawyer);
+					var isEditing = Boolean(document.querySelector('input[name="appointment_id"]') && document.querySelector('input[name="appointment_id"]').value);
+					// While editing, keep all active lawyers available so a rejected
+					// appointment can be reassigned to another lawyer quickly.
+					filterLawyerOptions(isEditing ? [] : allowedLawyerIds, !updateLawyer);
 
 					if (updateLawyer && lawyerSelect) {
 						var primaryLawyerId = selectedOption.getAttribute('data-lawyer-id') || '';
