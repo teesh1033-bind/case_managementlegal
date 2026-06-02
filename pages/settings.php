@@ -135,13 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $existingPassword = legalpro_normalize_smtp_password((string) getSetting('smtp_password', ''), $smtpCfgDraft);
 
         if ($smtpUsername !== '' && $newPassword === '' && $existingPassword === '') {
-            $message = 'Le mot de passe SMTP est obligatoire la première fois.';
+            $message = 'SMTP password is required the first time.';
             $messageType = 'danger';
         } elseif ($newPassword !== '' && legalpro_is_gmail_smtp($smtpCfgDraft)) {
             $pwdLen = legalpro_gmail_app_password_length($newPassword);
             if ($pwdLen !== 16) {
-                $message = 'Le mot de passe d\'application doit contenir exactement 16 lettres/chiffres après collage '
-                    . '(actuellement ' . $pwdLen . '). Copiez les 4 blocs de 4 caractères affichés par Google.';
+                $message = 'The app password must contain exactly 16 letters/numbers after paste '
+                    . '(currently ' . $pwdLen . '). Copy all 4 groups of 4 characters shown by Google.';
                 $messageType = 'danger';
             }
         }
@@ -493,8 +493,8 @@ $html = <<<'HTML'
 						</div>
 						<div class="card-body">
 <<<<<<< HEAD
-							<p class="text-xs text-muted mb-2"><strong>Gmail :</strong> mot de passe d\'application (16 lettres) — <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Google</a>.</p>
-							<p class="text-xs text-muted mb-2"><strong>Outlook :</strong> serveur <code>smtp-mail.outlook.com</code>, port <code>587</code>, TLS — email + mot de passe du compte (ou mot de passe d\'application si 2FA).</p>
+							<p class="text-xs text-muted mb-2"><strong>Gmail:</strong> app password (16 letters) — <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Google</a>.</p>
+							<p class="text-xs text-muted mb-2"><strong>Outlook:</strong> server <code>smtp-mail.outlook.com</code>, port <code>587</code>, TLS — account email + password (or app password if 2FA is enabled).</p>
 =======
 							<p class="text-xs text-muted">Use this to send emails from the app. For Gmail, use a Google <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App Password</a> (16 characters).</p>
 >>>>>>> fd15d52d10a474fed9fe92cf095df4e19f9306d5

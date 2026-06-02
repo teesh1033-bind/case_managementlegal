@@ -10,11 +10,11 @@ function legalpro_normalize_smtp_username(string $username): string
 function legalpro_normalize_smtp_password(string $password, array $cfg = []): string
 {
     $password = trim($password, " \t\n\r\0\x0B\xEF\xBB\xBF");
-    // Gmail : mot de passe d'application = 16 lettres sans espaces
+    // Gmail app passwords are 16 letters without spaces
     if (legalpro_is_gmail_smtp($cfg)) {
         return preg_replace('/[^a-zA-Z0-9]/u', '', $password);
     }
-    // Outlook / Office 365 : garder le mot de passe tel quel ($, etc.)
+    // Outlook / Office 365: keep password as-is ($, etc.)
     return $password;
 }
 
@@ -105,10 +105,10 @@ function legalpro_smtp_configuration_status(): array
 {
     $cfg = legalpro_get_smtp_config();
     if ($cfg['username'] === '') {
-        return ['ready' => false, 'message' => 'Email non envoyé : configurez l\'email (Gmail ou Outlook) dans Paramètres → Email.'];
+        return ['ready' => false, 'message' => 'Email not sent: configure email (Gmail or Outlook) in Settings -> Email.'];
     }
     if ($cfg['password'] === '') {
-        return ['ready' => false, 'message' => 'Email non envoyé : ajoutez le mot de passe SMTP dans Paramètres → Email.'];
+        return ['ready' => false, 'message' => 'Email not sent: add the SMTP password in Settings -> Email.'];
     }
 
     if (legalpro_is_gmail_smtp($cfg)) {
@@ -116,9 +116,9 @@ function legalpro_smtp_configuration_status(): array
         if ($len !== 16) {
             return [
                 'ready' => false,
-                'message' => 'Email non envoyé : le mot de passe d\'application enregistré a ' . $len . ' caractères (il en faut 16). '
-                    . 'Paramètres → Email : créez un nouveau mot de passe sur https://myaccount.google.com/apppasswords, '
-                    . 'collez les 4 groupes de 4 lettres (ex. abcd efgh ijkl mnop), puis Enregistrer et testez.',
+                'message' => 'Email not sent: saved app password has ' . $len . ' characters (must be 16). '
+                    . 'Settings -> Email: create a new password on https://myaccount.google.com/apppasswords, '
+                    . 'paste all 4 groups of 4 letters (e.g. abcd efgh ijkl mnop), then Save and test.',
             ];
         }
     }
@@ -169,14 +169,14 @@ function legalpro_send_client_credentials_email(
     $html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;line-height:1.6;color:#344767;max-width:560px;margin:0 auto;padding:24px;">'
         . '<h2 style="color:#4e62d4;">' . $company . '</h2>'
         . '<p>Bonjour <strong>' . $fullName . '</strong>,</p>'
-        . '<p>Votre compte portail client a été créé. Voici vos identifiants de connexion :</p>'
+        . '<p>Your client portal account has been created. Here are your login credentials:</p>'
         . '<table style="width:100%;border-collapse:collapse;margin:16px 0;background:#f6f8fb;">'
         . '<tr><td style="padding:12px;border-bottom:1px solid #e9ecef;"><strong>URL</strong></td><td style="padding:12px;border-bottom:1px solid #e9ecef;"><a href="' . $loginUrl . '">' . $loginUrl . '</a></td></tr>'
         . '<tr><td style="padding:12px;border-bottom:1px solid #e9ecef;"><strong>Nom d\'utilisateur</strong></td><td style="padding:12px;border-bottom:1px solid #e9ecef;">' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . '</td></tr>'
         . '<tr><td style="padding:12px;"><strong>Mot de passe</strong></td><td style="padding:12px;">' . htmlspecialchars($plainPassword, ENT_QUOTES, 'UTF-8') . '</td></tr>'
         . '</table>'
-        . '<p style="font-size:14px;color:#67748e;">Conservez ce message en lieu sûr. En cas de question, contactez votre cabinet.</p>'
-        . '<p>Cordialement,<br><strong>' . $company . '</strong></p></body></html>';
+        . '<p style="font-size:14px;color:#67748e;">Keep this message in a safe place. If you have questions, contact your law firm.</p>'
+        . '<p>Regards,<br><strong>' . $company . '</strong></p></body></html>';
 
     return legalpro_send_email($toEmail, $subject, $html);
 }

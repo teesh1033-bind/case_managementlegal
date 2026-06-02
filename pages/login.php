@@ -301,6 +301,41 @@ $html = <<<'HTML'
         .login-page .input-group .form-control:focus {
             box-shadow: none;
         }
+        .login-page .password-toggle {
+            border: none;
+            background: var(--bs-gray-100);
+            color: var(--bs-secondary-color);
+            min-width: 3rem;
+            padding: 0.75rem 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-left: 1px solid var(--bs-border-color);
+            transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+        }
+        .login-page .password-toggle:hover,
+        .login-page .password-toggle:focus {
+            color: var(--bs-primary);
+            background: rgba(var(--bs-primary-rgb), 0.08);
+            outline: none;
+        }
+        .login-page .password-toggle:active {
+            transform: scale(0.97);
+        }
+        .login-page .password-toggle .eye-icon {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            color: currentColor;
+        }
+        .login-page .password-toggle .eye-icon.is-hidden {
+            display: none;
+        }
+        .login-page .password-toggle.is-visible {
+            color: var(--bs-primary);
+            background: rgba(var(--bs-primary-rgb), 0.12);
+        }
         .login-help {
             margin-top: 1.5rem;
             padding-top: 1.25rem;
@@ -389,6 +424,16 @@ $html = <<<'HTML'
                                 <div class="input-group input-group-lg">
                                     <span class="input-group-text"><i class="ni ni-lock-circle-open" aria-hidden="true"></i></span>
                                     <input type="password" class="form-control" id="login_password" name="password" placeholder="Password" autocomplete="current-password" required>
+                                    <button type="button" class="password-toggle" id="toggle_login_password" aria-label="Show password" aria-controls="login_password" aria-pressed="false">
+                                        <svg class="eye-icon eye-open" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M2.5 12C4.3 8.5 7.7 6.25 12 6.25C16.3 6.25 19.7 8.5 21.5 12C19.7 15.5 16.3 17.75 12 17.75C7.7 17.75 4.3 15.5 2.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                                        </svg>
+                                        <svg class="eye-icon eye-closed is-hidden" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                            <path d="M2.5 12C3.35 10.35 4.55 8.96 6 7.9M9.2 6.5C10.08 6.33 11.02 6.25 12 6.25C16.3 6.25 19.7 8.5 21.5 12C20.75 13.46 19.75 14.73 18.55 15.72M14.8 17.5C13.93 17.67 12.99 17.75 12 17.75C7.7 17.75 4.3 15.5 2.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                             <div class="d-grid">
@@ -446,6 +491,24 @@ $html = <<<'HTML'
 
         // Set initial state
         selectLoginType('admin');
+
+        const passwordInput = document.getElementById('login_password');
+        const passwordToggle = document.getElementById('toggle_login_password');
+        if (passwordInput && passwordToggle) {
+            passwordToggle.addEventListener('click', function () {
+                const isPassword = passwordInput.type === 'password';
+                passwordInput.type = isPassword ? 'text' : 'password';
+                passwordToggle.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+                passwordToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+                passwordToggle.classList.toggle('is-visible', isPassword);
+                const openIcon = passwordToggle.querySelector('.eye-open');
+                const closedIcon = passwordToggle.querySelector('.eye-closed');
+                if (openIcon && closedIcon) {
+                    openIcon.classList.toggle('is-hidden', isPassword);
+                    closedIcon.classList.toggle('is-hidden', !isPassword);
+                }
+            });
+        }
     </script>
 </body>
 </html>

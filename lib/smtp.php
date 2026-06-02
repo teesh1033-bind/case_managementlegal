@@ -28,7 +28,7 @@ function legalpro_smtp_enable_tls($socket): void
         $methods |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
     }
     if (!@stream_socket_enable_crypto($socket, true, $methods)) {
-        throw new RuntimeException('TLS negotiation failed (vérifiez extension openssl dans PHP/Laragon).');
+        throw new RuntimeException('TLS negotiation failed (check openssl extension in PHP/Laragon).');
     }
 }
 
@@ -37,7 +37,7 @@ function legalpro_smtp_authenticate($socket, string $username, string $password)
     $username = legalpro_normalize_smtp_username($username);
     $password = legalpro_normalize_smtp_password($password, ['host' => '', 'username' => $username]); // cfg host filled by caller context
 
-    // Gmail : AUTH LOGIN après STARTTLS (plus fiable que PLAIN sur certains hébergeurs)
+    // Gmail: AUTH LOGIN after STARTTLS (more reliable on some hosts)
     fwrite($socket, "AUTH LOGIN\r\n");
     legalpro_smtp_expect($socket, [334], 'AUTH LOGIN');
     fwrite($socket, base64_encode($username) . "\r\n");
@@ -54,15 +54,15 @@ function legalpro_smtp_gmail_credentials_hint(string $username, string $password
     $len = legalpro_gmail_app_password_length($password);
     $email = legalpro_normalize_smtp_username($username);
 
-    $hint = 'Gmail refuse la connexion (mot de passe incorrect). ';
+    $hint = 'Gmail rejected the login (incorrect password). ';
     if ($len !== 16) {
-        $hint .= 'Mot de passe enregistré : ' . $len . ' caractères (il en faut 16). ';
+        $hint .= 'Saved password length: ' . $len . ' characters (must be 16). ';
     }
-    $hint .= 'Compte configuré : ' . $email . '. ';
-    $hint .= 'Étapes : (1) https://myaccount.google.com/apppasswords — créez un NOUVEAU mot de passe (supprimez les anciens). ';
-    $hint .= '(2) Paramètres → Email — collez les 16 lettres, même adresse Gmail que le compte Google. ';
-    $hint .= '(3) Enregistrer puis « Envoyer un email de test » avant d\'ajouter un client. ';
-    $hint .= 'N\'utilisez pas votre mot de passe Gmail habituel.';
+    $hint .= 'Configured account: ' . $email . '. ';
+    $hint .= 'Steps: (1) https://myaccount.google.com/apppasswords — create a NEW app password (revoke old ones). ';
+    $hint .= '(2) Settings -> Email — paste all 16 letters and use the same Gmail address as the Google account. ';
+    $hint .= '(3) Save, then run "Send test email" before adding a client. ';
+    $hint .= 'Do not use your regular Gmail password.';
 
     return $hint;
 }
@@ -117,7 +117,7 @@ function legalpro_smtp_send(
     $password = legalpro_normalize_smtp_password($config['password'], $config);
 
     if ($config['host'] === '' || $username === '' || $password === '') {
-        return ['ok' => false, 'message' => 'Configuration SMTP incomplète.'];
+        return ['ok' => false, 'message' => 'Incomplete SMTP configuration.'];
     }
 
     if (function_exists('legalpro_is_gmail_smtp') && (legalpro_is_gmail_smtp($config) || legalpro_is_outlook_smtp($config))) {
@@ -154,7 +154,7 @@ function legalpro_smtp_send(
         fwrite($socket, "QUIT\r\n");
         @fclose($socket);
 
-        return ['ok' => true, 'message' => 'Email envoyé avec succès.'];
+        return ['ok' => true, 'message' => 'Email sent successfully.'];
     } catch (Throwable $e) {
         if (is_resource($socket)) {
             @fclose($socket);
@@ -186,7 +186,7 @@ function legalpro_smtp_test_connection(array $config): array
         $len = strlen($password);
         return [
             'ok' => true,
-            'message' => 'Connexion Gmail OK pour ' . $username . ' (mot de passe : ' . $len . ' caractères).',
+            'message' => 'Gmail connection OK for ' . $username . ' (password length: ' . $len . ' characters).',
         ];
     } catch (Throwable $e) {
         if (is_resource($socket)) {
