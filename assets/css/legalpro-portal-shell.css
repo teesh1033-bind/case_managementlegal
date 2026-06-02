@@ -271,6 +271,7 @@ body.client-profile-page .main-content,
     background: transparent !important;
     border-radius: 0 !important;
     min-height: 100vh;
+    padding-top: var(--lp-portal-header-height) !important;
 }
 
 body.legalpro-sidebar-collapsed.legalpro-lawyer-portal .main-content,
@@ -291,31 +292,9 @@ body.client-appointments-page .main-content > .container-fluid {
     padding-right: 1.75rem;
 }
 
-/* Header utilities */
-.legalpro-portal-header-utilities,
-.legalpro-admin-header-utilities {
-    position: fixed;
-    top: 0;
-    right: 0;
-    left: var(--lp-portal-sidebar-width);
-    height: var(--lp-portal-header-height);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 1rem;
-    padding: 0 1.75rem;
-    z-index: 1035;
-    pointer-events: none;
-}
-
-body.legalpro-sidebar-collapsed .legalpro-portal-header-utilities,
-body.legalpro-sidebar-collapsed .legalpro-admin-header-utilities {
-    left: var(--lp-portal-sidebar-collapsed);
-}
-
-.legalpro-portal-header-utilities > *,
-.legalpro-admin-header-utilities > * {
-    pointer-events: auto;
+/* Navbar actions live inside the top bar */
+.legalpro-navbar-actions {
+    margin-left: auto;
 }
 
 /* Top navbar */
@@ -343,19 +322,40 @@ body.client-profile-page .navbar-main,
     border: none !important;
     border-radius: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
     min-height: var(--lp-portal-header-height);
-    position: sticky;
-    top: 0;
-    z-index: 1020;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: var(--lp-portal-sidebar-width) !important;
+    width: auto !important;
+    z-index: 1030 !important;
+}
+
+body.legalpro-sidebar-collapsed.legalpro-lawyer-portal .navbar-main,
+body.legalpro-sidebar-collapsed.lawyer-dashboard-page .navbar-main,
+body.legalpro-sidebar-collapsed.client-dashboard-page .navbar-main,
+body.legalpro-sidebar-collapsed.client-cases-page .navbar-main,
+body.legalpro-sidebar-collapsed.client-appointments-page .navbar-main {
+    left: var(--lp-portal-sidebar-collapsed) !important;
 }
 
 body.legalpro-lawyer-portal .navbar-main .container-fluid,
 body.lawyer-dashboard-page .navbar-main .container-fluid,
+body.lawyer-cases-page .navbar-main .container-fluid,
+body.lawyer-clients-page .navbar-main .container-fluid,
+body.lawyer-appointments-page .navbar-main .container-fluid,
+body.lawyer-availability-page .navbar-main .container-fluid,
+body.lawyer-court-tracking-page .navbar-main .container-fluid,
+body.lawyer-tasks-page .navbar-main .container-fluid,
 body.client-dashboard-page .navbar-main .container-fluid,
-body.client-appointments-page .navbar-main .container-fluid {
-    padding-top: 0.85rem !important;
-    padding-bottom: 0.85rem !important;
-    padding-right: 11rem !important;
+body.client-cases-page .navbar-main .container-fluid,
+body.client-appointments-page .navbar-main .container-fluid,
+body.client-court-tracking-page .navbar-main .container-fluid,
+body.client-payments-page .navbar-main .container-fluid,
+body.client-profile-page .navbar-main .container-fluid {
+    padding: 0.85rem 1.75rem !important;
+    min-height: var(--lp-portal-header-height);
 }
 
 body.legalpro-lawyer-portal .navbar-main .breadcrumb,
@@ -434,17 +434,21 @@ body.client-appointments-page .footer .copyright {
     }
 
     body.legalpro-lawyer-portal .main-content,
-    body.client-dashboard-page .main-content {
+    body.client-dashboard-page .main-content,
+    body.client-cases-page .main-content,
+    body.client-appointments-page .main-content {
         margin-left: 0 !important;
         width: 100% !important;
+        padding-top: var(--lp-portal-header-height) !important;
     }
 
-    .legalpro-portal-header-utilities {
-        left: 0;
+    body.legalpro-lawyer-portal .navbar-main,
+    body.client-dashboard-page .navbar-main {
+        left: 0 !important;
     }
 
     body.legalpro-lawyer-portal .navbar-main .container-fluid,
     body.client-dashboard-page .navbar-main .container-fluid {
-        padding-right: 1rem !important;
+        padding: 0.85rem 1rem !important;
     }
 }

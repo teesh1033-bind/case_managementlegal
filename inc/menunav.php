@@ -44,10 +44,12 @@ function isActive($itemId, $currentPage)
 }
 
 global $pdo;
-$headerUtilities = legalpro_render_admin_header_utilities(isset($pdo) ? $pdo : null);
+$navbarUtilitiesMount = legalpro_navbar_utilities_mount(
+    legalpro_render_admin_header_utilities(isset($pdo) ? $pdo : null)
+);
 ?>
 
-<link href="../assets/css/legalpro-admin-portal.css?v=6" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=7" rel="stylesheet" />
 
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
@@ -86,7 +88,7 @@ $headerUtilities = legalpro_render_admin_header_utilities(isset($pdo) ? $pdo : n
     </div>
 </aside>
 
-<?php echo $headerUtilities; ?>
+<?php echo $navbarUtilitiesMount; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

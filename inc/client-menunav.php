@@ -34,11 +34,13 @@ $companyName = $companyBranding['name'];
 $companyLogoUrl = $companyBranding['logo_url'];
 
 global $pdo;
-$headerUtilities = legalpro_render_client_header_utilities(isset($pdo) ? $pdo : null);
+$navbarUtilitiesMount = legalpro_navbar_utilities_mount(
+    legalpro_render_client_header_utilities(isset($pdo) ? $pdo : null)
+);
 ?>
 
-<link href="../assets/css/legalpro-client-portal.css?v=9" rel="stylesheet" />
-<link href="../assets/css/legalpro-portal-shell.css?v=1" rel="stylesheet" />
+<link href="../assets/css/legalpro-client-portal.css?v=11" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=4" rel="stylesheet" />
 
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-portal-sidebar legalpro-client-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
@@ -77,7 +79,7 @@ $headerUtilities = legalpro_render_client_header_utilities(isset($pdo) ? $pdo : 
     </div>
 </aside>
 
-<?php echo $headerUtilities; ?>
+<?php echo $navbarUtilitiesMount; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

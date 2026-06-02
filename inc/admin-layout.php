@@ -101,7 +101,7 @@ function legalpro_render_portal_header_utilities(
         : '';
 
     return '
-    <div class="legalpro-portal-header-utilities">
+    <div class="legalpro-navbar-actions d-flex align-items-center gap-3 flex-shrink-0">
         <a href="' . htmlspecialchars($notifUrl) . '" class="legalpro-header-notif" title="Notifications">
             <i class="ni ni-bell-55"></i>
             ' . $notifBadge . '
@@ -122,6 +122,38 @@ function legalpro_render_portal_header_utilities(
             </ul>
         </div>
     </div>';
+}
+
+/**
+ * Mount navbar actions into the page top bar (injected after menunav on each portal).
+ */
+function legalpro_navbar_utilities_mount(string $utilitiesHtml): string
+{
+    if ($utilitiesHtml === '') {
+        return '';
+    }
+
+    return '
+<div id="legalproNavbarUtilitiesMount" hidden>' . $utilitiesHtml . '</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var mount = document.getElementById("legalproNavbarUtilitiesMount");
+    var nav = document.querySelector("main .navbar-main .container-fluid");
+    if (!mount || !nav) {
+        return;
+    }
+    var actions = mount.querySelector(".legalpro-navbar-actions");
+    if (!actions) {
+        mount.remove();
+        return;
+    }
+    nav.classList.add("d-flex", "align-items-center", "justify-content-between", "flex-wrap", "gap-2", "w-100");
+    if (!nav.querySelector(".legalpro-navbar-actions")) {
+        nav.appendChild(actions);
+    }
+    mount.remove();
+});
+</script>';
 }
 
 function legalpro_render_admin_header_utilities(?PDO $pdo = null): string

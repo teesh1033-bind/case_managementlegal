@@ -1,14 +1,16 @@
 /**
- * LegalPro lawyer portal — full-page gradient; content cards stay white.
+ * LegalPro lawyer portal — light page background (same as admin shell).
  */
 :root {
-    --lawyer-portal-gradient: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
-    --lawyer-portal-bg-fallback: #2d3f6f;
+    --lawyer-portal-content-bg: #f4f6f9;
+    --lawyer-portal-gradient: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+    --lawyer-portal-bg-fallback: #f4f6f9;
 }
 
 .bg-legalpro-lawyer {
-    background: var(--lawyer-portal-gradient) !important;
-    background-color: var(--lawyer-portal-bg-fallback) !important;
+    background: var(--lawyer-portal-content-bg) !important;
+    background-color: var(--lawyer-portal-content-bg) !important;
+    background-image: none !important;
 }
 
 body.legalpro-lawyer-portal,
@@ -25,11 +27,9 @@ body.lawyer-client-view-page,
 body.lawyer-court-tracking-page,
 body.lawyer-tasks-page,
 .search-portal-page--lawyer {
-    background: var(--lawyer-portal-gradient) fixed !important;
-    background-color: var(--lawyer-portal-bg-fallback) !important;
-    background-image: var(--lawyer-portal-gradient) !important;
-    background-repeat: no-repeat !important;
-    background-size: cover !important;
+    background: var(--lawyer-portal-content-bg) !important;
+    background-color: var(--lawyer-portal-content-bg) !important;
+    background-image: none !important;
     min-height: 100vh;
 }
 
@@ -103,23 +103,7 @@ body.lawyer-tasks-page .main-content .card,
     background-color: #fff !important;
 }
 
-body.legalpro-lawyer-portal .navbar-main,
-body.legalpro-lawyer-portal .navbar-main.blur,
-body.legalpro-lawyer-portal .navbar-main.shadow-blur,
-body.legalpro-lawyer-portal #navbarBlur,
-body.legalpro-lawyer-portal #navbarBlur.blur,
-.search-portal-page--lawyer .navbar-main,
-.search-portal-page--lawyer .navbar-main.blur,
-.search-portal-page--lawyer #navbarBlur,
-.search-portal-page--lawyer #navbarBlur.blur {
-    background: transparent !important;
-    background-color: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-}
+/* Navbar styling — legalpro-portal-shell.css */
 
 /* Lawyer sidebar — purple icons & nav style (match admin LegalPro menunav) */
 body.legalpro-lawyer-portal .sidenav .navbar-nav > .nav-item > .nav-link,
