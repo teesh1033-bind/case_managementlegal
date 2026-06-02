@@ -76,14 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         'notes' => $notes
     ];
 
-    if (empty($caseId) || empty($date) || empty($time)) {
-        $message = 'Case, date, and time are required.';
-        $messageType = 'danger';
-    } elseif ($appointmentId && empty($lawyerId)) {
-        $message = 'Lawyer is required when updating an appointment.';
-        $messageType = 'danger';
-    } elseif (!$appointmentId && empty($assignedCaseLawyerIds) && empty($lawyerId)) {
-        $message = 'Please select a valid lawyer from the list.';
+    if (empty($caseId) || empty($lawyerId) || empty($date) || empty($time)) {
+        $message = 'Case, lawyer, date, and time are required.';
         $messageType = 'danger';
     } else {
         $dateTime = DateTime::createFromFormat('Y-m-d H:i', $date . ' ' . $time);
@@ -97,6 +91,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
             if ($dateTime < $now) {
                 $message = 'Appointment date and time cannot be in the past.';
                 $messageType = 'danger';
+            } else {
+                $excludeAppointmentId = $appointmentId > 0 ? $appointmentId : null;
+                $availabilityResult = validateLawyerBookingAvailability($pdo, $lawyerId, $date, $time, $excludeAppointmentId);
+                if (!$availabilityResult['ok']) {
+                    $message = $availabilityResult['message'];
+                    $messageType = 'danger';
+                }
             }
         }
 
@@ -167,32 +168,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                         }
                     }
                 } else {
-                    $targetLawyerIds = !empty($assignedCaseLawyerIds) ? $assignedCaseLawyerIds : [(int) $lawyerId];
-                    $targetLawyerIds = array_values(array_filter(array_unique(array_map('intval', $targetLawyerIds))));
-
-                    if (empty($targetLawyerIds)) {
-                        $message = 'No valid assigned lawyers were found for this case.';
+                    $lawyerCheck = $pdo->prepare("SELECT id FROM lawyers WHERE id = ? AND is_active = 1");
+                    $lawyerCheck->execute([$lawyerId]);
+                    if (!$lawyerCheck->fetch()) {
+                        $message = 'Please select a valid lawyer from the list.';
+                        $messageType = 'danger';
+                    } elseif (!empty($assignedCaseLawyerIds) && !in_array($lawyerId, $assignedCaseLawyerIds, true)) {
+                        $message = 'Please select a lawyer assigned to this case.';
                         $messageType = 'danger';
                     } else {
                         $stmt = $pdo->prepare("
                             INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status)
                             VALUES (?, ?, ?, ?, ?, ?, 'pending')
                         ");
+                        $stmt->execute([$clientId, $caseId, $lawyerId, $startsAt, $endsAt, $notes]);
+                        $newAppointmentId = (int) $pdo->lastInsertId();
 
-                        foreach ($targetLawyerIds as $targetLawyerId) {
-                            $stmt->execute([$clientId, $caseId, $targetLawyerId, $startsAt, $endsAt, $notes]);
-                            $newAppointmentId = (int) $pdo->lastInsertId();
+                        syncAppointmentAvailabilitySlot($pdo, [
+                            'id' => $newAppointmentId,
+                            'lawyer_id' => $lawyerId,
+                            'starts_at' => $startsAt,
+                            'ends_at' => $endsAt,
+                            'status' => 'pending',
+                        ]);
 
-                            syncAppointmentAvailabilitySlot($pdo, [
-                                'id' => $newAppointmentId,
-                                'lawyer_id' => $targetLawyerId,
-                                'starts_at' => $startsAt,
-                                'ends_at' => $endsAt,
-                                'status' => 'pending',
-                            ]);
-
-                            ensureLawyerAssignedToCase($pdo, $caseId, $targetLawyerId);
-                        }
+                        ensureLawyerAssignedToCase($pdo, $caseId, $lawyerId);
 
                         CaseEvents::trackAppointmentCreated($caseId, [
                             'starts_at' => $startsAt,
@@ -200,10 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                             'notes' => $notes
                         ]);
 
-                        $createdCount = count($targetLawyerIds);
-                        $msg = $createdCount > 1
-                            ? 'Appointments booked successfully for ' . $createdCount . ' assigned lawyers.'
-                            : 'Appointment booked successfully.';
+                        $msg = 'Appointment booked successfully.';
                     }
                 }
 
@@ -315,6 +312,35 @@ try {
     }
 }
 
+$lawyerAvailabilityByDate = [];
+$lawyerAvailabilityByDay = [];
+$lawyerHasSchedule = [];
+try {
+    $lawyerIdsForAvailability = array_map(static function ($lawyer) {
+        return (int) $lawyer['id'];
+    }, $lawyersList);
+    $availabilityMaps = loadLawyerAvailabilityForBooking($pdo, $lawyerIdsForAvailability);
+    $lawyerAvailabilityByDate = $availabilityMaps['byDate'];
+    $lawyerAvailabilityByDay = $availabilityMaps['byDay'];
+    $lawyerHasSchedule = $availabilityMaps['hasSchedule'];
+} catch (PDOException $e) {
+    $lawyerAvailabilityByDate = [];
+    $lawyerAvailabilityByDay = [];
+    $lawyerHasSchedule = [];
+}
+
+$lawyerOptions = '<option value="">Select lawyer</option>';
+$lawyerLabelMap = [];
+foreach ($lawyersList as $lawyer) {
+    $label = trim($lawyer['first_name'] . ' ' . $lawyer['last_name']);
+    if (!empty($lawyer['username'])) {
+        $label .= ' (' . $lawyer['username'] . ')';
+    }
+    $lawyerLabelMap[(int)$lawyer['id']] = $label;
+    $selected = ((int)$formData['lawyer_id'] === (int)$lawyer['id']) ? ' selected' : '';
+    $lawyerOptions .= '<option value="' . (int)$lawyer['id'] . '"' . $selected . '>' . htmlspecialchars($label) . '</option>';
+}
+
 $caseOptions = '<option value="">Select case</option>';
 foreach ($casesList as $case) {
     $selected = ((int)$formData['case_id'] === (int)$case['id']) ? ' selected' : '';
@@ -328,22 +354,11 @@ foreach ($casesList as $case) {
         . $selected . '>' . htmlspecialchars($case['case_display']) . '</option>';
 }
 
-$lawyerOptions = '<option value="">Select lawyer</option>';
-foreach ($lawyersList as $lawyer) {
-    $label = trim($lawyer['first_name'] . ' ' . $lawyer['last_name']);
-    if (!empty($lawyer['username'])) {
-        $label .= ' (' . $lawyer['username'] . ')';
-    }
-    $selected = ((int)$formData['lawyer_id'] === (int)$lawyer['id']) ? ' selected' : '';
-    $lawyerOptions .= '<option value="' . (int)$lawyer['id'] . '"' . $selected . '>' . htmlspecialchars($label) . '</option>';
-}
-
 $isEditing = !empty($formData['appointment_id']);
 $formTitle = $isEditing ? 'Update Appointment' : 'Book Appointment';
 $pageTitle = $isEditing ? 'Edit Appointment' : 'New Appointment';
 $submitLabel = $isEditing ? 'Save Changes' : 'Submit Request';
 $cancelLink = '<a href="appointments.php" class="btn btn-outline-secondary btn-sm mb-0" title="Back to appointments"><i class="ni ni-bold-left me-1"></i> Back to list</a>';
-
 $messageHtml = '';
 if ($message) {
     $messageHtml = '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">
@@ -430,7 +445,7 @@ $html = <<<'HTML'
 									<select class="form-control" name="lawyer_id" id="lawyer_select" required>
 										{LAWYER_OPTIONS}
 									</select>
-									<small class="text-muted">New appointments are created for all lawyers assigned to the selected case. This field is mainly used when editing.</small>
+									<small class="text-muted">One lawyer receives this appointment and can accept or reject it.</small>
 								</div>
 
 								<div class="row">
@@ -447,6 +462,8 @@ $html = <<<'HTML'
 										</div>
 									</div>
 								</div>
+								<div id="availabilityMessage" class="mb-3" style="display: none;"></div>
+								<small class="text-muted d-block mb-3">If the lawyer has published availability, you can only book within their available hours. Unavailable times and existing appointment blocks cannot be booked.</small>
 
 								<div class="form-group mb-4">
 									<label class="form-control-label text-sm font-weight-bold">Notes</label>
@@ -471,6 +488,10 @@ $html = <<<'HTML'
 	<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
 	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 	<script>
+		const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
+		const lawyerAvailabilityByDay = {LAWYER_AVAILABILITY_BY_DAY_JSON};
+		const lawyerHasSchedule = {LAWYER_HAS_SCHEDULE_JSON};
+
 		document.addEventListener('DOMContentLoaded', function() {
 			var caseSelect = document.getElementById('case_select');
 			var clientDisplay = document.getElementById('client_display');
@@ -545,6 +566,149 @@ $html = <<<'HTML'
             var dateInput = document.getElementById('appointment_date');
             var timeInput = document.getElementById('appointment_time');
             var appointmentForm = document.getElementById('appointmentForm');
+            var availabilityMessage = document.getElementById('availabilityMessage');
+
+            function lawyerHasPublishedSchedule(lawyerId) {
+                return !!(lawyerHasSchedule[lawyerId] || lawyerHasSchedule[String(lawyerId)]);
+            }
+
+            function getDayOfWeekFromDate(dateValue) {
+                var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                var date = new Date(dateValue + 'T00:00:00');
+                return days[date.getDay()];
+            }
+
+            function getSlotsForLawyerAndDate(lawyerId, dateValue) {
+                var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
+                var byDay = lawyerAvailabilityByDay[lawyerId] || lawyerAvailabilityByDay[String(lawyerId)] || {};
+                var dateSlots = byDate[dateValue] ? byDate[dateValue].slice() : [];
+                var daySlots = byDay[getDayOfWeekFromDate(dateValue)] ? byDay[getDayOfWeekFromDate(dateValue)].slice() : [];
+                return dateSlots.concat(daySlots);
+            }
+
+            function normalizeTimeValue(timeValue) {
+                if (!timeValue) {
+                    return '';
+                }
+                return timeValue.length === 5 ? timeValue + ':00' : timeValue;
+            }
+
+            function addOneHour(timeValue) {
+                var parts = timeValue.split(':');
+                var hours = parseInt(parts[0], 10);
+                var minutes = parseInt(parts[1], 10);
+                hours += 1;
+                if (hours >= 24) {
+                    hours = 23;
+                    minutes = 59;
+                }
+                return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':00';
+            }
+
+            function rangesOverlap(startA, endA, startB, endB) {
+                return startA < endB && endA > startB;
+            }
+
+            function isBlockedByUnavailable(timeValue, slots) {
+                var startTime = normalizeTimeValue(timeValue);
+                if (!startTime) {
+                    return false;
+                }
+                var endTime = addOneHour(startTime);
+                return slots.some(function(slot) {
+                    if (slot.type !== 'unavailable') {
+                        return false;
+                    }
+                    return rangesOverlap(startTime, endTime, slot.start, slot.end);
+                });
+            }
+
+            function isWithinAvailable(timeValue, slots) {
+                var optionTime = normalizeTimeValue(timeValue);
+                if (!optionTime) {
+                    return false;
+                }
+                return slots.some(function(slot) {
+                    return slot.type === 'available' && optionTime >= slot.start && optionTime < slot.end;
+                });
+            }
+
+            function setAvailabilityMessage(html, visible) {
+                if (!availabilityMessage) {
+                    return;
+                }
+                availabilityMessage.style.display = visible ? 'block' : 'none';
+                availabilityMessage.innerHTML = html || '';
+            }
+
+            function validateLawyerAvailabilitySelection() {
+                if (!lawyerSelect || !dateInput || !timeInput) {
+                    return true;
+                }
+
+                var lawyerId = lawyerSelect.value;
+                var dateValue = dateInput.value;
+                var timeValue = timeInput.value;
+
+                timeInput.setCustomValidity('');
+
+                if (!lawyerId || !dateValue) {
+                    setAvailabilityMessage('', false);
+                    return true;
+                }
+
+                if (!lawyerHasPublishedSchedule(lawyerId)) {
+                    setAvailabilityMessage(
+                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer has not published availability yet. You may still book a time.</div>',
+                        true
+                    );
+                    return true;
+                }
+
+                if (!timeValue) {
+                    setAvailabilityMessage(
+                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a time that falls within the lawyer\'s published availability.</div>',
+                        true
+                    );
+                    return false;
+                }
+
+                var slots = getSlotsForLawyerAndDate(lawyerId, dateValue);
+                var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
+
+                if (isBlockedByUnavailable(timeValue, slots)) {
+                    timeInput.setCustomValidity('This lawyer is unavailable at the selected time.');
+                    setAvailabilityMessage(
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer is unavailable at the selected time. Choose another slot.</div>',
+                        true
+                    );
+                    return false;
+                }
+
+                if (availableSlots.length === 0) {
+                    timeInput.setCustomValidity('This lawyer is not available on the selected date.');
+                    setAvailabilityMessage(
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer is not available on the selected date.</div>',
+                        true
+                    );
+                    return false;
+                }
+
+                if (!isWithinAvailable(timeValue, slots)) {
+                    timeInput.setCustomValidity('Selected time is outside the lawyer\'s available hours.');
+                    setAvailabilityMessage(
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
+                        true
+                    );
+                    return false;
+                }
+
+                setAvailabilityMessage(
+                    '<div class="alert alert-success py-2 mb-0"><i class="ni ni-check-bold"></i> Selected time is within the lawyer\'s availability.</div>',
+                    true
+                );
+                return true;
+            }
 
             function nowParts() {
                 var now = new Date();
@@ -580,10 +744,23 @@ $html = <<<'HTML'
                 }
             }
 
+            if (lawyerSelect) {
+                lawyerSelect.addEventListener('change', function() {
+                    validateLawyerAvailabilitySelection();
+                });
+            }
+
             if (dateInput && timeInput) {
-                dateInput.addEventListener('change', syncAppointmentMinDateTime);
-                timeInput.addEventListener('input', syncAppointmentMinDateTime);
+                dateInput.addEventListener('change', function() {
+                    syncAppointmentMinDateTime();
+                    validateLawyerAvailabilitySelection();
+                });
+                timeInput.addEventListener('input', function() {
+                    syncAppointmentMinDateTime();
+                    validateLawyerAvailabilitySelection();
+                });
                 syncAppointmentMinDateTime();
+                validateLawyerAvailabilitySelection();
             }
 
             if (appointmentForm && dateInput && timeInput) {
@@ -596,6 +773,13 @@ $html = <<<'HTML'
                         timeInput.reportValidity();
                         return;
                     }
+
+                    if (!validateLawyerAvailabilitySelection()) {
+                        event.preventDefault();
+                        timeInput.reportValidity();
+                        return;
+                    }
+
                     timeInput.setCustomValidity('');
                 });
             }
@@ -614,6 +798,9 @@ $html = str_replace('{CLIENT_NAME}', htmlspecialchars($formData['client_name']),
 $html = str_replace('{LAWYER_OPTIONS}', $lawyerOptions, $html);
 $html = str_replace('{DATE_VALUE}', htmlspecialchars($formData['date']), $html);
 $html = str_replace('{TIME_VALUE}', htmlspecialchars($formData['time']), $html);
+$html = str_replace('{LAWYER_AVAILABILITY_BY_DATE_JSON}', json_encode($lawyerAvailabilityByDate), $html);
+$html = str_replace('{LAWYER_AVAILABILITY_BY_DAY_JSON}', json_encode($lawyerAvailabilityByDay), $html);
+$html = str_replace('{LAWYER_HAS_SCHEDULE_JSON}', json_encode($lawyerHasSchedule), $html);
 $html = str_replace('{NOTES_VALUE}', htmlspecialchars($formData['notes']), $html);
 $html = str_replace('{SUBMIT_LABEL}', htmlspecialchars($submitLabel), $html);
 $html = str_replace('{CANCEL_EDIT_LINK}', $cancelLink, $html);

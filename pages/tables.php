@@ -205,6 +205,16 @@ if ($message) {
     </div>';
 }
 
+$totalCasesCount = count($cases);
+$casesSubtitle = $totalCasesCount === 1 ? '1 total case' : $totalCasesCount . ' total cases';
+
+require_once __DIR__ . '/../inc/admin-layout.php';
+$pageToolbar = legalpro_render_page_toolbar(
+    'Case Management',
+    'Legal case workspaces — manage clients, documents, billing and more.',
+    '<a href="case-new.php" class="btn btn-sm btn-primary mb-0"><i class="ni ni-fat-add me-1"></i> New Case</a>'
+);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -223,50 +233,26 @@ $html = <<<'HTML'
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
-	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
-	</aside>
+	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
+		<nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
 			<div class="container-fluid py-1 px-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
-						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Cases</li>
-					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">Cases</h6>
-				</nav>
+				<div>
+					<h6 class="font-weight-bolder mb-0"><i class="ni ni-collection me-2 text-primary"></i>Cases</h6>
+					<p class="dashboard-welcome-sub mb-0 mt-1">{CASES_SUBTITLE}</p>
+				</div>
 			</div>
 		</nav>
 		<div class="container-fluid py-4">
 			{MESSAGE}
-			
-			<!-- Page Header -->
-			<div class="row mb-4">
-				<div class="col-12">
-					<div class="card">
-						<div class="card-body p-3">
-							<div class="row align-items-center">
-								<div class="col-lg-8">
-									<h5 class="mb-0">Case Management</h5>
-									<p class="text-sm text-muted mb-0">View and manage all cases</p>
-								</div>
-								<div class="col-lg-4 text-end">
-									<a href="case-new.php" class="btn btn-dark btn-sm mb-0">
-										<i class="ni ni-fat-add me-1"></i> New Case
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+			{PAGE_TOOLBAR}
 
-			<!-- Cases Table -->
 			<div class="row">
 				<div class="col-12">
 					<div class="card mb-4">
-						<div class="card-header pb-0">
-							<h6>Cases Overview</h6>
+						<div class="card-header pb-3 pt-3 lp-card-header-primary">
+							<h6 class="mb-0 text-white">Cases Overview</h6>
+							<p class="text-xs mb-0 opacity-8">{CASES_SUBTITLE}</p>
 						</div>
 						<div class="card-body px-0 pt-0 pb-2">
 							<div class="table-responsive p-0">
@@ -316,6 +302,8 @@ HTML;
 
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{PAGE_TOOLBAR}', $pageToolbar, $html);
+$html = str_replace('{CASES_SUBTITLE}', htmlspecialchars($casesSubtitle), $html);
 $html = str_replace('{CASES_ROWS}', $casesRows, $html);
 
 // rewrite internal links from .html to .php

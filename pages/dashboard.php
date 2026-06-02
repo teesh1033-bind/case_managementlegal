@@ -277,19 +277,14 @@ $html = <<<'HTML'
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
-    <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
-    </aside>
+    <aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg ">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
+        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
             <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Dashboard</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Dashboard</h6>
-                    <p class="dashboard-welcome-sub text-white mb-0 mt-1">Welcome back, {ADMIN_NAME} · {WELCOME_DATE}</p>
-                </nav>
+                <div>
+                    <h6 class="font-weight-bolder mb-0">Dashboard</h6>
+                    <p class="dashboard-welcome-sub mb-0 mt-1">Welcome back, {ADMIN_NAME} · {WELCOME_DATE}</p>
+                </div>
                 <div class="dashboard-quick-actions ms-auto d-none d-md-flex">
                     <a href="case-new.php" class="btn btn-sm btn-white text-primary mb-0">+ New Case</a>
                     <a href="appointments.php" class="btn btn-sm btn-outline-white mb-0">Appointments</a>
