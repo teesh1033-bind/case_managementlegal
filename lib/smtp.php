@@ -35,7 +35,7 @@ function legalpro_smtp_enable_tls($socket): void
 function legalpro_smtp_authenticate($socket, string $username, string $password): void
 {
     $username = legalpro_normalize_smtp_username($username);
-    $password = legalpro_normalize_smtp_password($password);
+    $password = legalpro_normalize_smtp_password($password, ['host' => '', 'username' => $username]); // cfg host filled by caller context
 
     // Gmail : AUTH LOGIN après STARTTLS (plus fiable que PLAIN sur certains hébergeurs)
     fwrite($socket, "AUTH LOGIN\r\n");
@@ -114,14 +114,13 @@ function legalpro_smtp_send(
     string $fromName
 ): array {
     $username = legalpro_normalize_smtp_username($config['username']);
-    $password = legalpro_normalize_smtp_password($config['password']);
+    $password = legalpro_normalize_smtp_password($config['password'], $config);
 
     if ($config['host'] === '' || $username === '' || $password === '') {
         return ['ok' => false, 'message' => 'Configuration SMTP incomplète.'];
     }
 
-    // Gmail exige que l'expéditeur soit le même compte que l'authentification
-    if (function_exists('legalpro_is_gmail_smtp') && legalpro_is_gmail_smtp($config)) {
+    if (function_exists('legalpro_is_gmail_smtp') && (legalpro_is_gmail_smtp($config) || legalpro_is_outlook_smtp($config))) {
         $fromEmail = $username;
     }
 
@@ -176,7 +175,7 @@ function legalpro_smtp_send(
 function legalpro_smtp_test_connection(array $config): array
 {
     $username = legalpro_normalize_smtp_username($config['username']);
-    $password = legalpro_normalize_smtp_password($config['password']);
+    $password = legalpro_normalize_smtp_password($config['password'], $config);
     $socket = null;
 
     try {

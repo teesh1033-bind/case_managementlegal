@@ -128,17 +128,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
     } elseif ($formType === 'mail') {
+        $smtpHostPost = trim((string) ($_POST['smtp_host'] ?? 'smtp.gmail.com'));
         $smtpUsername = legalpro_normalize_smtp_username((string) ($_POST['smtp_username'] ?? ''));
-        $newPassword = legalpro_normalize_smtp_password((string) ($_POST['smtp_password'] ?? ''));
-        $existingPassword = legalpro_normalize_smtp_password((string) getSetting('smtp_password', ''));
+        $smtpCfgDraft = ['host' => $smtpHostPost, 'username' => $smtpUsername];
+        $newPassword = legalpro_normalize_smtp_password((string) ($_POST['smtp_password'] ?? ''), $smtpCfgDraft);
+        $existingPassword = legalpro_normalize_smtp_password((string) getSetting('smtp_password', ''), $smtpCfgDraft);
 
         if ($smtpUsername !== '' && $newPassword === '' && $existingPassword === '') {
-            $message = 'Le mot de passe d\'application Google est obligatoire la première fois.';
+            $message = 'Le mot de passe SMTP est obligatoire la première fois.';
             $messageType = 'danger';
-        } elseif ($newPassword !== '' && legalpro_is_gmail_smtp([
-            'host' => (string) ($_POST['smtp_host'] ?? 'smtp.gmail.com'),
-            'username' => $smtpUsername,
-        ])) {
+        } elseif ($newPassword !== '' && legalpro_is_gmail_smtp($smtpCfgDraft)) {
             $pwdLen = legalpro_gmail_app_password_length($newPassword);
             if ($pwdLen !== 16) {
                 $message = 'Le mot de passe d\'application doit contenir exactement 16 lettres/chiffres après collage '
@@ -158,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($newPassword !== '') {
                 setSetting('smtp_password', $newPassword);
             }
-            if ($smtpUsername !== '' && legalpro_is_gmail_smtp(['host' => trim((string) ($_POST['smtp_host'] ?? '')), 'username' => $smtpUsername])) {
+            if ($smtpUsername !== '' && (legalpro_is_gmail_smtp($smtpCfgDraft) || legalpro_is_outlook_smtp($smtpCfgDraft))) {
                 setSetting('mail_from_address', $smtpUsername);
             } else {
                 setSetting('mail_from_address', trim((string) ($_POST['mail_from_address'] ?? '')));
@@ -197,9 +196,11 @@ $smtpEncryption = (string) getSetting('smtp_encryption', 'tls');
 $smtpUsername = (string) getSetting('smtp_username', '');
 $mailFromAddress = (string) getSetting('mail_from_address', '');
 $appBaseUrl = (string) getSetting('app_base_url', '');
-$smtpStoredPassword = legalpro_normalize_smtp_password((string) getSetting('smtp_password', ''));
+$smtpCfgDisplay = ['host' => $smtpHost, 'username' => $smtpUsername];
+$smtpStoredPassword = legalpro_normalize_smtp_password((string) getSetting('smtp_password', ''), $smtpCfgDisplay);
 $smtpHasPassword = $smtpStoredPassword !== '';
 $smtpPasswordLen = strlen($smtpStoredPassword);
+$smtpIsGmail = legalpro_is_gmail_smtp($smtpCfgDisplay);
 if (!$smtpHasPassword) {
     $smtpPasswordStatusHtml = '<p class="text-xs text-warning mb-2">No app password saved yet.</p>';
 } elseif ($smtpPasswordLen === 16) {
@@ -488,10 +489,15 @@ $html = <<<'HTML'
 				<div class="col-lg-4">
 					<div class="card">
 						<div class="card-header pb-0">
-							<h6>Email (Gmail)</h6>
+							<h6>Email (Gmail / Outlook)</h6>
 						</div>
 						<div class="card-body">
+<<<<<<< HEAD
+							<p class="text-xs text-muted mb-2"><strong>Gmail :</strong> mot de passe d\'application (16 lettres) — <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Google</a>.</p>
+							<p class="text-xs text-muted mb-2"><strong>Outlook :</strong> serveur <code>smtp-mail.outlook.com</code>, port <code>587</code>, TLS — email + mot de passe du compte (ou mot de passe d\'application si 2FA).</p>
+=======
 							<p class="text-xs text-muted">Use this to send emails from the app. For Gmail, use a Google <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App Password</a> (16 characters).</p>
+>>>>>>> fd15d52d10a474fed9fe92cf095df4e19f9306d5
 							{SMTP_PASSWORD_STATUS}
 							<form method="post">
 								<input type="hidden" name="form_type" value="mail">
@@ -500,8 +506,13 @@ $html = <<<'HTML'
 									<label class="form-check-label" for="smtp_enabled">Enable SMTP</label>
 								</div>
 								<div class="form-group mb-2">
+<<<<<<< HEAD
+									<label class="form-control-label text-xs">Serveur</label>
+									<input class="form-control form-control-sm" type="text" name="smtp_host" value="{SMTP_HOST}" placeholder="smtp.gmail.com ou smtp-mail.outlook.com">
+=======
 									<label class="form-control-label text-xs">Server</label>
 									<input class="form-control form-control-sm" type="text" name="smtp_host" value="{SMTP_HOST}">
+>>>>>>> fd15d52d10a474fed9fe92cf095df4e19f9306d5
 								</div>
 								<div class="row g-2">
 									<div class="col-6">
@@ -517,8 +528,8 @@ $html = <<<'HTML'
 									</div>
 								</div>
 								<div class="form-group mb-2 mt-2">
-									<label class="form-control-label text-xs">Gmail</label>
-									<input class="form-control form-control-sm" type="email" name="smtp_username" value="{SMTP_USERNAME}">
+									<label class="form-control-label text-xs">Adresse email</label>
+									<input class="form-control form-control-sm" type="email" name="smtp_username" value="{SMTP_USERNAME}" placeholder="vous@gmail.com ou vous@outlook.com">
 								</div>
 								<div class="form-group mb-2">
 									<label class="form-control-label text-xs">App Password</label>
