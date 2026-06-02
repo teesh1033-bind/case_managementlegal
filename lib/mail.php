@@ -7,11 +7,15 @@ function legalpro_normalize_smtp_username(string $username): string
     return strtolower(trim($username));
 }
 
-function legalpro_normalize_smtp_password(string $password): string
+function legalpro_normalize_smtp_password(string $password, array $cfg = []): string
 {
-    // BOM / espaces / tirets du collage Google "abcd efgh ijkl mnop"
     $password = trim($password, " \t\n\r\0\x0B\xEF\xBB\xBF");
-    return preg_replace('/[^a-zA-Z0-9]/u', '', $password);
+    // Gmail : mot de passe d'application = 16 lettres sans espaces
+    if (legalpro_is_gmail_smtp($cfg)) {
+        return preg_replace('/[^a-zA-Z0-9]/u', '', $password);
+    }
+    // Outlook / Office 365 : garder le mot de passe tel quel ($, etc.)
+    return $password;
 }
 
 function legalpro_is_gmail_smtp(array $cfg): bool
@@ -19,6 +23,17 @@ function legalpro_is_gmail_smtp(array $cfg): bool
     return stripos($cfg['host'] ?? '', 'gmail') !== false
         || stripos($cfg['username'] ?? '', '@gmail.') !== false
         || stripos($cfg['username'] ?? '', '@googlemail.') !== false;
+}
+
+function legalpro_is_outlook_smtp(array $cfg): bool
+{
+    $host = strtolower($cfg['host'] ?? '');
+    $user = strtolower($cfg['username'] ?? '');
+    if (strpos($host, 'outlook') !== false || strpos($host, 'office365') !== false) {
+        return true;
+    }
+    return preg_match('/@(outlook|hotmail|live|msn)\./', $user) === 1
+        || preg_match('/@[^@]+\.(onmicrosoft|office)\.com$/', $user) === 1;
 }
 
 function legalpro_gmail_app_password_length(string $password): int
@@ -54,7 +69,7 @@ function legalpro_get_client_login_url(): string
 function legalpro_mail_from_address(): string
 {
     $cfg = legalpro_get_smtp_config();
-    if (legalpro_is_gmail_smtp($cfg) && $cfg['username'] !== '') {
+    if ((legalpro_is_gmail_smtp($cfg) || legalpro_is_outlook_smtp($cfg)) && $cfg['username'] !== '') {
         return $cfg['username'];
     }
     $from = trim((string) getSetting('mail_from_address', ''));
@@ -76,7 +91,10 @@ function legalpro_get_smtp_config(): array
         'port' => (int) getSetting('smtp_port', '587') ?: 587,
         'encryption' => trim((string) getSetting('smtp_encryption', 'tls')) ?: 'tls',
         'username' => legalpro_normalize_smtp_username((string) getSetting('smtp_username', '')),
-        'password' => legalpro_normalize_smtp_password((string) getSetting('smtp_password', '')),
+        'password' => legalpro_normalize_smtp_password((string) getSetting('smtp_password', ''), [
+            'host' => trim((string) getSetting('smtp_host', '')),
+            'username' => legalpro_normalize_smtp_username((string) getSetting('smtp_username', '')),
+        ]),
     ];
 }
 
@@ -87,10 +105,10 @@ function legalpro_smtp_configuration_status(): array
 {
     $cfg = legalpro_get_smtp_config();
     if ($cfg['username'] === '') {
-        return ['ready' => false, 'message' => 'Email non envoyé : configurez Gmail dans Paramètres → Email.'];
+        return ['ready' => false, 'message' => 'Email non envoyé : configurez l\'email (Gmail ou Outlook) dans Paramètres → Email.'];
     }
     if ($cfg['password'] === '') {
-        return ['ready' => false, 'message' => 'Email non envoyé : ajoutez un mot de passe d\'application Google dans Paramètres → Email.'];
+        return ['ready' => false, 'message' => 'Email non envoyé : ajoutez le mot de passe SMTP dans Paramètres → Email.'];
     }
 
     if (legalpro_is_gmail_smtp($cfg)) {
