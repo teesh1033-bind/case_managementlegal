@@ -155,6 +155,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $category = resolveSubmittedCaseCategory('Civil');
         $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : '';
         $expectedCompletion = isset($_POST['expected_completion']) ? $_POST['expected_completion'] : '';
+        $hasInvalidExpectedDate = !empty($startDate) && !empty($expectedCompletion)
+            && strtotime($expectedCompletion) <= strtotime($startDate);
 
         // cases.user_id = client's portal user (not lawyer — lawyers use case_lawyers)
         $clientUserId = null;
@@ -165,7 +167,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $clientUserId = (int) $clientRow['user_id'];
         }
 
-        if (empty($title) || empty($clientId)) {
+        if ($hasInvalidExpectedDate) {
+            $message = 'Expected completion date must be later than the start date.';
+            $messageType = 'danger';
+            $case['title'] = $title;
+            $case['client_id'] = $clientId;
+            $case['description'] = $description;
+            $case['status'] = $status;
+            $case['priority'] = $priority;
+            $case['category'] = $category;
+            $case['start_date'] = $startDate ?: null;
+            $case['expected_completion'] = $expectedCompletion ?: null;
+        } elseif (empty($title) || empty($clientId)) {
             $message = 'Case title and client are required.';
             $messageType = 'danger';
         } else {
@@ -918,11 +931,11 @@ $html = <<<'HTML'
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-control-label text-sm font-weight-bold">Start Date</label>
-                                        <input class="form-control" type="date" name="start_date" value="{START_DATE}">
+                                        <input class="form-control" id="case_start_date" type="date" name="start_date" value="{START_DATE}">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-control-label text-sm font-weight-bold">Expected Completion</label>
-                                        <input class="form-control" type="date" name="expected_completion" value="{EXPECTED_COMPLETION}">
+                                        <input class="form-control" id="case_expected_completion" type="date" name="expected_completion" value="{EXPECTED_COMPLETION}">
                                     </div>
                                     <div class="col-12 mb-3">
                                         <label class="form-control-label text-sm font-weight-bold">Description</label>
@@ -1257,6 +1270,44 @@ $html = <<<'HTML'
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            var caseStartInput = document.getElementById('case_start_date');
+            var caseExpectedInput = document.getElementById('case_expected_completion');
+            var caseUpdateForm = document.querySelector('form input[name="form_type"][value="update_case"]')?.closest('form');
+
+            function syncCaseExpectedMin() {
+                if (!caseStartInput || !caseExpectedInput) {
+                    return;
+                }
+                if (!caseStartInput.value) {
+                    caseExpectedInput.removeAttribute('min');
+                    caseExpectedInput.setCustomValidity('');
+                    return;
+                }
+                var minDate = new Date(caseStartInput.value + 'T00:00:00');
+                minDate.setDate(minDate.getDate() + 1);
+                caseExpectedInput.setAttribute('min', minDate.toISOString().slice(0, 10));
+                if (caseExpectedInput.value && caseExpectedInput.value <= caseStartInput.value) {
+                    caseExpectedInput.setCustomValidity('Expected completion date must be later than start date.');
+                } else {
+                    caseExpectedInput.setCustomValidity('');
+                }
+            }
+
+            if (caseStartInput && caseExpectedInput) {
+                caseStartInput.addEventListener('change', syncCaseExpectedMin);
+                caseExpectedInput.addEventListener('input', syncCaseExpectedMin);
+                syncCaseExpectedMin();
+            }
+            if (caseUpdateForm && caseExpectedInput) {
+                caseUpdateForm.addEventListener('submit', function(event) {
+                    syncCaseExpectedMin();
+                    if (!caseExpectedInput.checkValidity()) {
+                        event.preventDefault();
+                        caseExpectedInput.reportValidity();
+                    }
+                });
+            }
+
             var stageFileInput = document.getElementById('stage_file');
             if (stageFileInput) {
                 stageFileInput.addEventListener('change', function() {

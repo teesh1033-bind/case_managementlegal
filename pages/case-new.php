@@ -135,6 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $category = resolveSubmittedCaseCategory('Civil');
         $startDate = isset($_POST['start_date']) ? trim($_POST['start_date']) : null;
         $expectedCompletion = isset($_POST['expected_completion']) ? trim($_POST['expected_completion']) : null;
+        $hasInvalidExpectedDate = !empty($startDate) && !empty($expectedCompletion)
+            && strtotime($expectedCompletion) <= strtotime($startDate);
         
         // Parse services from POST data
         $services = [];
@@ -154,7 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $estimatedFees += $service['price'];
         }
         
-        if (empty($clientId) || empty($title)) {
+        if ($hasInvalidExpectedDate) {
+            $message = 'Expected completion date must be later than the start date.';
+            $messageType = 'danger';
+        } elseif (empty($clientId) || empty($title)) {
             $message = 'Client and case title are required.';
             $messageType = 'danger';
         } else {
@@ -519,7 +524,7 @@ $html = <<<'HTML'
 									<div class="col-md-3">
 										<div class="form-group">
 											<label class="form-control-label">Start Date</label>
-											<input class="form-control" type="date" name="start_date" value="{START_DATE_VALUE}">
+											<input class="form-control" id="case_start_date" type="date" name="start_date" value="{START_DATE_VALUE}">
 										</div>
 									</div>
 									<div class="col-md-3">
@@ -560,7 +565,7 @@ $html = <<<'HTML'
 									<div class="col-md-4">
 										<div class="form-group">
 											<label class="form-control-label">Expected Completion</label>
-											<input class="form-control" type="date" name="expected_completion" value="{EXPECTED_COMPLETION_VALUE}">
+											<input class="form-control" id="case_expected_completion" type="date" name="expected_completion" value="{EXPECTED_COMPLETION_VALUE}">
 										</div>
 									</div>
 								</div>
@@ -635,6 +640,42 @@ $html = <<<'HTML'
 	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 	<script src="../assets/js/spa-nav.js"></script>
 	<script>
+		(function () {
+			var startInput = document.getElementById('case_start_date');
+			var expectedInput = document.getElementById('case_expected_completion');
+			var caseForm = document.querySelector('form input[name="form_type"][value="save"]')?.closest('form');
+			if (!startInput || !expectedInput || !caseForm) {
+				return;
+			}
+
+			function syncExpectedMin() {
+				if (!startInput.value) {
+					expectedInput.removeAttribute('min');
+					return;
+				}
+				var minDate = new Date(startInput.value + 'T00:00:00');
+				minDate.setDate(minDate.getDate() + 1);
+				var minValue = minDate.toISOString().slice(0, 10);
+				expectedInput.setAttribute('min', minValue);
+				if (expectedInput.value && expectedInput.value <= startInput.value) {
+					expectedInput.setCustomValidity('Expected completion date must be later than start date.');
+				} else {
+					expectedInput.setCustomValidity('');
+				}
+			}
+
+			startInput.addEventListener('change', syncExpectedMin);
+			expectedInput.addEventListener('input', syncExpectedMin);
+			caseForm.addEventListener('submit', function (event) {
+				syncExpectedMin();
+				if (!expectedInput.checkValidity()) {
+					event.preventDefault();
+					expectedInput.reportValidity();
+				}
+			});
+			syncExpectedMin();
+		})();
+
 		// Services management
 		let serviceRowIndex = 0;
 		const existingServices = {EXISTING_SERVICES_JSON};
