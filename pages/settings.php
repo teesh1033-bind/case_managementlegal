@@ -492,12 +492,9 @@ $html = <<<'HTML'
 							<h6>Email (Gmail / Outlook)</h6>
 						</div>
 						<div class="card-body">
-<<<<<<< HEAD
 							<p class="text-xs text-muted mb-2"><strong>Gmail:</strong> app password (16 letters) — <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Google</a>.</p>
 							<p class="text-xs text-muted mb-2"><strong>Outlook:</strong> server <code>smtp-mail.outlook.com</code>, port <code>587</code>, TLS — account email + password (or app password if 2FA is enabled).</p>
-=======
 							<p class="text-xs text-muted">Use this to send emails from the app. For Gmail, use a Google <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App Password</a> (16 characters).</p>
->>>>>>> fd15d52d10a474fed9fe92cf095df4e19f9306d5
 							{SMTP_PASSWORD_STATUS}
 							<form method="post">
 								<input type="hidden" name="form_type" value="mail">
@@ -506,13 +503,8 @@ $html = <<<'HTML'
 									<label class="form-check-label" for="smtp_enabled">Enable SMTP</label>
 								</div>
 								<div class="form-group mb-2">
-<<<<<<< HEAD
-									<label class="form-control-label text-xs">Serveur</label>
-									<input class="form-control form-control-sm" type="text" name="smtp_host" value="{SMTP_HOST}" placeholder="smtp.gmail.com ou smtp-mail.outlook.com">
-=======
 									<label class="form-control-label text-xs">Server</label>
 									<input class="form-control form-control-sm" type="text" name="smtp_host" value="{SMTP_HOST}">
->>>>>>> fd15d52d10a474fed9fe92cf095df4e19f9306d5
 								</div>
 								<div class="row g-2">
 									<div class="col-6">
