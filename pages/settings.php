@@ -97,6 +97,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: settings.php?msg=' . urlencode('Category removed successfully.') . '&type=success');
             exit;
         }
+    } elseif ($formType === 'add_lawyer_specialization') {
+        $specializationName = isset($_POST['specialization_name']) ? trim($_POST['specialization_name']) : '';
+        if ($specializationName === '') {
+            $message = 'Specialization name is required.';
+            $messageType = 'danger';
+        } else {
+            $specializations = getLawyerSpecializationsFromSettings();
+            if (in_array($specializationName, $specializations, true)) {
+                $message = 'That specialization already exists.';
+                $messageType = 'warning';
+            } else {
+                $specializations[] = $specializationName;
+                sort($specializations, SORT_NATURAL | SORT_FLAG_CASE);
+                setSetting('lawyer_specializations', json_encode($specializations, JSON_UNESCAPED_UNICODE));
+                header('Location: settings.php?msg=' . urlencode('Specialization added successfully.') . '&type=success');
+                exit;
+            }
+        }
+    } elseif ($formType === 'remove_lawyer_specialization') {
+        $specializationIndex = isset($_POST['specialization_index']) ? (int) $_POST['specialization_index'] : -1;
+        $specializations = getLawyerSpecializationsFromSettings();
+        if (!isset($specializations[$specializationIndex])) {
+            $message = 'Specialization not found.';
+            $messageType = 'danger';
+        } else {
+            array_splice($specializations, $specializationIndex, 1);
+            setSetting('lawyer_specializations', json_encode($specializations, JSON_UNESCAPED_UNICODE));
+            header('Location: settings.php?msg=' . urlencode('Specialization removed successfully.') . '&type=success');
+            exit;
+        }
     } elseif ($formType === 'mail') {
         $smtpHostPost = trim((string) ($_POST['smtp_host'] ?? 'smtp.gmail.com'));
         $smtpUsername = legalpro_normalize_smtp_username((string) ($_POST['smtp_username'] ?? ''));
@@ -133,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 setSetting('mail_from_address', trim((string) ($_POST['mail_from_address'] ?? '')));
             }
             setSetting('app_base_url', trim((string) ($_POST['app_base_url'] ?? '')));
-            header('Location: settings.php?msg=' . urlencode('Paramètres email enregistrés.') . '&type=success');
+            header('Location: settings.php?msg=' . urlencode('Email settings saved.') . '&type=success');
             exit;
         }
     } elseif ($formType === 'test_mail') {
@@ -142,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $testTo = trim((string) getSetting('smtp_username', ''));
         }
         if (!filter_var($testTo, FILTER_VALIDATE_EMAIL)) {
-            $message = 'Adresse email de test invalide.';
+            $message = 'Invalid test email address.';
             $messageType = 'danger';
         } else {
             $cfg = legalpro_get_smtp_config();
@@ -151,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = $authTest['message'];
                 $messageType = 'danger';
             } else {
-                $result = legalpro_send_email($testTo, getCompanyName() . ' — Test', '<p>Email de test OK.</p>');
+                $result = legalpro_send_email($testTo, getCompanyName() . ' — Test', '<p>Test email sent successfully.</p>');
                 $message = $authTest['message'] . ' ' . $result['message'];
                 $messageType = $result['ok'] ? 'success' : 'danger';
             }
@@ -172,14 +202,12 @@ $smtpHasPassword = $smtpStoredPassword !== '';
 $smtpPasswordLen = strlen($smtpStoredPassword);
 $smtpIsGmail = legalpro_is_gmail_smtp($smtpCfgDisplay);
 if (!$smtpHasPassword) {
-    $smtpPasswordStatusHtml = '<p class="text-xs text-warning mb-2">Aucun mot de passe SMTP enregistré.</p>';
-} elseif ($smtpIsGmail && $smtpPasswordLen !== 16) {
-    $smtpPasswordStatusHtml = '<p class="text-xs text-danger mb-2"><strong>Gmail :</strong> mot de passe = '
-        . $smtpPasswordLen . ' caractères (il en faut 16 — mot de passe d\'application Google).</p>';
-} elseif ($smtpIsGmail) {
-    $smtpPasswordStatusHtml = '<p class="text-xs text-success mb-2">Gmail : mot de passe d\'application OK (16 caractères).</p>';
+    $smtpPasswordStatusHtml = '<p class="text-xs text-warning mb-2">No app password saved yet.</p>';
+} elseif ($smtpPasswordLen === 16) {
+    $smtpPasswordStatusHtml = '<p class="text-xs text-success mb-2">Saved password: 16 characters — OK.</p>';
 } else {
-    $smtpPasswordStatusHtml = '<p class="text-xs text-success mb-2">Mot de passe SMTP enregistré (Outlook / autre).</p>';
+    $smtpPasswordStatusHtml = '<p class="text-xs text-danger mb-2"><strong>Warning:</strong> saved password length is '
+        . $smtpPasswordLen . ' characters (it should be 16). Paste a new app password below.</p>';
 }
 $smtpEnabledChecked = ($smtpEnabled || ($smtpUsername !== '' && $smtpHasPassword)) ? ' checked' : '';
 $smtpTlsSelected = $smtpEncryption === 'tls' ? ' selected' : '';
@@ -213,6 +241,22 @@ if (empty($caseCategories)) {
             . '<form method="post" class="d-inline mb-0" onsubmit="return confirm(\'Remove this category?\');">'
             . '<input type="hidden" name="form_type" value="remove_case_category">'
             . '<input type="hidden" name="category_index" value="' . (int) $index . '">'
+            . '<button type="submit" class="btn btn-sm btn-danger">Remove</button>'
+            . '</form></li>';
+    }
+}
+
+$lawyerSpecializations = getLawyerSpecializationsFromSettings();
+$specializationsListHtml = '';
+if (empty($lawyerSpecializations)) {
+    $specializationsListHtml = '<li class="list-group-item text-center text-muted">No custom specializations added yet</li>';
+} else {
+    foreach ($lawyerSpecializations as $index => $specializationName) {
+        $specializationsListHtml .= '<li class="list-group-item d-flex justify-content-between align-items-center">'
+            . htmlspecialchars($specializationName)
+            . '<form method="post" class="d-inline mb-0" onsubmit="return confirm(\'Remove this specialization?\');">'
+            . '<input type="hidden" name="form_type" value="remove_lawyer_specialization">'
+            . '<input type="hidden" name="specialization_index" value="' . (int) $index . '">'
             . '<button type="submit" class="btn btn-sm btn-danger">Remove</button>'
             . '</form></li>';
     }
@@ -408,6 +452,39 @@ $html = <<<'HTML'
                             </div>
                         </div>
                     </div>
+                    <div class="card mt-4">
+                        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                            <h6>Lawyer Specializations</h6>
+                            <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#addSpecializationModal">Add Specialization</button>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-xs text-muted mb-2">Manage specialization options shown in the lawyer form dropdown.</p>
+                            <ul class="list-group">
+                                {SPECIALIZATIONS_LIST}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal fade" id="addSpecializationModal" tabindex="-1" aria-labelledby="addSpecializationModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post">
+                                    <input type="hidden" name="form_type" value="add_lawyer_specialization">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="addSpecializationModalLabel">Add Specialization</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label class="form-control-label">Specialization Name</label>
+                                        <input type="text" class="form-control" name="specialization_name" required placeholder="e.g. Criminal Law">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-dark">Add Specialization</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
 				</div>
 				<div class="col-lg-4">
 					<div class="card">
@@ -415,18 +492,27 @@ $html = <<<'HTML'
 							<h6>Email (Gmail / Outlook)</h6>
 						</div>
 						<div class="card-body">
+<<<<<<< HEAD
 							<p class="text-xs text-muted mb-2"><strong>Gmail :</strong> mot de passe d\'application (16 lettres) — <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">Google</a>.</p>
 							<p class="text-xs text-muted mb-2"><strong>Outlook :</strong> serveur <code>smtp-mail.outlook.com</code>, port <code>587</code>, TLS — email + mot de passe du compte (ou mot de passe d\'application si 2FA).</p>
+=======
+							<p class="text-xs text-muted">Use this to send emails from the app. For Gmail, use a Google <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App Password</a> (16 characters).</p>
+>>>>>>> fd15d52d10a474fed9fe92cf095df4e19f9306d5
 							{SMTP_PASSWORD_STATUS}
 							<form method="post">
 								<input type="hidden" name="form_type" value="mail">
 								<div class="form-check form-switch mb-2">
 									<input class="form-check-input" type="checkbox" name="smtp_enabled" value="1" id="smtp_enabled"{SMTP_ENABLED_CHECKED}>
-									<label class="form-check-label" for="smtp_enabled">Activer SMTP</label>
+									<label class="form-check-label" for="smtp_enabled">Enable SMTP</label>
 								</div>
 								<div class="form-group mb-2">
+<<<<<<< HEAD
 									<label class="form-control-label text-xs">Serveur</label>
 									<input class="form-control form-control-sm" type="text" name="smtp_host" value="{SMTP_HOST}" placeholder="smtp.gmail.com ou smtp-mail.outlook.com">
+=======
+									<label class="form-control-label text-xs">Server</label>
+									<input class="form-control form-control-sm" type="text" name="smtp_host" value="{SMTP_HOST}">
+>>>>>>> fd15d52d10a474fed9fe92cf095df4e19f9306d5
 								</div>
 								<div class="row g-2">
 									<div class="col-6">
@@ -434,7 +520,7 @@ $html = <<<'HTML'
 										<input class="form-control form-control-sm" type="number" name="smtp_port" value="{SMTP_PORT}">
 									</div>
 									<div class="col-6">
-										<label class="form-control-label text-xs">Chiffrement</label>
+										<label class="form-control-label text-xs">Encryption</label>
 										<select class="form-control form-control-sm" name="smtp_encryption">
 											<option value="tls"{SMTP_TLS_SELECTED}>TLS</option>
 											<option value="ssl"{SMTP_SSL_SELECTED}>SSL</option>
@@ -446,20 +532,20 @@ $html = <<<'HTML'
 									<input class="form-control form-control-sm" type="email" name="smtp_username" value="{SMTP_USERNAME}" placeholder="vous@gmail.com ou vous@outlook.com">
 								</div>
 								<div class="form-group mb-2">
-									<label class="form-control-label text-xs">Mot de passe</label>
-									<input class="form-control form-control-sm" type="password" name="smtp_password" placeholder="{SMTP_PASSWORD_PLACEHOLDER}" autocomplete="new-password">
-									<small class="text-muted">Gmail = 16 lettres (app password). Outlook = mot de passe du compte.</small>
+									<label class="form-control-label text-xs">App Password</label>
+									<input class="form-control form-control-sm" type="text" name="smtp_password" placeholder="{SMTP_PASSWORD_PLACEHOLDER}" autocomplete="off" spellcheck="false" inputmode="text">
+									<small class="text-muted">Paste exactly as generated, for example: <code>abcd efgh ijkl mnop</code> (spaces are allowed).</small>
 								</div>
 								<div class="form-group mb-2">
-									<label class="form-control-label text-xs">URL du site (optionnel)</label>
+									<label class="form-control-label text-xs">Site URL (optional)</label>
 									<input class="form-control form-control-sm" type="url" name="app_base_url" value="{APP_BASE_URL}" placeholder="http://case-management-system.test">
 								</div>
-								<button type="submit" class="btn btn-dark btn-sm w-100 mb-2">Enregistrer</button>
+								<button type="submit" class="btn btn-dark btn-sm w-100 mb-2">Save</button>
 							</form>
 							<form method="post">
 								<input type="hidden" name="form_type" value="test_mail">
-								<input class="form-control form-control-sm mb-2" type="email" name="test_email" placeholder="Email de test">
-								<button type="submit" class="btn btn-outline-primary btn-sm w-100">Envoyer un email de test</button>
+								<input class="form-control form-control-sm mb-2" type="email" name="test_email" placeholder="Test email address">
+								<button type="submit" class="btn btn-outline-primary btn-sm w-100">Send test email</button>
 							</form>
 						</div>
 					</div>
@@ -497,6 +583,7 @@ $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CURRENCY_OPTIONS}', $currencyOptionsHtml, $html);
 $html = str_replace('{SERVICES_LIST}', $servicesListHtml, $html);
 $html = str_replace('{CATEGORIES_LIST}', $categoriesListHtml, $html);
+$html = str_replace('{SPECIALIZATIONS_LIST}', $specializationsListHtml, $html);
 $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name']), $html);
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
@@ -509,7 +596,7 @@ $html = str_replace('{SMTP_NONE_SELECTED}', $smtpNoneSelected, $html);
 $html = str_replace('{SMTP_USERNAME}', htmlspecialchars($smtpUsername), $html);
 $html = str_replace('{MAIL_FROM_ADDRESS}', htmlspecialchars($mailFromAddress), $html);
 $html = str_replace('{APP_BASE_URL}', htmlspecialchars($appBaseUrl), $html);
-$html = str_replace('{SMTP_PASSWORD_PLACEHOLDER}', $smtpHasPassword ? 'Laisser vide pour conserver' : '16 caractères', $html);
+$html = str_replace('{SMTP_PASSWORD_PLACEHOLDER}', $smtpHasPassword ? 'Leave blank to keep current password' : '16 characters', $html);
 $html = str_replace('{SMTP_PASSWORD_STATUS}', $smtpPasswordStatusHtml, $html);
 echo $html;
 ?>

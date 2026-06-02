@@ -41,16 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim(isset($_POST['email']) ? $_POST['email'] : '');
         $phone = trim(isset($_POST['phone']) ? $_POST['phone'] : '');
         $licenseNumber = trim(isset($_POST['license_number']) ? $_POST['license_number'] : '');
-        $specializationSelect = trim(isset($_POST['specialization_select']) ? $_POST['specialization_select'] : '');
-        $specializationCustom = trim(isset($_POST['specialization_custom']) ? $_POST['specialization_custom'] : '');
-        if ($specializationSelect === '__other__') {
-            $specialization = $specializationCustom;
-        } else {
-            $specialization = $specializationSelect;
-        }
-        if ($specialization !== '') {
-            addLawyerSpecialization($specialization);
-        }
+        $specialization = trim(isset($_POST['specialization_select']) ? $_POST['specialization_select'] : '');
         $experienceYears = isset($_POST['experience_years']) ? (int)$_POST['experience_years'] : 0;
         $bio = trim(isset($_POST['bio']) ? $_POST['bio'] : '');
         $officeAddress = trim(isset($_POST['office_address']) ? $_POST['office_address'] : '');
@@ -349,27 +340,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
     $formData['office_address'] = trim((string) ($_POST['office_address'] ?? ''));
     $formData['is_active'] = isset($_POST['is_active']) ? 1 : 0;
 
-    $specializationSelect = trim((string) ($_POST['specialization_select'] ?? ''));
-    $specializationCustom = trim((string) ($_POST['specialization_custom'] ?? ''));
-    if ($specializationSelect === '__other__') {
-        $formData['specialization'] = $specializationCustom;
-    } else {
-        $formData['specialization'] = $specializationSelect;
-    }
+    $formData['specialization'] = trim((string) ($_POST['specialization_select'] ?? ''));
 }
 
 $lawyerSpecializations = getLawyerSpecializations();
 $currentSpecialization = trim((string) $formData['specialization']);
-$isOtherSpecialization = $currentSpecialization !== '' && !in_array($currentSpecialization, $lawyerSpecializations, true);
+$isLegacySpecialization = $currentSpecialization !== '' && !in_array($currentSpecialization, $lawyerSpecializations, true);
 
 $specializationOptionsHtml = '<option value="">Select specialization...</option>';
 foreach ($lawyerSpecializations as $specName) {
-    $selected = ($currentSpecialization === $specName && !$isOtherSpecialization) ? ' selected' : '';
+    $selected = $currentSpecialization === $specName ? ' selected' : '';
     $specializationOptionsHtml .= '<option value="' . htmlspecialchars($specName) . '"' . $selected . '>' . htmlspecialchars($specName) . '</option>';
 }
-$specializationOptionsHtml .= '<option value="__other__"' . ($isOtherSpecialization ? ' selected' : '') . '>Add new specialization...</option>';
-$specializationCustomClass = $isOtherSpecialization ? '' : 'd-none';
-$specializationCustomValue = $isOtherSpecialization ? $currentSpecialization : '';
+if ($isLegacySpecialization) {
+    $specializationOptionsHtml .= '<option value="' . htmlspecialchars($currentSpecialization) . '" selected>'
+        . htmlspecialchars($currentSpecialization)
+        . ' (legacy)</option>';
+}
 
 $isEditing = !empty($formData['lawyer_id']);
 $formTitle = $isEditing ? 'Edit Lawyer' : 'Add New Lawyer';
@@ -630,8 +617,7 @@ $html = <<<'HTML'
                                 <select class="form-control" name="specialization_select" id="specialization_select">
                                     {SPECIALIZATION_OPTIONS}
                                 </select>
-                                <input type="text" class="form-control mt-2 {SPECIALIZATION_CUSTOM_CLASS}" name="specialization_custom" id="specialization_custom" value="{SPECIALIZATION_CUSTOM_VALUE}" placeholder="Enter new specialization, e.g. Criminal Law">
-                                <small class="text-muted d-block mt-1">Choose an existing specialization or pick "Add new specialization..." to enter one.</small>
+                                <small class="text-muted d-block mt-1">Specializations are managed in <a href="settings.php">Settings</a>.</small>
                             </div>
                         </div>
                         
@@ -669,26 +655,11 @@ $html = <<<'HTML'
             document.getElementById('lawyerModalLabel').textContent = 'Add New Lawyer';
             document.querySelector('#lawyerModal input[name="lawyer_id"]').value = '';
             document.getElementById('lawyerModal').querySelector('form').reset();
-            syncSpecializationField();
             // Reset form display for new lawyer
             document.getElementById('user_account_section').style.display = 'block';
             document.getElementById('user_update_section').style.display = 'none';
             document.getElementById('user_select').required = true;
             new bootstrap.Modal(document.getElementById('lawyerModal')).show();
-        }
-
-        function syncSpecializationField() {
-            var select = document.getElementById('specialization_select');
-            var custom = document.getElementById('specialization_custom');
-            if (!select || !custom) {
-                return;
-            }
-            if (select.value === '__other__') {
-                custom.classList.remove('d-none');
-            } else {
-                custom.classList.add('d-none');
-                custom.value = '';
-            }
         }
 
         // Show modal if editing
@@ -703,11 +674,6 @@ $html = <<<'HTML'
                 LegalProPassword.attachLawyerSaveForm(lawyerForm);
             }
 
-            var specializationSelect = document.getElementById('specialization_select');
-            if (specializationSelect) {
-                specializationSelect.addEventListener('change', syncSpecializationField);
-                syncSpecializationField();
-            }
         });
 
         function showCreateUserForm() {
@@ -770,8 +736,6 @@ $replacements = [
     '{PHONE}' => htmlspecialchars($formData['phone']),
     '{LICENSE_NUMBER}' => htmlspecialchars($formData['license_number']),
     '{SPECIALIZATION_OPTIONS}' => $specializationOptionsHtml,
-    '{SPECIALIZATION_CUSTOM_CLASS}' => $specializationCustomClass,
-    '{SPECIALIZATION_CUSTOM_VALUE}' => htmlspecialchars($specializationCustomValue),
     '{EXPERIENCE_YEARS}' => htmlspecialchars($formData['experience_years']),
     '{BIO}' => htmlspecialchars($formData['bio']),
     '{OFFICE_ADDRESS}' => htmlspecialchars($formData['office_address']),
