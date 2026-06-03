@@ -22,7 +22,6 @@ $menuItems = [
     ['title' => 'Financial Summary', 'url' => 'financial-summary.php', 'icon' => 'ni ni-chart-pie-35', 'id' => 'financial-summary'],
     ['title' => 'Documents', 'url' => 'documents.php', 'icon' => 'ni ni-folder-17', 'id' => 'documents'],
     ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'ni ni-chat-round', 'id' => 'chatbot'],
-    ['title' => 'Settings', 'url' => 'settings.php', 'icon' => 'ni ni-settings', 'id' => 'settings'],
 ];
 
 function isActive($itemId, $currentPage)
