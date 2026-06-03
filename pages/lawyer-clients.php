@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -46,10 +47,18 @@ try {
     $clients = [];
 }
 
+$iconClientRow = legalpro_icon('user');
+$iconClientEmpty = legalpro_icon('users');
+$iconCardHeader = legalpro_icon('users');
+
 // Build clients table HTML
 $clientsTable = '';
 if (empty($clients)) {
-    $clientsTable = '<tr><td colspan="5" class="text-center text-muted py-4">No clients found</td></tr>';
+    $clientsTable = '<tr><td colspan="5" class="border-0"><div class="text-center py-5 px-4">
+        <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconClientEmpty . '</div>
+        <h5 class="font-weight-bolder mt-3 mb-2">No clients found</h5>
+        <p class="text-sm text-muted mb-0">Try adjusting your search.</p>
+    </div></td></tr>';
 } else {
     foreach ($clients as $client) {
         $fullName = htmlspecialchars($client['first_name'] . ' ' . $client['last_name']);
@@ -60,9 +69,7 @@ if (empty($clients)) {
         <tr>
             <td>
                 <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
-                        <i class="ni ni-circle-08 text-white text-xs opacity-10"></i>
-                    </div>
+                    <div class="lawyer-client-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconClientRow . '</div>
                     <div>
                         <h6 class="mb-0 text-sm">' . $fullName . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($client['email']) . '</p>
@@ -71,8 +78,8 @@ if (empty($clients)) {
             </td>
             <td>' . htmlspecialchars($client['phone'] ?: 'Not provided') . '</td>
             <td class="text-center">
-                <span class="badge bg-primary">' . (int)$client['total_cases'] . ' total</span><br>
-                <span class="badge bg-success">' . (int)$client['active_cases'] . ' active</span>
+                <span class="ca-status-pill ca-status-pill--scheduled d-inline-block mb-1">' . (int)$client['total_cases'] . ' total</span><br>
+                <span class="ca-status-pill ca-status-pill--done d-inline-block">' . (int)$client['active_cases'] . ' active</span>
             </td>
             <td>
                 <span class="text-sm" title="' . $caseTitles . '">' . $caseTitlesShort . '</span>
@@ -103,6 +110,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-clients-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
@@ -152,9 +160,7 @@ $html = <<<'HTML'
                     <div class="card mb-4">
                         <div class="card-header pb-0 pt-3">
                             <div class="d-flex align-items-center">
-                                <div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-md me-3">
-                                    <i class="ni ni-circle-08 text-white text-lg opacity-10"></i>
-                                </div>
+                                <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                 <div>
                                     <h6 class="mb-0">My Clients</h6>
                                     <p class="text-xs text-muted mb-0">Clients from your assigned cases</p>
@@ -211,6 +217,7 @@ $replacements = [
     '{SEARCH_VALUE}' => htmlspecialchars($search),
     '{TOTAL_CLIENTS}' => count($clients),
     '{CLIENTS_TABLE}' => $clientsTable,
+    '{ICON_CARD_HEADER}' => $iconCardHeader,
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

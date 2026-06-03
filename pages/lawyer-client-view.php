@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -114,15 +115,8 @@ if (empty($clientCases)) {
 } else {
     $casesHtml = '<div class="row">';
     foreach ($clientCases as $case) {
-        $statusBadge = '';
-        switch ($case['status']) {
-            case 'open': $statusBadge = '<span class="badge bg-success">Open</span>'; break;
-            case 'in_progress': $statusBadge = '<span class="badge bg-primary">In Progress</span>'; break;
-            case 'closed': $statusBadge = '<span class="badge bg-secondary">Closed</span>'; break;
-            default: $statusBadge = '<span class="badge bg-light">' . htmlspecialchars($case['status']) . '</span>';
-        }
-
-        $primaryBadge = $case['is_primary'] ? '<span class="badge bg-warning text-dark ms-1">Primary</span>' : '';
+        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+        $primaryBadge = $case['is_primary'] ? '<span class="ca-status-pill ca-status-pill--pending ms-1">Primary</span>' : '';
 
         $casesHtml .= '
         <div class="col-md-6 mb-3">
@@ -144,14 +138,15 @@ if (empty($clientCases)) {
     $casesHtml .= '</div>';
 }
 
+$iconDocRow = legalpro_icon('file-text');
+$iconCommentEmpty = legalpro_icon('message-circle');
+
 // Build comments feed HTML
 $commentsHtml = '';
 if (empty($clientComments)) {
     $commentsHtml = '
     <div class="cc-comments-empty text-center py-5 mb-0">
-        <div class="cc-comments-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
-            <i class="ni ni-chat-round text-primary text-lg opacity-10" aria-hidden="true"></i>
-        </div>
+        <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCommentEmpty . '</div>
         <h6 class="font-weight-bolder mt-4 mb-2">No comments yet</h6>
         <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Comments from this client and your team on shared cases will appear here.</p>
     </div>';
@@ -230,9 +225,7 @@ if (empty($clientDocuments)) {
         <tr>
             <td>
                 <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
-                        <i class="ni ni-single-copy-04 text-white text-xs opacity-10"></i>
-                    </div>
+                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconDocRow . '</div>
                     <div>
                         <h6 class="mb-0 text-sm">' . $safeDisplayName . '</h6>
                         <p class="text-xs text-muted mb-0">' . $safeCaseTitle . '</p>
@@ -268,7 +261,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-lawyer-portal.css?v=2" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
     <style>
         .lawyer-client-comments-feed .cc-comment-list {
             display: flex;

@@ -321,3 +321,60 @@ body.lawyer-dashboard-page .legalpro-lawyer-nav .nav-link:hover .legalpro-lawyer
     opacity: 1 !important;
 }
 */
+
+/* Lawyer portal — soft status pills + table row icons (matches client portal) */
+.legalpro-lawyer-portal .ca-status-pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.35em 0.85em;
+    border-radius: 999px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+.legalpro-lawyer-portal .ca-status-pill--pending {
+    background: rgba(251, 140, 0, 0.14);
+    color: #c45c00;
+}
+.legalpro-lawyer-portal .ca-status-pill--scheduled {
+    background: rgba(94, 114, 228, 0.14);
+    color: #5e72e4;
+}
+.legalpro-lawyer-portal .ca-status-pill--done {
+    background: rgba(103, 116, 142, 0.12);
+    color: #67748e;
+}
+.legalpro-lawyer-portal .ca-status-pill--declined {
+    background: rgba(245, 54, 92, 0.12);
+    color: #d6336c;
+}
+.legalpro-lawyer-portal .ca-status-pill--muted {
+    background: rgba(103, 116, 142, 0.1);
+    color: #8392ab;
+}
+.legalpro-lawyer-portal .lp-row-icon.dashboard-stat-icon-wrap,
+.legalpro-lawyer-portal .lawyer-cases-row-icon.dashboard-stat-icon-wrap,
+.legalpro-lawyer-portal .lawyer-client-row-icon.dashboard-stat-icon-wrap,
+.legalpro-lawyer-portal .lawyer-appt-row-icon.dashboard-stat-icon-wrap,
+.legalpro-lawyer-portal .lawyer-ct-row-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+.legalpro-lawyer-portal .lp-empty-icon.dashboard-stat-icon-wrap {
+    width: 3.25rem;
+    height: 3.25rem;
+    min-width: 3.25rem;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+body.lawyer-court-tracking-page .dashboard-upcoming-empty .dashboard-stat-icon-wrap {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    margin: 0 auto 0.5rem;
+    border-radius: 50%;
+}

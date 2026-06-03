@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -80,7 +81,6 @@ try {
     $upcomingAppointments = [];
 }
 
-require_once __DIR__ . '/../inc/legalpro-icons.php';
 $iconStatCases = legalpro_icon('briefcase');
 $iconStatActive = legalpro_icon('message-circle');
 $iconStatClients = legalpro_icon('users');
@@ -95,13 +95,7 @@ if (empty($recentCases)) {
     $recentCasesHtml = '<tr><td colspan="4" class="text-center text-muted py-4">No cases assigned yet</td></tr>';
 } else {
     foreach ($recentCases as $case) {
-        $statusBadge = '';
-        switch ($case['status']) {
-            case 'open': $statusBadge = '<span class="badge bg-success">Open</span>'; break;
-            case 'in_progress': $statusBadge = '<span class="badge bg-primary">In Progress</span>'; break;
-            case 'closed': $statusBadge = '<span class="badge bg-secondary">Closed</span>'; break;
-            default: $statusBadge = '<span class="badge bg-light">' . htmlspecialchars($case['status']) . '</span>';
-        }
+        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
 
         $recentCasesHtml .= '
         <tr>

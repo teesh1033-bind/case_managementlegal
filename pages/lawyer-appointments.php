@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
 
@@ -250,13 +251,13 @@ function buildLawyerAppointmentActions(array $appointment): string
     $html = '<div class="lawyer-appointment-actions">';
 
     if ($status === 'accepted') {
-        $html .= '<span class="badge bg-success">Locked</span>';
+        $html .= '<span class="ca-status-pill ca-status-pill--done">Locked</span>';
         $html .= '</div>';
         return $html;
     }
 
     if ($status === 'rejected') {
-        $html .= '<span class="badge bg-danger">Rejected</span>';
+        $html .= '<span class="ca-status-pill ca-status-pill--declined">Rejected</span>';
         $html .= '</div>';
         return $html;
     }
@@ -308,37 +309,25 @@ function buildLawyerAppointmentActions(array $appointment): string
     return $html;
 }
 
+$iconApptRow = legalpro_icon('calendar-clock');
+$iconApptEmpty = legalpro_icon('calendar');
+$iconCardHeader = legalpro_icon('calendar');
+
 // Build appointments table HTML
 $appointmentsTable = '';
 if (empty($appointments)) {
-    $appointmentsTable = '<tr><td colspan="7" class="text-center text-muted py-4">No appointments found matching your criteria</td></tr>';
+    $appointmentsTable = '<tr><td colspan="7" class="border-0"><div class="text-center py-5 px-4">
+        <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconApptEmpty . '</div>
+        <h5 class="font-weight-bolder mt-3 mb-2">No appointments found</h5>
+        <p class="text-sm text-muted mb-0">Try adjusting your filters.</p>
+    </div></td></tr>';
 } else {
     foreach ($appointments as $appointment) {
         $appointmentDate = date('M d, Y', strtotime($appointment['starts_at']));
         $appointmentTime = date('g:i A', strtotime($appointment['starts_at']));
-        $isPast = strtotime($appointment['starts_at']) < time();
         $isToday = date('Y-m-d', strtotime($appointment['starts_at'])) === date('Y-m-d');
 
-        $statusBadge = '';
-        switch ($appointment['status']) {
-            case 'pending':
-                $statusBadge = '<span class="badge bg-warning">Pending Approval</span>';
-                break;
-            case 'accepted':
-                if ($isPast) {
-                    $statusBadge = '<span class="badge bg-secondary">Completed</span>';
-                } elseif ($isToday) {
-                    $statusBadge = '<span class="badge bg-info">Today</span>';
-                } else {
-                    $statusBadge = '<span class="badge bg-success">Scheduled</span>';
-                }
-                break;
-            case 'rejected':
-                $statusBadge = '<span class="badge bg-danger">Rejected</span>';
-                break;
-            default:
-                $statusBadge = '<span class="badge bg-light">' . htmlspecialchars($appointment['status']) . '</span>';
-        }
+        $statusBadge = lawyer_appointment_status_badge($appointment);
 
         $rowClass = $appointment['status'] === 'rejected' ? 'table-danger' : ($isToday && $appointment['status'] === 'accepted' ? 'table-info' : '');
 
@@ -346,9 +335,7 @@ if (empty($appointments)) {
         <tr class="' . $rowClass . '">
             <td>
                 <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
-                        <i class="ni ni-time-alarm text-white text-xs opacity-10"></i>
-                    </div>
+                    <div class="lawyer-appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconApptRow . '</div>
                     <div>
                         <h6 class="mb-0 text-sm">' . htmlspecialchars($appointment['case_title']) . '</h6>
                         <p class="text-xs text-muted mb-0">Case #' . htmlspecialchars($appointment['case_id']) . '</p>
@@ -390,7 +377,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-lawyer-portal.css?v=2" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
     <style>
         .lawyer-appointment-actions {
             align-items: center;
@@ -483,9 +470,7 @@ $html = <<<'HTML'
                     <div class="card mb-4">
                         <div class="card-header pb-0 pt-3">
                             <div class="d-flex align-items-center">
-                                <div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-md me-3">
-                                    <i class="ni ni-time-alarm text-white text-lg opacity-10"></i>
-                                </div>
+                                <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                 <div>
                                     <h6 class="mb-0">My Appointments</h6>
                                     <p class="text-xs text-muted mb-0">Accept, reject, keep pending, or reschedule client requests</p>
@@ -878,6 +863,7 @@ $replacements = [
     '{STATUS_PAST}' => '',
     '{TOTAL_APPOINTMENTS}' => count($appointments),
     '{APPOINTMENTS_TABLE}' => $appointmentsTable,
+    '{ICON_CARD_HEADER}' => $iconCardHeader,
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

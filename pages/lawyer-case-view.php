@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
 
@@ -231,26 +232,11 @@ try {
 // Fetch case events for this case
 $caseEvents = CaseEvents::getCaseEvents($caseId);
 
-// Build status badge
-$statusBadge = '';
-switch ($case['status']) {
-    case 'open': $statusBadge = '<span class="badge bg-success">Open</span>'; break;
-    case 'in_progress': $statusBadge = '<span class="badge bg-primary">In Progress</span>'; break;
-    case 'closed': $statusBadge = '<span class="badge bg-secondary">Closed</span>'; break;
-    default: $statusBadge = '<span class="badge bg-light">' . htmlspecialchars($case['status']) . '</span>';
-}
-
-// Build priority badge
-$priorityBadge = '';
-switch ($case['priority']) {
-    case 'High': $priorityBadge = '<span class="badge bg-danger">High</span>'; break;
-    case 'Urgent': $priorityBadge = '<span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>Urgent</span>'; break;
-    case 'Normal': $priorityBadge = '<span class="badge bg-warning">Normal</span>'; break;
-    default: $priorityBadge = '<span class="badge bg-light">' . htmlspecialchars($case['priority']) . '</span>';
-}
-
-// Build category badge
-$categoryBadge = '<span class="badge bg-info">' . htmlspecialchars($case['category']) . '</span>';
+$statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+$priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+$categoryBadge = '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars((string) ($case['category'] ?? '')) . '</span>';
+$iconDocRow = legalpro_icon('file-text');
+$iconCommentEmpty = legalpro_icon('message-circle');
 
 // Build services HTML
 $servicesHtml = '';
@@ -347,9 +333,7 @@ if (empty($documents)) {
         <tr>
             <td>
                 <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
-                        <i class="ni ni-single-copy-04 text-white text-xs opacity-10"></i>
-                    </div>
+                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconDocRow . '</div>
                     <div>
                         <h6 class="mb-0 text-sm">' . htmlspecialchars($documentName) . '</h6>
                         <p class="text-xs text-muted mb-0">Uploaded ' . date('M d, Y', strtotime($document['uploaded_at'])) . '</p>
@@ -384,7 +368,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-lawyer-portal.css?v=2" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
     <style>
         .lawyer-case-comments .cc-comment-list {
             display: flex;
@@ -794,9 +778,7 @@ if (!empty($comments)) {
 } else {
     $commentsHtml = '
     <div class="cc-comments-empty text-center py-5 mb-0">
-        <div class="cc-comments-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
-            <i class="ni ni-chat-round text-success text-lg opacity-10" aria-hidden="true"></i>
-        </div>
+        <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success mx-auto d-flex align-items-center justify-content-center">' . $iconCommentEmpty . '</div>
         <h6 class="font-weight-bolder mt-4 mb-2">No comments yet</h6>
         <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Post a comment below to communicate with the client and your team about this case.</p>
     </div>';

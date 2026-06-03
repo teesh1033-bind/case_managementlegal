@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -51,35 +52,28 @@ try {
     $cases = [];
 }
 
+$iconCaseRow = legalpro_icon('briefcase');
+$iconCaseEmpty = legalpro_icon('briefcase');
+$iconCardHeader = legalpro_icon('briefcase');
+
 // Build cases table HTML
 $casesTable = '';
 if (empty($cases)) {
-    $casesTable = '<tr><td colspan="6" class="text-center text-muted py-4">No cases found matching your criteria</td></tr>';
+    $casesTable = '<tr><td colspan="6" class="border-0"><div class="text-center py-5 px-4">
+        <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseEmpty . '</div>
+        <h5 class="font-weight-bolder mt-3 mb-2">No cases found</h5>
+        <p class="text-sm text-muted mb-0">Try adjusting your search or status filter.</p>
+    </div></td></tr>';
 } else {
     foreach ($cases as $case) {
-        $statusBadge = '';
-        switch ($case['status']) {
-            case 'open': $statusBadge = '<span class="badge bg-success">Open</span>'; break;
-            case 'in_progress': $statusBadge = '<span class="badge bg-primary">In Progress</span>'; break;
-            case 'closed': $statusBadge = '<span class="badge bg-secondary">Closed</span>'; break;
-            default: $statusBadge = '<span class="badge bg-light">' . htmlspecialchars($case['status']) . '</span>';
-        }
-
-        $priorityBadge = '';
-        switch ($case['priority']) {
-            case 'High': $priorityBadge = '<span class="badge bg-warning text-white">High</span>'; break;
-            case 'Urgent': $priorityBadge = '<span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>Urgent</span>'; break;
-            case 'Normal': $priorityBadge = '<span class="badge bg-warning">Normal</span>'; break;
-            default: $priorityBadge = '<span class="badge bg-light">' . htmlspecialchars($case['priority']) . '</span>';
-        }
+        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+        $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
 
         $casesTable .= '
         <tr>
             <td>
                 <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
-                        <i class="ni ni-folder-17 text-white text-xs opacity-10"></i>
-                    </div>
+                    <div class="lawyer-cases-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconCaseRow . '</div>
                     <div>
                         <h6 class="mb-0 text-sm">' . htmlspecialchars($case['title']) . '</h6>
                         <p class="text-xs text-muted mb-0">Case #' . htmlspecialchars($case['id']) . '</p>
@@ -121,6 +115,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-cases-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
@@ -179,9 +174,7 @@ $html = <<<'HTML'
                     <div class="card mb-4">
                         <div class="card-header pb-0 pt-3">
                             <div class="d-flex align-items-center">
-                                <div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-md me-3">
-                                    <i class="ni ni-collection text-white text-lg opacity-10"></i>
-                                </div>
+                                <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">' . $iconCardHeader . '</div>
                                 <div>
                                     <h6 class="mb-0">My Cases</h6>
                                     <p class="text-xs text-muted mb-0">Cases assigned to you</p>

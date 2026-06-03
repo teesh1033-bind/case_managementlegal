@@ -405,3 +405,31 @@ function client_case_priority_badge(string $priority): string
 
     return '<span class="ca-status-pill ' . $pill . '">' . htmlspecialchars($label) . '</span>';
 }
+
+function lawyer_appointment_status_badge(array $appointment): string
+{
+    $status = strtolower((string) ($appointment['status'] ?? ''));
+    $startsAt = !empty($appointment['starts_at']) ? strtotime($appointment['starts_at']) : 0;
+    $now = time();
+
+    if ($status === 'pending') {
+        return '<span class="ca-status-pill ca-status-pill--pending">Pending approval</span>';
+    }
+    if ($status === 'rejected') {
+        return '<span class="ca-status-pill ca-status-pill--declined">Rejected</span>';
+    }
+    if ($status === 'accepted') {
+        if ($startsAt > 0 && $startsAt < $now) {
+            return '<span class="ca-status-pill ca-status-pill--done">Completed</span>';
+        }
+        if ($startsAt > 0 && date('Y-m-d', $startsAt) === date('Y-m-d')) {
+            return '<span class="ca-status-pill ca-status-pill--scheduled">Today</span>';
+        }
+
+        return '<span class="ca-status-pill ca-status-pill--scheduled">Scheduled</span>';
+    }
+
+    $label = ucwords(str_replace('_', ' ', $status));
+
+    return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+}
