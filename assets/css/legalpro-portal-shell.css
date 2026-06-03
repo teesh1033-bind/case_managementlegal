@@ -80,14 +80,33 @@ body.lawyer-client-view-page .legalpro-portal-sidebar,
 body.lawyer-court-tracking-page .legalpro-portal-sidebar,
 body.lawyer-tasks-page .legalpro-portal-sidebar,
 body.client-dashboard-page .legalpro-portal-sidebar,
+body.client-dashboard-page .legalpro-admin-sidebar,
 body.client-cases-page .legalpro-portal-sidebar,
+body.client-cases-page .legalpro-admin-sidebar,
 body.client-appointments-page .legalpro-portal-sidebar,
+body.client-appointments-page .legalpro-admin-sidebar,
 body.client-court-tracking-page .legalpro-portal-sidebar,
+body.client-court-tracking-page .legalpro-admin-sidebar,
 body.client-payments-page .legalpro-portal-sidebar,
+body.client-payments-page .legalpro-admin-sidebar,
 body.client-portal-page .legalpro-portal-sidebar,
+body.client-portal-page .legalpro-admin-sidebar,
 body.client-profile-page .legalpro-portal-sidebar,
+body.client-profile-page .legalpro-admin-sidebar,
+body.legalpro-lawyer-portal .legalpro-admin-sidebar,
+body.lawyer-dashboard-page .legalpro-admin-sidebar,
+body.lawyer-cases-page .legalpro-admin-sidebar,
+body.lawyer-clients-page .legalpro-admin-sidebar,
+body.lawyer-appointments-page .legalpro-admin-sidebar,
+body.lawyer-availability-page .legalpro-admin-sidebar,
+body.lawyer-case-view-page .legalpro-admin-sidebar,
+body.lawyer-client-view-page .legalpro-admin-sidebar,
+body.lawyer-court-tracking-page .legalpro-admin-sidebar,
+body.lawyer-tasks-page .legalpro-admin-sidebar,
 .search-portal-page--lawyer .legalpro-portal-sidebar,
-.search-portal-page--client .legalpro-portal-sidebar {
+.search-portal-page--lawyer .legalpro-admin-sidebar,
+.search-portal-page--client .legalpro-portal-sidebar,
+.search-portal-page--client .legalpro-admin-sidebar {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -106,7 +125,8 @@ body.client-profile-page .legalpro-portal-sidebar,
     padding: 0;
 }
 
-body.legalpro-sidebar-collapsed .legalpro-portal-sidebar {
+body.legalpro-sidebar-collapsed .legalpro-portal-sidebar,
+body.legalpro-sidebar-collapsed .legalpro-admin-sidebar {
     width: var(--lp-portal-sidebar-collapsed) !important;
     max-width: var(--lp-portal-sidebar-collapsed) !important;
 }

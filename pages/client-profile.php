@@ -164,6 +164,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=5" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 client-profile-page">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>

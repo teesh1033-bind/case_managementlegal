@@ -1,5 +1,5 @@
 <?php
-// inc/lawyer-menunav.php — Lawyer portal sidebar + header utilities
+// inc/lawyer-menunav.php — Lawyer portal sidebar + header utilities (same shell as menunav.php)
 
 require_once __DIR__ . '/admin-layout.php';
 
@@ -41,10 +41,14 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 );
 ?>
 
-<link href="../assets/css/legalpro-lawyer-portal.css?v=7" rel="stylesheet" />
-<link href="../assets/css/legalpro-portal-shell.css?v=8" rel="stylesheet" />
-
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-portal-sidebar legalpro-lawyer-sidebar" id="sidenav-main">
+<?php
+if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
+    ob_start();
+    include __DIR__ . '/lawyer-portal-head.php';
+    echo ob_get_clean();
+}
+?>
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
         <a href="lawyer-dashboard.php" class="legalpro-sidebar-brand__link">
             <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="42" height="42" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
@@ -59,7 +63,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
         <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
 
-    <div class="collapse navbar-collapse w-auto legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
+    <div class="collapse navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
         <ul class="navbar-nav legalpro-sidebar-nav">
             <?php foreach ($lawyerMenuItems as $item): ?>
                 <?php $active = lawyerNavIsActive($item['id'], $currentPage); ?>

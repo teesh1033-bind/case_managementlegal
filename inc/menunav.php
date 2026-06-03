@@ -49,8 +49,8 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 );
 ?>
 
-<link href="../assets/css/legalpro-admin-portal.css?v=11" rel="stylesheet" />
-
+<link href="../assets/css/legalpro-admin-portal.css?v=12" rel="stylesheet" />
+<link href="../assets/css/legalpro-sidebar-nav.css?v=1" rel="stylesheet" />
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
         <a href="dashboard.php" class="legalpro-sidebar-brand__link">
@@ -66,7 +66,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
         <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
 
-    <div class="collapse navbar-collapse w-auto legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
+    <div class="collapse navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
         <ul class="navbar-nav legalpro-sidebar-nav">
             <?php foreach ($menuItems as $item): ?>
                 <?php $active = isActive($item['id'], $currentPage); ?>
