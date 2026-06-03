@@ -425,16 +425,37 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <style>
-        /* More space between option text and dropdown chevron */
-        .lawyer-tasks-page select.form-select {
+        .lawyer-tasks-page .lawyer-tasks-toolbar {
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+        .lawyer-tasks-page .lawyer-tasks-toolbar .btn {
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            height: 2rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8125rem;
+            line-height: 1.25;
+            --bs-btn-padding-y: 0.25rem;
+            --bs-btn-padding-x: 0.75rem;
+        }
+        .lawyer-tasks-page .lawyer-tasks-toolbar .form-select {
+            width: auto;
+            height: 2rem;
+            min-width: 8.5rem;
+            padding: 0.2rem 1.75rem 0.2rem 0.65rem;
+            font-size: 0.8125rem;
+            line-height: 1.25;
+            background-position: right 0.5rem center;
+        }
+        /* More space between option text and dropdown chevron (in-card filters) */
+        .lawyer-tasks-page .task-actions-row .form-select,
+        .lawyer-tasks-page #taskModal .form-select {
             padding-left: 0.875rem;
             padding-right: 2.85rem;
             background-position: right 0.85rem center;
-        }
-        .lawyer-tasks-page select.form-select-sm {
-            padding-left: 0.75rem;
-            padding-right: 2.65rem;
-            background-position: right 0.65rem center;
         }
         .lawyer-tasks-page .task-card-themed {
             background: #f4f6fc;
@@ -505,7 +526,7 @@ $html = <<<'HTML'
                         <div class="card-header pb-0">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6>My Tasks</h6>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex lawyer-tasks-toolbar">
                                     <button class="btn btn-sm btn-primary mb-0" type="button" onclick="showAddTaskModal()">
                                         <i class="ni ni-fat-add me-1"></i>Add Task
                                     </button>
