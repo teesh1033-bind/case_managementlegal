@@ -57,30 +57,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])
                     $message = 'Please provide a new date and time to reschedule.';
                     $messageType = 'danger';
                 } else {
-                    $startsAt = $newDate . ' ' . (preg_match('/^\d{2}:\d{2}$/', $newTime) ? $newTime . ':00' : $newTime);
-                    $endsAt = date('Y-m-d H:i:s', strtotime($startsAt . ' +1 hour'));
-                    $notes = (string) ($appointment['notes'] ?? '');
-                    if ($rescheduleNotes !== '') {
-                        $notes = trim(($notes !== '' ? $notes . "\n\n" : '') . '[Rescheduled by lawyer] ' . $rescheduleNotes);
+                    $durationMinutes = lawyerAppointmentDurationMinutes($appointment);
+                    $availabilityCheck = validateLawyerBookingAvailability(
+                        $pdo,
+                        $lawyerId,
+                        $newDate,
+                        $newTime,
+                        $appointmentId,
+                        $durationMinutes
+                    );
+
+                    if (!$availabilityCheck['ok']) {
+                        $message = $availabilityCheck['message'] ?? 'The selected time is not available.';
+                        $messageType = 'danger';
+                    } else {
+                        $startsAt = $newDate . ' ' . (preg_match('/^\d{2}:\d{2}$/', $newTime) ? $newTime . ':00' : $newTime);
+                        $endsAt = date('Y-m-d H:i:s', strtotime($startsAt . ' +' . $durationMinutes . ' minutes'));
+                        $notes = (string) ($appointment['notes'] ?? '');
+                        if ($rescheduleNotes !== '') {
+                            $notes = trim(($notes !== '' ? $notes . "\n\n" : '') . '[Rescheduled by lawyer] ' . $rescheduleNotes);
+                        }
+
+                        $stmt = $pdo->prepare("
+                            UPDATE appointments
+                            SET starts_at = ?, ends_at = ?, status = ?, notes = ?
+                            WHERE id = ? AND lawyer_id = ?
+                        ");
+                        $stmt->execute([$startsAt, $endsAt, $newStatus, $notes, $appointmentId, $lawyerId]);
+
+                        syncAppointmentAvailabilitySlot($pdo, [
+                            'id' => $appointmentId,
+                            'lawyer_id' => $lawyerId,
+                            'starts_at' => $startsAt,
+                            'ends_at' => $endsAt,
+                            'status' => $newStatus,
+                        ]);
+
+                        $message = 'Appointment rescheduled successfully.';
+                        $messageType = 'success';
                     }
-
-                    $stmt = $pdo->prepare("
-                        UPDATE appointments
-                        SET starts_at = ?, ends_at = ?, status = ?, notes = ?
-                        WHERE id = ? AND lawyer_id = ?
-                    ");
-                    $stmt->execute([$startsAt, $endsAt, $newStatus, $notes, $appointmentId, $lawyerId]);
-
-                    syncAppointmentAvailabilitySlot($pdo, [
-                        'id' => $appointmentId,
-                        'lawyer_id' => $lawyerId,
-                        'starts_at' => $startsAt,
-                        'ends_at' => $endsAt,
-                        'status' => $newStatus,
-                    ]);
-
-                    $message = 'Appointment rescheduled successfully.';
-                    $messageType = 'success';
                 }
             } else {
                 $statusMap = [
@@ -171,6 +186,47 @@ try {
     $appointments = [];
 }
 
+$rescheduleAvailabilityByDate = [];
+$rescheduleHasSchedule = false;
+try {
+    $availabilityMaps = loadLawyerAvailabilityForBooking($pdo, [$lawyerId]);
+    $rescheduleAvailabilityByDate = $availabilityMaps['byDate'][$lawyerId] ?? [];
+    $rescheduleHasSchedule = !empty($availabilityMaps['hasSchedule'][$lawyerId]);
+} catch (PDOException $e) {
+    $rescheduleAvailabilityByDate = [];
+    $rescheduleHasSchedule = false;
+}
+
+/**
+ * Appointment length in minutes (30 or 60) from stored start/end.
+ */
+function lawyerAppointmentDurationMinutes(array $appointment): int
+{
+    $starts = strtotime((string) ($appointment['starts_at'] ?? ''));
+    $ends = strtotime((string) ($appointment['ends_at'] ?? ''));
+    if ($starts && $ends && $ends > $starts) {
+        $minutes = (int) round(($ends - $starts) / 60);
+        if ($minutes <= 30) {
+            return 30;
+        }
+    }
+
+    return 60;
+}
+
+/**
+ * Case file link for a lawyer appointment row (own column for vertical alignment).
+ */
+function buildLawyerAppointmentCaseLink(array $appointment): string
+{
+    $caseId = (int) ($appointment['case_id'] ?? 0);
+    if ($caseId <= 0) {
+        return '<span class="text-muted text-xs">—</span>';
+    }
+
+    return '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-dark mb-0">Case</a>';
+}
+
 /**
  * Build action buttons for a lawyer-managed appointment row.
  */
@@ -181,14 +237,17 @@ function buildLawyerAppointmentActions(array $appointment): string
     if ($status === 'approved') {
         $status = 'accepted';
     }
-    $caseId = (int) $appointment['case_id'];
     $dateVal = date('Y-m-d', strtotime($appointment['starts_at']));
     $timeVal = date('H:i', strtotime($appointment['starts_at']));
+    $durationMinutes = lawyerAppointmentDurationMinutes($appointment);
     $defaultRescheduleStatus = ($status === 'accepted') ? 'accepted' : 'pending';
+    $rescheduleOnclickArgs = $id . ', \''
+        . htmlspecialchars($dateVal, ENT_QUOTES) . '\', \''
+        . htmlspecialchars($timeVal, ENT_QUOTES) . '\', \''
+        . htmlspecialchars($defaultRescheduleStatus, ENT_QUOTES) . '\', '
+        . $durationMinutes;
 
     $html = '<div class="lawyer-appointment-actions">';
-
-    $html .= '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-dark mb-0">Case</a>';
 
     if ($status === 'accepted') {
         $html .= '<span class="badge bg-success">Locked</span>';
@@ -215,7 +274,7 @@ function buildLawyerAppointmentActions(array $appointment): string
             <button type="submit" class="btn btn-sm btn-danger mb-0" onclick="return confirm(\'Reject this appointment?\')">Reject</button>
         </form>
         <button type="button" class="btn btn-sm btn-primary mb-0"
-            onclick="openRescheduleModal(' . $id . ', \'' . htmlspecialchars($dateVal, ENT_QUOTES) . '\', \'' . htmlspecialchars($timeVal, ENT_QUOTES) . '\', \'' . htmlspecialchars($defaultRescheduleStatus, ENT_QUOTES) . '\')">
+            onclick="openRescheduleModal(' . $rescheduleOnclickArgs . ')">
             Reschedule
         </button>';
         $html .= '</div>';
@@ -240,7 +299,7 @@ function buildLawyerAppointmentActions(array $appointment): string
             <button type="submit" class="btn btn-sm btn-warning mb-0" onclick="return confirm(\'Keep this appointment as pending?\')">Pending</button>
         </form>
         <button type="button" class="btn btn-sm btn-primary mb-0"
-            onclick="openRescheduleModal(' . $id . ', \'' . htmlspecialchars($dateVal, ENT_QUOTES) . '\', \'' . htmlspecialchars($timeVal, ENT_QUOTES) . '\', \'' . htmlspecialchars($defaultRescheduleStatus, ENT_QUOTES) . '\')">
+            onclick="openRescheduleModal(' . $rescheduleOnclickArgs . ')">
             Reschedule
         </button>';
 
@@ -252,7 +311,7 @@ function buildLawyerAppointmentActions(array $appointment): string
 // Build appointments table HTML
 $appointmentsTable = '';
 if (empty($appointments)) {
-    $appointmentsTable = '<tr><td colspan="6" class="text-center text-muted py-4">No appointments found matching your criteria</td></tr>';
+    $appointmentsTable = '<tr><td colspan="7" class="text-center text-muted py-4">No appointments found matching your criteria</td></tr>';
 } else {
     foreach ($appointments as $appointment) {
         $appointmentDate = date('M d, Y', strtotime($appointment['starts_at']));
@@ -306,7 +365,8 @@ if (empty($appointments)) {
             </td>
             <td>' . htmlspecialchars($appointment['notes'] ?: 'No notes') . '</td>
             <td class="text-center">' . $statusBadge . '</td>
-            <td class="text-end lawyer-appointment-actions-cell">' . buildLawyerAppointmentActions($appointment) . '</td>
+            <td class="text-center align-middle lawyer-appointment-case-cell">' . buildLawyerAppointmentCaseLink($appointment) . '</td>
+            <td class="text-end align-middle lawyer-appointment-actions-cell">' . buildLawyerAppointmentActions($appointment) . '</td>
         </tr>';
     }
 }
@@ -349,9 +409,21 @@ $html = <<<'HTML'
             padding-right: 0.4rem;
             white-space: nowrap;
         }
+        .lawyer-appointment-case-cell,
         .lawyer-appointment-actions-cell {
+            vertical-align: middle;
             white-space: nowrap;
             width: 1%;
+        }
+        .lawyer-appointment-case-cell .btn {
+            min-width: 4.25rem;
+        }
+        #reschedule_time option.lp-time-available {
+            color: #2dce89;
+            font-weight: 600;
+        }
+        #reschedule_time option:disabled {
+            color: #adb5bd;
         }
     </style>
 </head>
@@ -425,11 +497,12 @@ $html = <<<'HTML'
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Matter</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date & Time</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Notes</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case</th>
                                             <th class="text-end text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                                         </tr>
                                     </thead>
@@ -475,8 +548,13 @@ $html = <<<'HTML'
                         </div>
                         <div class="mb-3">
                             <label class="form-label">New time</label>
-                            <input type="time" class="form-control" name="reschedule_time" id="reschedule_time" required>
+                            <select class="form-control" name="reschedule_time" id="reschedule_time" required>
+                                <option value="">Select time</option>
+                            </select>
+                            <input type="hidden" id="reschedule_duration_minutes" name="reschedule_duration_minutes" value="60">
+                            <small class="text-muted d-block mt-1">Only <span class="text-success font-weight-bold">green</span> times match your published availability for the selected day.</small>
                         </div>
+                        <div id="rescheduleAvailabilityMessage" class="mb-3" style="display: none;"></div>
                         <div class="mb-3">
                             <label class="form-label">Status after reschedule</label>
                             <select class="form-select" name="reschedule_status" id="reschedule_status">
@@ -504,14 +582,282 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
-        function openRescheduleModal(appointmentId, dateValue, timeValue, statusValue) {
+        const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
+        const lawyerHasPublishedSchedule = {LAWYER_HAS_SCHEDULE_JSON};
+        const NO_AVAILABILITY_ON_DATE_MSG = 'No available times on this date. Choose another date.';
+        const SLOT_DAY_START_MINUTES = 9 * 60;
+        const SLOT_DAY_END_MINUTES = 17 * 60 + 30;
+
+        var rescheduleOriginalDate = '';
+        var rescheduleOriginalTime = '';
+
+        function openRescheduleModal(appointmentId, dateValue, timeValue, statusValue, durationMinutes) {
             document.getElementById('reschedule_appointment_id').value = appointmentId;
             document.getElementById('reschedule_date').value = dateValue;
-            document.getElementById('reschedule_time').value = timeValue;
             document.getElementById('reschedule_status').value = statusValue || 'pending';
             document.getElementById('reschedule_notes').value = '';
+            document.getElementById('reschedule_duration_minutes').value = durationMinutes === 30 ? '30' : '60';
+            rescheduleOriginalDate = dateValue || '';
+            rescheduleOriginalTime = window.normalizeRescheduleSelectTime(timeValue);
+            window.renderRescheduleTimeOptions(window.normalizeRescheduleSelectTime(timeValue));
             bootstrap.Modal.getOrCreateInstance(document.getElementById('rescheduleModal')).show();
         }
+
+        (function() {
+            var dateInput = document.getElementById('reschedule_date');
+            var timeSelect = document.getElementById('reschedule_time');
+            var durationInput = document.getElementById('reschedule_duration_minutes');
+            var messageEl = document.getElementById('rescheduleAvailabilityMessage');
+            var form = document.getElementById('rescheduleForm');
+            var saveBtn = form ? form.querySelector('button[type="submit"]') : null;
+
+            function getRescheduleDurationMinutes() {
+                return durationInput && parseInt(durationInput.value, 10) === 30 ? 30 : 60;
+            }
+
+            function getStandardSlotTimes(durationMinutes) {
+                var times = [];
+                var lastStart = durationMinutes === 30 ? SLOT_DAY_END_MINUTES : SLOT_DAY_END_MINUTES - 30;
+                for (var t = SLOT_DAY_START_MINUTES; t <= lastStart; t += durationMinutes) {
+                    var h = Math.floor(t / 60);
+                    var m = t % 60;
+                    times.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
+                }
+                return times;
+            }
+
+            function normalizeRescheduleSelectTime(timeValue) {
+                if (!timeValue) {
+                    return '';
+                }
+                var parts = String(timeValue).split(':');
+                return parts[0].padStart(2, '0') + ':' + (parts[1] || '00').padStart(2, '0');
+            }
+
+            function normalizeTimeValue(timeValue) {
+                return timeValue.length === 5 ? timeValue + ':00' : timeValue;
+            }
+
+            function addDurationToTime(timeValue, durationMinutes) {
+                var normalized = timeValue.length === 5 ? timeValue : timeValue.slice(0, 5);
+                var parts = normalized.split(':');
+                var total = parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10) + durationMinutes;
+                if (total >= 24 * 60) {
+                    total = 24 * 60 - 1;
+                }
+                return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0') + ':00';
+            }
+
+            function rangesOverlap(startA, endA, startB, endB) {
+                return startA < endB && endA > startB;
+            }
+
+            function formatTimeLabel(timeValue) {
+                var parts = timeValue.split(':');
+                var hours = parseInt(parts[0], 10);
+                var minutes = parts[1] || '00';
+                var period = hours >= 12 ? 'PM' : 'AM';
+                var displayHours = hours % 12;
+                if (displayHours === 0) {
+                    displayHours = 12;
+                }
+                return displayHours + ':' + minutes + ' ' + period;
+            }
+
+            function formatSlotRangeLabel(startValue, durationMinutes) {
+                if (durationMinutes === 60) {
+                    return formatTimeLabel(startValue);
+                }
+                var endHm = addDurationToTime(startValue.length === 5 ? startValue + ':00' : startValue, durationMinutes).slice(0, 5);
+                return formatTimeLabel(startValue) + ' \u2013 ' + formatTimeLabel(endHm);
+            }
+
+            function getSlotsForDate(dateValue) {
+                return lawyerAvailabilityByDate[dateValue] ? lawyerAvailabilityByDate[dateValue].slice() : [];
+            }
+
+            function lawyerHasAvailabilityOnDate(dateValue) {
+                return getSlotsForDate(dateValue).some(function(slot) {
+                    return slot.type === 'available';
+                });
+            }
+
+            function nowParts() {
+                var now = new Date();
+                return {
+                    date: now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'),
+                    time: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
+                };
+            }
+
+            function isBlockedByUnavailable(timeValue, slots, durationMinutes, dateValue) {
+                var startTime = normalizeTimeValue(timeValue);
+                var endTime = addDurationToTime(startTime, durationMinutes);
+                var isSameAsOriginal = dateValue === rescheduleOriginalDate
+                    && normalizeRescheduleSelectTime(timeValue) === rescheduleOriginalTime;
+
+                return slots.some(function(slot) {
+                    if (slot.type !== 'unavailable') {
+                        return false;
+                    }
+                    if (!rangesOverlap(startTime, endTime, slot.start, slot.end)) {
+                        return false;
+                    }
+                    return !isSameAsOriginal;
+                });
+            }
+
+            function isWithinAvailable(timeValue, slots, durationMinutes) {
+                var startTime = normalizeTimeValue(timeValue);
+                var endTime = addDurationToTime(startTime, durationMinutes);
+                return slots.some(function(slot) {
+                    return slot.type === 'available' && startTime >= slot.start && endTime <= slot.end;
+                });
+            }
+
+            function isTimeSlotBookable(timeValue, dateValue, slots, durationMinutes) {
+                if (!timeValue || !lawyerHasPublishedSchedule) {
+                    return false;
+                }
+                var now = nowParts();
+                if (dateValue === now.date && timeValue < now.time) {
+                    return false;
+                }
+                if (!lawyerHasAvailabilityOnDate(dateValue)) {
+                    return false;
+                }
+                return isWithinAvailable(timeValue, slots, durationMinutes)
+                    && !isBlockedByUnavailable(timeValue, slots, durationMinutes, dateValue);
+            }
+
+            function setRescheduleMessage(html, visible) {
+                if (!messageEl) {
+                    return;
+                }
+                messageEl.style.display = visible ? 'block' : 'none';
+                messageEl.innerHTML = html || '';
+            }
+
+            function setSaveEnabled(enabled) {
+                if (saveBtn) {
+                    saveBtn.disabled = !enabled;
+                }
+            }
+
+            window.renderRescheduleTimeOptions = function(preservedTime) {
+                if (!timeSelect || !dateInput) {
+                    return;
+                }
+
+                var dateValue = dateInput.value;
+                var durationMinutes = getRescheduleDurationMinutes();
+                var previous = preservedTime || normalizeRescheduleSelectTime(timeSelect.value);
+                var slots = getSlotsForDate(dateValue);
+                var hasBookable = false;
+
+                timeSelect.innerHTML = '<option value="">Select time</option>';
+                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                    var option = document.createElement('option');
+                    option.value = slotValue;
+                    option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);
+                    timeSelect.appendChild(option);
+                });
+
+                if (!dateValue) {
+                    setRescheduleMessage(
+                        '<div class="alert alert-info py-2 mb-0">Select a date to see your available times.</div>',
+                        true
+                    );
+                    setSaveEnabled(false);
+                    return;
+                }
+
+                if (!lawyerHasPublishedSchedule || !lawyerHasAvailabilityOnDate(dateValue)) {
+                    timeSelect.querySelectorAll('option').forEach(function(option) {
+                        if (option.value) {
+                            option.disabled = true;
+                        }
+                    });
+                    timeSelect.value = '';
+                    setRescheduleMessage(
+                        '<div class="alert alert-warning py-2 mb-0">' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
+                        true
+                    );
+                    setSaveEnabled(false);
+                    return;
+                }
+
+                timeSelect.querySelectorAll('option').forEach(function(option) {
+                    if (!option.value) {
+                        return;
+                    }
+                    if (isTimeSlotBookable(option.value, dateValue, slots, durationMinutes)) {
+                        option.classList.add('lp-time-available');
+                        option.disabled = false;
+                        hasBookable = true;
+                    } else {
+                        option.disabled = true;
+                    }
+                });
+
+                if (previous) {
+                    var match = timeSelect.querySelector('option[value="' + previous + '"]');
+                    timeSelect.value = match && !match.disabled ? previous : '';
+                }
+
+                if (!hasBookable) {
+                    setRescheduleMessage(
+                        '<div class="alert alert-warning py-2 mb-0">' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
+                        true
+                    );
+                    setSaveEnabled(false);
+                    return;
+                }
+
+                if (!timeSelect.value) {
+                    setRescheduleMessage(
+                        '<div class="alert alert-info py-2 mb-0">Choose a <span class="text-success font-weight-bold">green</span> available time.</div>',
+                        true
+                    );
+                    setSaveEnabled(false);
+                    return;
+                }
+
+                setRescheduleMessage('', false);
+                setSaveEnabled(true);
+            };
+
+            window.normalizeRescheduleSelectTime = normalizeRescheduleSelectTime;
+
+            if (dateInput) {
+                dateInput.addEventListener('change', function() {
+                    renderRescheduleTimeOptions('');
+                });
+            }
+
+            if (timeSelect) {
+                timeSelect.addEventListener('change', function() {
+                    renderRescheduleTimeOptions(timeSelect.value);
+                });
+            }
+
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    var dateValue = dateInput ? dateInput.value : '';
+                    var timeValue = timeSelect ? timeSelect.value : '';
+                    var selected = timeSelect ? timeSelect.options[timeSelect.selectedIndex] : null;
+
+                    if (!dateValue || !timeValue || !selected || selected.disabled) {
+                        event.preventDefault();
+                        setRescheduleMessage(
+                            '<div class="alert alert-warning py-2 mb-0">Please select an available time (green option).</div>',
+                            true
+                        );
+                        setSaveEnabled(false);
+                    }
+                });
+            }
+        })();
     </script>
 </body>
 </html>
@@ -520,6 +866,8 @@ HTML;
 $replacements = [
     '{MESSAGE}' => $messageHtml,
     '{MIN_DATE}' => date('Y-m-d'),
+    '{LAWYER_AVAILABILITY_BY_DATE_JSON}' => json_encode($rescheduleAvailabilityByDate, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP),
+    '{LAWYER_HAS_SCHEDULE_JSON}' => $rescheduleHasSchedule ? 'true' : 'false',
     '{NAVIGATION}' => $navHtml,
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',

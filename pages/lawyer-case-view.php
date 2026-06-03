@@ -59,8 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
                 $stmt = $pdo->prepare("INSERT INTO documents (case_id, filename, filepath, label, uploaded_by) VALUES (?, ?, ?, ?, ?)");
                 $stmt->execute([$caseId, $file['name'], 'uploads/lawyer_files/' . $fileName, $label ?: $file['name'], $lawyerName]);
 
-                // Log the event
-                logDocumentUpload($pdo, $caseId, $label ?: $file['name'], $lawyerName, $lawyerUserId);
+                CaseEvents::trackDocumentUploaded($caseId, [
+                    'filename' => $file['name'],
+                    'label' => $label ?: $file['name'],
+                ]);
             } catch (PDOException $e) {
                 // Handle error silently for now
             }
@@ -76,6 +78,68 @@ try {
     ensureLawyerAssignedToCase($pdo, $caseId, $lawyerId);
 } catch (PDOException $e) {
     die('Error checking case access: ' . htmlspecialchars($e->getMessage()));
+}
+
+// Handle comment deletion (lawyer's own comments on this case only)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_comment_id'])) {
+    $commentId = (int) $_POST['delete_comment_id'];
+    if ($commentId > 0 && $lawyerUserId) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT cc.id
+                FROM case_comments cc
+                INNER JOIN case_lawyers cl ON cl.case_id = cc.case_id AND cl.lawyer_id = ?
+                WHERE cc.id = ? AND cc.case_id = ? AND cc.user_id = ?
+            ");
+            $stmt->execute([$lawyerId, $commentId, $caseId, $lawyerUserId]);
+            if ($stmt->fetch()) {
+                $del = $pdo->prepare('DELETE FROM case_comments WHERE id = ? AND case_id = ?');
+                $del->execute([$commentId, $caseId]);
+            }
+        } catch (PDOException $e) {
+            // Deletion failed silently; page will reload without changes
+        }
+    }
+    header('Location: lawyer-case-view.php?id=' . $caseId . '#lawyer-case-comments');
+    exit;
+}
+
+// Handle document deletion (assigned lawyer, documents on this case)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_document_id'])) {
+    $documentId = (int) $_POST['delete_document_id'];
+    if ($documentId > 0) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT d.id, d.filepath, d.filename, d.label
+                FROM documents d
+                INNER JOIN case_lawyers cl ON cl.case_id = d.case_id AND cl.lawyer_id = ?
+                WHERE d.id = ? AND d.case_id = ?
+            ");
+            $stmt->execute([$lawyerId, $documentId, $caseId]);
+            $doc = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($doc) {
+                $del = $pdo->prepare('DELETE FROM documents WHERE id = ? AND case_id = ?');
+                $del->execute([$documentId, $caseId]);
+
+                $relativePath = ltrim((string) ($doc['filepath'] ?? ''), '/\\');
+                if ($relativePath !== '') {
+                    $fsPath = __DIR__ . '/../' . $relativePath;
+                    if (is_file($fsPath)) {
+                        @unlink($fsPath);
+                    }
+                }
+
+                CaseEvents::trackDocumentDeleted($caseId, [
+                    'filename' => (string) ($doc['filename'] ?? basename($relativePath)),
+                    'label' => (string) ($doc['label'] ?? ''),
+                ]);
+            }
+        } catch (PDOException $e) {
+            // Deletion failed silently; page will reload without changes
+        }
+    }
+    header('Location: lawyer-case-view.php?id=' . $caseId . '#case-documents');
+    exit;
 }
 
 // Fetch case details
@@ -250,16 +314,34 @@ if (empty($appointments)) {
 // Build documents HTML
 $documentsHtml = '';
 if (empty($documents)) {
-    $documentsHtml = '<tr><td colspan="3" class="text-center text-muted py-3">No documents uploaded</td></tr>';
+    $documentsHtml = '<tr><td colspan="4" class="text-center text-muted py-3">No documents uploaded</td></tr>';
 } else {
     foreach ($documents as $document) {
+        $documentId = (int) ($document['id'] ?? 0);
         $documentPath = isset($document['filepath']) ? (string) $document['filepath'] : '';
         $documentName = !empty($document['label']) ? $document['label'] : (!empty($document['filename']) ? $document['filename'] : basename($documentPath));
-        $fileUrl = '../' . ltrim($documentPath, '/');
-        $fileSystemPath = __DIR__ . '/../' . ltrim($documentPath, '/');
+        $fileUrl = '../' . ltrim($documentPath, '/\\');
+        $fileSystemPath = __DIR__ . '/../' . ltrim($documentPath, '/\\');
         $fileSize = ($documentPath !== '' && is_file($fileSystemPath)) ? filesize($fileSystemPath) : false;
         $fileSizeFormatted = $fileSize ? round($fileSize / 1024, 1) . ' KB' : 'Unknown';
         $fileType = !empty($document['filename']) ? strtoupper(pathinfo($document['filename'], PATHINFO_EXTENSION)) : 'File';
+
+        $actionButtons = '';
+        if ($documentPath !== '' && is_file($fileSystemPath)) {
+            $actionButtons .= '
+                <a href="' . htmlspecialchars($fileUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary mb-0">View</a>
+                <a href="' . htmlspecialchars($fileUrl) . '" download class="btn btn-sm btn-outline-secondary mb-0">Download</a>';
+        }
+        if ($documentId > 0) {
+            $actionButtons .= '
+                <form method="post" class="d-inline mb-0" onsubmit="return confirm(\'Remove this document permanently?\');">
+                    <input type="hidden" name="delete_document_id" value="' . $documentId . '">
+                    <button type="submit" class="btn btn-sm btn-outline-danger mb-0">Remove</button>
+                </form>';
+        }
+        if ($actionButtons === '') {
+            $actionButtons = '<span class="text-xs text-muted">Unavailable</span>';
+        }
 
         $documentsHtml .= '
         <tr>
@@ -277,8 +359,7 @@ if (empty($documents)) {
             <td class="text-center">' . htmlspecialchars($fileType) . '</td>
             <td class="text-center">' . $fileSizeFormatted . '</td>
             <td class="text-end">
-                <a href="' . htmlspecialchars($fileUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
-                <a href="' . htmlspecialchars($fileUrl) . '" download class="btn btn-sm btn-outline-secondary">Download</a>
+                <div class="d-inline-flex flex-wrap justify-content-end gap-1">' . $actionButtons . '</div>
             </td>
         </tr>';
     }
@@ -302,7 +383,90 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/legalpro-lawyer-portal.css?v=2" rel="stylesheet" />
+    <style>
+        .lawyer-case-comments .cc-comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: min(32rem, 55vh);
+            overflow-y: auto;
+            padding-right: 0.15rem;
+        }
+        .lawyer-case-comments .cc-comment-list::-webkit-scrollbar { width: 6px; }
+        .lawyer-case-comments .cc-comment-list::-webkit-scrollbar-thumb {
+            background: rgba(45, 206, 137, 0.35);
+            border-radius: 999px;
+        }
+        .lawyer-case-comments .cc-comment-item-inner {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,.06);
+            border-radius: 0.75rem;
+            padding: 1rem 1.15rem;
+            border-left: 4px solid #8392ab;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+            width: 100%;
+            max-width: 100%;
+        }
+        .lawyer-case-comments .cc-comment-item--client .cc-comment-item-inner { border-left-color: #11cdef; }
+        .lawyer-case-comments .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
+        .lawyer-case-comments .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
+        .lawyer-case-comments .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
+        .lawyer-case-comments .cc-comment-item--yours .cc-comment-item-inner {
+            background: #f8fdfb;
+            border-color: rgba(45, 206, 137, 0.25);
+        }
+        .lawyer-case-comments .cc-comment-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.65rem;
+            flex-wrap: wrap;
+        }
+        .lawyer-case-comments .cc-comment-head-main {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.35rem;
+            min-width: 0;
+        }
+        .lawyer-case-comments .cc-comment-author {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #344767;
+        }
+        .lawyer-case-comments .cc-comment-time {
+            font-size: 0.75rem;
+            color: #8392ab;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .lawyer-case-comments .cc-comment-text {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #525f7f;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            margin: 0;
+        }
+        .lawyer-case-comments .cc-comment-form textarea {
+            border-radius: 0.65rem;
+            resize: vertical;
+            min-height: 6rem;
+        }
+        .lawyer-case-comments .cc-comment-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+        .lawyer-case-comments .cc-comment-delete-form {
+            display: inline-flex;
+            margin: 0;
+        }
+    </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-case-view-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
@@ -394,7 +558,7 @@ $html = <<<'HTML'
                                     <button class="nav-link" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button" role="tab">Appointments</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">Documents</button>
+                                    <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#case-documents" type="button" role="tab">Documents</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">Track of Events</button>
@@ -461,7 +625,7 @@ $html = <<<'HTML'
                                 </div>
 
                                 <!-- Documents Tab -->
-                                <div class="tab-pane fade" id="documents" role="tabpanel">
+                                <div class="tab-pane fade" id="case-documents" role="tabpanel">
                                     <div class="table-responsive">
                                         <table class="table table-striped">
                                             <thead>
@@ -491,30 +655,21 @@ $html = <<<'HTML'
             <!-- Comments Section -->
             <div class="row mt-4">
                 <div class="col-12">
-                    <div class="card">
+                    <div id="lawyer-case-comments" class="card cc-comments-panel lawyer-case-comments shadow-sm">
                         <div class="card-header pb-0">
-                            <h6>Case Comments & Files</h6>
+                            <h6 class="mb-0">Case Comments &amp; Files</h6>
+                            <p class="text-sm text-muted mb-0">Discussion on this case</p>
                         </div>
                         <div class="card-body">
-                            <!-- Comments -->
                             {COMMENTS_HTML}
 
-                            <!-- Add Comment Form -->
-                            <div class="mt-4">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Add Comment</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <form method="POST" action="">
-                                            <div class="form-group">
-                                                <textarea class="form-control" name="comment" rows="3" placeholder="Add your comment here..." required></textarea>
-                                            </div>
-                                            <button type="submit" class="btn btn-primary btn-sm mt-2">Add Comment</button>
-                                        </form>
-                                    </div>
+                            <form method="POST" action="" class="cc-comment-form mt-4 pt-4 border-top">
+                                <label for="lawyer-case-comment-input" class="form-label text-sm font-weight-bold mb-2">Add a comment</label>
+                                <textarea id="lawyer-case-comment-input" class="form-control" name="comment" rows="4" placeholder="Write your comment here…" required></textarea>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="submit" class="btn bg-gradient-success mb-0">Post comment</button>
                                 </div>
-                            </div>
+                            </form>
 
                             <!-- Upload File Form -->
                             <div class="mt-4">
@@ -561,56 +716,89 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var hash = window.location.hash;
+        if (hash === '#case-documents' || hash === '#lawyer-case-comments') {
+            var tabBtn = document.querySelector('[data-bs-target="' + hash + '"]');
+            if (tabBtn && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+            }
+        }
+    });
+    </script>
 </body>
 </html>
 HTML;
 
-// Build comments HTML (chat-like interface)
+$commentRoleBadge = static function (string $type): string {
+    switch ($type) {
+        case 'client':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-info">Client</span>';
+        case 'lawyer':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
+        case 'admin':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-warning">Admin</span>';
+        case 'staff':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Staff</span>';
+        default:
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">System</span>';
+    }
+};
+
+// Build comments feed (left-aligned, full width)
 $commentsHtml = '';
 if (!empty($comments)) {
-    $commentsHtml .= '<div class="chat-messages" style="max-height: 300px; overflow-y: auto;">';
+    $commentsHtml .= '<ul class="cc-comment-list list-unstyled mb-0">';
     foreach ($comments as $comment) {
-        $isCurrentUser = ($comment['user_id'] == $lawyerUserId);
-        $alignment = $isCurrentUser ? 'justify-content-end' : 'justify-content-start';
-        $bgColor = $isCurrentUser ? 'bg-primary' : 'bg-light';
-        $textColor = $isCurrentUser ? 'text-white' : 'text-dark';
-        $marginClass = $isCurrentUser ? 'ms-3' : 'me-3';
-
-        // Add user type badge
-        $userTypeBadge = '';
-        switch ($comment['comment_type']) {
-            case 'client':
-                $userTypeBadge = '<span class="badge badge-sm bg-info">Client</span>';
-                break;
-            case 'lawyer':
-                $userTypeBadge = '<span class="badge badge-sm bg-success">Lawyer</span>';
-                break;
-            case 'admin':
-                $userTypeBadge = '<span class="badge badge-sm bg-warning">Admin</span>';
-                break;
-            case 'staff':
-                $userTypeBadge = '<span class="badge badge-sm bg-secondary">Staff</span>';
-                break;
+        $isCurrentUser = ((int) ($comment['user_id'] ?? 0) === (int) $lawyerUserId);
+        $type = (string) ($comment['comment_type'] ?? '');
+        $itemClass = 'cc-comment-item cc-comment-item--' . preg_replace('/[^a-z]/', '', $type);
+        if ($isCurrentUser) {
+            $itemClass .= ' cc-comment-item--yours';
+        }
+        $timeLabel = date('M j, Y · g:i A', strtotime($comment['created_at']));
+        $body = nl2br(htmlspecialchars((string) ($comment['comment'] ?? '')));
+        $authorLabel = htmlspecialchars((string) ($comment['commenter_name'] ?? 'User'));
+        $roleBadge = $commentRoleBadge($type);
+        $youBadge = $isCurrentUser ? '<span class="badge badge-sm bg-gradient-success ms-1">You</span>' : '';
+        $commentId = (int) ($comment['id'] ?? 0);
+        $deleteBtn = '';
+        if ($isCurrentUser && $commentId > 0) {
+            $deleteBtn = '
+            <form method="post" class="cc-comment-delete-form" onsubmit="return confirm(\'Delete this comment permanently?\');">
+                <input type="hidden" name="delete_comment_id" value="' . $commentId . '">
+                <button type="submit" class="btn btn-sm btn-outline-danger mb-0">Delete</button>
+            </form>';
         }
 
-        $commentsHtml .= '<div class="d-flex ' . $alignment . ' mb-3">
-            <div class="chat-message ' . $bgColor . ' ' . $textColor . ' rounded-lg p-3 ' . $marginClass . '" style="max-width: 70%;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <div class="d-flex align-items-center">
-                        <strong class="me-2">' . htmlspecialchars($comment['commenter_name']) . '</strong>
-                        ' . $userTypeBadge . '
+        $commentsHtml .= '
+        <li class="' . $itemClass . '">
+            <div class="cc-comment-item-inner">
+                <div class="cc-comment-head">
+                    <div class="cc-comment-head-main">
+                        <span class="cc-comment-author">' . $authorLabel . '</span>
+                        ' . $youBadge . '
+                        ' . $roleBadge . '
                     </div>
-                    <small class="opacity-75">' . date('M d, H:i', strtotime($comment['created_at'])) . '</small>
+                    <div class="cc-comment-head-actions">
+                        <time class="cc-comment-time" datetime="' . htmlspecialchars(date('c', strtotime($comment['created_at']))) . '">' . htmlspecialchars($timeLabel) . '</time>
+                        ' . $deleteBtn . '
+                    </div>
                 </div>
-                <p class="mb-0" style="word-wrap: break-word;">' . nl2br(htmlspecialchars($comment['comment'])) . '</p>
+                <div class="cc-comment-text">' . $body . '</div>
             </div>
-        </div>';
+        </li>';
     }
-    $commentsHtml .= '</div>';
+    $commentsHtml .= '</ul>';
 } else {
-    $commentsHtml = '<div class="text-center py-3">
-        <i class="ni ni-chat-round text-muted" style="font-size: 2rem;"></i>
-        <p class="text-muted mt-1 mb-0">No comments yet. Start the conversation!</p>
+    $commentsHtml = '
+    <div class="cc-comments-empty text-center py-5 mb-0">
+        <div class="cc-comments-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
+            <i class="ni ni-chat-round text-success text-lg opacity-10" aria-hidden="true"></i>
+        </div>
+        <h6 class="font-weight-bolder mt-4 mb-2">No comments yet</h6>
+        <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Post a comment below to communicate with the client and your team about this case.</p>
     </div>';
 }
 

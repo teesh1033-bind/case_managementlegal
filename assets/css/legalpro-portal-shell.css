@@ -367,9 +367,19 @@ body.client-profile-page .main-content > .container-fluid {
     z-index: 1060 !important;
     min-width: 12rem;
     margin-top: 0 !important;
-    padding: 0.4rem 0;
+    padding: 0.35rem 0;
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 0.65rem;
+}
+
+.legalpro-header-user__menu > li {
+    margin: 0;
+    list-style: none;
+}
+
+.legalpro-header-user__menu .dropdown-divider {
+    display: none;
+    margin: 0;
 }
 
 .legalpro-header-user__menu.dropdown-menu::before {
@@ -396,8 +406,13 @@ body.client-profile-page .main-content > .container-fluid {
 
 .legalpro-header-user__menu .dropdown-item {
     font-size: 0.875rem;
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 1rem;
+    line-height: 1.35;
     font-weight: 500;
+}
+
+.legalpro-header-user__menu .dropdown-item + .dropdown-item {
+    margin-top: 0;
 }
 
 /* Top navbar */

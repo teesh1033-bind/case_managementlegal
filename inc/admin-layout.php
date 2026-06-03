@@ -118,7 +118,6 @@ function legalpro_render_portal_header_utilities(
             <ul class="dropdown-menu dropdown-menu-end shadow border-0 legalpro-header-user__menu" id="legalproHeaderUserMenuList">
                 ' . $profileItem . '
                 ' . $extraMenuHtml . '
-                ' . ($profileItem !== '' || $extraMenuHtml !== '' ? '<li><hr class="dropdown-divider"></li>' : '') . '
                 <li><a class="dropdown-item text-danger" href="' . htmlspecialchars($logoutUrl) . '"><i class="ni ni-button-power me-2"></i>Sign out</a></li>
             </ul>
         </div>

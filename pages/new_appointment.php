@@ -351,16 +351,25 @@ try {
     $lawyerHasSchedule = [];
 }
 
-$lawyerOptions = '<option value="">Select lawyer</option>';
+$lawyerOptionsCatalog = [];
 $lawyerLabelMap = [];
 foreach ($lawyersList as $lawyer) {
-    $label = trim($lawyer['first_name'] . ' ' . $lawyer['last_name']);
-    if (!empty($lawyer['username'])) {
-        $label .= ' (' . $lawyer['username'] . ')';
+    $label = trim(preg_replace('/\s+/u', ' ', ($lawyer['first_name'] ?? '') . ' ' . ($lawyer['last_name'] ?? '')));
+    if ($label === '') {
+        $label = 'Lawyer #' . (int) $lawyer['id'];
     }
-    $lawyerLabelMap[(int)$lawyer['id']] = $label;
-    $selected = ((int)$formData['lawyer_id'] === (int)$lawyer['id']) ? ' selected' : '';
-    $lawyerOptions .= '<option value="' . (int)$lawyer['id'] . '"' . $selected . '>' . htmlspecialchars($label) . '</option>';
+    $lawyerLabelMap[(int) $lawyer['id']] = $label;
+    $lawyerOptionsCatalog[] = [
+        'id' => (int) $lawyer['id'],
+        'label' => $label,
+    ];
+}
+
+$lawyerOptions = '<option value="">Select lawyer</option>';
+foreach ($lawyerOptionsCatalog as $entry) {
+    $selected = ((int) $formData['lawyer_id'] === (int) $entry['id']) ? ' selected' : '';
+    $lawyerOptions .= '<option value="' . (int) $entry['id'] . '"' . $selected . '>'
+        . htmlspecialchars($entry['label']) . '</option>';
 }
 
 $caseOptions = '<option value="">Select case</option>';
@@ -429,35 +438,10 @@ $html = <<<'HTML'
 		#appointment_time option:disabled {
 			color: #adb5bd;
 		}
-		.time-slot-btn {
-			border: 1px solid #dee2e6;
-			background: #fff;
-			color: #525f7f;
-			font-size: 0.8125rem;
-			font-weight: 600;
-			padding: 0.35rem 0.75rem;
-			border-radius: 0.5rem;
-			cursor: pointer;
-			transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-		}
-		.time-slot-btn.lp-slot-available {
-			border-color: #2dce89;
-			color: #2dce89;
-			background: rgba(45, 206, 137, 0.08);
-		}
-		.time-slot-btn.lp-slot-available:hover,
-		.time-slot-btn.lp-slot-available:focus {
-			background: #2dce89;
-			color: #fff;
-		}
-		.time-slot-btn.lp-slot-selected {
-			background: #2dce89;
-			border-color: #2dce89;
-			color: #fff;
-		}
-		.time-slot-btn:disabled {
-			opacity: 0.45;
-			cursor: not-allowed;
+		#lawyer_select option,
+		#case_select option,
+		#appointment_time option {
+			padding: 0.2rem 0.5rem;
 		}
 	</style>
 </head>
@@ -553,10 +537,7 @@ $html = <<<'HTML'
 										</div>
 									</div>
 								</div>
-								<div class="form-group mb-3">
-									<div id="timeSlotPicker" class="d-flex flex-wrap gap-2" aria-label="Available time slots"></div>
-									<small class="text-muted d-block mt-2">Tap a <span class="text-success font-weight-bold">green</span> slot or pick a green time from the list. Gray options are outside the lawyer&apos;s schedule.</small>
-								</div>
+								<small class="text-muted d-block mb-3">Choose a <span class="text-success font-weight-bold">green</span> time from the list. Gray options are outside the lawyer&apos;s schedule.</small>
 								<div id="availabilityMessage" class="mb-3" style="display: none;"></div>
 								<small class="text-muted d-block mb-3">Appointments can only be booked when the lawyer has published availability for the selected date. Unavailable blocks and existing appointments are excluded.</small>
 
@@ -583,6 +564,7 @@ $html = <<<'HTML'
 	<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
 	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 	<script>
+		const lawyerOptionsCatalog = {LAWYER_OPTIONS_CATALOG_JSON};
 		const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
 		const lawyerAvailabilityByDay = {LAWYER_AVAILABILITY_BY_DAY_JSON};
 		const lawyerHasSchedule = {LAWYER_HAS_SCHEDULE_JSON};
@@ -598,25 +580,35 @@ $html = <<<'HTML'
 			var lawyerSelect = document.getElementById('lawyer_select');
 
 			function filterLawyerOptions(allowedLawyerIds, keepCurrentValue) {
-				if (!lawyerSelect) {
+				if (!lawyerSelect || !Array.isArray(lawyerOptionsCatalog)) {
 					return;
 				}
 
 				var currentValue = keepCurrentValue ? lawyerSelect.value : '';
 				var hasAllowedLawyers = allowedLawyerIds.length > 0;
 
-				Array.from(lawyerSelect.options).forEach(function(option) {
-					if (!option.value) {
-						option.hidden = false;
-						option.disabled = false;
+				lawyerSelect.innerHTML = '';
+				var placeholder = document.createElement('option');
+				placeholder.value = '';
+				placeholder.textContent = 'Select lawyer';
+				lawyerSelect.appendChild(placeholder);
+
+				lawyerOptionsCatalog.forEach(function(entry) {
+					var id = String(entry.id);
+					var isAllowed = !hasAllowedLawyers
+						|| allowedLawyerIds.indexOf(id) !== -1
+						|| (keepCurrentValue && id === currentValue);
+					if (!isAllowed) {
 						return;
 					}
 
-					var isAllowed = !hasAllowedLawyers
-						|| allowedLawyerIds.indexOf(option.value) !== -1
-						|| (keepCurrentValue && option.value === currentValue);
-					option.hidden = !isAllowed;
-					option.disabled = !isAllowed;
+					var option = document.createElement('option');
+					option.value = id;
+					option.textContent = entry.label;
+					if (keepCurrentValue && id === currentValue) {
+						option.selected = true;
+					}
+					lawyerSelect.appendChild(option);
 				});
 			}
 
@@ -667,7 +659,6 @@ $html = <<<'HTML'
             var dateInput = document.getElementById('appointment_date');
             var durationSelect = document.getElementById('appointment_duration');
             var timeInput = document.getElementById('appointment_time');
-            var timeSlotPicker = document.getElementById('timeSlotPicker');
             var appointmentForm = document.getElementById('appointmentForm');
             var availabilityMessage = document.getElementById('availabilityMessage');
 
@@ -822,67 +813,6 @@ $html = <<<'HTML'
                 return isWithinAvailable(timeValue, slots, durationMinutes) && !isBlockedByUnavailable(timeValue, slots, durationMinutes);
             }
 
-            function syncTimeSlotPickerSelection() {
-                if (!timeSlotPicker || !timeInput) {
-                    return;
-                }
-                var selectedValue = timeInput.value;
-                timeSlotPicker.querySelectorAll('.time-slot-btn').forEach(function(btn) {
-                    btn.classList.toggle('lp-slot-selected', btn.getAttribute('data-time') === selectedValue);
-                });
-            }
-
-            function renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule, durationMinutes) {
-                if (!timeSlotPicker) {
-                    return;
-                }
-
-                timeSlotPicker.innerHTML = '';
-
-                if (!lawyerId || !dateValue || !timeInput) {
-                    return;
-                }
-
-                var timeOptions = timeInput.querySelectorAll('.time-option');
-                timeOptions.forEach(function(option) {
-                    if (!option.value) {
-                        return;
-                    }
-
-                    var bookable = isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule, durationMinutes);
-                    var btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'time-slot-btn';
-                    btn.setAttribute('data-time', option.value);
-                    btn.textContent = option.textContent.trim();
-
-                    if (bookable) {
-                        if (hasSchedule) {
-                            btn.classList.add('lp-slot-available');
-                        }
-                        btn.addEventListener('click', function() {
-                            timeInput.value = option.value;
-                            syncTimeSlotPickerSelection();
-                            syncAppointmentMinDateTime();
-                            validateLawyerAvailabilitySelection();
-                        });
-                    } else if (hasSchedule) {
-                        btn.disabled = true;
-                    } else {
-                        btn.addEventListener('click', function() {
-                            timeInput.value = option.value;
-                            syncTimeSlotPickerSelection();
-                            syncAppointmentMinDateTime();
-                            validateLawyerAvailabilitySelection();
-                        });
-                    }
-
-                    timeSlotPicker.appendChild(btn);
-                });
-
-                syncTimeSlotPickerSelection();
-            }
-
             function rebuildTimeSelectOptions(durationMinutes, preservedTime) {
                 if (!timeInput) {
                     return preservedTime;
@@ -917,9 +847,6 @@ $html = <<<'HTML'
                 var preservedTime = rebuildTimeSelectOptions(durationMinutes, normalizeSelectTime(timeInput.value || initialAppointmentTime));
 
                 if (!lawyerId || !dateValue) {
-                    if (timeSlotPicker) {
-                        timeSlotPicker.innerHTML = '';
-                    }
                     setAvailabilityMessage(
                         lawyerId
                             ? '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a date to see available time slots in green.</div>'
@@ -934,15 +861,12 @@ $html = <<<'HTML'
                 var hasBookableSlot = false;
 
                 if (!hasSchedule || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
-                    timeOptions.forEach(function(option) {
+                    timeInput.querySelectorAll('.time-option').forEach(function(option) {
                         if (option.value) {
                             option.disabled = true;
                         }
                     });
                     timeInput.value = '';
-                    if (timeSlotPicker) {
-                        timeSlotPicker.innerHTML = '';
-                    }
                     setAvailabilityMessage(
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
                         true
@@ -973,8 +897,6 @@ $html = <<<'HTML'
                         timeInput.value = '';
                     }
                 }
-
-                renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule, durationMinutes);
 
                 if (!hasBookableSlot) {
                     setAvailabilityMessage(
@@ -1131,7 +1053,6 @@ $html = <<<'HTML'
                 });
                 timeInput.addEventListener('change', function() {
                     syncAppointmentMinDateTime();
-                    syncTimeSlotPickerSelection();
                     validateLawyerAvailabilitySelection();
                 });
                 if (durationSelect && initialDurationMinutes) {
@@ -1175,6 +1096,7 @@ $html = str_replace('{APPOINTMENT_ID}', htmlspecialchars($formData['appointment_
 $html = str_replace('{CASE_OPTIONS}', $caseOptions, $html);
 $html = str_replace('{CLIENT_NAME}', htmlspecialchars($formData['client_name']), $html);
 $html = str_replace('{LAWYER_OPTIONS}', $lawyerOptions, $html);
+$html = str_replace('{LAWYER_OPTIONS_CATALOG_JSON}', json_encode($lawyerOptionsCatalog, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), $html);
 $html = str_replace('{DATE_VALUE}', htmlspecialchars($formData['date']), $html);
 $html = str_replace('{TIME_VALUE}', htmlspecialchars($formData['time']), $html);
 $durationMinutesForm = (int) ($formData['duration_minutes'] ?? 60);
