@@ -1,0 +1,137 @@
+/**
+ * LegalPro — Lucide outline icons (reference: thin line icons in soft circles)
+ */
+
+.lp-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.lp-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    stroke-width: 1.75;
+    stroke: currentColor;
+    fill: none;
+}
+
+.lp-icon svg [fill] {
+    fill: none;
+}
+
+/* Sidebar — white outline icons */
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__icon .lp-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    stroke: currentColor;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-collapse .lp-icon svg,
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-brand .lp-icon svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Header bell & user menu */
+.legalpro-header-notif .lp-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    stroke: #344767;
+}
+
+.legalpro-header-user__caret.lp-icon svg {
+    width: 0.85rem;
+    height: 0.85rem;
+    stroke: #8392ab;
+}
+
+.legalpro-header-user__menu .dropdown-item .lp-icon svg {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.15rem;
+}
+
+/* Dashboard glance — icon on colored tile */
+.dashboard-glance__icon .lp-icon svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    stroke: #fff;
+}
+
+/* Dashboard stat cards — soft circle + colored stroke (Eagle-style) */
+.dashboard-stat-icon-wrap {
+    width: 3rem;
+    height: 3rem;
+    min-width: 3rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(94, 114, 228, 0.12);
+}
+
+.dashboard-stat-icon-wrap .lp-icon svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    stroke: #5e72e4;
+}
+
+.dashboard-stat-icon-wrap--primary {
+    background: rgba(94, 114, 228, 0.12);
+}
+
+.dashboard-stat-icon-wrap--primary .lp-icon svg {
+    stroke: #5e72e4;
+}
+
+.dashboard-stat-icon-wrap--danger {
+    background: rgba(245, 54, 92, 0.1);
+}
+
+.dashboard-stat-icon-wrap--danger .lp-icon svg {
+    stroke: #f5365c;
+}
+
+.dashboard-stat-icon-wrap--success {
+    background: rgba(45, 206, 137, 0.12);
+}
+
+.dashboard-stat-icon-wrap--success .lp-icon svg {
+    stroke: #2dce89;
+}
+
+.dashboard-stat-icon-wrap--warning {
+    background: rgba(251, 99, 64, 0.12);
+}
+
+.dashboard-stat-icon-wrap--warning .lp-icon svg {
+    stroke: #fb6340;
+}
+
+body.legalpro-dashboard-page .dashboard-stat-card .icon-shape {
+    display: none !important;
+}
+
+.dashboard-upcoming-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+}
+
+.dashboard-upcoming-empty .lp-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    stroke: #8392ab;
+}
+
+.cd-list-item .lp-icon svg {
+    width: 0.85rem;
+    height: 0.85rem;
+    stroke: #5e72e4;
+}

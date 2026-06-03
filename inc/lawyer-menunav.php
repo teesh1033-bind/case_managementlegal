@@ -2,18 +2,19 @@
 // inc/lawyer-menunav.php — Lawyer portal sidebar + header utilities (same shell as menunav.php)
 
 require_once __DIR__ . '/admin-layout.php';
+require_once __DIR__ . '/legalpro-icons.php';
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 $lawyerMenuItems = [
-    ['title' => 'Dashboard', 'url' => 'lawyer-dashboard.php', 'icon' => 'ni ni-tv-2', 'id' => 'lawyer-dashboard'],
-    ['title' => 'My Tasks', 'url' => 'tasks.php', 'icon' => 'ni ni-check-bold', 'id' => 'tasks'],
-    ['title' => 'My Cases', 'url' => 'lawyer-cases.php', 'icon' => 'ni ni-folder-17', 'id' => 'lawyer-cases'],
-    ['title' => 'My Clients', 'url' => 'lawyer-clients.php', 'icon' => 'ni ni-circle-08', 'id' => 'lawyer-clients'],
-    ['title' => 'Appointments', 'url' => 'lawyer-appointments.php', 'icon' => 'ni ni-calendar-grid-58', 'id' => 'lawyer-appointments'],
-    ['title' => 'Court Tracking', 'url' => 'lawyer-court-tracking.php', 'icon' => 'ni ni-map-big', 'id' => 'lawyer-court-tracking'],
-    ['title' => 'My Availability', 'url' => 'lawyer-availability.php', 'icon' => 'ni ni-time-alarm', 'id' => 'lawyer-availability'],
-    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'ni ni-chat-round', 'id' => 'chatbot'],
+    ['title' => 'Dashboard', 'url' => 'lawyer-dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'lawyer-dashboard'],
+    ['title' => 'My Tasks', 'url' => 'tasks.php', 'icon' => 'list-checks', 'id' => 'tasks'],
+    ['title' => 'My Cases', 'url' => 'lawyer-cases.php', 'icon' => 'briefcase', 'id' => 'lawyer-cases'],
+    ['title' => 'My Clients', 'url' => 'lawyer-clients.php', 'icon' => 'users', 'id' => 'lawyer-clients'],
+    ['title' => 'Appointments', 'url' => 'lawyer-appointments.php', 'icon' => 'calendar', 'id' => 'lawyer-appointments'],
+    ['title' => 'Court Tracking', 'url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'id' => 'lawyer-court-tracking'],
+    ['title' => 'My Availability', 'url' => 'lawyer-availability.php', 'icon' => 'clock', 'id' => 'lawyer-availability'],
+    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
 
 function lawyerNavIsActive($itemId, $currentPage)
@@ -59,7 +60,7 @@ if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
             </span>
         </a>
         <button type="button" class="legalpro-sidebar-collapse btn btn-link p-0 d-none d-xl-inline-flex" id="legalproSidebarCollapse" aria-label="Collapse sidebar">
-            <i class="ni ni-bold-left"></i>
+            <?php echo legalpro_icon('chevron-left'); ?>
         </button>
         <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
@@ -70,7 +71,7 @@ if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
                 <?php $active = lawyerNavIsActive($item['id'], $currentPage); ?>
                 <li class="nav-item">
                     <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
-                        <span class="legalpro-sidebar-nav__icon"><i class="<?php echo htmlspecialchars($item['icon']); ?>"></i></span>
+                        <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
                         <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
                     </a>
                 </li>
@@ -91,3 +92,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<?php legalpro_icons_footer_scripts(); ?>
