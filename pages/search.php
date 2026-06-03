@@ -209,7 +209,7 @@ $portalTitle = $portal === 'client' ? 'Client' : ($portal === 'lawyer' ? 'Lawyer
 $stripClass = $portal === 'admin' ? 'bg-legalpro-admin' : ($portal === 'lawyer' ? 'bg-legalpro-lawyer' : 'bg-legalpro-client');
 $bodyExtra = 'search-portal-page search-portal-page--' . $portal;
 if ($portal === 'client') {
-    $bodyExtra .= ' client-portal-page';
+    $bodyExtra .= ' legalpro-client-portal client-portal-page';
 } elseif ($portal === 'lawyer') {
     $bodyExtra .= ' legalpro-lawyer-portal';
 }
@@ -264,30 +264,33 @@ $resultsQueryClass = 'text-white';
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <?php endif; ?>
     <style>
-        .search-portal-page .navbar-main,
-        .search-portal-page .navbar-main.blur,
-        .search-portal-page #navbarBlur {
+        .search-portal-page--lawyer .navbar-main,
+        .search-portal-page--lawyer .navbar-main.blur,
+        .search-portal-page--lawyer #navbarBlur,
+        .search-portal-page--admin .navbar-main,
+        .search-portal-page--admin .navbar-main.blur,
+        .search-portal-page--admin #navbarBlur {
             background: transparent !important;
             backdrop-filter: none !important;
             border: none !important;
             box-shadow: none !important;
         }
-        .search-portal-page--client .navbar-main {
-            margin-top: 20px;
-        }
-        .search-portal-page .navbar-main .breadcrumb-item,
-        .search-portal-page .navbar-main .breadcrumb-item a,
-        .search-portal-page .navbar-main h5,
-        .search-portal-page .navbar-main .nav-link {
+        .search-portal-page--lawyer .navbar-main .breadcrumb-item,
+        .search-portal-page--lawyer .navbar-main .breadcrumb-item a,
+        .search-portal-page--lawyer .navbar-main h5,
+        .search-portal-page--lawyer .navbar-main .nav-link,
+        .search-portal-page--admin .navbar-main .breadcrumb-item,
+        .search-portal-page--admin .navbar-main .breadcrumb-item a,
+        .search-portal-page--admin .navbar-main h5,
+        .search-portal-page--admin .navbar-main .nav-link {
             color: #fff !important;
         }
-        .search-portal-page .navbar-main .breadcrumb-item a {
+        .search-portal-page--lawyer .navbar-main .breadcrumb-item a,
+        .search-portal-page--admin .navbar-main .breadcrumb-item a {
             opacity: 0.9;
         }
-        .search-portal-page .navbar-main .breadcrumb-item.active {
-            opacity: 1;
-        }
-        .search-portal-page .navbar-main .sidenav-toggler-line {
+        .search-portal-page--lawyer .navbar-main .sidenav-toggler-line,
+        .search-portal-page--admin .navbar-main .sidenav-toggler-line {
             background-color: #fff !important;
         }
         .search-portal-page--lawyer .search-hero,
@@ -398,6 +401,15 @@ $resultsQueryClass = 'text-white';
     <?php echo $sidebarHtml; ?>
 
     <main class="main-content position-relative border-radius-lg">
+        <?php if ($portal === 'client'): ?>
+            <?php
+            require_once __DIR__ . '/../inc/client-portal-navbar.php';
+            echo legalpro_render_client_page_navbar('Search', 'Search', 'Search cases…', [
+                'client_name' => $userLabel,
+                'search_value' => $q,
+            ]);
+            ?>
+        <?php else: ?>
         <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" <?php echo $navbarBlurAttr; ?>>
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
@@ -430,6 +442,7 @@ $resultsQueryClass = 'text-white';
                 </div>
             </div>
         </nav>
+        <?php endif; ?>
 
         <div class="container-fluid py-4">
             <?php if ($error): ?>

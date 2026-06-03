@@ -8,7 +8,7 @@ if (defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
 define('LEGALPRO_CLIENT_PORTAL_HEAD', true);
 require_once __DIR__ . '/legalpro-icons.php';
 ?>
-<link href="../assets/css/legalpro-portal-shell.css?v=12" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=13" rel="stylesheet" />
 <link href="../assets/css/legalpro-client-portal.css?v=16" rel="stylesheet" />
 <link href="../assets/css/legalpro-admin-portal.css?v=14" rel="stylesheet" />
 <link href="../assets/css/legalpro-sidebar-nav.css?v=1" rel="stylesheet" />

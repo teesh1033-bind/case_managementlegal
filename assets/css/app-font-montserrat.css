@@ -231,8 +231,8 @@ input.form-check-input[type=checkbox].task-lawyer-checkbox:checked::after {
   transform: translate(-50%, -50%) rotate(45deg);
 }
 
-/* Toggle switches keep Bootstrap slider style */
-.form-switch .form-check-input[type=checkbox]::after {
+/* Hide Argon knob pseudo on generic switches only; status toggles use .legalpro-status-switch */
+.form-switch:not(.legalpro-status-switch) .form-check-input[type=checkbox]::after {
   display: none !important;
   content: none !important;
 }

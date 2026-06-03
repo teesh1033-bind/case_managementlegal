@@ -32,32 +32,32 @@
     color: inherit;
 }
 
-.dashboard-glance__icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 0.65rem;
-    display: flex;
+/* Glance icons — Eagle-style soft circle + outline stroke (matches stat cards) */
+.dashboard-glance-icon-wrap {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    border-radius: 50%;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    font-size: 1rem;
     flex-shrink: 0;
 }
 
-.dashboard-glance__icon--primary {
-    background: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
+.dashboard-glance-icon-wrap--primary {
+    background: rgba(94, 114, 228, 0.12);
 }
 
-.dashboard-glance__icon--info {
-    background: linear-gradient(310deg, #11cdef 0%, #1171ef 100%);
+.dashboard-glance-icon-wrap--info {
+    background: rgba(17, 205, 239, 0.12);
 }
 
-.dashboard-glance__icon--warning {
-    background: linear-gradient(310deg, #fb6340 0%, #fbb140 100%);
+.dashboard-glance-icon-wrap--warning {
+    background: rgba(251, 99, 64, 0.12);
 }
 
-.dashboard-glance__icon--success {
-    background: linear-gradient(310deg, #2dce89 0%, #2dcecc 100%);
+.dashboard-glance-icon-wrap--success {
+    background: rgba(45, 206, 137, 0.12);
 }
 
 .dashboard-glance__value {

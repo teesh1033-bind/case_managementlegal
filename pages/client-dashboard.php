@@ -74,6 +74,8 @@ try {
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
 
 require_once __DIR__ . '/../inc/legalpro-icons.php';
+require_once __DIR__ . '/../inc/client-portal-navbar.php';
+$clientPageNavbar = legalpro_render_client_page_navbar('Dashboard', 'Dashboard', 'Search cases…');
 $iconStatTotal = legalpro_icon('briefcase');
 $iconStatOpen = legalpro_icon('circle-check');
 $iconStatPending = legalpro_icon('clock');
@@ -194,66 +196,13 @@ $html = <<<'HTML'
         }
         .client-dashboard-page .cd-list-item .flex-grow-1 { min-width: 0; }
         .client-dashboard-page .cd-list-item:last-child { margin-bottom: 0 !important; }
-        .client-dashboard-page .legalpro-navbar-search .input-group {
-            position: relative;
-        }
-        .client-dashboard-page .legalpro-navbar-search input[type="search"].form-control {
-            padding-right: 2.35rem !important;
-        }
-        .client-dashboard-page .navbar-search-clear {
-            position: absolute;
-            top: 50%;
-            right: 0.45rem;
-            transform: translateY(-50%);
-            z-index: 5;
-            width: 1.35rem;
-            height: 1.35rem;
-            border: 0;
-            border-radius: 50%;
-            background: transparent;
-            color: #8392ab;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: color 0.15s ease, background-color 0.15s ease;
-            padding: 0;
-        }
-        .client-dashboard-page .navbar-search-clear:hover,
-        .client-dashboard-page .navbar-search-clear:focus {
-            color: #5e72e4;
-            background: rgba(94, 114, 228, 0.08);
-            outline: none;
-        }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 client-dashboard-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-dashboard-page">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
-            <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <a href="javascript:;" class="nav-link text-body p-0 d-xl-none" id="iconNavbarSidenav">
-                        <div class="sidenav-toggler-inner">
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                        </div>
-                    </a>
-                    <div>
-                        <h6 class="font-weight-bolder mb-0">Dashboard</h6>
-                        <p class="dashboard-welcome-sub mb-0 mt-1">Welcome back, {CLIENT_NAME}</p>
-                    </div>
-                </div>
-                <form class="legalpro-navbar-search flex-grow-1 flex-md-grow-0" method="get" action="search.php" role="search" style="max-width: 300px;">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text text-body border-end-0"><i class="fas fa-search" aria-hidden="true"></i></span>
-                        <input type="search" name="q" class="form-control border-start-0" placeholder="Search cases…" value="" autocomplete="off" maxlength="200" aria-label="Search">
-                    </div>
-                </form>
-            </div>
-        </nav>
+        {CLIENT_NAVBAR}
         <div class="container-fluid py-4">
             {MESSAGE}
 
@@ -374,25 +323,13 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var searchInput = document.querySelector('.legalpro-navbar-search input[name="q"]');
-            var clearBtn = document.querySelector('.legalpro-navbar-search .navbar-search-clear');
-            if (!searchInput || !clearBtn) return;
-
-            clearBtn.addEventListener('click', function () {
-                searchInput.value = '';
-                searchInput.focus();
-                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-            });
-        });
-    </script>
 </body>
 </html>
 HTML;
 
 // Replace placeholders
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
 $html = str_replace('{CLIENT_NAME}', htmlspecialchars($client_name), $html);
 $html = str_replace('{TOTAL_CASES}', isset($caseStats['total_cases']) ? $caseStats['total_cases'] : 0, $html);
 $html = str_replace('{OPEN_CASES}', isset($caseStats['open_cases']) ? $caseStats['open_cases'] : 0, $html);

@@ -96,3 +96,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<?php legalpro_icons_footer_scripts(); ?>

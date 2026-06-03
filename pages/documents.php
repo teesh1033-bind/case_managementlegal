@@ -551,6 +551,11 @@ foreach ($cases as $case) {
 }
 $recentCount = count($recentDocuments);
 
+require_once __DIR__ . '/../inc/legalpro-icons.php';
+$iconStatDocs = legalpro_icon('folder-open');
+$iconStatTemplates = legalpro_icon('files');
+$iconStatUploads = legalpro_icon('upload');
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -566,6 +571,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
     <style>
         .case-item:hover {
             background-color: #f8f9fa !important;
@@ -668,7 +674,7 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
         <!-- replaced dynamically -->
@@ -689,7 +695,7 @@ $html = <<<'HTML'
             {MESSAGE}
             <div class="row mb-4">
                 <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
+                    <div class="card dashboard-stat-card">
                         <div class="card-body p-3">
                             <div class="row">
                                 <div class="col-8">
@@ -700,16 +706,14 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-dark shadow text-center rounded-circle">
-                                        <i class="ni ni-folder-17 text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--dark">{ICON_STAT_DOCS}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
+                    <div class="card dashboard-stat-card">
                         <div class="card-body p-3">
                             <div class="row">
                                 <div class="col-8">
@@ -720,16 +724,14 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-info shadow text-center rounded-circle">
-                                        <i class="ni ni-single-copy-04 text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--info">{ICON_STAT_TEMPLATES}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-4 col-sm-6">
-                    <div class="card">
+                    <div class="card dashboard-stat-card">
                         <div class="card-body p-3">
                             <div class="row">
                                 <div class="col-8">
@@ -740,9 +742,7 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-success shadow text-center rounded-circle">
-                                        <i class="ni ni-cloud-upload-96 text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">{ICON_STAT_UPLOADS}</div>
                                 </div>
                             </div>
                         </div>
@@ -1002,6 +1002,9 @@ $html = str_replace('{RECENT_DOCS}', $recentDocsList, $html);
 $html = str_replace('{DOCUMENT_ACCORDION}', $documentAccordion, $html);
 $html = str_replace('{PREVIEW_HTML}', $previewHtml, $html);
 $html = str_replace('{TEMPLATE_OPTIONS}', $templateOptions, $html);
+$html = str_replace('{ICON_STAT_DOCS}', $iconStatDocs, $html);
+$html = str_replace('{ICON_STAT_TEMPLATES}', $iconStatTemplates, $html);
+$html = str_replace('{ICON_STAT_UPLOADS}', $iconStatUploads, $html);
 
 // replace legacy html links, inject shared layout
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);

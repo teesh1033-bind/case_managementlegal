@@ -261,7 +261,7 @@ require_once __DIR__ . '/../inc/legalpro-icons.php';
 $iconGlanceToday = legalpro_icon('clock');
 $iconGlanceWeek = legalpro_icon('calendar');
 $iconGlancePending = legalpro_icon('bell');
-$iconGlanceInvoices = legalpro_icon('credit-card');
+$iconGlanceInvoices = legalpro_icon('file-text');
 $iconStatCases = legalpro_icon('briefcase');
 $iconStatActive = legalpro_icon('message-circle');
 $iconStatCompleted = legalpro_icon('file-text');
@@ -284,8 +284,8 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=4" rel="stylesheet" />
-    <link href="../assets/css/legalpro-icons.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -310,28 +310,28 @@ $html = <<<'HTML'
                 <div class="col-12">
                     <div class="dashboard-glance">
                         <a href="appointments.php" class="dashboard-glance__item">
-                            <div class="dashboard-glance__icon dashboard-glance__icon--primary">{ICON_GLANCE_TODAY}</div>
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--primary">{ICON_GLANCE_TODAY}</div>
                             <div>
                                 <div class="dashboard-glance__value">{APPOINTMENTS_TODAY}</div>
                                 <div class="dashboard-glance__label">Today</div>
                             </div>
                         </a>
                         <a href="appointments.php" class="dashboard-glance__item">
-                            <div class="dashboard-glance__icon dashboard-glance__icon--info">{ICON_GLANCE_WEEK}</div>
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--info">{ICON_GLANCE_WEEK}</div>
                             <div>
                                 <div class="dashboard-glance__value">{APPOINTMENTS_WEEK}</div>
                                 <div class="dashboard-glance__label">This week</div>
                             </div>
                         </a>
                         <a href="appointments.php" class="dashboard-glance__item">
-                            <div class="dashboard-glance__icon dashboard-glance__icon--warning">{ICON_GLANCE_PENDING}</div>
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--warning">{ICON_GLANCE_PENDING}</div>
                             <div>
                                 <div class="dashboard-glance__value">{DUE_TODAY}</div>
                                 <div class="dashboard-glance__label">Pending today</div>
                             </div>
                         </a>
                         <a href="invoices.php" class="dashboard-glance__item">
-                            <div class="dashboard-glance__icon dashboard-glance__icon--success">{ICON_GLANCE_INVOICES}</div>
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--success">{ICON_GLANCE_INVOICES}</div>
                             <div>
                                 <div class="dashboard-glance__value">{UNPAID_INVOICES}</div>
                                 <div class="dashboard-glance__label">Open invoices</div>
