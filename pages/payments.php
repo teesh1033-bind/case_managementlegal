@@ -238,8 +238,13 @@ foreach ($cases as $case) {
     $lastPayment = isset($case['last_payment']) && $case['last_payment'] ? $case['last_payment'] : '—';
     $clientName = isset($case['client_name']) && $case['client_name'] ? $case['client_name'] : 'Unknown Client';
 
-    $selectedAttr = $formData['case_id'] == $caseId ? ' selected' : '';
-    $caseOptions .= '<option value="' . $caseId . '"' . $selectedAttr . '>' . htmlspecialchars($caseNumber . ' · ' . $case['title'] . ' (' . $clientName . ')') . '</option>';
+    $isFullyPaid = $estimated > 0 && $balance <= 0.01;
+
+    if (!$isFullyPaid) {
+        $selectedAttr = $formData['case_id'] == $caseId ? ' selected' : '';
+        $caseOptions .= '<option value="' . $caseId . '"' . $selectedAttr . '>' . htmlspecialchars($caseNumber . ' · ' . $case['title'] . ' (' . $clientName . ')') . '</option>';
+    }
+
     $ledgerOptions .= '<option value="' . $caseId . '">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</option>';
 
     $caseLedger[$caseId] = [
