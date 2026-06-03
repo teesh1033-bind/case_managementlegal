@@ -376,6 +376,53 @@ $html = <<<'HTML'
         .login-meta a:hover {
             text-decoration: underline;
         }
+        .login-page .login-remember {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+            margin: 0;
+        }
+        .login-page .login-remember-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 1.125rem;
+            height: 1.125rem;
+            margin: 0;
+            flex-shrink: 0;
+            border: 2px solid #adb5bd;
+            border-radius: 0.25rem;
+            background: #fff;
+            cursor: pointer;
+            position: relative;
+            vertical-align: middle;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .login-page .login-remember-checkbox:hover {
+            border-color: #8392ab;
+        }
+        .login-page .login-remember-checkbox:focus {
+            outline: none;
+            border-color: #5e72e4;
+            box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.15);
+        }
+        .login-page .login-remember-checkbox:checked {
+            background-color: #fff;
+            border-color: #344767;
+            background-image: none;
+        }
+        .login-page .login-remember-checkbox:checked::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 42%;
+            width: 0.3rem;
+            height: 0.55rem;
+            border: solid #344767;
+            border-width: 0 2px 2px 0;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
         .login-page .btn-primary {
             border: none;
             border-radius: 0.6rem;
@@ -479,8 +526,8 @@ $html = <<<'HTML'
                                 </div>
                             </div>
                             <div class="login-meta">
-                                <label class="mb-0 d-flex align-items-center gap-2">
-                                    <input type="checkbox" class="form-check-input m-0" style="width: 1rem; height: 1rem;">
+                                <label class="login-remember mb-0">
+                                    <input type="checkbox" class="login-remember-checkbox" id="login_remember" name="remember" value="1" aria-label="Remember me">
                                     <span>Remember me</span>
                                 </label>
                                 <a href="javascript:void(0)">Forgot password?</a>
