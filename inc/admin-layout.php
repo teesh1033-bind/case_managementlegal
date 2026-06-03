@@ -229,7 +229,7 @@ function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
         'lawyer-appointments.php',
         legalpro_lawyer_notification_count($pdo, $lawyerId),
         'lawyer-logout.php',
-        'profile.php'
+        'lawyer-profile.php'
     );
 }
 
