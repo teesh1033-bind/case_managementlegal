@@ -107,14 +107,15 @@ function legalpro_render_portal_header_utilities(
             ' . $notifBadge . '
         </a>
         <div class="legalpro-header-user dropdown">
-            <a href="#" class="legalpro-header-user__toggle dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <button type="button" class="legalpro-header-user__toggle" aria-expanded="false" aria-haspopup="true" aria-controls="legalproHeaderUserMenuList">
                 <span class="legalpro-header-user__avatar">' . htmlspecialchars($initials) . '</span>
                 <span class="legalpro-header-user__meta d-none d-md-block">
                     <span class="legalpro-header-user__name">' . htmlspecialchars($displayName) . '</span>
                     <span class="legalpro-header-user__role">' . htmlspecialchars($roleLabel) . '</span>
                 </span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                <i class="ni ni-bold-down legalpro-header-user__caret" aria-hidden="true"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 legalpro-header-user__menu" id="legalproHeaderUserMenuList">
                 ' . $profileItem . '
                 ' . $extraMenuHtml . '
                 ' . ($profileItem !== '' || $extraMenuHtml !== '' ? '<li><hr class="dropdown-divider"></li>' : '') . '
@@ -152,6 +153,54 @@ document.addEventListener("DOMContentLoaded", function () {
         nav.appendChild(actions);
     }
     mount.remove();
+
+    var userRoot = nav.querySelector(".legalpro-header-user");
+    if (!userRoot || userRoot.dataset.menuBound === "1") {
+        return;
+    }
+    userRoot.dataset.menuBound = "1";
+
+    var userToggle = userRoot.querySelector(".legalpro-header-user__toggle");
+    var userMenu = userRoot.querySelector(".legalpro-header-user__menu");
+    if (!userToggle || !userMenu) {
+        return;
+    }
+
+    function closeUserMenu() {
+        userMenu.classList.remove("show");
+        userToggle.classList.remove("show");
+        userToggle.setAttribute("aria-expanded", "false");
+    }
+
+    function openUserMenu() {
+        userMenu.classList.add("show");
+        userToggle.classList.add("show");
+        userToggle.setAttribute("aria-expanded", "true");
+    }
+
+    userToggle.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (userMenu.classList.contains("show")) {
+            closeUserMenu();
+        } else {
+            openUserMenu();
+        }
+    });
+
+    userMenu.addEventListener("click", function (e) {
+        e.stopPropagation();
+    });
+
+    document.addEventListener("click", function () {
+        closeUserMenu();
+    });
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            closeUserMenu();
+        }
+    });
 });
 </script>';
 }

@@ -301,6 +301,78 @@ body.client-profile-page .main-content > .container-fluid {
     margin-left: auto;
 }
 
+/* Header user menu (Profile, Settings, Sign out) */
+.legalpro-header-user.dropdown {
+    position: relative;
+}
+
+.legalpro-header-user__toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.35rem 0.5rem 0.35rem 0.35rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: none;
+    cursor: pointer;
+    color: inherit;
+}
+
+.legalpro-header-user__caret {
+    font-size: 0.65rem;
+    color: #8392ab;
+    margin-left: 0.15rem;
+    margin-right: 0.15rem;
+    transition: transform 0.2s ease;
+}
+
+.legalpro-header-user__toggle.show .legalpro-header-user__caret {
+    transform: rotate(180deg);
+}
+
+.legalpro-header-user__menu.dropdown-menu {
+    position: absolute !important;
+    top: calc(100% + 0.35rem) !important;
+    right: 0 !important;
+    left: auto !important;
+    display: none;
+    z-index: 1060 !important;
+    min-width: 12rem;
+    margin-top: 0 !important;
+    padding: 0.4rem 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.65rem;
+}
+
+.legalpro-header-user__menu.dropdown-menu::before {
+    display: none !important;
+    content: none !important;
+}
+
+.legalpro-header-user__menu.dropdown-menu:not(.show) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    animation: none !important;
+}
+
+.legalpro-header-user__menu.dropdown-menu.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+.legalpro-header-user__menu .dropdown-item {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
 /* Top navbar */
 body.legalpro-lawyer-portal .navbar-main,
 body.lawyer-dashboard-page .navbar-main,
@@ -334,6 +406,14 @@ body.client-profile-page .navbar-main,
     left: var(--lp-portal-sidebar-width) !important;
     width: auto !important;
     z-index: 1030 !important;
+    overflow: visible !important;
+}
+
+body.legalpro-lawyer-portal .navbar-main .container-fluid,
+body.lawyer-dashboard-page .navbar-main .container-fluid,
+body.client-dashboard-page .navbar-main .container-fluid,
+body.client-profile-page .navbar-main .container-fluid {
+    overflow: visible !important;
 }
 
 body.legalpro-sidebar-collapsed.legalpro-lawyer-portal .navbar-main,

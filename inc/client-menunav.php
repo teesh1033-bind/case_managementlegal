@@ -40,7 +40,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 ?>
 
 <link href="../assets/css/legalpro-client-portal.css?v=11" rel="stylesheet" />
-<link href="../assets/css/legalpro-portal-shell.css?v=5" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=7" rel="stylesheet" />
 
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-portal-sidebar legalpro-client-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
