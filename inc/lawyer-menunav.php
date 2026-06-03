@@ -48,6 +48,7 @@ if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
     echo ob_get_clean();
 }
 ?>
+
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
         <a href="lawyer-dashboard.php" class="legalpro-sidebar-brand__link">

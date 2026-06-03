@@ -26,6 +26,14 @@ foreach ($alterStatements as $statement) {
     }
 }
 
+try {
+    $pdo->query("ALTER TABLE cases ADD COLUMN estimated_fees DECIMAL(12,2) DEFAULT 0.00 AFTER category");
+} catch (PDOException $e) {
+    if (stripos($e->getMessage(), 'duplicate column') === false) {
+        throw $e;
+    }
+}
+
 function getNextInvoiceNumber(PDO $pdo): string
 {
     $maxNum = 0;
@@ -237,11 +245,22 @@ try {
     $clients = [];
 }
 
+$caseFinancialData = [];
 try {
     $casesList = $pdo->query("
-        SELECT c.id, CONCAT('C-', LPAD(c.id, 4, '0')) AS case_number, c.title, CONCAT(cl.first_name, ' ', cl.last_name) AS client_name
+        SELECT
+            c.id,
+            c.client_id,
+            c.title,
+            c.status,
+            COALESCE(c.estimated_fees, 0) AS estimated_fees,
+            CONCAT('C-', LPAD(c.id, 4, '0')) AS case_number,
+            CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
+            COALESCE(SUM(p.amount), 0) AS paid_total
         FROM cases c
         LEFT JOIN clients cl ON cl.id = c.client_id
+        LEFT JOIN payments p ON p.case_id = c.id
+        GROUP BY c.id, c.client_id, c.title, c.status, c.estimated_fees, cl.first_name, cl.last_name
         ORDER BY c.created_at DESC
     ")->fetchAll();
 } catch (PDOException $e) {
@@ -256,8 +275,28 @@ foreach ($clients as $client) {
 
 $caseOptions = '<option value="">Linked case (optional)</option>';
 foreach ($casesList as $caseRow) {
-    $selected = $formData['case_id'] == $caseRow['id'] ? ' selected' : '';
-    $caseOptions .= '<option value="' . (int)$caseRow['id'] . '"' . $selected . '>' . htmlspecialchars($caseRow['case_number'] . ' · ' . $caseRow['title'] . ' (' . $caseRow['client_name'] . ')') . '</option>';
+    $caseId = (int) $caseRow['id'];
+    $estimated = (float) ($caseRow['estimated_fees'] ?? 0);
+    $paid = (float) ($caseRow['paid_total'] ?? 0);
+    $remaining = max($estimated - $paid, 0);
+
+    $selected = $formData['case_id'] == $caseId ? ' selected' : '';
+    $clientIdAttr = !empty($caseRow['client_id']) ? ' data-client-id="' . (int) $caseRow['client_id'] . '"' : '';
+    $caseOptions .= '<option value="' . $caseId . '"' . $selected . $clientIdAttr . '>'
+        . htmlspecialchars($caseRow['case_number'] . ' · ' . $caseRow['title'] . ' (' . $caseRow['client_name'] . ')')
+        . '</option>';
+
+    $caseFinancialData[$caseId] = [
+        'case_number' => $caseRow['case_number'],
+        'title' => $caseRow['title'],
+        'client' => $caseRow['client_name'] ?: 'Unknown Client',
+        'total' => formatCurrency($estimated),
+        'total_raw' => $estimated,
+        'paid' => formatCurrency($paid),
+        'paid_raw' => $paid,
+        'remaining' => formatCurrency($remaining),
+        'remaining_raw' => $remaining,
+    ];
 }
 
 try {
@@ -399,15 +438,35 @@ $html = <<<'HTML'
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Client</label>
-                                    <select class="form-select" name="client_id" required>
+                                    <select class="form-select" name="client_id" id="invoice_client_id" required>
                                         {CLIENT_OPTIONS}
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Linked Case (optional)</label>
-                                    <select class="form-select" name="case_id">
+                                    <select class="form-select" name="case_id" id="invoice_case_id">
                                         {CASE_OPTIONS}
                                     </select>
+                                </div>
+                                <div id="case-amount-summary" class="mb-3" style="display: none;">
+                                    <div class="border border-radius-lg bg-light p-3">
+                                        <p class="text-xs text-uppercase text-muted font-weight-bold mb-2 mb-md-0" id="case-amount-summary-label">Case payment summary</p>
+                                        <div class="row g-3 mt-0">
+                                            <div class="col-sm-6">
+                                                <div class="text-center text-sm-start">
+                                                    <span class="text-xs text-muted d-block">Total amount for this case</span>
+                                                    <span class="h6 mb-0 font-weight-bold" id="case-total-amount">{CURRENCY_ZERO}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="text-center text-sm-start">
+                                                    <span class="text-xs text-muted d-block">Remaining to pay</span>
+                                                    <span class="h6 mb-0 font-weight-bold text-warning" id="case-remaining-amount">{CURRENCY_ZERO}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-muted mb-0 mt-2" id="case-amount-summary-paid"></p>
+                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -486,6 +545,63 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script src="../assets/js/spa-nav.js"></script>
+    <script>
+        (function() {
+            var caseFinancialData = {CASE_FINANCIAL_JSON};
+            var currencyZero = '{CURRENCY_ZERO}';
+            var caseSelect = document.getElementById('invoice_case_id');
+            var clientSelect = document.getElementById('invoice_client_id');
+            var summaryBox = document.getElementById('case-amount-summary');
+            var summaryLabel = document.getElementById('case-amount-summary-label');
+            var totalEl = document.getElementById('case-total-amount');
+            var remainingEl = document.getElementById('case-remaining-amount');
+            var paidNoteEl = document.getElementById('case-amount-summary-paid');
+
+            function updateCaseAmountSummary(caseId) {
+                if (!summaryBox || !totalEl || !remainingEl) {
+                    return;
+                }
+                var data = caseId ? caseFinancialData[caseId] : null;
+                if (!data) {
+                    summaryBox.style.display = 'none';
+                    return;
+                }
+                summaryBox.style.display = 'block';
+                totalEl.textContent = data.total;
+                remainingEl.textContent = data.remaining;
+                if (parseFloat(data.remaining_raw || 0) <= 0.01 && parseFloat(data.total_raw || 0) > 0) {
+                    remainingEl.classList.remove('text-warning');
+                    remainingEl.classList.add('text-success');
+                } else {
+                    remainingEl.classList.remove('text-success');
+                    remainingEl.classList.add('text-warning');
+                }
+                if (summaryLabel) {
+                    summaryLabel.textContent = data.case_number + ' · ' + data.title;
+                }
+                if (paidNoteEl) {
+                    paidNoteEl.textContent = 'Paid so far: ' + data.paid
+                        + (parseFloat(data.total_raw || 0) > 0
+                            ? ' (' + Math.min(100, Math.round((parseFloat(data.paid_raw || 0) / parseFloat(data.total_raw)) * 100)) + '% of total)'
+                            : '');
+                }
+            }
+
+            if (caseSelect) {
+                caseSelect.addEventListener('change', function() {
+                    var caseId = this.value;
+                    var selectedOption = this.options[this.selectedIndex];
+                    if (clientSelect && selectedOption && selectedOption.getAttribute('data-client-id')) {
+                        clientSelect.value = selectedOption.getAttribute('data-client-id');
+                    }
+                    updateCaseAmountSummary(caseId);
+                });
+                if (caseSelect.value) {
+                    updateCaseAmountSummary(caseSelect.value);
+                }
+            }
+        })();
+    </script>
 </body>
 </html>
 HTML;
@@ -503,6 +619,8 @@ $html = str_replace('{FORM_DUE_DATE}', htmlspecialchars($formData['due_date']), 
 $html = str_replace('{FORM_NOTES}', htmlspecialchars($formData['notes']), $html);
 $html = str_replace('{STATUS_OPTIONS}', $statusOptionsHtml, $html);
 $html = str_replace('{INVOICE_ROWS}', $invoiceRows, $html);
+$html = str_replace('{CASE_FINANCIAL_JSON}', json_encode($caseFinancialData), $html);
+$html = str_replace('{CURRENCY_ZERO}', formatCurrency(0), $html);
 
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
 

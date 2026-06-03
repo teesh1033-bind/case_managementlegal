@@ -45,6 +45,7 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
     echo ob_get_clean();
 }
 ?>
+
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
         <a href="client-dashboard.php" class="legalpro-sidebar-brand__link">

@@ -166,11 +166,13 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
  *
  * @return array{ok: bool, message?: string}
  */
-function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appointmentDate, string $appointmentTime, ?int $excludeAppointmentId = null): array
+function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appointmentDate, string $appointmentTime, ?int $excludeAppointmentId = null, int $durationMinutes = 60): array
 {
     if ($lawyerId <= 0 || $appointmentDate === '' || $appointmentTime === '') {
         return ['ok' => false, 'message' => 'Lawyer, date, and time are required.'];
     }
+
+    $durationMinutes = in_array($durationMinutes, [30, 60], true) ? $durationMinutes : 60;
 
     $requestedTime = normalizeAppointmentTime($appointmentTime);
     $dayOfWeek = strtolower(date('l', strtotime($appointmentDate)));
@@ -179,7 +181,7 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
         return ['ok' => false, 'message' => 'Invalid appointment date or time.'];
     }
 
-    $endTime = date('H:i:s', strtotime('+1 hour', $startTs));
+    $endTime = date('H:i:s', strtotime('+' . $durationMinutes . ' minutes', $startTs));
 
     $unavailableSql = "
         SELECT id FROM lawyer_time_slots
@@ -231,10 +233,10 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
           AND slot_date IS NOT NULL
           AND slot_date = ?
           AND start_time <= ?
-          AND end_time > ?
+          AND end_time >= ?
         LIMIT 1
     ");
-    $stmt->execute([$lawyerId, $appointmentDate, $requestedTime, $requestedTime]);
+    $stmt->execute([$lawyerId, $appointmentDate, $requestedTime, $endTime]);
     if (!$stmt->fetch()) {
         return [
             'ok' => false,

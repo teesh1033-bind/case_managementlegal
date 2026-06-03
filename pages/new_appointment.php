@@ -24,6 +24,7 @@ $formData = [
     'lawyer_id' => '',
     'date' => '',
     'time' => '',
+    'duration_minutes' => '60',
     'notes' => ''
 ];
 
@@ -41,6 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
     $lawyerId = isset($_POST['lawyer_id']) ? (int)$_POST['lawyer_id'] : 0;
     $date = isset($_POST['date']) ? trim($_POST['date']) : '';
     $time = isset($_POST['time']) ? trim($_POST['time']) : '';
+    $durationMinutes = isset($_POST['duration_minutes']) ? (int) $_POST['duration_minutes'] : 60;
+    if (!in_array($durationMinutes, [30, 60], true)) {
+        $durationMinutes = 60;
+    }
     $notes = isset($_POST['notes']) ? trim($_POST['notes']) : '';
 
     $clientId = 0;
@@ -73,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         'lawyer_id' => $lawyerId,
         'date' => $date,
         'time' => $time,
+        'duration_minutes' => (string) $durationMinutes,
         'notes' => $notes
     ];
 
@@ -96,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                 $messageType = 'danger';
             } else {
                 $excludeAppointmentId = $appointmentId > 0 ? $appointmentId : null;
-                $availabilityResult = validateLawyerBookingAvailability($pdo, $lawyerId, $date, $time, $excludeAppointmentId);
+                $availabilityResult = validateLawyerBookingAvailability($pdo, $lawyerId, $date, $time, $excludeAppointmentId, $durationMinutes);
                 if (empty($availabilityResult['ok'])) {
                     $message = $availabilityResult['message'] ?? 'No available times on this date. Choose another date.';
                     $messageType = 'danger';
@@ -107,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         $availabilityOk = isset($availabilityResult) && !empty($availabilityResult['ok']);
         if ($messageType !== 'danger' && $dateTime && $availabilityOk) {
             $startsAt = $dateTime->format('Y-m-d H:i:s');
-            $endsAt = $dateTime->modify('+1 hour')->format('Y-m-d H:i:s');
+            $endsAt = (clone $dateTime)->modify('+' . $durationMinutes . ' minutes')->format('Y-m-d H:i:s');
 
             try {
                 if ($appointmentId) {
@@ -242,6 +248,14 @@ if (empty($formData['appointment_id']) && isset($_GET['id']) && ctype_digit($_GE
             exit;
         }
         $startsAt = $appointment['starts_at'] ? new DateTime($appointment['starts_at']) : null;
+        $endsAt = !empty($appointment['ends_at']) ? new DateTime($appointment['ends_at']) : null;
+        $inferredDuration = 60;
+        if ($startsAt && $endsAt) {
+            $diffMinutes = (int) round(($endsAt->getTimestamp() - $startsAt->getTimestamp()) / 60);
+            if ($diffMinutes > 0 && $diffMinutes <= 45) {
+                $inferredDuration = 30;
+            }
+        }
         $clientName = trim((isset($appointment['first_name']) ? $appointment['first_name'] : '') . ' ' . (isset($appointment['last_name']) ? $appointment['last_name'] : ''));
         $formData = [
             'appointment_id' => $appointment['id'],
@@ -250,6 +264,7 @@ if (empty($formData['appointment_id']) && isset($_GET['id']) && ctype_digit($_GE
             'lawyer_id' => $appointment['lawyer_id'],
             'date' => $startsAt ? $startsAt->format('Y-m-d') : '',
             'time' => $startsAt ? $startsAt->format('H:i') : '',
+            'duration_minutes' => (string) $inferredDuration,
             'notes' => $appointment['notes']
         ];
     } else {
@@ -513,31 +528,34 @@ $html = <<<'HTML'
 								</div>
 
 								<div class="row">
-									<div class="col-md-6">
+									<div class="col-md-4">
 										<div class="form-group mb-3">
 											<label class="form-control-label text-sm font-weight-bold">Date <span class="text-danger">*</span></label>
 											<input class="form-control" type="date" name="date" id="appointment_date" value="{DATE_VALUE}" required>
 										</div>
 									</div>
-									<div class="col-md-6">
+									<div class="col-md-4">
+										<div class="form-group mb-3">
+											<label class="form-control-label text-sm font-weight-bold">Time category <span class="text-danger">*</span></label>
+											<select class="form-control" name="duration_minutes" id="appointment_duration" required>
+												<option value="60"{DURATION_60_SELECTED}>1 hour</option>
+												<option value="30"{DURATION_30_SELECTED}>30 minutes</option>
+											</select>
+											<small class="text-muted">30 min uses slots every half hour (e.g. 9:00–9:30).</small>
+										</div>
+									</div>
+									<div class="col-md-4">
 										<div class="form-group mb-3">
 											<label class="form-control-label text-sm font-weight-bold">Time <span class="text-danger">*</span></label>
 											<select class="form-control" name="time" id="appointment_time" required>
 												<option value="">Select time</option>
-												<option value="09:00" class="time-option">9:00 AM</option>
-												<option value="10:00" class="time-option">10:00 AM</option>
-												<option value="11:00" class="time-option">11:00 AM</option>
-												<option value="12:00" class="time-option">12:00 PM</option>
-												<option value="13:00" class="time-option">1:00 PM</option>
-												<option value="14:00" class="time-option">2:00 PM</option>
-												<option value="15:00" class="time-option">3:00 PM</option>
-												<option value="16:00" class="time-option">4:00 PM</option>
-												<option value="17:00" class="time-option">5:00 PM</option>
 											</select>
-											<div id="timeSlotPicker" class="d-flex flex-wrap gap-2 mt-2" aria-label="Available time slots"></div>
-											<small class="text-muted d-block mt-2">Tap a <span class="text-success font-weight-bold">green</span> slot or pick a green time from the list. Gray options are outside the lawyer&apos;s schedule.</small>
 										</div>
 									</div>
+								</div>
+								<div class="form-group mb-3">
+									<div id="timeSlotPicker" class="d-flex flex-wrap gap-2" aria-label="Available time slots"></div>
+									<small class="text-muted d-block mt-2">Tap a <span class="text-success font-weight-bold">green</span> slot or pick a green time from the list. Gray options are outside the lawyer&apos;s schedule.</small>
 								</div>
 								<div id="availabilityMessage" class="mb-3" style="display: none;"></div>
 								<small class="text-muted d-block mb-3">Appointments can only be booked when the lawyer has published availability for the selected date. Unavailable blocks and existing appointments are excluded.</small>
@@ -569,7 +587,10 @@ $html = <<<'HTML'
 		const lawyerAvailabilityByDay = {LAWYER_AVAILABILITY_BY_DAY_JSON};
 		const lawyerHasSchedule = {LAWYER_HAS_SCHEDULE_JSON};
 		const initialAppointmentTime = '{TIME_VALUE}';
+		const initialDurationMinutes = parseInt('{DURATION_MINUTES}', 10) || 60;
 		const NO_AVAILABILITY_ON_DATE_MSG = 'No available times on this date. Choose another date.';
+		const SLOT_DAY_START_MINUTES = 9 * 60;
+		const SLOT_DAY_END_MINUTES = 17 * 60 + 30;
 
 		document.addEventListener('DOMContentLoaded', function() {
 			var caseSelect = document.getElementById('case_select');
@@ -644,10 +665,47 @@ $html = <<<'HTML'
 			}
 
             var dateInput = document.getElementById('appointment_date');
+            var durationSelect = document.getElementById('appointment_duration');
             var timeInput = document.getElementById('appointment_time');
             var timeSlotPicker = document.getElementById('timeSlotPicker');
             var appointmentForm = document.getElementById('appointmentForm');
             var availabilityMessage = document.getElementById('availabilityMessage');
+
+            function getDurationMinutes() {
+                var value = durationSelect ? parseInt(durationSelect.value, 10) : 60;
+                return value === 30 ? 30 : 60;
+            }
+
+            function getStandardSlotTimes(durationMinutes) {
+                var times = [];
+                var lastStart = durationMinutes === 30 ? SLOT_DAY_END_MINUTES : SLOT_DAY_END_MINUTES - 30;
+                for (var t = SLOT_DAY_START_MINUTES; t <= lastStart; t += durationMinutes) {
+                    var h = Math.floor(t / 60);
+                    var m = t % 60;
+                    times.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
+                }
+                return times;
+            }
+
+            function addDurationToTime(timeValue, durationMinutes) {
+                var normalized = timeValue.length === 5 ? timeValue : timeValue.slice(0, 5);
+                var parts = normalized.split(':');
+                var total = parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10) + durationMinutes;
+                if (total >= 24 * 60) {
+                    total = 24 * 60 - 1;
+                }
+                var h = Math.floor(total / 60);
+                var m = total % 60;
+                return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':00';
+            }
+
+            function formatSlotRangeLabel(startValue, durationMinutes) {
+                if (durationMinutes === 60) {
+                    return formatTimeLabel(startValue);
+                }
+                var endHm = addDurationToTime(startValue.length === 5 ? startValue + ':00' : startValue, durationMinutes).slice(0, 5);
+                return formatTimeLabel(startValue) + ' \u2013 ' + formatTimeLabel(endHm);
+            }
 
             function lawyerHasPublishedSchedule(lawyerId) {
                 return !!(lawyerHasSchedule[lawyerId] || lawyerHasSchedule[String(lawyerId)]);
@@ -686,28 +744,16 @@ $html = <<<'HTML'
                 return timeValue.length === 5 ? timeValue + ':00' : timeValue;
             }
 
-            function addOneHour(timeValue) {
-                var parts = timeValue.split(':');
-                var hours = parseInt(parts[0], 10);
-                var minutes = parseInt(parts[1], 10);
-                hours += 1;
-                if (hours >= 24) {
-                    hours = 23;
-                    minutes = 59;
-                }
-                return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':00';
-            }
-
             function rangesOverlap(startA, endA, startB, endB) {
                 return startA < endB && endA > startB;
             }
 
-            function isBlockedByUnavailable(timeValue, slots) {
+            function isBlockedByUnavailable(timeValue, slots, durationMinutes) {
                 var startTime = normalizeTimeValue(timeValue);
                 if (!startTime) {
                     return false;
                 }
-                var endTime = addOneHour(startTime);
+                var endTime = addDurationToTime(startTime, durationMinutes);
                 return slots.some(function(slot) {
                     if (slot.type !== 'unavailable') {
                         return false;
@@ -716,13 +762,14 @@ $html = <<<'HTML'
                 });
             }
 
-            function isWithinAvailable(timeValue, slots) {
-                var optionTime = normalizeTimeValue(timeValue);
-                if (!optionTime) {
+            function isWithinAvailable(timeValue, slots, durationMinutes) {
+                var startTime = normalizeTimeValue(timeValue);
+                if (!startTime) {
                     return false;
                 }
+                var endTime = addDurationToTime(startTime, durationMinutes);
                 return slots.some(function(slot) {
-                    return slot.type === 'available' && optionTime >= slot.start && optionTime < slot.end;
+                    return slot.type === 'available' && startTime >= slot.start && endTime <= slot.end;
                 });
             }
 
@@ -757,7 +804,7 @@ $html = <<<'HTML'
                 return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
             }
 
-            function isTimeSlotBookable(timeValue, lawyerId, dateValue, slots, hasSchedule) {
+            function isTimeSlotBookable(timeValue, lawyerId, dateValue, slots, hasSchedule, durationMinutes) {
                 if (!timeValue) {
                     return false;
                 }
@@ -772,7 +819,7 @@ $html = <<<'HTML'
                 if (!availableSlots.length) {
                     return false;
                 }
-                return isWithinAvailable(timeValue, slots) && !isBlockedByUnavailable(timeValue, slots);
+                return isWithinAvailable(timeValue, slots, durationMinutes) && !isBlockedByUnavailable(timeValue, slots, durationMinutes);
             }
 
             function syncTimeSlotPickerSelection() {
@@ -785,7 +832,7 @@ $html = <<<'HTML'
                 });
             }
 
-            function renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule) {
+            function renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule, durationMinutes) {
                 if (!timeSlotPicker) {
                     return;
                 }
@@ -802,7 +849,7 @@ $html = <<<'HTML'
                         return;
                     }
 
-                    var bookable = isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule);
+                    var bookable = isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule, durationMinutes);
                     var btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'time-slot-btn';
@@ -836,6 +883,29 @@ $html = <<<'HTML'
                 syncTimeSlotPickerSelection();
             }
 
+            function rebuildTimeSelectOptions(durationMinutes, preservedTime) {
+                if (!timeInput) {
+                    return preservedTime;
+                }
+                var previous = preservedTime || normalizeSelectTime(timeInput.value);
+                timeInput.innerHTML = '<option value="">Select time</option>';
+                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                    var option = document.createElement('option');
+                    option.value = slotValue;
+                    option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);
+                    option.className = 'time-option';
+                    timeInput.appendChild(option);
+                });
+                if (previous && !timeInput.querySelector('option[value="' + previous + '"]')) {
+                    var customOption = document.createElement('option');
+                    customOption.value = previous;
+                    customOption.textContent = formatSlotRangeLabel(previous, durationMinutes);
+                    customOption.className = 'time-option';
+                    timeInput.appendChild(customOption);
+                }
+                return previous;
+            }
+
             function renderTimeOptions() {
                 if (!timeInput) {
                     return;
@@ -843,13 +913,8 @@ $html = <<<'HTML'
 
                 var lawyerId = lawyerSelect ? lawyerSelect.value : '';
                 var dateValue = dateInput ? dateInput.value : '';
-                var preservedTime = normalizeSelectTime(timeInput.value || initialAppointmentTime);
-                var timeOptions = timeInput.querySelectorAll('.time-option');
-
-                timeOptions.forEach(function(option) {
-                    option.classList.remove('lp-time-available', 'text-success', 'font-weight-bold');
-                    option.disabled = false;
-                });
+                var durationMinutes = getDurationMinutes();
+                var preservedTime = rebuildTimeSelectOptions(durationMinutes, normalizeSelectTime(timeInput.value || initialAppointmentTime));
 
                 if (!lawyerId || !dateValue) {
                     if (timeSlotPicker) {
@@ -886,12 +951,12 @@ $html = <<<'HTML'
                     return;
                 }
 
-                timeOptions.forEach(function(option) {
+                timeInput.querySelectorAll('.time-option').forEach(function(option) {
                     if (!option.value) {
                         return;
                     }
 
-                    if (isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule)) {
+                    if (isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule, durationMinutes)) {
                         if (hasSchedule) {
                             option.classList.add('lp-time-available', 'text-success', 'font-weight-bold');
                         }
@@ -901,22 +966,6 @@ $html = <<<'HTML'
                     }
                 });
 
-                if (preservedTime && !timeInput.querySelector('option[value="' + preservedTime + '"]')) {
-                    var customOption = document.createElement('option');
-                    customOption.value = preservedTime;
-                    customOption.textContent = formatTimeLabel(preservedTime);
-                    customOption.className = 'time-option';
-                    if (isTimeSlotBookable(preservedTime, lawyerId, dateValue, slots, hasSchedule)) {
-                        if (hasSchedule) {
-                            customOption.classList.add('lp-time-available', 'text-success', 'font-weight-bold');
-                        }
-                        hasBookableSlot = true;
-                    } else if (hasSchedule) {
-                        customOption.disabled = true;
-                    }
-                    timeInput.appendChild(customOption);
-                }
-
                 if (preservedTime) {
                     timeInput.value = preservedTime;
                     var selectedOption = timeInput.options[timeInput.selectedIndex];
@@ -925,7 +974,7 @@ $html = <<<'HTML'
                     }
                 }
 
-                renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule);
+                renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule, durationMinutes);
 
                 if (!hasBookableSlot) {
                     setAvailabilityMessage(
@@ -989,7 +1038,9 @@ $html = <<<'HTML'
                 var slots = getSlotsForLawyerAndDate(lawyerId, dateValue);
                 var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
 
-                if (isBlockedByUnavailable(timeValue, slots)) {
+                var durationMinutes = getDurationMinutes();
+
+                if (isBlockedByUnavailable(timeValue, slots, durationMinutes)) {
                     timeInput.setCustomValidity('This lawyer is unavailable at the selected time.');
                     setAvailabilityMessage(
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer is unavailable at the selected time. Choose another slot.</div>',
@@ -1009,7 +1060,7 @@ $html = <<<'HTML'
                     return false;
                 }
 
-                if (!isWithinAvailable(timeValue, slots)) {
+                if (!isWithinAvailable(timeValue, slots, durationMinutes)) {
                     timeInput.setCustomValidity('Selected time is outside the lawyer\'s available hours.');
                     setAvailabilityMessage(
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
@@ -1064,6 +1115,15 @@ $html = <<<'HTML'
                 });
             }
 
+            if (durationSelect) {
+                durationSelect.addEventListener('change', function() {
+                    if (timeInput) {
+                        timeInput.value = '';
+                    }
+                    renderTimeOptions();
+                });
+            }
+
             if (dateInput && timeInput) {
                 dateInput.addEventListener('change', function() {
                     syncAppointmentMinDateTime();
@@ -1074,6 +1134,9 @@ $html = <<<'HTML'
                     syncTimeSlotPickerSelection();
                     validateLawyerAvailabilitySelection();
                 });
+                if (durationSelect && initialDurationMinutes) {
+                    durationSelect.value = String(initialDurationMinutes);
+                }
                 syncAppointmentMinDateTime();
                 renderTimeOptions();
             }
@@ -1114,6 +1177,13 @@ $html = str_replace('{CLIENT_NAME}', htmlspecialchars($formData['client_name']),
 $html = str_replace('{LAWYER_OPTIONS}', $lawyerOptions, $html);
 $html = str_replace('{DATE_VALUE}', htmlspecialchars($formData['date']), $html);
 $html = str_replace('{TIME_VALUE}', htmlspecialchars($formData['time']), $html);
+$durationMinutesForm = (int) ($formData['duration_minutes'] ?? 60);
+if (!in_array($durationMinutesForm, [30, 60], true)) {
+    $durationMinutesForm = 60;
+}
+$html = str_replace('{DURATION_MINUTES}', (string) $durationMinutesForm, $html);
+$html = str_replace('{DURATION_60_SELECTED}', $durationMinutesForm === 60 ? ' selected' : '', $html);
+$html = str_replace('{DURATION_30_SELECTED}', $durationMinutesForm === 30 ? ' selected' : '', $html);
 $html = str_replace('{LAWYER_AVAILABILITY_BY_DATE_JSON}', json_encode($lawyerAvailabilityByDate), $html);
 $html = str_replace('{LAWYER_AVAILABILITY_BY_DAY_JSON}', json_encode($lawyerAvailabilityByDay), $html);
 $html = str_replace('{LAWYER_HAS_SCHEDULE_JSON}', json_encode($lawyerHasSchedule), $html);
