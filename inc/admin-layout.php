@@ -271,3 +271,54 @@ function legalpro_render_page_toolbar(string $title, string $subtitle = '', stri
         ' . $actions . '
     </div>';
 }
+
+function legalpro_format_case_number(int $caseId, ?string $createdAt = null): string
+{
+    $year = $createdAt ? date('Y', strtotime($createdAt)) : date('Y');
+
+    return 'CASE-' . $year . '-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
+}
+
+function legalpro_format_case_fee($amount): string
+{
+    $value = is_numeric($amount) ? (float) $amount : 0.0;
+
+    return '£ ' . number_format($value, 2);
+}
+
+function legalpro_case_priority_badge(string $priority): string
+{
+    $key = strtolower(trim($priority));
+    $label = $priority !== '' ? $priority : 'Normal';
+
+    if ($key === 'high' || $key === 'urgent') {
+        $class = $key === 'urgent' ? 'lp-pill--priority-urgent' : 'lp-pill--priority-high';
+    } else {
+        $class = 'lp-pill--priority-medium';
+        if ($key === 'normal') {
+            $label = 'Medium';
+        }
+    }
+
+    return '<span class="lp-pill ' . $class . '">' . htmlspecialchars($label) . '</span>';
+}
+
+function legalpro_case_status_badge(string $status): string
+{
+    $key = strtolower(str_replace(' ', '_', trim($status)));
+    $map = [
+        'open' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
+        'waiting_for_client' => ['label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
+        'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+}
