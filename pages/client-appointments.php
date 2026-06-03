@@ -332,47 +332,18 @@ foreach ($clientCases as $case) {
     $caseOptions .= '<option value="' . $case['id'] . '">' . htmlspecialchars($case['title']) . '</option>';
 }
 
-// Build lawyer availability data
-$lawyerAvailability = [];
-foreach ($availableLawyers as $lawyer) {
-    $lawyerAvailability[$lawyer['id']] = [];
-
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM lawyer_time_slots WHERE lawyer_id = ? ORDER BY day_of_week, start_time");
-        $stmt->execute([$lawyer['id']]);
-        $slots = $stmt->fetchAll();
-
-        foreach ($slots as $slot) {
-            $dayKey = strtolower($slot['day_of_week']);
-            if (!isset($lawyerAvailability[$lawyer['id']][$dayKey])) {
-                $lawyerAvailability[$lawyer['id']][$dayKey] = [];
-            }
-            $lawyerAvailability[$lawyer['id']][$dayKey][] = [
-                'start' => $slot['start_time'],
-                'end' => $slot['end_time'],
-                'type' => $slot['slot_type']
-            ];
-        }
-    } catch (PDOException $e) {
-        // Continue without availability data
-    }
-}
-
+$lawyerAvailabilityByDate = [];
 $lawyerHasAvailability = [];
-foreach ($availableLawyers as $lawyer) {
-    $hasAvailable = false;
-    $lawyerId = (int) $lawyer['id'];
-    if (!empty($lawyerAvailability[$lawyerId])) {
-        foreach ($lawyerAvailability[$lawyerId] as $daySlots) {
-            foreach ($daySlots as $slot) {
-                if (($slot['type'] ?? '') === 'available') {
-                    $hasAvailable = true;
-                    break 2;
-                }
-            }
-        }
-    }
-    $lawyerHasAvailability[$lawyerId] = $hasAvailable;
+try {
+    $lawyerIdsForAvailability = array_map(static function ($lawyer) {
+        return (int) $lawyer['id'];
+    }, $availableLawyers);
+    $availabilityMaps = loadLawyerAvailabilityForBooking($pdo, $lawyerIdsForAvailability);
+    $lawyerAvailabilityByDate = $availabilityMaps['byDate'];
+    $lawyerHasAvailability = $availabilityMaps['hasSchedule'];
+} catch (PDOException $e) {
+    $lawyerAvailabilityByDate = [];
+    $lawyerHasAvailability = [];
 }
 
 // Build lawyer options
@@ -699,8 +670,9 @@ $html = <<<'HTML'
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 
     <script>
-        const lawyerAvailability = {$lawyerAvailabilityJson};
+        const lawyerAvailabilityByDate = {$lawyerAvailabilityByDateJson};
         const lawyerHasAvailability = {$lawyerHasAvailabilityJson};
+        const NO_AVAILABILITY_ON_DATE_MSG = 'No available times on this date. Choose another date.';
         let appointmentModalInstance = null;
 
         function lawyerHasPublishedSchedule(lawyerId) {
@@ -713,10 +685,19 @@ $html = <<<'HTML'
             return days[date.getDay()];
         }
 
-        function getAvailableSlotsForDay(lawyerId, dayOfWeek) {
-            const lawyerSlots = lawyerAvailability[lawyerId] || lawyerAvailability[String(lawyerId)] || {};
-            const daySlots = lawyerSlots[dayOfWeek] || [];
-            return daySlots.filter(function(slot) { return slot.type === 'available'; });
+        function getSlotsForLawyerAndDate(lawyerId, dateValue) {
+            const byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
+            return (byDate[dateValue] || []).slice();
+        }
+
+        function getAvailableSlotsForDate(lawyerId, dateValue) {
+            return getSlotsForLawyerAndDate(lawyerId, dateValue).filter(function(slot) {
+                return slot.type === 'available';
+            });
+        }
+
+        function lawyerHasAvailabilityOnDate(lawyerId, dateValue) {
+            return getAvailableSlotsForDate(lawyerId, dateValue).length > 0;
         }
 
         function isTimeWithinAvailableSlots(timeValue, availableSlots) {
@@ -850,12 +831,6 @@ $html = <<<'HTML'
                 return;
             }
 
-            if (!lawyerHasPublishedSchedule(lawyerId)) {
-                dateMessageDiv.style.display = 'block';
-                dateMessageDiv.innerHTML = '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer has not published availability yet. You may still request a time, or contact your legal team.</div>';
-                return;
-            }
-
             if (!dateInput.value) {
                 dateMessageDiv.style.display = 'block';
                 dateMessageDiv.innerHTML = '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a date to see available times.</div>';
@@ -863,8 +838,20 @@ $html = <<<'HTML'
                 return;
             }
 
-            const dayOfWeek = getDayOfWeekFromDate(dateInput.value);
-            const availableSlots = getAvailableSlotsForDay(lawyerId, dayOfWeek);
+            if (!lawyerHasPublishedSchedule(lawyerId) || !lawyerHasAvailabilityOnDate(lawyerId, dateInput.value)) {
+                timeOptions.forEach(function(option) {
+                    if (option.value) {
+                        option.disabled = true;
+                    }
+                });
+                timeSelect.value = '';
+                dateMessageDiv.style.display = 'block';
+                dateMessageDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>';
+                setBookButtonEnabled(false);
+                return;
+            }
+
+            const availableSlots = getAvailableSlotsForDate(lawyerId, dateInput.value);
 
             if (availableSlots.length === 0) {
                 timeOptions.forEach(function(option) {
@@ -874,7 +861,7 @@ $html = <<<'HTML'
                 });
                 timeSelect.value = '';
                 dateMessageDiv.style.display = 'block';
-                dateMessageDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Your lawyer is not available on this date. Please reschedule to another date.</div>';
+                dateMessageDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> No available times on this date. Choose another date.</div>';
                 setBookButtonEnabled(false);
                 return;
             }
@@ -901,7 +888,7 @@ $html = <<<'HTML'
 
             if (!hasAvailableTimes) {
                 dateMessageDiv.style.display = 'block';
-                dateMessageDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> No available times on this date. Please reschedule to another date.</div>';
+                dateMessageDiv.innerHTML = '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> No available times on this date. Choose another date.</div>';
                 setBookButtonEnabled(false);
                 return;
             }
@@ -919,12 +906,21 @@ $html = <<<'HTML'
                 const dateValue = document.getElementById('appointment_date').value;
                 const timeValue = document.getElementById('appointment_time').value;
 
-                if (!lawyerId || !dateValue || !timeValue || !lawyerHasPublishedSchedule(lawyerId)) {
-                    setBookButtonEnabled(!!lawyerId && !!dateValue && !!timeValue);
+                if (!lawyerId || !dateValue || !timeValue) {
+                    setBookButtonEnabled(false);
                     return;
                 }
 
-                const availableSlots = getAvailableSlotsForDay(lawyerId, getDayOfWeekFromDate(dateValue));
+                if (!lawyerHasPublishedSchedule(lawyerId)) {
+                    setBookButtonEnabled(false);
+                    return;
+                }
+
+                if (!lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                    setBookButtonEnabled(false);
+                    return;
+                }
+                const availableSlots = getAvailableSlotsForDate(lawyerId, dateValue);
                 setBookButtonEnabled(isTimeWithinAvailableSlots(timeValue, availableSlots));
             });
             loadLawyerAvailability();
@@ -963,18 +959,26 @@ $html = <<<'HTML'
                 return false;
             }
 
-            if (lawyerHasPublishedSchedule(lawyerId)) {
-                const availableSlots = getAvailableSlotsForDay(lawyerId, getDayOfWeekFromDate(dateInput));
+            if (!lawyerHasPublishedSchedule(lawyerId)) {
+                alert('No available times on this date. Choose another date.');
+                return false;
+            }
 
-                if (availableSlots.length === 0) {
-                    alert('Your lawyer is not available on the selected date. Please reschedule to another date.');
-                    return false;
-                }
+            if (!lawyerHasAvailabilityOnDate(lawyerId, dateInput)) {
+                alert(NO_AVAILABILITY_ON_DATE_MSG);
+                return false;
+            }
 
-                if (!isTimeWithinAvailableSlots(selectedTime, availableSlots)) {
-                    alert('Your lawyer is not available at the selected time. Please reschedule to another date or choose an available time slot.');
-                    return false;
-                }
+            const availableSlots = getAvailableSlotsForDate(lawyerId, dateInput);
+
+            if (availableSlots.length === 0) {
+                alert(NO_AVAILABILITY_ON_DATE_MSG);
+                return false;
+            }
+
+            if (!isTimeWithinAvailableSlots(selectedTime, availableSlots)) {
+                alert('Your lawyer is not available at the selected time. Please reschedule to another date or choose an available time slot.');
+                return false;
             }
 
             return true;
@@ -990,7 +994,7 @@ $html = str_replace('{CLIENT_NAME}', htmlspecialchars($client_name), $html);
 $html = str_replace('{APPOINTMENTS_ROWS}', $appointmentsRows, $html);
 $html = str_replace('{CASE_OPTIONS}', $caseOptions, $html);
 $html = str_replace('{LAWYER_OPTIONS}', $lawyerOptions, $html);
-$html = str_replace('{$lawyerAvailabilityJson}', json_encode($lawyerAvailability), $html);
+$html = str_replace('{$lawyerAvailabilityByDateJson}', json_encode($lawyerAvailabilityByDate), $html);
 $html = str_replace('{$lawyerHasAvailabilityJson}', json_encode($lawyerHasAvailability), $html);
 $html = str_replace('{MIN_DATE}', date('Y-m-d'), $html);
 $html = str_replace('{APPT_TOTAL}', (string) $apptTotal, $html);

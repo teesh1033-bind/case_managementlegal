@@ -132,7 +132,8 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $slot) {
         $lawyerId = (int) $slot['lawyer_id'];
         $slotType = $slot['slot_type'] === 'available' ? 'available' : 'unavailable';
-        if ($slotType === 'available') {
+        $slotDate = isset($slot['slot_date']) ? trim((string) $slot['slot_date']) : '';
+        if ($slotType === 'available' && $slotDate !== '') {
             $hasSchedule[$lawyerId] = true;
         }
 
@@ -142,7 +143,6 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
             'type' => $slotType,
         ];
 
-        $slotDate = isset($slot['slot_date']) ? trim((string) $slot['slot_date']) : '';
         if ($slotDate !== '') {
             if (!isset($byDate[$lawyerId][$slotDate])) {
                 $byDate[$lawyerId][$slotDate] = [];
@@ -208,29 +208,19 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
         ];
     }
 
-    $stmt = $pdo->prepare("
-        SELECT COUNT(*) FROM lawyer_time_slots
-        WHERE lawyer_id = ? AND slot_type = 'available'
-    ");
-    $stmt->execute([$lawyerId]);
-    if ((int) $stmt->fetchColumn() === 0) {
-        return ['ok' => true];
-    }
-
+    // Booking requires availability published for the exact calendar date (lawyer availability UI).
     $stmt = $pdo->prepare("
         SELECT COUNT(*) FROM lawyer_time_slots
         WHERE lawyer_id = ?
           AND slot_type = 'available'
-          AND (
-            (slot_date IS NOT NULL AND slot_date = ?)
-            OR (slot_date IS NULL AND day_of_week = ?)
-          )
+          AND slot_date IS NOT NULL
+          AND slot_date = ?
     ");
-    $stmt->execute([$lawyerId, $appointmentDate, $dayOfWeek]);
+    $stmt->execute([$lawyerId, $appointmentDate]);
     if ((int) $stmt->fetchColumn() === 0) {
         return [
             'ok' => false,
-            'message' => 'This lawyer is not available on the selected date. Please choose another date.',
+            'message' => 'No available times on this date. Choose another date.',
         ];
     }
 
@@ -238,15 +228,13 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
         SELECT id FROM lawyer_time_slots
         WHERE lawyer_id = ?
           AND slot_type = 'available'
-          AND (
-            (slot_date IS NOT NULL AND slot_date = ?)
-            OR (slot_date IS NULL AND day_of_week = ?)
-          )
+          AND slot_date IS NOT NULL
+          AND slot_date = ?
           AND start_time <= ?
           AND end_time > ?
         LIMIT 1
     ");
-    $stmt->execute([$lawyerId, $appointmentDate, $dayOfWeek, $requestedTime, $requestedTime]);
+    $stmt->execute([$lawyerId, $appointmentDate, $requestedTime, $requestedTime]);
     if (!$stmt->fetch()) {
         return [
             'ok' => false,

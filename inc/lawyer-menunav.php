@@ -72,13 +72,6 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
             <?php endforeach; ?>
         </ul>
     </div>
-
-    <div class="legalpro-sidebar-footer">
-        <a href="lawyer-logout.php" class="legalpro-sidebar-signout">
-            <i class="ni ni-button-power"></i>
-            <span>Sign Out</span>
-        </a>
-    </div>
 </aside>
 
 <?php echo $navbarUtilitiesMount; ?>

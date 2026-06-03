@@ -36,8 +36,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])
             if (!$appointment) {
                 $message = 'Appointment not found or you do not have permission to update it.';
                 $messageType = 'danger';
-            } elseif (strtolower((string) ($appointment['status'] ?? 'pending')) === 'accepted') {
+            } elseif (in_array(strtolower((string) ($appointment['status'] ?? 'pending')), ['accepted', 'approved'], true)) {
                 $message = 'Accepted appointments cannot be modified.';
+                $messageType = 'danger';
+            } elseif (strtolower((string) ($appointment['status'] ?? 'pending')) === 'rejected'
+                && in_array($action, ['accept', 'reject', 'pending', 'reschedule'], true)) {
+                $message = 'Rejected appointments cannot be changed.';
                 $messageType = 'danger';
             } elseif ($action === 'reschedule') {
                 $newDate = trim((string) ($_POST['reschedule_date'] ?? ''));
@@ -173,7 +177,10 @@ try {
 function buildLawyerAppointmentActions(array $appointment): string
 {
     $id = (int) $appointment['id'];
-    $status = (string) ($appointment['status'] ?? 'pending');
+    $status = strtolower((string) ($appointment['status'] ?? 'pending'));
+    if ($status === 'approved') {
+        $status = 'accepted';
+    }
     $caseId = (int) $appointment['case_id'];
     $dateVal = date('Y-m-d', strtotime($appointment['starts_at']));
     $timeVal = date('H:i', strtotime($appointment['starts_at']));
@@ -189,34 +196,49 @@ function buildLawyerAppointmentActions(array $appointment): string
         return $html;
     }
 
-    if ($status !== 'accepted') {
+    if ($status === 'rejected') {
+        $html .= '<span class="badge bg-danger">Rejected</span>';
+        $html .= '</div>';
+        return $html;
+    }
+
+    if ($status === 'pending') {
         $html .= '
         <form method="post" class="lawyer-appointment-actions__form">
             <input type="hidden" name="appointment_id" value="' . $id . '">
             <input type="hidden" name="appointment_action" value="accept">
             <button type="submit" class="btn btn-sm btn-success mb-0" onclick="return confirm(\'Accept this appointment?\')">Accept</button>
-        </form>';
-    }
-
-    if ($status !== 'rejected') {
-        $html .= '
+        </form>
         <form method="post" class="lawyer-appointment-actions__form">
             <input type="hidden" name="appointment_id" value="' . $id . '">
             <input type="hidden" name="appointment_action" value="reject">
             <button type="submit" class="btn btn-sm btn-danger mb-0" onclick="return confirm(\'Reject this appointment?\')">Reject</button>
-        </form>';
+        </form>
+        <button type="button" class="btn btn-sm btn-primary mb-0"
+            onclick="openRescheduleModal(' . $id . ', \'' . htmlspecialchars($dateVal, ENT_QUOTES) . '\', \'' . htmlspecialchars($timeVal, ENT_QUOTES) . '\', \'' . htmlspecialchars($defaultRescheduleStatus, ENT_QUOTES) . '\')">
+            Reschedule
+        </button>';
+        $html .= '</div>';
+        return $html;
     }
 
-    if ($status !== 'pending') {
-        $html .= '
+    // Accepted (non-locked path) or other statuses: allow moving back to pending / reject / reschedule.
+    $html .= '
+        <form method="post" class="lawyer-appointment-actions__form">
+            <input type="hidden" name="appointment_id" value="' . $id . '">
+            <input type="hidden" name="appointment_action" value="accept">
+            <button type="submit" class="btn btn-sm btn-success mb-0" onclick="return confirm(\'Accept this appointment?\')">Accept</button>
+        </form>
+        <form method="post" class="lawyer-appointment-actions__form">
+            <input type="hidden" name="appointment_id" value="' . $id . '">
+            <input type="hidden" name="appointment_action" value="reject">
+            <button type="submit" class="btn btn-sm btn-danger mb-0" onclick="return confirm(\'Reject this appointment?\')">Reject</button>
+        </form>
         <form method="post" class="lawyer-appointment-actions__form">
             <input type="hidden" name="appointment_id" value="' . $id . '">
             <input type="hidden" name="appointment_action" value="pending">
             <button type="submit" class="btn btn-sm btn-warning mb-0" onclick="return confirm(\'Keep this appointment as pending?\')">Pending</button>
-        </form>';
-    }
-
-    $html .= '
+        </form>
         <button type="button" class="btn btn-sm btn-primary mb-0"
             onclick="openRescheduleModal(' . $id . ', \'' . htmlspecialchars($dateVal, ENT_QUOTES) . '\', \'' . htmlspecialchars($timeVal, ENT_QUOTES) . '\', \'' . htmlspecialchars($defaultRescheduleStatus, ENT_QUOTES) . '\')">
             Reschedule

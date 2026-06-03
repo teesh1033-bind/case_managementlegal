@@ -76,6 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         'notes' => $notes
     ];
 
+    $dateTime = null;
+    $availabilityResult = ['ok' => false];
+
     if (empty($caseId) || empty($lawyerId) || empty($date) || empty($time)) {
         $message = 'Case, lawyer, date, and time are required.';
         $messageType = 'danger';
@@ -94,14 +97,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
             } else {
                 $excludeAppointmentId = $appointmentId > 0 ? $appointmentId : null;
                 $availabilityResult = validateLawyerBookingAvailability($pdo, $lawyerId, $date, $time, $excludeAppointmentId);
-                if (!$availabilityResult['ok']) {
-                    $message = $availabilityResult['message'];
+                if (empty($availabilityResult['ok'])) {
+                    $message = $availabilityResult['message'] ?? 'No available times on this date. Choose another date.';
                     $messageType = 'danger';
                 }
             }
         }
 
-        if ($messageType !== 'danger' && $dateTime) {
+        $availabilityOk = isset($availabilityResult) && !empty($availabilityResult['ok']);
+        if ($messageType !== 'danger' && $dateTime && $availabilityOk) {
             $startsAt = $dateTime->format('Y-m-d H:i:s');
             $endsAt = $dateTime->modify('+1 hour')->format('Y-m-d H:i:s');
 
@@ -123,13 +127,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                         }
 
                         if ($messageType !== 'danger') {
-                            $updatedStatus = (isset($oldAppointment['status']) ? strtolower((string) $oldAppointment['status']) : 'pending');
-                            if ($updatedStatus === '') {
-                                $updatedStatus = 'pending';
+                            $previousStatus = strtolower((string) ($oldAppointment['status'] ?? 'pending'));
+                            if ($previousStatus === '') {
+                                $previousStatus = 'pending';
                             }
-                            // If a rejected appointment is reassigned to another lawyer,
-                            // restart the review cycle for the new lawyer.
-                            if ((int) $oldAppointment['lawyer_id'] !== $lawyerId && $updatedStatus === 'rejected') {
+                            $updatedStatus = $previousStatus;
+                            // Rejected appointments must go back to pending so the assigned lawyer
+                            // can accept or reject (including when admin picks a different lawyer).
+                            if ($previousStatus === 'rejected') {
                                 $updatedStatus = 'pending';
                             }
 
@@ -164,7 +169,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                                 ]);
                             }
 
-                            $msg = 'Appointment updated successfully.';
+                            $msg = $previousStatus === 'rejected'
+                                ? 'Appointment reassigned. The lawyer must accept or reject this request.'
+                                : 'Appointment updated successfully.';
                         }
                     }
                 } else {
@@ -355,9 +362,26 @@ foreach ($casesList as $case) {
 }
 
 $isEditing = !empty($formData['appointment_id']);
-$formTitle = $isEditing ? 'Update Appointment' : 'Book Appointment';
-$pageTitle = $isEditing ? 'Edit Appointment' : 'New Appointment';
-$submitLabel = $isEditing ? 'Save Changes' : 'Submit Request';
+$editingAppointmentStatus = '';
+if ($isEditing) {
+    if (isset($appointment) && is_array($appointment)) {
+        $editingAppointmentStatus = strtolower((string) ($appointment['status'] ?? 'pending'));
+    } else {
+        $statusStmt = $pdo->prepare('SELECT status FROM appointments WHERE id = ?');
+        $statusStmt->execute([(int) $formData['appointment_id']]);
+        $editingAppointmentStatus = strtolower((string) ($statusStmt->fetchColumn() ?: 'pending'));
+    }
+}
+$isRejectedReassign = $isEditing && $editingAppointmentStatus === 'rejected';
+$formTitle = $isRejectedReassign ? 'Reassign Appointment' : ($isEditing ? 'Update Appointment' : 'Book Appointment');
+$pageTitle = $isRejectedReassign ? 'Reassign Appointment' : ($isEditing ? 'Edit Appointment' : 'New Appointment');
+$submitLabel = $isRejectedReassign ? 'Assign & send to lawyer' : ($isEditing ? 'Save Changes' : 'Submit Request');
+$rejectedReassignNoticeHtml = '';
+if ($isRejectedReassign) {
+    $rejectedReassignNoticeHtml = '<div class="alert alert-info py-2 mb-3" role="alert">'
+        . '<i class="ni ni-info-16"></i> This appointment was rejected. Choose a lawyer and time, then save. '
+        . 'The assigned lawyer will receive it as <strong>pending</strong> and can accept or reject.</div>';
+}
 $cancelLink = '<a href="appointments.php" class="btn btn-outline-secondary btn-sm mb-0" title="Back to appointments"><i class="ni ni-bold-left me-1"></i> Back to list</a>';
 $messageHtml = '';
 if ($message) {
@@ -462,6 +486,7 @@ $html = <<<'HTML'
 							</div>
 						</div>
 						<div class="card-body pt-3">
+							{REJECTED_REASSIGN_NOTICE}
 							<form method="post" id="appointmentForm">
 								<input type="hidden" name="form_type" value="save">
 								<input type="hidden" name="appointment_id" value="{APPOINTMENT_ID}">
@@ -515,7 +540,7 @@ $html = <<<'HTML'
 									</div>
 								</div>
 								<div id="availabilityMessage" class="mb-3" style="display: none;"></div>
-								<small class="text-muted d-block mb-3">When a lawyer has published availability, only green time slots can be booked. Unavailable blocks and existing appointments are excluded.</small>
+								<small class="text-muted d-block mb-3">Appointments can only be booked when the lawyer has published availability for the selected date. Unavailable blocks and existing appointments are excluded.</small>
 
 								<div class="form-group mb-4">
 									<label class="form-control-label text-sm font-weight-bold">Notes</label>
@@ -523,7 +548,7 @@ $html = <<<'HTML'
 								</div>
 
 								<div class="d-flex gap-2">
-									<button class="btn btn-dark btn-sm mb-0" type="submit">
+									<button class="btn btn-dark btn-sm mb-0" type="submit" id="submitAppointmentBtn" disabled>
 										<i class="ni ni-check-bold me-1"></i> {SUBMIT_LABEL}
 									</button>
 								</div>
@@ -544,6 +569,7 @@ $html = <<<'HTML'
 		const lawyerAvailabilityByDay = {LAWYER_AVAILABILITY_BY_DAY_JSON};
 		const lawyerHasSchedule = {LAWYER_HAS_SCHEDULE_JSON};
 		const initialAppointmentTime = '{TIME_VALUE}';
+		const NO_AVAILABILITY_ON_DATE_MSG = 'No available times on this date. Choose another date.';
 
 		document.addEventListener('DOMContentLoaded', function() {
 			var caseSelect = document.getElementById('case_select');
@@ -635,10 +661,22 @@ $html = <<<'HTML'
 
             function getSlotsForLawyerAndDate(lawyerId, dateValue) {
                 var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
-                var byDay = lawyerAvailabilityByDay[lawyerId] || lawyerAvailabilityByDay[String(lawyerId)] || {};
-                var dateSlots = byDate[dateValue] ? byDate[dateValue].slice() : [];
-                var daySlots = byDay[getDayOfWeekFromDate(dateValue)] ? byDay[getDayOfWeekFromDate(dateValue)].slice() : [];
-                return dateSlots.concat(daySlots);
+                return byDate[dateValue] ? byDate[dateValue].slice() : [];
+            }
+
+            function lawyerHasAvailabilityOnDate(lawyerId, dateValue) {
+                return getSlotsForLawyerAndDate(lawyerId, dateValue).some(function(slot) {
+                    return slot.type === 'available';
+                });
+            }
+
+            function setSubmitEnabled(enabled) {
+                var submitBtn = document.getElementById('submitAppointmentBtn');
+                if (!submitBtn) {
+                    return;
+                }
+                submitBtn.disabled = !enabled;
+                submitBtn.title = enabled ? '' : 'Select a lawyer, date, and available time before booking.';
             }
 
             function normalizeTimeValue(timeValue) {
@@ -728,7 +766,7 @@ $html = <<<'HTML'
                     return false;
                 }
                 if (!hasSchedule) {
-                    return true;
+                    return false;
                 }
                 var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
                 if (!availableSlots.length) {
@@ -830,6 +868,24 @@ $html = <<<'HTML'
                 var hasSchedule = lawyerHasPublishedSchedule(lawyerId);
                 var hasBookableSlot = false;
 
+                if (!hasSchedule || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                    timeOptions.forEach(function(option) {
+                        if (option.value) {
+                            option.disabled = true;
+                        }
+                    });
+                    timeInput.value = '';
+                    if (timeSlotPicker) {
+                        timeSlotPicker.innerHTML = '';
+                    }
+                    setAvailabilityMessage(
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
+                        true
+                    );
+                    setSubmitEnabled(false);
+                    return;
+                }
+
                 timeOptions.forEach(function(option) {
                     if (!option.value) {
                         return;
@@ -871,11 +927,12 @@ $html = <<<'HTML'
 
                 renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule);
 
-                if (hasSchedule && !hasBookableSlot) {
+                if (!hasBookableSlot) {
                     setAvailabilityMessage(
-                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> No available times on this date. Choose another date.</div>',
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
                         true
                     );
+                    setSubmitEnabled(false);
                     return;
                 }
 
@@ -895,15 +952,18 @@ $html = <<<'HTML'
 
                 if (!lawyerId || !dateValue) {
                     setAvailabilityMessage('', false);
-                    return true;
+                    setSubmitEnabled(false);
+                    return false;
                 }
 
-                if (!lawyerHasPublishedSchedule(lawyerId)) {
+                if (!lawyerHasPublishedSchedule(lawyerId) || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                    timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
                     setAvailabilityMessage(
-                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer has not published availability yet. You may still book a time.</div>',
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
                         true
                     );
-                    return true;
+                    setSubmitEnabled(false);
+                    return false;
                 }
 
                 if (!timeValue) {
@@ -911,6 +971,7 @@ $html = <<<'HTML'
                         '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a <span class="text-success font-weight-bold">green</span> time within the lawyer\'s published availability.</div>',
                         true
                     );
+                    setSubmitEnabled(false);
                     return false;
                 }
 
@@ -921,6 +982,7 @@ $html = <<<'HTML'
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> The selected time is not available. Choose a green time slot.</div>',
                         true
                     );
+                    setSubmitEnabled(false);
                     return false;
                 }
 
@@ -933,15 +995,17 @@ $html = <<<'HTML'
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer is unavailable at the selected time. Choose another slot.</div>',
                         true
                     );
+                    setSubmitEnabled(false);
                     return false;
                 }
 
                 if (availableSlots.length === 0) {
-                    timeInput.setCustomValidity('This lawyer is not available on the selected date.');
+                    timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
                     setAvailabilityMessage(
-                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer is not available on the selected date.</div>',
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
                         true
                     );
+                    setSubmitEnabled(false);
                     return false;
                 }
 
@@ -951,6 +1015,7 @@ $html = <<<'HTML'
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
                         true
                     );
+                    setSubmitEnabled(false);
                     return false;
                 }
 
@@ -958,6 +1023,7 @@ $html = <<<'HTML'
                     '<div class="alert alert-success py-2 mb-0"><i class="ni ni-check-bold"></i> Selected time is within the lawyer\'s availability.</div>',
                     true
                 );
+                setSubmitEnabled(true);
                 return true;
             }
 
@@ -1041,6 +1107,7 @@ HTML;
 $html = str_replace('{PAGE_TITLE}', htmlspecialchars($pageTitle), $html);
 $html = str_replace('{FORM_TITLE}', htmlspecialchars($formTitle), $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{REJECTED_REASSIGN_NOTICE}', $rejectedReassignNoticeHtml, $html);
 $html = str_replace('{APPOINTMENT_ID}', htmlspecialchars($formData['appointment_id']), $html);
 $html = str_replace('{CASE_OPTIONS}', $caseOptions, $html);
 $html = str_replace('{CLIENT_NAME}', htmlspecialchars($formData['client_name']), $html);
