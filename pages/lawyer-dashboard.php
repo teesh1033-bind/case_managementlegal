@@ -80,6 +80,15 @@ try {
     $upcomingAppointments = [];
 }
 
+require_once __DIR__ . '/../inc/legalpro-icons.php';
+$iconStatCases = legalpro_icon('briefcase');
+$iconStatActive = legalpro_icon('message-circle');
+$iconStatClients = legalpro_icon('users');
+$iconPanelCases = legalpro_icon('briefcase');
+$iconPanelAppts = legalpro_icon('calendar');
+$iconRowCase = legalpro_icon('briefcase');
+$iconRowAppt = legalpro_icon('calendar');
+
 // Build recent cases HTML
 $recentCasesHtml = '';
 if (empty($recentCases)) {
@@ -98,9 +107,7 @@ if (empty($recentCases)) {
         <tr>
             <td>
                 <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
-                        <i class="ni ni-folder-17 text-white text-xs opacity-10"></i>
-                    </div>
+                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3" style="width:2.25rem;height:2.25rem;min-width:2.25rem">' . $iconRowCase . '</div>
                     <div>
                         <h6 class="mb-0 text-sm">' . htmlspecialchars($case['title']) . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($case['first_name'] . ' ' . $case['last_name']) . '</p>
@@ -128,9 +135,7 @@ if (empty($upcomingAppointments)) {
         <tr>
             <td>
                 <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-success shadow text-center border-radius-md me-3">
-                        <i class="ni ni-time-alarm text-white text-xs opacity-10"></i>
-                    </div>
+                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success me-3" style="width:2.25rem;height:2.25rem;min-width:2.25rem">' . $iconRowAppt . '</div>
                     <div>
                         <h6 class="mb-0 text-sm">' . htmlspecialchars($appointment['case_title']) . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointment['first_name'] . ' ' . $appointment['last_name']) . '</p>
@@ -169,7 +174,7 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=3" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-dashboard-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-dashboard-page legalpro-dashboard-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -198,9 +203,7 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                                        <i class="ni ni-collection text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_STAT_CASES}</div>
                                 </div>
                             </div>
                         </div>
@@ -217,9 +220,7 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
-                                        <i class="ni ni-active-40 text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">{ICON_STAT_ACTIVE}</div>
                                 </div>
                             </div>
                         </div>
@@ -236,9 +237,7 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md">
-                                        <i class="ni ni-circle-08 text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_STAT_CLIENTS}</div>
                                 </div>
                             </div>
                         </div>
@@ -254,9 +253,7 @@ $html = <<<'HTML'
                     <div class="card">
                         <div class="card-header pb-0 p-3">
                             <div class="d-flex align-items-center">
-                                <div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-md me-3">
-                                    <i class="ni ni-collection text-white text-lg opacity-10"></i>
-                                </div>
+                                <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_PANEL_CASES}</div>
                                 <div>
                                     <h6 class="mb-0">Recent Cases</h6>
                                     <p class="text-sm text-muted mb-0">Your most recently assigned cases</p>
@@ -288,9 +285,7 @@ $html = <<<'HTML'
                     <div class="card">
                         <div class="card-header pb-0 p-3">
                             <div class="d-flex align-items-center">
-                                <div class="icon icon-shape icon-md bg-gradient-success shadow text-center border-radius-md me-3">
-                                    <i class="ni ni-time-alarm text-white text-lg opacity-10"></i>
-                                </div>
+                                <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success me-3">{ICON_PANEL_APPTS}</div>
                                 <div>
                                     <h6 class="mb-0">Upcoming Appointments</h6>
                                     <p class="text-sm text-muted mb-0">Your next scheduled appointments</p>
@@ -348,6 +343,11 @@ $replacements = [
     '{TOTAL_CLIENTS}' => $stats['total_clients'],
     '{RECENT_CASES}' => $recentCasesHtml,
     '{UPCOMING_APPOINTMENTS}' => $upcomingAppointmentsHtml,
+    '{ICON_STAT_CASES}' => $iconStatCases,
+    '{ICON_STAT_ACTIVE}' => $iconStatActive,
+    '{ICON_STAT_CLIENTS}' => $iconStatClients,
+    '{ICON_PANEL_CASES}' => $iconPanelCases,
+    '{ICON_PANEL_APPTS}' => $iconPanelAppts,
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

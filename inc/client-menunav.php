@@ -2,16 +2,17 @@
 // inc/client-menunav.php — Client portal sidebar + header utilities (same shell as menunav.php)
 
 require_once __DIR__ . '/admin-layout.php';
+require_once __DIR__ . '/legalpro-icons.php';
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 $clientMenuItems = [
-    ['title' => 'Dashboard', 'url' => 'client-dashboard.php', 'icon' => 'ni ni-tv-2', 'id' => 'client-dashboard'],
-    ['title' => 'My Cases', 'url' => 'client-cases.php', 'icon' => 'ni ni-collection', 'id' => 'client-cases'],
-    ['title' => 'Appointments', 'url' => 'client-appointments.php', 'icon' => 'ni ni-time-alarm', 'id' => 'client-appointments'],
-    ['title' => 'Court Tracking', 'url' => 'client-court-tracking.php', 'icon' => 'ni ni-calendar-grid-58', 'id' => 'client-court-tracking'],
-    ['title' => 'Payments', 'url' => 'client-payments.php', 'icon' => 'ni ni-money-coins', 'id' => 'client-payments'],
-    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'ni ni-chat-round', 'id' => 'chatbot'],
+    ['title' => 'Dashboard', 'url' => 'client-dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'client-dashboard'],
+    ['title' => 'My Cases', 'url' => 'client-cases.php', 'icon' => 'briefcase', 'id' => 'client-cases'],
+    ['title' => 'Appointments', 'url' => 'client-appointments.php', 'icon' => 'calendar', 'id' => 'client-appointments'],
+    ['title' => 'Court Tracking', 'url' => 'client-court-tracking.php', 'icon' => 'landmark', 'id' => 'client-court-tracking'],
+    ['title' => 'Payments', 'url' => 'client-payments.php', 'icon' => 'credit-card', 'id' => 'client-payments'],
+    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
 
 if (!function_exists('clientNavIsActive')) {
@@ -56,7 +57,7 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
             </span>
         </a>
         <button type="button" class="legalpro-sidebar-collapse btn btn-link p-0 d-none d-xl-inline-flex" id="legalproSidebarCollapse" aria-label="Collapse sidebar">
-            <i class="ni ni-bold-left"></i>
+            <?php echo legalpro_icon('chevron-left'); ?>
         </button>
         <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
@@ -67,7 +68,7 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
                 <?php $active = clientNavIsActive($item['id'], $currentPage); ?>
                 <li class="nav-item">
                     <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
-                        <span class="legalpro-sidebar-nav__icon"><i class="<?php echo htmlspecialchars($item['icon']); ?>"></i></span>
+                        <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
                         <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
                     </a>
                 </li>
@@ -88,3 +89,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<?php legalpro_icons_footer_scripts(); ?>

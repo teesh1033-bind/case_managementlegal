@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/password-validation.php';
+require_once __DIR__ . '/../inc/client-portal-navbar.php';
 
 if (!isset($_SESSION['client_id'])) {
     header('Location: login.php');
@@ -166,28 +167,12 @@ $html = <<<'HTML'
     <link href="../assets/css/app-font-montserrat.css?v=5" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 client-profile-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-profile-page">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
-            <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <a href="javascript:;" class="nav-link text-body p-0 d-xl-none" id="iconNavbarSidenav">
-                        <div class="sidenav-toggler-inner">
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                        </div>
-                    </a>
-                    <div>
-                        <h6 class="font-weight-bolder mb-0">My Profile</h6>
-                        <p class="dashboard-welcome-sub mb-0 mt-1">Manage your account details</p>
-                    </div>
-                </div>
-            </div>
-        </nav>
+        <?php echo legalpro_render_client_page_navbar('My Profile', 'Profile', 'Search cases…', ['client_name' => $clientName]); ?>
 
         <div class="container-fluid py-4">
             {MESSAGE}

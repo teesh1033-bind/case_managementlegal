@@ -426,6 +426,7 @@ body.lawyer-case-view-page .navbar-main,
 body.lawyer-client-view-page .navbar-main,
 body.lawyer-court-tracking-page .navbar-main,
 body.lawyer-tasks-page .navbar-main,
+body.legalpro-client-portal .navbar-main,
 body.client-dashboard-page .navbar-main,
 body.client-cases-page .navbar-main,
 body.client-appointments-page .navbar-main,
@@ -460,12 +461,14 @@ body.client-profile-page .navbar-main .container-fluid {
 
 body.legalpro-sidebar-collapsed.legalpro-lawyer-portal .navbar-main,
 body.legalpro-sidebar-collapsed.lawyer-dashboard-page .navbar-main,
+body.legalpro-sidebar-collapsed.legalpro-client-portal .navbar-main,
 body.legalpro-sidebar-collapsed.client-dashboard-page .navbar-main,
 body.legalpro-sidebar-collapsed.client-cases-page .navbar-main,
 body.legalpro-sidebar-collapsed.client-appointments-page .navbar-main,
 body.legalpro-sidebar-collapsed.client-profile-page .navbar-main,
 body.legalpro-sidebar-collapsed.client-payments-page .navbar-main,
-body.legalpro-sidebar-collapsed.client-court-tracking-page .navbar-main {
+body.legalpro-sidebar-collapsed.client-court-tracking-page .navbar-main,
+body.legalpro-sidebar-collapsed.client-portal-page .navbar-main {
     left: var(--lp-portal-sidebar-collapsed) !important;
 }
 
@@ -477,43 +480,108 @@ body.lawyer-appointments-page .navbar-main .container-fluid,
 body.lawyer-availability-page .navbar-main .container-fluid,
 body.lawyer-court-tracking-page .navbar-main .container-fluid,
 body.lawyer-tasks-page .navbar-main .container-fluid,
+body.legalpro-client-portal .navbar-main .container-fluid,
 body.client-dashboard-page .navbar-main .container-fluid,
 body.client-cases-page .navbar-main .container-fluid,
 body.client-appointments-page .navbar-main .container-fluid,
 body.client-court-tracking-page .navbar-main .container-fluid,
 body.client-payments-page .navbar-main .container-fluid,
-body.client-profile-page .navbar-main .container-fluid {
+body.client-profile-page .navbar-main .container-fluid,
+body.client-portal-page .navbar-main .container-fluid {
     padding: 0.85rem 1.75rem !important;
     min-height: var(--lp-portal-header-height);
 }
 
 body.legalpro-lawyer-portal .navbar-main .breadcrumb,
-body.lawyer-dashboard-page .navbar-main .breadcrumb,
+body.lawyer-dashboard-page .navbar-main .breadcrumb {
+    display: none !important;
+}
+
+body.legalpro-client-portal .navbar-main .breadcrumb,
 body.client-dashboard-page .navbar-main .breadcrumb,
-body.client-appointments-page .navbar-main .breadcrumb {
+body.client-appointments-page .navbar-main .breadcrumb,
+body.client-cases-page .navbar-main .breadcrumb,
+body.client-court-tracking-page .navbar-main .breadcrumb,
+body.client-payments-page .navbar-main .breadcrumb,
+body.client-portal-page .navbar-main .breadcrumb,
+body.client-profile-page .navbar-main .breadcrumb,
+.search-portal-page--client .navbar-main .breadcrumb {
     display: none !important;
 }
 
 body.legalpro-lawyer-portal .navbar-main h6,
 body.lawyer-dashboard-page .navbar-main h6,
-body.client-dashboard-page .navbar-main h6,
-body.client-appointments-page .navbar-main h6,
-body.client-profile-page .navbar-main h6,
 body.legalpro-lawyer-portal .navbar-main .text-white,
 body.lawyer-dashboard-page .navbar-main .text-white,
-body.client-dashboard-page .navbar-main .text-white,
-body.client-appointments-page .navbar-main .text-white,
-body.client-profile-page .navbar-main .text-white,
-body.legalpro-lawyer-portal .navbar-main .font-weight-bolder,
-body.client-dashboard-page .navbar-main .font-weight-bolder,
-body.client-profile-page .navbar-main .font-weight-bolder {
+body.legalpro-lawyer-portal .navbar-main .font-weight-bolder {
     color: #344767 !important;
     opacity: 1 !important;
 }
 
 body.legalpro-lawyer-portal .navbar-main h6,
+body.lawyer-dashboard-page .navbar-main h6 {
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+}
+
+/* Client portal — page title & welcome visible on white navbar */
+body.legalpro-client-portal .navbar-main h5,
+body.legalpro-client-portal .navbar-main h6,
+body.legalpro-client-portal .navbar-main .text-white,
+body.legalpro-client-portal .navbar-main .font-weight-bolder,
+body.legalpro-client-portal .navbar-main a.text-white,
+body.client-dashboard-page .navbar-main h5,
 body.client-dashboard-page .navbar-main h6,
-body.client-profile-page .navbar-main h6 {
+body.client-appointments-page .navbar-main h5,
+body.client-appointments-page .navbar-main h6,
+body.client-cases-page .navbar-main h5,
+body.client-cases-page .navbar-main h6,
+body.client-court-tracking-page .navbar-main h5,
+body.client-court-tracking-page .navbar-main h6,
+body.client-payments-page .navbar-main h5,
+body.client-payments-page .navbar-main h6,
+body.client-portal-page .navbar-main h5,
+body.client-portal-page .navbar-main h6,
+body.client-profile-page .navbar-main h5,
+body.client-profile-page .navbar-main h6,
+body.client-dashboard-page .navbar-main .text-white,
+body.client-appointments-page .navbar-main .text-white,
+body.client-cases-page .navbar-main .text-white,
+body.client-court-tracking-page .navbar-main .text-white,
+body.client-payments-page .navbar-main .text-white,
+body.client-portal-page .navbar-main .text-white,
+body.client-profile-page .navbar-main .text-white,
+body.client-dashboard-page .navbar-main .font-weight-bolder,
+body.client-appointments-page .navbar-main .font-weight-bolder,
+body.client-cases-page .navbar-main .font-weight-bolder,
+body.client-court-tracking-page .navbar-main .font-weight-bolder,
+body.client-payments-page .navbar-main .font-weight-bolder,
+body.client-portal-page .navbar-main .font-weight-bolder,
+body.client-profile-page .navbar-main .font-weight-bolder,
+.search-portal-page--client .navbar-main h5,
+.search-portal-page--client .navbar-main .text-white,
+.search-portal-page--client .navbar-main .font-weight-bolder {
+    color: #344767 !important;
+    opacity: 1 !important;
+}
+
+body.legalpro-client-portal .navbar-main h5,
+body.legalpro-client-portal .navbar-main h6,
+body.client-dashboard-page .navbar-main h5,
+body.client-dashboard-page .navbar-main h6,
+body.client-appointments-page .navbar-main h5,
+body.client-appointments-page .navbar-main h6,
+body.client-cases-page .navbar-main h5,
+body.client-cases-page .navbar-main h6,
+body.client-court-tracking-page .navbar-main h5,
+body.client-court-tracking-page .navbar-main h6,
+body.client-payments-page .navbar-main h5,
+body.client-payments-page .navbar-main h6,
+body.client-portal-page .navbar-main h5,
+body.client-portal-page .navbar-main h6,
+body.client-profile-page .navbar-main h5,
+body.client-profile-page .navbar-main h6,
+.search-portal-page--client .navbar-main h5 {
     font-size: 1.35rem !important;
     font-weight: 800 !important;
 }
@@ -592,16 +660,26 @@ body.client-appointments-page .footer .copyright {
     }
 
     body.legalpro-lawyer-portal .navbar-main,
+    body.legalpro-client-portal .navbar-main,
     body.client-dashboard-page .navbar-main,
     body.client-profile-page .navbar-main,
     body.client-cases-page .navbar-main,
-    body.client-appointments-page .navbar-main {
+    body.client-appointments-page .navbar-main,
+    body.client-court-tracking-page .navbar-main,
+    body.client-payments-page .navbar-main,
+    body.client-portal-page .navbar-main {
         left: 0 !important;
     }
 
     body.legalpro-lawyer-portal .navbar-main .container-fluid,
+    body.legalpro-client-portal .navbar-main .container-fluid,
     body.client-dashboard-page .navbar-main .container-fluid,
-    body.client-profile-page .navbar-main .container-fluid {
+    body.client-profile-page .navbar-main .container-fluid,
+    body.client-cases-page .navbar-main .container-fluid,
+    body.client-appointments-page .navbar-main .container-fluid,
+    body.client-court-tracking-page .navbar-main .container-fluid,
+    body.client-payments-page .navbar-main .container-fluid,
+    body.client-portal-page .navbar-main .container-fluid {
         padding: 0.85rem 1rem !important;
     }
 }

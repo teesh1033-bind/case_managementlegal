@@ -257,6 +257,17 @@ $chartTrendLabel = $chartPaidTotal >= $chartInvoicedTotal * 0.8
     ? 'Strong collection rate'
     : 'Track outstanding invoices';
 
+require_once __DIR__ . '/../inc/legalpro-icons.php';
+$iconGlanceToday = legalpro_icon('clock');
+$iconGlanceWeek = legalpro_icon('calendar');
+$iconGlancePending = legalpro_icon('bell');
+$iconGlanceInvoices = legalpro_icon('file-text');
+$iconStatCases = legalpro_icon('briefcase');
+$iconStatActive = legalpro_icon('message-circle');
+$iconStatCompleted = legalpro_icon('file-text');
+$iconStatTasks = legalpro_icon('list-checks');
+$iconUpcomingEmpty = legalpro_icon('calendar');
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -273,9 +284,10 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=3" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg ">
@@ -298,28 +310,28 @@ $html = <<<'HTML'
                 <div class="col-12">
                     <div class="dashboard-glance">
                         <a href="appointments.php" class="dashboard-glance__item">
-                            <div class="dashboard-glance__icon dashboard-glance__icon--primary"><i class="ni ni-time-alarm"></i></div>
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--primary">{ICON_GLANCE_TODAY}</div>
                             <div>
                                 <div class="dashboard-glance__value">{APPOINTMENTS_TODAY}</div>
                                 <div class="dashboard-glance__label">Today</div>
                             </div>
                         </a>
                         <a href="appointments.php" class="dashboard-glance__item">
-                            <div class="dashboard-glance__icon dashboard-glance__icon--info"><i class="ni ni-calendar-grid-58"></i></div>
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--info">{ICON_GLANCE_WEEK}</div>
                             <div>
                                 <div class="dashboard-glance__value">{APPOINTMENTS_WEEK}</div>
                                 <div class="dashboard-glance__label">This week</div>
                             </div>
                         </a>
                         <a href="appointments.php" class="dashboard-glance__item">
-                            <div class="dashboard-glance__icon dashboard-glance__icon--warning"><i class="ni ni-bell-55"></i></div>
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--warning">{ICON_GLANCE_PENDING}</div>
                             <div>
                                 <div class="dashboard-glance__value">{DUE_TODAY}</div>
                                 <div class="dashboard-glance__label">Pending today</div>
                             </div>
                         </a>
                         <a href="invoices.php" class="dashboard-glance__item">
-                            <div class="dashboard-glance__icon dashboard-glance__icon--success"><i class="ni ni-credit-card"></i></div>
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--success">{ICON_GLANCE_INVOICES}</div>
                             <div>
                                 <div class="dashboard-glance__value">{UNPAID_INVOICES}</div>
                                 <div class="dashboard-glance__label">Open invoices</div>
@@ -345,9 +357,7 @@ $html = <<<'HTML'
                                         </div>
                                     </div>
                                     <div class="col-4 text-end">
-                                        <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
-                                            <i class="ni ni-collection text-lg opacity-10" aria-hidden="true"></i>
-                                        </div>
+                                        <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_STAT_CASES}</div>
                                     </div>
                                 </div>
                             </div>
@@ -369,9 +379,7 @@ $html = <<<'HTML'
                                         </div>
                                     </div>
                                     <div class="col-4 text-end">
-                                        <div class="icon icon-shape bg-gradient-danger shadow-danger text-center rounded-circle">
-                                            <i class="ni ni-world text-lg opacity-10" aria-hidden="true"></i>
-                                        </div>
+                                        <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--danger">{ICON_STAT_ACTIVE}</div>
                                     </div>
                                 </div>
                             </div>
@@ -394,9 +402,7 @@ $html = <<<'HTML'
                                         </div>
                                     </div>
                                     <div class="col-4 text-end">
-                                        <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
-                                            <i class="ni ni-paper-diploma text-lg opacity-10" aria-hidden="true"></i>
-                                        </div>
+                                        <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">{ICON_STAT_COMPLETED}</div>
                                     </div>
                                 </div>
                             </div>
@@ -419,9 +425,7 @@ $html = <<<'HTML'
                                         </div>
                                     </div>
                                     <div class="col-4 text-end">
-                                        <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
-                                            <i class="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
-                                        </div>
+                                        <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--warning">{ICON_STAT_TASKS}</div>
                                     </div>
                                 </div>
                             </div>
@@ -799,7 +803,7 @@ if (empty($recentCases)) {
 // Upcoming appointments sidebar HTML
 $upcomingAppointmentsHtml = '';
 if (empty($upcomingAppointments)) {
-    $upcomingAppointmentsHtml = '<div class="dashboard-upcoming-empty"><i class="ni ni-calendar-grid-58"></i>No upcoming appointments</div>';
+    $upcomingAppointmentsHtml = '<div class="dashboard-upcoming-empty">' . $iconUpcomingEmpty . 'No upcoming appointments</div>';
 } else {
     foreach ($upcomingAppointments as $up) {
         $status = isset($up['status']) ? strtolower($up['status']) : 'pending';
@@ -837,6 +841,14 @@ $html = str_replace('{NEW_CASES_WEEK}', $newCasesThisWeek, $html);
 $html = str_replace('{COMPLETION_RATE}', $completionRate, $html);
 $html = str_replace('{DUE_TODAY}', $dueToday, $html);
 $html = str_replace('{RECENT_CASES_LIST}', $recentCasesList, $html);
+$html = str_replace('{ICON_GLANCE_TODAY}', $iconGlanceToday, $html);
+$html = str_replace('{ICON_GLANCE_WEEK}', $iconGlanceWeek, $html);
+$html = str_replace('{ICON_GLANCE_PENDING}', $iconGlancePending, $html);
+$html = str_replace('{ICON_GLANCE_INVOICES}', $iconGlanceInvoices, $html);
+$html = str_replace('{ICON_STAT_CASES}', $iconStatCases, $html);
+$html = str_replace('{ICON_STAT_ACTIVE}', $iconStatActive, $html);
+$html = str_replace('{ICON_STAT_COMPLETED}', $iconStatCompleted, $html);
+$html = str_replace('{ICON_STAT_TASKS}', $iconStatTasks, $html);
 
 // Inject dynamic calendar data directly into the template
 $html = str_replace('{CALENDAR_EVENTS_JSON}', json_encode($calendarEvents), $html);

@@ -2,6 +2,7 @@
 // inc/menunav.php — Admin sidebar + header utilities (LegalPro colors, modern shell)
 
 require_once __DIR__ . '/admin-layout.php';
+require_once __DIR__ . '/legalpro-icons.php';
 
 $companyBranding = getCompanyBranding();
 $companyName = $companyBranding['name'];
@@ -11,17 +12,17 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 $currentPage = str_replace('.php', '', $currentPage);
 
 $menuItems = [
-    ['title' => 'Dashboard', 'url' => 'dashboard.php', 'icon' => 'ni ni-tv-2', 'id' => 'dashboard'],
-    ['title' => 'Clients', 'url' => 'clients.php', 'icon' => 'ni ni-circle-08', 'id' => 'clients'],
-    ['title' => 'Cases', 'url' => 'tables.php', 'icon' => 'ni ni-collection', 'id' => 'tables'],
-    ['title' => 'Payments', 'url' => 'payments.php', 'icon' => 'ni ni-money-coins', 'id' => 'payments'],
-    ['title' => 'Appointments', 'url' => 'appointments.php', 'icon' => 'ni ni-calendar-grid-58', 'id' => 'appointments'],
-    ['title' => 'Court Tracking', 'url' => 'court-tracking.php', 'icon' => 'ni ni-map-big', 'id' => 'court-tracking'],
-    ['title' => 'Lawyers', 'url' => 'lawyers.php', 'icon' => 'ni ni-single-02', 'id' => 'lawyers'],
-    ['title' => 'Invoices', 'url' => 'invoices.php', 'icon' => 'ni ni-paper-diploma', 'id' => 'invoices'],
-    ['title' => 'Financial Summary', 'url' => 'financial-summary.php', 'icon' => 'ni ni-chart-pie-35', 'id' => 'financial-summary'],
-    ['title' => 'Documents', 'url' => 'documents.php', 'icon' => 'ni ni-folder-17', 'id' => 'documents'],
-    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'ni ni-chat-round', 'id' => 'chatbot'],
+    ['title' => 'Dashboard', 'url' => 'dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'dashboard'],
+    ['title' => 'Clients', 'url' => 'clients.php', 'icon' => 'users', 'id' => 'clients'],
+    ['title' => 'Cases', 'url' => 'tables.php', 'icon' => 'briefcase', 'id' => 'tables'],
+    ['title' => 'Payments', 'url' => 'payments.php', 'icon' => 'credit-card', 'id' => 'payments'],
+    ['title' => 'Appointments', 'url' => 'appointments.php', 'icon' => 'calendar', 'id' => 'appointments'],
+    ['title' => 'Court Tracking', 'url' => 'court-tracking.php', 'icon' => 'landmark', 'id' => 'court-tracking'],
+    ['title' => 'Lawyers', 'url' => 'lawyers.php', 'icon' => 'user-round', 'id' => 'lawyers'],
+    ['title' => 'Invoices', 'url' => 'invoices.php', 'icon' => 'file-text', 'id' => 'invoices'],
+    ['title' => 'Financial Summary', 'url' => 'financial-summary.php', 'icon' => 'pie-chart', 'id' => 'financial-summary'],
+    ['title' => 'Documents', 'url' => 'documents.php', 'icon' => 'folder-open', 'id' => 'documents'],
+    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
 
 function isActive($itemId, $currentPage)
@@ -48,8 +49,13 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 );
 ?>
 
+<<<<<<< HEAD
 <link href="../assets/css/legalpro-admin-portal.css?v=12" rel="stylesheet" />
+=======
+<link href="../assets/css/legalpro-admin-portal.css?v=14" rel="stylesheet" />
+>>>>>>> 664800965a792d9a40888326069eb06e04c585fa
 <link href="../assets/css/legalpro-sidebar-nav.css?v=1" rel="stylesheet" />
+<?php legalpro_icons_asset_links(); ?>
 
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
@@ -61,7 +67,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
             </span>
         </a>
         <button type="button" class="legalpro-sidebar-collapse btn btn-link p-0 d-none d-xl-inline-flex" id="legalproSidebarCollapse" aria-label="Collapse sidebar">
-            <i class="ni ni-bold-left"></i>
+            <?php echo legalpro_icon('chevron-left'); ?>
         </button>
         <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
@@ -72,7 +78,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
                 <?php $active = isActive($item['id'], $currentPage); ?>
                 <li class="nav-item">
                     <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
-                        <span class="legalpro-sidebar-nav__icon"><i class="<?php echo htmlspecialchars($item['icon']); ?>"></i></span>
+                        <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
                         <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
                     </a>
                 </li>
@@ -94,3 +100,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<?php legalpro_icons_footer_scripts(); ?>

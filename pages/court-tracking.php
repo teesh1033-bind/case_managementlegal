@@ -681,6 +681,4 @@ if (empty($upcomingCourtDates)) {
             }
         }
     </script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
-</body>
-</html>
+<?php include __DIR__ . '/../inc/footer.php'; ?>

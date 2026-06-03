@@ -376,8 +376,8 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <style></style>
+<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=16" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -501,9 +501,9 @@ $html = <<<'HTML'
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Status</label>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_active" value="1" {IS_ACTIVE_CHECKED}>
-                                        <label class="form-check-label">Active</label>
+                                    <div class="form-check form-switch legalpro-status-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" name="is_active" value="1" id="lawyer_is_active" {IS_ACTIVE_CHECKED}>
+                                        <label class="form-check-label" for="lawyer_is_active">Active</label>
                                     </div>
                                 </div>
                             </div>

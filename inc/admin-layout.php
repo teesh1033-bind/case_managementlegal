@@ -3,6 +3,8 @@
  * Shared admin portal layout helpers (Eagle-style shell, LegalPro colors).
  */
 
+require_once __DIR__ . '/legalpro-icons.php';
+
 function legalpro_admin_notification_count(?PDO $pdo = null): int
 {
     if ($pdo === null) {
@@ -97,13 +99,13 @@ function legalpro_render_portal_header_utilities(
         : '';
 
     $profileItem = $profileUrl !== ''
-        ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '"><i class="ni ni-single-02 me-2"></i>Profile</a></li>'
+        ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . 'Profile</a></li>'
         : '';
 
     return '
     <div class="legalpro-navbar-actions d-flex align-items-center gap-3 flex-shrink-0">
         <a href="' . htmlspecialchars($notifUrl) . '" class="legalpro-header-notif" title="Notifications">
-            <i class="ni ni-bell-55"></i>
+            ' . legalpro_icon('bell') . '
             ' . $notifBadge . '
         </a>
         <div class="legalpro-header-user dropdown">
@@ -113,12 +115,12 @@ function legalpro_render_portal_header_utilities(
                     <span class="legalpro-header-user__name">' . htmlspecialchars($displayName) . '</span>
                     <span class="legalpro-header-user__role">' . htmlspecialchars($roleLabel) . '</span>
                 </span>
-                <i class="ni ni-bold-down legalpro-header-user__caret" aria-hidden="true"></i>
+                ' . legalpro_icon('chevron-down', 'legalpro-header-user__caret') . '
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow border-0 legalpro-header-user__menu" id="legalproHeaderUserMenuList">
                 ' . $profileItem . '
                 ' . $extraMenuHtml . '
-                <li><a class="dropdown-item text-danger" href="' . htmlspecialchars($logoutUrl) . '"><i class="ni ni-button-power me-2"></i>Sign out</a></li>
+                <li><a class="dropdown-item text-danger" href="' . htmlspecialchars($logoutUrl) . '">' . legalpro_icon('log-out', 'me-2') . 'Sign out</a></li>
             </ul>
         </div>
     </div>';
@@ -213,7 +215,7 @@ function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
         legalpro_admin_notification_count($pdo),
         'admin-logout.php',
         'profile.php',
-        '<li><a class="dropdown-item" href="settings.php"><i class="ni ni-settings me-2"></i>Settings</a></li>'
+        '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>'
     );
 }
 
@@ -268,4 +270,55 @@ function legalpro_render_page_toolbar(string $title, string $subtitle = '', stri
         </div>
         ' . $actions . '
     </div>';
+}
+
+function legalpro_format_case_number(int $caseId, ?string $createdAt = null): string
+{
+    $year = $createdAt ? date('Y', strtotime($createdAt)) : date('Y');
+
+    return 'CASE-' . $year . '-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
+}
+
+function legalpro_format_case_fee($amount): string
+{
+    $value = is_numeric($amount) ? (float) $amount : 0.0;
+
+    return '£ ' . number_format($value, 2);
+}
+
+function legalpro_case_priority_badge(string $priority): string
+{
+    $key = strtolower(trim($priority));
+    $label = $priority !== '' ? $priority : 'Normal';
+
+    if ($key === 'high' || $key === 'urgent') {
+        $class = $key === 'urgent' ? 'lp-pill--priority-urgent' : 'lp-pill--priority-high';
+    } else {
+        $class = 'lp-pill--priority-medium';
+        if ($key === 'normal') {
+            $label = 'Medium';
+        }
+    }
+
+    return '<span class="lp-pill ' . $class . '">' . htmlspecialchars($label) . '</span>';
+}
+
+function legalpro_case_status_badge(string $status): string
+{
+    $key = strtolower(str_replace(' ', '_', trim($status)));
+    $map = [
+        'open' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
+        'waiting_for_client' => ['label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
+        'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
 }

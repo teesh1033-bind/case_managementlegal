@@ -364,6 +364,12 @@ foreach ($allowedMethods as $value => $label) {
     $methodsOptions .= '<option value="' . htmlspecialchars($value) . '"' . $selected . '>' . htmlspecialchars($label) . '</option>';
 }
 
+require_once __DIR__ . '/../inc/legalpro-icons.php';
+$iconStatCollected = legalpro_icon('banknote');
+$iconStatOutstanding = legalpro_icon('clock');
+$iconStatPaidOff = legalpro_icon('circle-check');
+$iconStatInstallments = legalpro_icon('briefcase');
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -379,6 +385,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
     <style>
         .payments-summary-card .card-header {
             padding: 1.25rem 1.5rem 0.75rem;
@@ -407,7 +414,7 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <!-- replaced dynamically -->
@@ -428,7 +435,7 @@ $html = <<<'HTML'
             {MESSAGE}
             <div class="row">
                 <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
+                    <div class="card dashboard-stat-card">
                         <div class="card-body p-3">
                             <div class="row">
                                 <div class="col-8">
@@ -439,16 +446,14 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
-                                        <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">{ICON_STAT_COLLECTED}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
+                    <div class="card dashboard-stat-card">
                         <div class="card-body p-3">
                             <div class="row">
                                 <div class="col-8">
@@ -459,16 +464,14 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
-                                        <i class="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--warning">{ICON_STAT_OUTSTANDING}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
+                    <div class="card dashboard-stat-card">
                         <div class="card-body p-3">
                             <div class="row">
                                 <div class="col-8">
@@ -479,16 +482,14 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
-                                        <i class="ni ni-check-bold text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--info">{ICON_STAT_PAID_OFF}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-3 col-sm-6">
-                    <div class="card">
+                    <div class="card dashboard-stat-card">
                         <div class="card-body p-3">
                             <div class="row">
                                 <div class="col-8">
@@ -499,9 +500,7 @@ $html = <<<'HTML'
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
-                                        <i class="ni ni-collection text-lg opacity-10" aria-hidden="true"></i>
-                                    </div>
+                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_STAT_INSTALLMENTS}</div>
                                 </div>
                             </div>
                         </div>
@@ -773,6 +772,10 @@ $html = str_replace('{CASES_PAID_OFF}', $casesPaidOff, $html);
 $html = str_replace('{PAST_30}', formatCurrency($paymentsThisMonth), $html);
 $html = str_replace('{CASE_DATA_JSON}', json_encode($caseLedger), $html);
 $html = str_replace('{CURRENCY_ZERO}', formatCurrency(0), $html);
+$html = str_replace('{ICON_STAT_COLLECTED}', $iconStatCollected, $html);
+$html = str_replace('{ICON_STAT_OUTSTANDING}', $iconStatOutstanding, $html);
+$html = str_replace('{ICON_STAT_PAID_OFF}', $iconStatPaidOff, $html);
+$html = str_replace('{ICON_STAT_INSTALLMENTS}', $iconStatInstallments, $html);
 
 // rewrite internal links (if any) to .php
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);

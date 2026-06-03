@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -79,14 +80,32 @@ try {
     }
 }
 
-// Fetch cases with client and lawyer info
+$hasCaseServicesTable = false;
+try {
+    $hasCaseServicesTable = (bool) $pdo->query("SHOW TABLES LIKE 'case_services'")->fetch();
+} catch (PDOException $e) {
+    $hasCaseServicesTable = false;
+}
+
+$serviceSelect = $hasCaseServicesTable
+    ? "(
+            SELECT cs.service_name
+            FROM case_services cs
+            WHERE cs.case_id = c.id
+            ORDER BY cs.created_at ASC
+            LIMIT 1
+        ) AS primary_service"
+    : 'NULL AS primary_service';
+
+// Fetch cases with client, lawyer, and primary service
 try {
     $stmt = $pdo->query("
         SELECT 
             c.*,
             cl.first_name AS client_first_name,
             cl.last_name AS client_last_name,
-            GROUP_CONCAT(CONCAT(l.first_name, ' ', l.last_name) SEPARATOR ', ') AS lawyer_names
+            GROUP_CONCAT(DISTINCT CONCAT(l.first_name, ' ', l.last_name) SEPARATOR ', ') AS lawyer_names,
+            {$serviceSelect}
         FROM cases c
         LEFT JOIN clients cl ON cl.id = c.client_id
         LEFT JOIN case_lawyers clw ON clw.case_id = c.id
@@ -106,91 +125,59 @@ try {
 // Build cases table rows
 $casesRows = '';
 if (empty($cases)) {
-    $casesRows = '<tr><td colspan="5" class="text-center py-5">
-        <div class="text-center">
-            <i class="ni ni-collection text-muted" style="font-size: 3rem;"></i>
-            <p class="text-muted mt-3 mb-0">No cases found.</p>
-            <p class="text-xs text-muted mb-0"><a href="case-new.php">Create your first case</a></p>
-        </div>
+    $casesRows = '<tr class="legalpro-cases-empty"><td colspan="9" class="text-center">
+        <p class="text-muted mb-2 font-weight-bold">No cases found.</p>
+        <p class="text-xs text-muted mb-3">Create a case to start managing clients, documents, and billing.</p>
+        <a href="case-new.php" class="btn btn-sm btn-legalpro-cases-new">+ New Case</a>
     </td></tr>';
 } else {
     foreach ($cases as $case) {
-        $caseId = (int)$case['id'];
-        $caseNumber = 'C-' . str_pad($caseId, 4, '0', STR_PAD_LEFT);
-        $title = htmlspecialchars($case['title']);
+        $caseId = (int) $case['id'];
+        $createdAt = isset($case['created_at']) ? $case['created_at'] : null;
+        $caseNumber = legalpro_format_case_number($caseId, $createdAt);
+        $title = htmlspecialchars((string) ($case['title'] ?? ''));
         $clientFirstName = isset($case['client_first_name']) ? $case['client_first_name'] : '';
         $clientLastName = isset($case['client_last_name']) ? $case['client_last_name'] : '';
         $clientName = trim($clientFirstName . ' ' . $clientLastName) ?: 'Unassigned';
-        $lawyerName = isset($case['lawyer_names']) && $case['lawyer_names'] ? $case['lawyer_names'] : 'Unassigned';
-        
-        $status = isset($case['status']) ? strtolower($case['status']) : 'open';
-        $statusLabel = ucfirst(str_replace('_', ' ', $status));
-        $badgeClass = 'bg-gradient-info';
-        if ($status === 'in_progress') {
-            $badgeClass = 'bg-gradient-warning';
-        } elseif ($status === 'closed') {
-            $badgeClass = 'bg-gradient-success';
+        $clientDisplay = htmlspecialchars(strtolower($clientName));
+
+        $category = isset($case['category']) && $case['category'] !== '' ? $case['category'] : 'General';
+        $titleSub = htmlspecialchars($category);
+
+        $serviceName = !empty($case['primary_service'])
+            ? $case['primary_service']
+            : ($case['title'] ?? '—');
+        $serviceDisplay = htmlspecialchars((string) $serviceName);
+
+        $priority = isset($case['priority']) ? (string) $case['priority'] : 'Normal';
+        $status = isset($case['status']) ? strtolower((string) $case['status']) : 'open';
+
+        $feeDisplay = legalpro_format_case_fee($case['estimated_fees'] ?? 0);
+
+        $deadline = '—';
+        if (!empty($case['expected_completion'])) {
+            $deadline = date('M j, Y', strtotime($case['expected_completion']));
         }
-        
-        $dueDate = '';
-        if (isset($case['expected_completion']) && $case['expected_completion']) {
-            $dueDate = date('m/d/y', strtotime($case['expected_completion']));
-        } else {
-            $dueDate = 'N/A';
-        }
-        
-        // JSON encode case data for modal
-        $caseDataJson = htmlspecialchars(json_encode([
-            'id' => $caseId,
-            'case_number' => $caseNumber,
-            'title' => $case['title'],
-            'client_id' => $case['client_id'],
-            'client_name' => $clientName,
-            'user_id' => isset($case['user_id']) ? $case['user_id'] : '',
-            'lawyer_name' => $lawyerName,
-            'description' => isset($case['description']) ? $case['description'] : '',
-            'status' => $status,
-            'priority' => isset($case['priority']) ? $case['priority'] : 'Normal',
-            'category' => isset($case['category']) ? $case['category'] : 'Civil',
-            'estimated_fees' => isset($case['estimated_fees']) ? $case['estimated_fees'] : '',
-            'start_date' => isset($case['start_date']) && $case['start_date'] ? date('Y-m-d', strtotime($case['start_date'])) : '',
-            'expected_completion' => isset($case['expected_completion']) && $case['expected_completion'] ? date('Y-m-d', strtotime($case['expected_completion'])) : ''
-        ]), ENT_QUOTES);
-        
+
+        $searchBlob = strtolower($caseNumber . ' ' . ($case['title'] ?? '') . ' ' . $clientName . ' ' . $serviceName . ' ' . $category);
+        $priorityFilter = strtolower($priority);
+        $statusFilter = $status;
+
         $casesRows .= '
-        <tr style="cursor: pointer;" onclick="window.location.href=\'case-view.php?id=' . $caseId . '\'">
+        <tr class="legalpro-cases-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES) . '" data-status="' . htmlspecialchars($statusFilter, ENT_QUOTES) . '" data-priority="' . htmlspecialchars($priorityFilter, ENT_QUOTES) . '">
+            <td><a class="legalpro-case-number" href="case-view.php?id=' . $caseId . '">' . htmlspecialchars($caseNumber) . '</a></td>
             <td>
-                <div class="d-flex px-2 py-1">
-                    <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
-                        <i class="ni ni-collection text-white text-xs opacity-10"></i>
-                    </div>
-                    <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">' . $caseNumber . ' · ' . $title . '</h6>
-                        <p class="text-xs text-secondary mb-0">' . htmlspecialchars($clientName) . '</p>
-                    </div>
-                </div>
+                <p class="legalpro-case-title__main mb-0">' . $title . '</p>
+                <p class="legalpro-case-title__sub">' . $titleSub . '</p>
             </td>
-            <td>
-                <p class="text-xs font-weight-bold mb-0">Client: ' . htmlspecialchars($clientName) . '</p>
-                <p class="text-xs text-secondary mb-0">Lawyer: ' . htmlspecialchars($lawyerName) . '</p>
-            </td>
-            <td class="align-middle text-center text-sm">
-                <span class="badge badge-sm ' . $badgeClass . '">' . $statusLabel . '</span>
-            </td>
-            <td class="align-middle text-center">
-                <span class="text-secondary text-xs font-weight-bold">' . $dueDate . '</span>
-            </td>
-            <td class="align-middle">
-                <div class="d-flex gap-1">
-                    <a class="btn btn-sm btn-primary mb-0" href="case-view.php?id=' . $caseId . '" title="View Details">View</a>
-                    <a class="btn btn-sm btn-dark mb-0" href="case-edit.php?id=' . $caseId . '" title="Edit Case">Edit</a>
-                    <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete case ' . $caseNumber . '? This action cannot be undone.\');" onclick="event.stopPropagation();">
-                        <input type="hidden" name="form_type" value="delete">
-                        <input type="hidden" name="case_id" value="' . $caseId . '">
-                        <button class="btn btn-sm btn-danger mb-0" type="submit" title="Delete Case">Delete</button>
-                    </form>
-                    <a class="btn btn-sm btn-info mb-0" href="case-contract.php?id=' . $caseId . '" target="_blank" onclick="event.stopPropagation();" title="Generate Contract">Contract</a>
-                </div>
+            <td><span class="legalpro-case-client">' . $clientDisplay . '</span></td>
+            <td>' . $serviceDisplay . '</td>
+            <td class="legalpro-case-fee">' . htmlspecialchars($feeDisplay) . '</td>
+            <td>' . legalpro_case_priority_badge($priority) . '</td>
+            <td>' . htmlspecialchars($deadline) . '</td>
+            <td>' . legalpro_case_status_badge($status) . '</td>
+            <td class="text-end">
+                <a class="btn btn-sm btn-legalpro-case-open mb-0" href="case-view.php?id=' . $caseId . '">Open</a>
             </td>
         </tr>';
     }
@@ -208,12 +195,8 @@ if ($message) {
 $totalCasesCount = count($cases);
 $casesSubtitle = $totalCasesCount === 1 ? '1 total case' : $totalCasesCount . ' total cases';
 
-require_once __DIR__ . '/../inc/admin-layout.php';
-$pageToolbar = legalpro_render_page_toolbar(
-    'Case Management',
-    'Legal case workspaces — manage clients, documents, billing and more.',
-    '<a href="case-new.php" class="btn btn-sm btn-primary mb-0"><i class="ni ni-fat-add me-1"></i> New Case</a>'
-);
+$newCaseBtn = '<a href="case-new.php" class="btn btn-sm btn-legalpro-cases-new mb-0">' . legalpro_icon('plus', 'me-1') . ' New Case</a>';
+$casesSearchIcon = legalpro_icon('search');
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -229,48 +212,76 @@ $html = <<<'HTML'
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=17" rel="stylesheet" />
+	<?php legalpro_icons_asset_links(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-cases-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
 		<nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
 			<div class="container-fluid py-1 px-3">
 				<div>
-					<h6 class="font-weight-bolder mb-0"><i class="ni ni-collection me-2 text-primary"></i>Cases</h6>
-					<p class="dashboard-welcome-sub mb-0 mt-1">{CASES_SUBTITLE}</p>
+					<h6 class="font-weight-bolder mb-0">Cases</h6>
+					<p class="dashboard-welcome-sub mb-0 mt-1">Legal case workspaces — manage clients, documents, billing &amp; more</p>
 				</div>
 			</div>
 		</nav>
 		<div class="container-fluid py-4">
 			{MESSAGE}
-			{PAGE_TOOLBAR}
 
 			<div class="row">
 				<div class="col-12">
-					<div class="card mb-4">
-						<div class="card-header pb-3 pt-3 lp-card-header-primary">
-							<h6 class="mb-0 text-white">Cases Overview</h6>
-							<p class="text-xs mb-0 opacity-8">{CASES_SUBTITLE}</p>
+					<div class="card mb-4 legalpro-cases-hub">
+						<div class="legalpro-cases-hub__head">
+							<div>
+								<h5 class="legalpro-cases-hub__title">Case Management</h5>
+								<p class="legalpro-cases-hub__count">{CASES_SUBTITLE}</p>
+							</div>
+							{NEW_CASE_BTN}
 						</div>
-						<div class="card-body px-0 pt-0 pb-2">
-							<div class="table-responsive p-0">
-								<table class="table align-items-center mb-0">
+						<div class="legalpro-cases-filters">
+							<div class="legalpro-cases-search">
+								{CASES_SEARCH_ICON}
+								<input type="search" class="form-control" id="casesSearchInput" placeholder="Search cases..." autocomplete="off" aria-label="Search cases">
+							</div>
+							<select class="form-select" id="casesStatusFilter" aria-label="Filter by status">
+								<option value="">All statuses</option>
+								<option value="open">Pending</option>
+								<option value="in_progress">In Progress</option>
+								<option value="waiting_for_client">Waiting For Client</option>
+								<option value="closed">Closed</option>
+							</select>
+							<select class="form-select" id="casesPriorityFilter" aria-label="Filter by priority">
+								<option value="">All priorities</option>
+								<option value="high">High</option>
+								<option value="normal">Medium</option>
+								<option value="urgent">Urgent</option>
+							</select>
+						</div>
+						<div class="card-body px-0 pt-0 pb-2 legalpro-cases-table-wrap">
+							<div class="table-responsive">
+								<table class="table legalpro-cases-table mb-0" id="casesTable">
 									<thead>
 										<tr>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Client / Lawyer</th>
-											<th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-											<th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Due</th>
-											<th class="text-secondary opacity-7"></th>
+											<th>Case #</th>
+											<th>Title</th>
+											<th>Client</th>
+											<th>Service</th>
+											<th>Fee</th>
+											<th>Priority</th>
+											<th>Deadline</th>
+											<th>Status</th>
+											<th class="text-end"></th>
 										</tr>
 									</thead>
-									<tbody>
+									<tbody id="casesTableBody">
 										{CASES_ROWS}
 									</tbody>
 								</table>
 							</div>
+							<p class="text-xs text-muted px-4 pb-3 mb-0 d-none" id="casesFilterEmpty">No cases match your filters.</p>
 						</div>
 					</div>
 				</div>
@@ -296,13 +307,65 @@ $html = <<<'HTML'
 	<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
 	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 	<script src="../assets/js/spa-nav.js"></script>
+	<script>
+	(function () {
+		var searchInput = document.getElementById('casesSearchInput');
+		var statusFilter = document.getElementById('casesStatusFilter');
+		var priorityFilter = document.getElementById('casesPriorityFilter');
+		var tbody = document.getElementById('casesTableBody');
+		var emptyNote = document.getElementById('casesFilterEmpty');
+		if (!tbody) {
+			return;
+		}
+
+		function applyCasesFilters() {
+			var q = (searchInput && searchInput.value ? searchInput.value : '').trim().toLowerCase();
+			var status = statusFilter ? statusFilter.value : '';
+			var priority = priorityFilter ? priorityFilter.value : '';
+			var rows = tbody.querySelectorAll('.legalpro-cases-row');
+			var visible = 0;
+
+			rows.forEach(function (row) {
+				var match = true;
+				if (q && row.getAttribute('data-search').indexOf(q) === -1) {
+					match = false;
+				}
+				if (status && row.getAttribute('data-status') !== status) {
+					match = false;
+				}
+				if (priority && row.getAttribute('data-priority') !== priority) {
+					match = false;
+				}
+				row.style.display = match ? '' : 'none';
+				if (match) {
+					visible++;
+				}
+			});
+
+			if (emptyNote) {
+				emptyNote.classList.toggle('d-none', visible > 0 || rows.length === 0);
+			}
+		}
+
+		if (searchInput) {
+			searchInput.addEventListener('input', applyCasesFilters);
+		}
+		if (statusFilter) {
+			statusFilter.addEventListener('change', applyCasesFilters);
+		}
+		if (priorityFilter) {
+			priorityFilter.addEventListener('change', applyCasesFilters);
+		}
+	})();
+	</script>
 </body>
 </html>
 HTML;
 
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
-$html = str_replace('{PAGE_TOOLBAR}', $pageToolbar, $html);
+$html = str_replace('{NEW_CASE_BTN}', $newCaseBtn, $html);
+$html = str_replace('{CASES_SEARCH_ICON}', $casesSearchIcon, $html);
 $html = str_replace('{CASES_SUBTITLE}', htmlspecialchars($casesSubtitle), $html);
 $html = str_replace('{CASES_ROWS}', $casesRows, $html);
 

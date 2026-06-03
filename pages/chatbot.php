@@ -51,10 +51,29 @@ if ($role === 'admin') {
 } elseif ($role === 'lawyer') {
     $portalBodyClass .= ' legalpro-lawyer-portal lawyer-dashboard-page';
 } else {
-    $portalBodyClass .= ' client-portal-page client-dashboard-page';
+    $portalBodyClass .= ' legalpro-client-portal client-portal-page client-dashboard-page';
 }
 
 $headerBgClass = ($role === 'client') ? 'bg-primary' : 'bg-legalpro-admin';
+
+$topNavbarHtml = '
+		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
+			<div class="container-fluid py-1 px-3">
+				<nav aria-label="breadcrumb">
+					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
+						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Assistant</a></li>
+						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Chatbot</li>
+					</ol>
+					<h6 class="font-weight-bolder text-white mb-0">AI Assistant</h6>
+				</nav>
+			</div>
+		</nav>';
+if ($role === 'client') {
+    require_once __DIR__ . '/../inc/client-portal-navbar.php';
+    $topNavbarHtml = legalpro_render_client_page_navbar('AI Assistant', 'AI Assistant', 'Search cases…', [
+        'client_name' => $context['display_name'],
+    ]);
+}
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -111,17 +130,7 @@ $html = <<<'HTML'
 	<div class="min-height-300 {HEADER_BG_CLASS} position-absolute w-100"></div>
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
-			<div class="container-fluid py-1 px-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Assistant</a></li>
-						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Chatbot</li>
-					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">AI Assistant</h6>
-				</nav>
-			</div>
-		</nav>
+		{TOP_NAVBAR}
 		<div class="container-fluid py-4">
 			<div class="row">
 				<div class="col-lg-8">
@@ -272,6 +281,7 @@ $html = str_replace('{ROLE_LABEL}', ucfirst($role), $html);
 $html = str_replace('{WELCOME_TEXT}', '<br><span class="text-muted">' . htmlspecialchars($welcomeText) . '</span>', $html);
 $html = str_replace('{SHORTCUTS_HTML}', $shortcutsHtml, $html);
 $html = str_replace('{PORTAL_BODY_CLASS}', $portalBodyClass, $html);
+$html = str_replace('{TOP_NAVBAR}', $topNavbarHtml, $html);
 $html = str_replace('{HEADER_BG_CLASS}', $headerBgClass, $html);
 
 $portalHeadCss = '';
