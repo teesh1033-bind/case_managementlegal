@@ -103,9 +103,9 @@ body.lawyer-tasks-page .main-content .card,
     background-color: #fff !important;
 }
 
-/* Navbar styling — legalpro-portal-shell.css */
+/* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */
 
-/* Lawyer sidebar — purple icons & nav style (match admin LegalPro menunav) */
+/* Legacy lawyer sidenav overrides disabled — do not re-enable without scoping away #sidenav-main.legalpro-admin-sidebar
 body.legalpro-lawyer-portal .sidenav .navbar-nav > .nav-item > .nav-link,
 body.lawyer-dashboard-page .sidenav .navbar-nav > .nav-item > .nav-link,
 body.lawyer-cases-page .sidenav .navbar-nav > .nav-item > .nav-link,
@@ -314,3 +314,4 @@ body.lawyer-dashboard-page .legalpro-lawyer-nav .nav-link:hover .legalpro-lawyer
     color: #fff !important;
     opacity: 1 !important;
 }
+*/

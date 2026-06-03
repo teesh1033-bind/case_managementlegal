@@ -200,7 +200,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
-<link href="../assets/css/legalpro-client-portal.css?v=8" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <style>
         .client-payments-page { --cp-radius: 1.15rem; }
         .client-payments-page .cp-hero {

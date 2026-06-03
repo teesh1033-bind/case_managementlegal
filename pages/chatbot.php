@@ -71,6 +71,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 	<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	{PORTAL_HEAD_CSS}
 	<style>
 		.chat-window { height: 460px; overflow-y: auto; background: #fff; border-radius: 0.75rem; border: 1px solid #e9ecef; padding: 1rem; }
 		.chat-message-user { justify-content: flex-end; }
@@ -272,6 +273,18 @@ $html = str_replace('{WELCOME_TEXT}', '<br><span class="text-muted">' . htmlspec
 $html = str_replace('{SHORTCUTS_HTML}', $shortcutsHtml, $html);
 $html = str_replace('{PORTAL_BODY_CLASS}', $portalBodyClass, $html);
 $html = str_replace('{HEADER_BG_CLASS}', $headerBgClass, $html);
+
+$portalHeadCss = '';
+if ($role === 'client') {
+    ob_start();
+    include __DIR__ . '/../inc/client-portal-head.php';
+    $portalHeadCss = ob_get_clean();
+} elseif ($role === 'lawyer') {
+    ob_start();
+    include __DIR__ . '/../inc/lawyer-portal-head.php';
+    $portalHeadCss = ob_get_clean();
+}
+$html = str_replace('{PORTAL_HEAD_CSS}', $portalHeadCss, $html);
 
 if ($role === 'lawyer') {
     ob_start();

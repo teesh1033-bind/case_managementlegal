@@ -261,7 +261,7 @@ $resultsQueryClass = 'text-white';
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php if ($portal === 'client'): ?>
-    <link href="../assets/css/legalpro-client-portal.css?v=8" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <?php endif; ?>
     <style>
         .search-portal-page .navbar-main,
