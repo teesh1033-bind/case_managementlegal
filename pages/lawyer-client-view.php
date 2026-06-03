@@ -57,15 +57,16 @@ try {
     $clientCases = [];
 }
 
-// Fetch client's comments (from all their cases that this lawyer has access to)
+// Fetch comments from all client cases assigned to this lawyer
 $clientComments = [];
 try {
     $stmt = $pdo->prepare("
-        SELECT cc.*, c.title as case_title, c.id as case_id
-        FROM client_comments cc
+        SELECT cc.*, c.title AS case_title, c.id AS case_id, u.username
+        FROM case_comments cc
         INNER JOIN cases c ON c.id = cc.case_id
         INNER JOIN case_lawyers cl ON cl.case_id = c.id
-        WHERE c.client_id = ? AND cl.lawyer_id = ?
+        LEFT JOIN users u ON u.id = cc.user_id
+        WHERE c.client_id = ? AND cl.lawyer_id = ? AND cc.is_private = 0
         ORDER BY cc.created_at DESC
     ");
     $stmt->execute([$clientId, $lawyerId]);
@@ -73,6 +74,21 @@ try {
 } catch (PDOException $e) {
     $clientComments = [];
 }
+
+$commentRoleBadge = static function (string $type): string {
+    switch ($type) {
+        case 'client':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-info">Client</span>';
+        case 'lawyer':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
+        case 'admin':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-warning">Admin</span>';
+        case 'staff':
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Staff</span>';
+        default:
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">System</span>';
+    }
+};
 
 // Fetch client's documents (from all their cases that this lawyer has access to)
 $clientDocuments = [];
@@ -128,31 +144,49 @@ if (empty($clientCases)) {
     $casesHtml .= '</div>';
 }
 
-// Build comments HTML
+// Build comments feed HTML
 $commentsHtml = '';
 if (empty($clientComments)) {
-    $commentsHtml = '<tr><td colspan="3" class="text-center text-muted py-3">No comments from this client yet</td></tr>';
+    $commentsHtml = '
+    <div class="cc-comments-empty text-center py-5 mb-0">
+        <div class="cc-comments-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
+            <i class="ni ni-chat-round text-primary text-lg opacity-10" aria-hidden="true"></i>
+        </div>
+        <h6 class="font-weight-bolder mt-4 mb-2">No comments yet</h6>
+        <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Comments from this client and your team on shared cases will appear here.</p>
+    </div>';
 } else {
+    $commentsHtml .= '<ul class="cc-comment-list list-unstyled mb-0">';
     foreach ($clientComments as $comment) {
+        $type = (string) ($comment['comment_type'] ?? '');
+        $username = trim((string) ($comment['username'] ?? ''));
+        $displayName = $username !== '' ? $username : ucfirst($type !== '' ? $type : 'User');
+        $itemClass = 'cc-comment-item cc-comment-item--' . preg_replace('/[^a-z]/', '', $type);
+        $timeLabel = date('M j, Y · g:i A', strtotime($comment['created_at']));
+        $body = nl2br(htmlspecialchars((string) ($comment['comment'] ?? '')));
+        $roleBadge = $commentRoleBadge($type);
+        $caseId = (int) ($comment['case_id'] ?? 0);
+        $caseTitle = htmlspecialchars((string) ($comment['case_title'] ?? 'Case'));
+        $caseLink = $caseId > 0
+            ? '<a href="lawyer-case-view.php?id=' . $caseId . '" class="text-xs text-primary font-weight-bold">' . $caseTitle . '</a>'
+            : '<span class="text-xs text-muted">' . $caseTitle . '</span>';
+
         $commentsHtml .= '
-        <tr>
-            <td>
-                <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-info shadow text-center border-radius-md me-3">
-                        <i class="ni ni-chat-round text-white text-xs opacity-10"></i>
+        <li class="' . $itemClass . '">
+            <div class="cc-comment-item-inner">
+                <div class="cc-comment-head">
+                    <div class="cc-comment-head-main">
+                        <span class="cc-comment-author">' . htmlspecialchars($displayName) . '</span>
+                        ' . $roleBadge . '
+                        <span class="cc-comment-case text-xs text-muted">· ' . $caseLink . '</span>
                     </div>
-                    <div>
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($comment['case_title']) . '</h6>
-                        <p class="text-xs text-muted mb-0">' . date('M d, Y H:i', strtotime($comment['created_at'])) . '</p>
-                    </div>
+                    <time class="cc-comment-time" datetime="' . htmlspecialchars(date('c', strtotime($comment['created_at']))) . '">' . htmlspecialchars($timeLabel) . '</time>
                 </div>
-            </td>
-            <td>' . nl2br(htmlspecialchars($comment['comment'])) . '</td>
-            <td class="text-center">
-                <span class="badge bg-' . ($comment['is_read'] ? 'success' : 'warning') . '">' . ($comment['is_read'] ? 'Read' : 'Unread') . '</span>
-            </td>
-        </tr>';
+                <div class="cc-comment-text">' . $body . '</div>
+            </div>
+        </li>';
     }
+    $commentsHtml .= '</ul>';
 }
 
 // Build documents HTML
@@ -233,7 +267,72 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/legalpro-lawyer-portal.css?v=2" rel="stylesheet" />
+    <style>
+        .lawyer-client-comments-feed .cc-comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: min(36rem, 65vh);
+            overflow-y: auto;
+            padding-right: 0.15rem;
+        }
+        .lawyer-client-comments-feed .cc-comment-list::-webkit-scrollbar { width: 6px; }
+        .lawyer-client-comments-feed .cc-comment-list::-webkit-scrollbar-thumb {
+            background: rgba(45, 206, 137, 0.35);
+            border-radius: 999px;
+        }
+        .lawyer-client-comments-feed .cc-comment-item-inner {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,.06);
+            border-radius: 0.75rem;
+            padding: 1rem 1.15rem;
+            border-left: 4px solid #8392ab;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .lawyer-client-comments-feed .cc-comment-item--client .cc-comment-item-inner { border-left-color: #11cdef; }
+        .lawyer-client-comments-feed .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
+        .lawyer-client-comments-feed .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
+        .lawyer-client-comments-feed .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
+        .lawyer-client-comments-feed .cc-comment-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.65rem;
+            flex-wrap: wrap;
+        }
+        .lawyer-client-comments-feed .cc-comment-head-main {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.35rem;
+            min-width: 0;
+        }
+        .lawyer-client-comments-feed .cc-comment-author {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #344767;
+        }
+        .lawyer-client-comments-feed .cc-comment-case {
+            display: inline;
+        }
+        .lawyer-client-comments-feed .cc-comment-time {
+            font-size: 0.75rem;
+            color: #8392ab;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .lawyer-client-comments-feed .cc-comment-text {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #525f7f;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            margin: 0;
+        }
+    </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-client-view-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
@@ -337,19 +436,8 @@ $html = <<<'HTML'
                             <div class="tab-content" id="clientTabsContent">
                                 <!-- Comments Tab -->
                                 <div class="tab-pane fade show active" id="comments" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>Case</th>
-                                                    <th>Comment</th>
-                                                    <th class="text-center">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {COMMENTS_HTML}
-                                            </tbody>
-                                        </table>
+                                    <div class="lawyer-client-comments-feed">
+                                        {COMMENTS_HTML}
                                     </div>
                                 </div>
 
