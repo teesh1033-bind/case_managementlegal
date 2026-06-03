@@ -17,21 +17,30 @@ function clientAppointmentStatusMeta(string $status, int $startsAt, ?int $endsAt
 {
     $now = time();
     if ($status === 'pending') {
-        return ['key' => 'pending', 'label' => 'Pending approval', 'class' => 'warning'];
+        return ['key' => 'pending', 'label' => 'Pending approval', 'pill' => 'ca-status-pill--pending'];
     }
     if ($status === 'accepted') {
-        if ($startsAt > $now) {
-            return ['key' => 'upcoming', 'label' => 'Upcoming', 'class' => 'info'];
-        }
         if ($endsAt && $endsAt < $now) {
-            return ['key' => 'completed', 'label' => 'Completed', 'class' => 'success'];
+            return ['key' => 'completed', 'label' => 'Completed', 'pill' => 'ca-status-pill--done'];
         }
-        return ['key' => 'in_progress', 'label' => 'In progress', 'class' => 'primary'];
+        if ($startsAt > $now) {
+            return ['key' => 'upcoming', 'label' => 'Upcoming', 'pill' => 'ca-status-pill--scheduled'];
+        }
+
+        return ['key' => 'in_progress', 'label' => 'In progress', 'pill' => 'ca-status-pill--scheduled'];
     }
     if ($status === 'rejected') {
-        return ['key' => 'rejected', 'label' => 'Rejected', 'class' => 'danger'];
+        return ['key' => 'rejected', 'label' => 'Rejected', 'pill' => 'ca-status-pill--declined'];
     }
-    return ['key' => 'unknown', 'label' => ucfirst($status ?: 'unknown'), 'class' => 'secondary'];
+
+    return ['key' => 'unknown', 'label' => ucfirst($status ?: 'unknown'), 'pill' => 'ca-status-pill--muted'];
+}
+
+function clientAppointmentStatusBadge(array $meta): string
+{
+    $pill = isset($meta['pill']) ? $meta['pill'] : 'ca-status-pill--muted';
+
+    return '<span class="ca-status-pill ' . htmlspecialchars($pill) . '">' . htmlspecialchars($meta['label']) . '</span>';
 }
 
 // AJAX: appointment details for modal
@@ -77,7 +86,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
             'ends_at' => $endsAt ? date('M j, Y g:i A', $endsAt) : null,
             'status' => $apt['status'],
             'status_label' => $meta['label'],
-            'status_class' => $meta['class'],
+            'status_pill' => $meta['pill'],
             'notes' => trim((string) ($apt['notes'] ?? '')),
             'requested_at' => !empty($apt['created_at']) ? date('M j, Y g:i A', strtotime($apt['created_at'])) : null,
         ]);
@@ -224,6 +233,13 @@ foreach ($appointments as $_apt) {
     }
 }
 
+require_once __DIR__ . '/../inc/legalpro-icons.php';
+$iconApptRow = legalpro_icon('calendar-clock');
+$iconApptEmpty = legalpro_icon('calendar');
+$iconHeroTotal = legalpro_icon('calendar');
+$iconHeroPending = legalpro_icon('clock');
+$iconHeroUpcoming = legalpro_icon('calendar-check');
+
 $messageHtml = '';
 if ($message) {
     $successClass = ($messageType === 'success') ? ' text-white' : '';
@@ -236,9 +252,7 @@ $appointmentsRows = '';
 if (empty($appointments)) {
     $appointmentsRows = '<tr><td colspan="5" class="border-0">
         <div class="text-center py-5 px-4">
-            <div class="ca-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
-                <i class="ni ni-calendar-grid-58 text-primary text-lg opacity-10" aria-hidden="true"></i>
-            </div>
+            <div class="ca-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconApptEmpty . '</div>
             <h5 class="font-weight-bolder mt-4 mb-2">No appointments yet</h5>
             <p class="text-sm text-muted mb-4 mx-auto" style="max-width: 22rem;">Use the booking panel to request a time with your counsel. Pending requests appear here until they are accepted.</p>
         </div>
@@ -255,7 +269,7 @@ if (empty($appointments)) {
             strtotime($apt['starts_at']),
             !empty($apt['ends_at']) ? strtotime($apt['ends_at']) : null
         );
-        $statusBadge = '<span class="badge badge-sm bg-gradient-' . htmlspecialchars($statusMeta['class']) . '">' . htmlspecialchars($statusMeta['label']) . '</span>';
+        $statusBadge = clientAppointmentStatusBadge($statusMeta);
 
         $notesRaw = isset($apt['notes']) ? trim((string) $apt['notes']) : '';
         $notesDisp = $notesRaw === '' ? '—' : (strlen($notesRaw) > 64 ? htmlspecialchars(substr($notesRaw, 0, 64)) . '…' : htmlspecialchars($notesRaw));
@@ -263,9 +277,7 @@ if (empty($appointments)) {
         $appointmentsRows .= '<tr class="ca-appt-row">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
-                    <div class="ca-appt-icon icon icon-shape icon-sm bg-gradient-info shadow text-center border-radius-md flex-shrink-0">
-                        <i class="ni ni-time-alarm text-white text-xs opacity-10" aria-hidden="true"></i>
-                    </div>
+                    <div class="ca-appt-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconApptRow . '</div>
                     <div class="min-width-0">
                         <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 14rem;">' . htmlspecialchars($apt['case_title'] ?: 'Appointment') . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointmentDate) . ' · ' . htmlspecialchars($appointmentTime) . '</p>
@@ -371,6 +383,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
 
     <style>
         .client-appointments-page { --ca-radius: 1.15rem; }
@@ -394,16 +407,42 @@ $html = <<<'HTML'
         .client-appointments-page .ca-hero-pill {
             background: #f8f9fe;
             border-radius: 0.75rem;
-            padding: 0.55rem 0.9rem;
+            padding: 0.65rem 1rem;
             border: 1px solid rgba(94, 114, 228, 0.15);
-            min-width: 5.5rem;
-            text-align: center;
+            min-width: 7.5rem;
         }
         .client-appointments-page .ca-hero-pill .ca-hero-pill-label {
             color: #67748e;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
         .client-appointments-page .ca-hero-pill .ca-hero-pill-value {
             color: #344767;
+        }
+        .client-appointments-page .ca-hero-pill-icon.dashboard-glance-icon-wrap {
+            width: 2.5rem;
+            height: 2.5rem;
+            min-width: 2.5rem;
+        }
+        .client-appointments-page .ca-appt-icon.dashboard-stat-icon-wrap {
+            width: 2.5rem;
+            height: 2.5rem;
+            min-width: 2.5rem;
+            border-radius: 50%;
+            box-shadow: none;
+        }
+        .client-appointments-page .ca-empty-icon.dashboard-stat-icon-wrap {
+            width: 3.25rem;
+            height: 3.25rem;
+            min-width: 3.25rem;
+            border-radius: 50%;
+            box-shadow: none;
+        }
+        .client-appointments-page .ca-appt-row .icon-shape,
+        .client-appointments-page .ca-empty-icon.icon-shape {
+            display: none !important;
         }
         .client-appointments-page .ca-panel {
             border-radius: var(--ca-radius);
@@ -439,15 +478,37 @@ $html = <<<'HTML'
         .client-appointments-page .ca-appt-row:hover td {
             background: rgba(94, 114, 228, 0.04);
         }
-        .client-appointments-page .ca-appt-icon {
-            width: 2.35rem;
-            height: 2.35rem;
+        /* Status pills — restrained palette (amber / brand purple / slate / red) */
+        .client-appointments-page .ca-status-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.35em 0.85em;
+            border-radius: 999px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .client-appointments-page .ca-status-pill--pending {
+            background: rgba(251, 140, 0, 0.14);
+            color: #c45c00;
+        }
+        .client-appointments-page .ca-status-pill--scheduled {
+            background: rgba(94, 114, 228, 0.14);
+            color: #5e72e4;
+        }
+        .client-appointments-page .ca-status-pill--done {
+            background: rgba(103, 116, 142, 0.12);
+            color: #67748e;
+        }
+        .client-appointments-page .ca-status-pill--declined {
+            background: rgba(245, 54, 92, 0.12);
+            color: #d6336c;
+        }
+        .client-appointments-page .ca-status-pill--muted {
+            background: rgba(103, 116, 142, 0.1);
+            color: #8392ab;
         }
         .client-appointments-page .min-width-0 { min-width: 0; }
-        .client-appointments-page .ca-empty-icon {
-            width: 4rem;
-            height: 4rem;
-        }
         .client-appointments-page .time-option {
             transition: all 0.2s ease;
         }
@@ -509,17 +570,26 @@ $html = <<<'HTML'
                                 <p class="ca-hero-text text-sm mb-0" style="max-width: 32rem;">Track requests, confirmations, and past sessions. Book a new slot from the panel on the right.</p>
                             </div>
                             <div class="d-flex flex-wrap gap-3 justify-content-lg-end">
-                                <div class="ca-hero-pill">
-                                    <p class="ca-hero-pill-label text-xs mb-0">Total</p>
-                                    <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_TOTAL}</p>
+                                <div class="ca-hero-pill d-flex align-items-center gap-2">
+                                    <div class="ca-hero-pill-icon dashboard-glance-icon-wrap dashboard-glance-icon-wrap--primary">{ICON_HERO_TOTAL}</div>
+                                    <div>
+                                        <p class="ca-hero-pill-label mb-0">Total</p>
+                                        <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_TOTAL}</p>
+                                    </div>
                                 </div>
-                                <div class="ca-hero-pill">
-                                    <p class="ca-hero-pill-label text-xs mb-0">Pending</p>
-                                    <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_PENDING}</p>
+                                <div class="ca-hero-pill d-flex align-items-center gap-2">
+                                    <div class="ca-hero-pill-icon dashboard-glance-icon-wrap dashboard-glance-icon-wrap--warning">{ICON_HERO_PENDING}</div>
+                                    <div>
+                                        <p class="ca-hero-pill-label mb-0">Pending</p>
+                                        <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_PENDING}</p>
+                                    </div>
                                 </div>
-                                <div class="ca-hero-pill">
-                                    <p class="ca-hero-pill-label text-xs mb-0">Upcoming</p>
-                                    <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_UPCOMING}</p>
+                                <div class="ca-hero-pill d-flex align-items-center gap-2">
+                                    <div class="ca-hero-pill-icon dashboard-glance-icon-wrap dashboard-glance-icon-wrap--info">{ICON_HERO_UPCOMING}</div>
+                                    <div>
+                                        <p class="ca-hero-pill-label mb-0">Upcoming</p>
+                                        <p class="ca-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;">{APPT_UPCOMING}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -712,7 +782,7 @@ $html = <<<'HTML'
                             '<p class="text-xs text-uppercase text-muted font-weight-bold mb-1">Matter</p>' +
                             '<h6 class="mb-0 font-weight-bold">' + escapeHtml(data.case_title) + '</h6>' +
                         '</div>' +
-                        '<span class="badge bg-gradient-' + escapeHtml(data.status_class) + '">' + escapeHtml(data.status_label) + '</span>' +
+                        '<span class="ca-status-pill ' + escapeHtml(data.status_pill || 'ca-status-pill--muted') + '">' + escapeHtml(data.status_label) + '</span>' +
                     '</div>' +
                     '<div class="row g-3">' +
                         '<div class="col-sm-6">' +
@@ -968,6 +1038,9 @@ $html = str_replace('{MIN_DATE}', date('Y-m-d'), $html);
 $html = str_replace('{APPT_TOTAL}', (string) $apptTotal, $html);
 $html = str_replace('{APPT_PENDING}', (string) $apptPending, $html);
 $html = str_replace('{APPT_UPCOMING}', (string) $apptUpcoming, $html);
+$html = str_replace('{ICON_HERO_TOTAL}', $iconHeroTotal, $html);
+$html = str_replace('{ICON_HERO_PENDING}', $iconHeroPending, $html);
+$html = str_replace('{ICON_HERO_UPCOMING}', $iconHeroUpcoming, $html);
 
 require_once __DIR__ . '/../inc/client-sidebar.php';
 $html = inject_client_sidebar($html);

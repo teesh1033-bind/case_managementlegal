@@ -778,11 +778,13 @@ if (empty($recentCases)) {
         
         $status = isset($case['status']) ? strtolower($case['status']) : 'open';
         $statusLabel = ucfirst(str_replace('_', ' ', $status));
-        $badgeClass = 'bg-gradient-info';
+        $badgeClass = 'bg-gradient-primary';
         if ($status === 'in_progress') {
             $badgeClass = 'bg-gradient-warning';
         } elseif ($status === 'closed') {
             $badgeClass = 'bg-gradient-success';
+        } elseif ($status === 'open' || $status === 'pending') {
+            $badgeClass = 'bg-gradient-primary';
         }
         
         $createdDate = isset($case['created_at']) && $case['created_at'] ? date('M d, Y', strtotime($case['created_at'])) : 'N/A';

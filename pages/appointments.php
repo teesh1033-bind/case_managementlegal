@@ -160,7 +160,7 @@ if (empty($appointments)) {
         if ($status === 'accepted') {
             $editActionHtml = '<button type="button" class="btn btn-sm btn-secondary mb-0" disabled title="Accepted appointments cannot be edited">Edit</button>';
         } elseif ($status === 'rejected') {
-            $editActionHtml = '<a href="new_appointment.php?id=' . (int) $appointment['id'] . '" class="btn btn-sm btn-info mb-0" title="Choose another lawyer or time; the assigned lawyer must accept or reject">Reassign</a>';
+            $editActionHtml = '<a href="new_appointment.php?id=' . (int) $appointment['id'] . '" class="btn btn-sm bg-gradient-primary text-white mb-0" title="Choose another lawyer or time; the assigned lawyer must accept or reject">Reassign</a>';
         } else {
             $editActionHtml = '<a href="new_appointment.php?id=' . (int) $appointment['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>';
         }

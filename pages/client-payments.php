@@ -11,6 +11,25 @@ if (!isset($_SESSION['client_id'])) {
 $client_id = $_SESSION['client_id'];
 $client_name = $_SESSION['client_name'];
 
+function clientInvoiceStatusMeta(float $balanceDue, ?string $dueDate): array
+{
+    if ($balanceDue <= 0) {
+        return ['label' => 'Paid', 'pill' => 'ca-status-pill--done'];
+    }
+    if ($dueDate && strtotime($dueDate) < time()) {
+        return ['label' => 'Overdue', 'pill' => 'ca-status-pill--declined'];
+    }
+
+    return ['label' => 'Outstanding', 'pill' => 'ca-status-pill--pending'];
+}
+
+function clientInvoiceStatusBadge(array $meta): string
+{
+    $pill = isset($meta['pill']) ? $meta['pill'] : 'ca-status-pill--muted';
+
+    return '<span class="ca-status-pill ' . htmlspecialchars($pill) . '">' . htmlspecialchars($meta['label']) . '</span>';
+}
+
 $message = '';
 $messageType = '';
 
@@ -81,6 +100,12 @@ foreach ($invoices as $_inv) {
     }
 }
 
+require_once __DIR__ . '/../inc/legalpro-icons.php';
+$iconInvoiceRow = legalpro_icon('file-text');
+$iconInvoiceEmpty = legalpro_icon('file-text');
+$iconPaymentRow = legalpro_icon('credit-card');
+$iconPaymentEmpty = legalpro_icon('credit-card');
+
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
 
 // Build invoices table rows
@@ -88,32 +113,25 @@ $invoicesRows = '';
 if (empty($invoices)) {
     $invoicesRows = '<tr><td colspan="6" class="border-0">
         <div class="text-center py-5 px-4">
-            <div class="cp-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
-                <i class="ni ni-single-copy-04 text-primary text-lg opacity-10" aria-hidden="true"></i>
-            </div>
+            <div class="cp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconInvoiceEmpty . '</div>
             <h5 class="font-weight-bolder mt-4 mb-2">No invoices yet</h5>
             <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">When your firm issues an invoice for a matter, it will show here with amounts, due dates, and payment status.</p>
         </div>
     </td></tr>';
 } else {
     foreach ($invoices as $invoice) {
-        $statusBadge = '';
-        if ($invoice['balance_due'] <= 0) {
-            $statusBadge = '<span class="badge badge-sm bg-gradient-success">Paid</span>';
-        } elseif (strtotime($invoice['due_date']) < time()) {
-            $statusBadge = '<span class="badge badge-sm bg-gradient-danger">Overdue</span>';
-        } else {
-            $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
-        }
+        $statusMeta = clientInvoiceStatusMeta(
+            (float) ($invoice['balance_due'] ?? 0),
+            !empty($invoice['due_date']) ? $invoice['due_date'] : null
+        );
+        $statusBadge = clientInvoiceStatusBadge($statusMeta);
 
         $caseTitle = $invoice['case_title'] ?: '—';
 
         $invoicesRows .= '<tr class="cp-invoice-row">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
-                    <div class="cp-row-icon icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md flex-shrink-0">
-                        <i class="ni ni-single-copy-04 text-white text-xs opacity-10" aria-hidden="true"></i>
-                    </div>
+                    <div class="cp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconInvoiceRow . '</div>
                     <div class="min-width-0">
                         <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 12rem;">' . htmlspecialchars($invoice['invoice_number']) . '</h6>
                         <p class="text-xs text-muted mb-0 text-truncate" style="max-width: 14rem;" title="' . htmlspecialchars($caseTitle) . '">' . htmlspecialchars($caseTitle) . '</p>
@@ -144,9 +162,7 @@ $paymentsRows = '';
 if (empty($payments)) {
     $paymentsRows = '<tr><td colspan="5" class="border-0">
         <div class="text-center py-5 px-4">
-            <div class="cp-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
-                <i class="ni ni-credit-card text-success text-lg opacity-10" aria-hidden="true"></i>
-            </div>
+            <div class="cp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success mx-auto d-flex align-items-center justify-content-center">' . $iconPaymentEmpty . '</div>
             <h5 class="font-weight-bolder mt-4 mb-2">No payments recorded</h5>
             <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Posted payments from your firm will appear here with date, method, and reference.</p>
         </div>
@@ -160,9 +176,7 @@ if (empty($payments)) {
         $paymentsRows .= '<tr class="cp-payment-row">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
-                    <div class="cp-row-icon icon icon-shape icon-sm bg-gradient-success shadow text-center border-radius-md flex-shrink-0">
-                        <i class="ni ni-money-coins text-white text-xs opacity-10" aria-hidden="true"></i>
-                    </div>
+                    <div class="cp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success flex-shrink-0">' . $iconPaymentRow . '</div>
                     <div class="min-width-0">
                         <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 11rem;" title="' . htmlspecialchars($caseTitle) . '">' . htmlspecialchars($caseTitle) . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($payment['invoice_number'] ?: 'No invoice #') . '</p>
@@ -204,6 +218,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
     <style>
         .client-payments-page { --cp-radius: 1.15rem; }
         .client-payments-page .cp-hero {
@@ -271,15 +286,55 @@ $html = <<<'HTML'
         .client-payments-page .cp-payment-row:hover td {
             background: rgba(94, 114, 228, 0.04);
         }
-        .client-payments-page .cp-row-icon {
-            width: 2.35rem;
-            height: 2.35rem;
+        .client-payments-page .ca-status-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.35em 0.85em;
+            border-radius: 999px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .client-payments-page .ca-status-pill--pending {
+            background: rgba(251, 140, 0, 0.14);
+            color: #c45c00;
+        }
+        .client-payments-page .ca-status-pill--scheduled {
+            background: rgba(94, 114, 228, 0.14);
+            color: #5e72e4;
+        }
+        .client-payments-page .ca-status-pill--done {
+            background: rgba(103, 116, 142, 0.12);
+            color: #67748e;
+        }
+        .client-payments-page .ca-status-pill--declined {
+            background: rgba(245, 54, 92, 0.12);
+            color: #d6336c;
+        }
+        .client-payments-page .ca-status-pill--muted {
+            background: rgba(103, 116, 142, 0.1);
+            color: #8392ab;
+        }
+        .client-payments-page .cp-row-icon.dashboard-stat-icon-wrap {
+            width: 2.5rem;
+            height: 2.5rem;
+            min-width: 2.5rem;
+            border-radius: 50%;
+            box-shadow: none;
+        }
+        .client-payments-page .cp-empty-icon.dashboard-stat-icon-wrap {
+            width: 3.25rem;
+            height: 3.25rem;
+            min-width: 3.25rem;
+            border-radius: 50%;
+            box-shadow: none;
+        }
+        .client-payments-page .cp-invoice-row .icon-shape,
+        .client-payments-page .cp-payment-row .icon-shape,
+        .client-payments-page .cp-empty-icon.icon-shape {
+            display: none !important;
         }
         .client-payments-page .min-width-0 { min-width: 0; }
-        .client-payments-page .cp-empty-icon {
-            width: 4rem;
-            height: 4rem;
-        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-payments-page">

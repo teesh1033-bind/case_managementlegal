@@ -1,26 +1,12 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
     header('Location: admin-login.php');
     exit;
-}
-
-function courtDateStatusBadgeHtml($status) {
-    switch (strtolower((string) $status)) {
-        case 'scheduled':
-            return '<span class="badge badge-sm bg-gradient-info">Scheduled</span>';
-        case 'completed':
-            return '<span class="badge badge-sm bg-gradient-success">Completed</span>';
-        case 'cancelled':
-            return '<span class="badge badge-sm bg-gradient-danger">Cancelled</span>';
-        case 'postponed':
-            return '<span class="badge badge-sm bg-gradient-warning">Postponed</span>';
-        default:
-            return '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars(ucfirst((string) $status)) . '</span>';
-    }
 }
 
 // Check if court_dates table exists
@@ -182,13 +168,16 @@ foreach ($court_dates as $date) {
     ];
 }
 
+$iconCourtRow = legalpro_icon('landmark');
+$iconCourtEmpty = legalpro_icon('calendar');
+
 $upcomingCourtDatesHtml = '';
 $upcomingCourtDates = array_values(array_filter($court_dates, function ($row) {
     return strtotime($row['court_date']) >= time()
         && strtolower((string) ($row['status'] ?? '')) === 'scheduled';
 }));
 if (empty($upcomingCourtDates)) {
-    $upcomingCourtDatesHtml = '<div class="dashboard-upcoming-empty"><i class="ni ni-calendar-grid-58"></i>No upcoming court dates</div>';
+    $upcomingCourtDatesHtml = '<div class="dashboard-upcoming-empty"><div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">' . $iconCourtEmpty . '</div>No upcoming court dates</div>';
 } else {
     usort($upcomingCourtDates, function ($a, $b) {
         return strtotime($a['court_date']) <=> strtotime($b['court_date']);
@@ -227,7 +216,9 @@ if (empty($upcomingCourtDates)) {
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=3" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=19" rel="stylesheet" />
+    <?php legalpro_icons_asset_links(); ?>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
         .court-date-modal .modal-dialog {
@@ -247,7 +238,7 @@ if (empty($upcomingCourtDates)) {
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/menunav.php'; ?>
 
@@ -358,12 +349,17 @@ if (empty($upcomingCourtDates)) {
                                     <tbody>
                                         <?php foreach ($court_dates as $date): ?>
                                             <tr>
-                                                <td><?php echo htmlspecialchars($date['case_title']); ?></td>
+                                                <td>
+                                                    <div class="d-flex align-items-center gap-3 py-1">
+                                                        <div class="ct-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0"><?php echo $iconCourtRow; ?></div>
+                                                        <span class="text-sm font-weight-bold"><?php echo htmlspecialchars($date['case_title']); ?></span>
+                                                    </div>
+                                                </td>
                                                 <td><?php echo htmlspecialchars($date['client_name']); ?></td>
                                                 <td><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
                                                 <td><?php echo htmlspecialchars($date['title']); ?></td>
                                                 <td class="align-middle text-center">
-                                                    <?php echo courtDateStatusBadgeHtml($date['status']); ?>
+                                                    <?php echo legalpro_court_date_status_badge((string) ($date['status'] ?? '')); ?>
                                                 </td>
                                                 <td class="align-middle">
                                                     <div class="court-actions">
@@ -520,7 +516,7 @@ if (empty($upcomingCourtDates)) {
                             <strong>Date & Time:</strong> <span id="view_datetime"></span>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <strong>Status:</strong> <span id="view_status" class="badge badge-sm bg-gradient-secondary"></span>
+                            <strong>Status:</strong> <span id="view_status" class="lp-pill lp-pill--status-default"></span>
                         </div>
                         <div class="col-md-12 mb-3">
                             <strong>Title:</strong> <span id="view_title"></span>
@@ -633,15 +629,15 @@ if (empty($upcomingCourtDates)) {
                     cancelled: 'Cancelled',
                     postponed: 'Postponed'
                 };
-                var statusClasses = {
-                    scheduled: 'badge badge-sm bg-gradient-info',
-                    completed: 'badge badge-sm bg-gradient-success',
-                    cancelled: 'badge badge-sm bg-gradient-danger',
-                    postponed: 'badge badge-sm bg-gradient-warning'
+                var statusPills = {
+                    scheduled: 'lp-pill lp-pill--status-progress',
+                    completed: 'lp-pill lp-pill--status-closed',
+                    cancelled: 'lp-pill lp-pill--status-declined',
+                    postponed: 'lp-pill lp-pill--status-pending'
                 };
                 var statusKey = (eventData.status || '').toLowerCase();
                 document.getElementById('view_status').textContent = statusLabels[statusKey] || (statusKey.charAt(0).toUpperCase() + statusKey.slice(1));
-                document.getElementById('view_status').className = statusClasses[statusKey] || 'badge badge-sm bg-gradient-secondary';
+                document.getElementById('view_status').className = statusPills[statusKey] || 'lp-pill lp-pill--status-default';
                 document.getElementById('view_title').textContent = eventData.title;
                 document.getElementById('view_description').textContent = eventData.description || 'No description';
                 document.getElementById('view_location').textContent = eventData.location || 'Not specified';

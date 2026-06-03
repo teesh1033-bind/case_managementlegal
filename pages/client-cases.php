@@ -38,6 +38,10 @@ try {
 
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
 
+require_once __DIR__ . '/../inc/admin-layout.php';
+$iconCaseRow = legalpro_icon('briefcase');
+$iconCaseEmpty = legalpro_icon('briefcase');
+
 $caseCount = count($cases);
 
 // Build cases table rows
@@ -45,9 +49,7 @@ $casesRows = '';
 if (empty($cases)) {
     $casesRows = '<tr><td colspan="6" class="border-0">
         <div class="text-center py-5 px-4">
-            <div class="cc-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
-                <i class="ni ni-folder-17 text-primary text-lg opacity-10" aria-hidden="true"></i>
-            </div>
+            <div class="cc-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseEmpty . '</div>
             <h5 class="font-weight-bolder mt-4 mb-2">No cases yet</h5>
             <p class="text-sm text-muted mb-4 mx-auto" style="max-width: 22rem;">When your legal team opens a matter for you, it will appear in this list with status, priority, and assigned counsel.</p>
             <a href="client-dashboard.php" class="btn btn-sm btn-primary mb-0">Go to dashboard</a>
@@ -59,44 +61,15 @@ if (empty($cases)) {
         $caseNumber = 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
         $lawyerNames = $case['lawyer_names'] ?: 'Unassigned';
 
-        switch ($case['status']) {
-            case 'open':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-success">Open</span>';
-                break;
-            case 'closed':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">Closed</span>';
-                break;
-            case 'pending':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
-                break;
-            default:
-                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($case['status']) . '</span>';
-                break;
-        }
-
-        switch ($case['priority']) {
-            case 'High':
-                $priorityBadge = '<span class="badge badge-sm bg-gradient-danger">High</span>';
-                break;
-            case 'Normal':
-                $priorityBadge = '<span class="badge badge-sm bg-gradient-warning">Normal</span>';
-                break;
-            case 'Low':
-                $priorityBadge = '<span class="badge badge-sm bg-gradient-info">Low</span>';
-                break;
-            default:
-                $priorityBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($case['priority']) . '</span>';
-                break;
-        }
+        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+        $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
 
         $updated = isset($case['updated_at']) ? date('M j, Y', strtotime($case['updated_at'])) : '';
 
         $casesRows .= '<tr class="cc-case-row">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
-                    <div class="cc-case-icon icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md flex-shrink-0">
-                        <i class="ni ni-folder-17 text-white text-xs opacity-10" aria-hidden="true"></i>
-                    </div>
+                    <div class="cc-case-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconCaseRow . '</div>
                     <div class="min-width-0">
                         <p class="text-xs text-primary font-weight-bold mb-0">' . htmlspecialchars($caseNumber) . '</p>
                         <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 14rem;">' . htmlspecialchars($case['title']) . '</h6>
@@ -204,10 +177,6 @@ $html = <<<'HTML'
         .client-cases-page .cc-case-row:hover td {
             background: rgba(94, 114, 228, 0.04);
         }
-        .client-cases-page .cc-case-icon {
-            width: 2.35rem;
-            height: 2.35rem;
-        }
         .client-cases-page .min-width-0 { min-width: 0; }
         .client-cases-page .cc-pill {
             display: inline-block;
@@ -215,10 +184,6 @@ $html = <<<'HTML'
             border-radius: 2rem;
             background: rgba(94, 114, 228, 0.08);
             color: #324cdd;
-        }
-        .client-cases-page .cc-empty-icon {
-            width: 4rem;
-            height: 4rem;
         }
     </style>
 </head>

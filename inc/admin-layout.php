@@ -322,3 +322,86 @@ function legalpro_case_status_badge(string $status): string
 
     return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
 }
+
+function legalpro_court_date_status_meta(string $status): array
+{
+    $key = strtolower(trim($status));
+    $map = [
+        'scheduled' => ['label' => 'Scheduled', 'pill' => 'lp-pill--status-progress'],
+        'completed' => ['label' => 'Completed', 'pill' => 'lp-pill--status-closed'],
+        'cancelled' => ['label' => 'Cancelled', 'pill' => 'lp-pill--status-declined'],
+        'postponed' => ['label' => 'Postponed', 'pill' => 'lp-pill--status-pending'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return ['label' => $label, 'pill' => 'lp-pill--status-default'];
+    }
+
+    return $map[$key];
+}
+
+function legalpro_court_date_status_badge(string $status): string
+{
+    $meta = legalpro_court_date_status_meta($status);
+
+    return '<span class="lp-pill ' . $meta['pill'] . '">' . htmlspecialchars($meta['label']) . '</span>';
+}
+
+function client_court_date_status_badge(string $status): string
+{
+    $key = strtolower(trim($status));
+    $map = [
+        'scheduled' => ['label' => 'Scheduled', 'pill' => 'ca-status-pill--scheduled'],
+        'completed' => ['label' => 'Completed', 'pill' => 'ca-status-pill--done'],
+        'cancelled' => ['label' => 'Cancelled', 'pill' => 'ca-status-pill--declined'],
+        'postponed' => ['label' => 'Postponed', 'pill' => 'ca-status-pill--pending'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+}
+
+function client_case_status_badge(string $status): string
+{
+    $key = strtolower(str_replace(' ', '_', trim($status)));
+    $map = [
+        'open' => ['label' => 'Open', 'pill' => 'ca-status-pill--scheduled'],
+        'in_progress' => ['label' => 'In Progress', 'pill' => 'ca-status-pill--scheduled'],
+        'closed' => ['label' => 'Closed', 'pill' => 'ca-status-pill--done'],
+        'pending' => ['label' => 'Pending', 'pill' => 'ca-status-pill--pending'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+}
+
+function client_case_priority_badge(string $priority): string
+{
+    $key = strtolower(trim($priority));
+    $label = $priority !== '' ? $priority : 'Normal';
+
+    if ($key === 'high' || $key === 'urgent') {
+        $pill = 'ca-status-pill--declined';
+    } elseif ($key === 'low') {
+        $pill = 'ca-status-pill--muted';
+    } else {
+        $pill = 'ca-status-pill--pending';
+        if ($key === 'normal') {
+            $label = 'Normal';
+        }
+    }
+
+    return '<span class="ca-status-pill ' . $pill . '">' . htmlspecialchars($label) . '</span>';
+}

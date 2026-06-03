@@ -95,4 +95,53 @@ body.client-portal-page .main-content .card:not([class*="-hero"]) {
     background-color: #fff !important;
 }
 
+/* Client portal — soft status pills (shared across cases, appointments, payments, court) */
+.legalpro-client-portal .ca-status-pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.35em 0.85em;
+    border-radius: 999px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+.legalpro-client-portal .ca-status-pill--pending {
+    background: rgba(251, 140, 0, 0.14);
+    color: #c45c00;
+}
+.legalpro-client-portal .ca-status-pill--scheduled {
+    background: rgba(94, 114, 228, 0.14);
+    color: #5e72e4;
+}
+.legalpro-client-portal .ca-status-pill--done {
+    background: rgba(103, 116, 142, 0.12);
+    color: #67748e;
+}
+.legalpro-client-portal .ca-status-pill--declined {
+    background: rgba(245, 54, 92, 0.12);
+    color: #d6336c;
+}
+.legalpro-client-portal .ca-status-pill--muted {
+    background: rgba(103, 116, 142, 0.1);
+    color: #8392ab;
+}
+.legalpro-client-portal .cp-row-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .cc-case-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .cct-row-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+.legalpro-client-portal .cp-empty-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .cc-empty-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .cct-empty-icon.dashboard-stat-icon-wrap {
+    width: 3.25rem;
+    height: 3.25rem;
+    min-width: 3.25rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
 /* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */

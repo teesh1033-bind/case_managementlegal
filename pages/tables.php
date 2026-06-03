@@ -122,10 +122,14 @@ try {
     }
 }
 
+$iconCaseRow = legalpro_icon('briefcase');
+$iconCaseEmpty = legalpro_icon('briefcase');
+
 // Build cases table rows
 $casesRows = '';
 if (empty($cases)) {
     $casesRows = '<tr class="legalpro-cases-empty"><td colspan="9" class="text-center">
+        <div class="legalpro-cases-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary d-inline-flex align-items-center justify-content-center">' . $iconCaseEmpty . '</div>
         <p class="text-muted mb-2 font-weight-bold">No cases found.</p>
         <p class="text-xs text-muted mb-3">Create a case to start managing clients, documents, and billing.</p>
         <a href="case-new.php" class="btn btn-sm btn-legalpro-cases-new">+ New Case</a>
@@ -167,8 +171,13 @@ if (empty($cases)) {
         <tr class="legalpro-cases-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES) . '" data-status="' . htmlspecialchars($statusFilter, ENT_QUOTES) . '" data-priority="' . htmlspecialchars($priorityFilter, ENT_QUOTES) . '">
             <td><a class="legalpro-case-number" href="case-view.php?id=' . $caseId . '">' . htmlspecialchars($caseNumber) . '</a></td>
             <td>
-                <p class="legalpro-case-title__main mb-0">' . $title . '</p>
-                <p class="legalpro-case-title__sub">' . $titleSub . '</p>
+                <div class="d-flex align-items-center gap-3 py-1">
+                    <div class="legalpro-cases-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconCaseRow . '</div>
+                    <div class="min-width-0">
+                        <p class="legalpro-case-title__main mb-0">' . $title . '</p>
+                        <p class="legalpro-case-title__sub">' . $titleSub . '</p>
+                    </div>
+                </div>
             </td>
             <td><span class="legalpro-case-client">' . $clientDisplay . '</span></td>
             <td>' . $serviceDisplay . '</td>
@@ -213,7 +222,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=17" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=19" rel="stylesheet" />
 	<?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-cases-page">

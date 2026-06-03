@@ -724,9 +724,10 @@ body.legalpro-admin-portal .dashboard-calendar-hub .lp-card-header-primary {
 
 /* —— Cases hub (Eagle-style table) —— */
 body.admin-cases-page {
-    --lp-cases-accent: #26a69a;
-    --lp-cases-accent-soft: rgba(38, 166, 154, 0.12);
-    --lp-cases-accent-border: rgba(38, 166, 154, 0.35);
+    --lp-cases-accent: var(--lp-admin-primary);
+    --lp-cases-accent-dark: var(--lp-admin-primary-dark);
+    --lp-cases-accent-soft: rgba(94, 114, 228, 0.12);
+    --lp-cases-accent-border: rgba(94, 114, 228, 0.35);
 }
 
 body.admin-cases-page .legalpro-cases-hub {
@@ -760,17 +761,17 @@ body.admin-cases-page .legalpro-cases-hub__count {
 }
 
 body.admin-cases-page .btn-legalpro-cases-new {
-    background: var(--lp-cases-accent) !important;
+    background: var(--lp-admin-gradient) !important;
     border: none !important;
     color: #fff !important;
     font-weight: 700;
     border-radius: 10px;
     padding: 0.5rem 1.1rem;
-    box-shadow: 0 4px 14px rgba(38, 166, 154, 0.28);
+    box-shadow: 0 4px 14px rgba(94, 114, 228, 0.32);
 }
 
 body.admin-cases-page .btn-legalpro-cases-new:hover {
-    filter: brightness(1.05);
+    filter: brightness(1.06);
     color: #fff !important;
 }
 
@@ -845,18 +846,18 @@ body.admin-cases-page .legalpro-cases-table tbody td {
 }
 
 body.admin-cases-page .legalpro-cases-table tbody tr:hover {
-    background: rgba(38, 166, 154, 0.04);
+    background: rgba(94, 114, 228, 0.05);
 }
 
 body.admin-cases-page .legalpro-case-number {
     font-weight: 700;
-    color: var(--lp-cases-accent);
+    color: var(--lp-cases-accent) !important;
     font-size: 0.8125rem;
     text-decoration: none;
 }
 
 body.admin-cases-page .legalpro-case-number:hover {
-    color: #1e8c82;
+    color: var(--lp-cases-accent-dark) !important;
 }
 
 body.admin-cases-page .legalpro-case-title__main {
@@ -899,7 +900,7 @@ body.admin-cases-page .btn-legalpro-case-open:hover {
     border-color: var(--lp-cases-accent) !important;
 }
 
-body.admin-cases-page .lp-pill {
+body.legalpro-admin-portal .lp-pill {
     display: inline-block;
     font-size: 0.72rem;
     font-weight: 700;
@@ -909,44 +910,82 @@ body.admin-cases-page .lp-pill {
     white-space: nowrap;
 }
 
-body.admin-cases-page .lp-pill--priority-high {
+body.legalpro-admin-portal .lp-pill--priority-high {
     background: rgba(17, 113, 239, 0.12);
     color: #1171ef;
 }
 
-body.admin-cases-page .lp-pill--priority-urgent {
+body.legalpro-admin-portal .lp-pill--priority-urgent {
     background: rgba(245, 54, 92, 0.12);
     color: #f5365c;
 }
 
-body.admin-cases-page .lp-pill--priority-medium {
-    background: rgba(38, 166, 154, 0.14);
-    color: #1e8c82;
+body.legalpro-admin-portal .lp-pill--priority-medium {
+    background: rgba(94, 114, 228, 0.14);
+    color: #5e72e4;
 }
 
-body.admin-cases-page .lp-pill--status-progress {
+body.legalpro-admin-portal .lp-pill--status-progress {
     background: rgba(17, 113, 239, 0.12);
     color: #1171ef;
 }
 
-body.admin-cases-page .lp-pill--status-waiting {
+body.legalpro-admin-portal .lp-pill--status-waiting {
     background: rgba(130, 94, 228, 0.12);
     color: #825ee4;
 }
 
-body.admin-cases-page .lp-pill--status-pending {
+body.legalpro-admin-portal .lp-pill--status-pending {
     background: rgba(251, 140, 0, 0.14);
     color: #e65100;
 }
 
-body.admin-cases-page .lp-pill--status-closed {
+body.legalpro-admin-portal .lp-pill--status-closed {
     background: rgba(103, 116, 142, 0.14);
     color: #67748e;
 }
 
-body.admin-cases-page .lp-pill--status-default {
+body.legalpro-admin-portal .lp-pill--status-default {
     background: rgba(103, 116, 142, 0.12);
     color: #67748e;
+}
+
+body.legalpro-admin-portal .lp-pill--status-declined {
+    background: rgba(245, 54, 92, 0.12);
+    color: #d6336c;
+}
+
+body.admin-court-tracking-page .ct-row-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+body.admin-court-tracking-page .dashboard-upcoming-empty .dashboard-stat-icon-wrap {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    margin: 0 auto 0.5rem;
+    border-radius: 50%;
+}
+
+body.admin-cases-page .legalpro-cases-row-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+body.admin-cases-page .legalpro-cases-empty-icon.dashboard-stat-icon-wrap {
+    width: 3.25rem;
+    height: 3.25rem;
+    min-width: 3.25rem;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    box-shadow: none;
 }
 
 body.admin-cases-page .legalpro-cases-empty td {
