@@ -136,6 +136,8 @@ body.legalpro-sidebar-collapsed .legalpro-sidebar-signout span {
 }
 
 .legalpro-sidebar-brand__logo {
+    width: 42px;
+    height: 42px;
     object-fit: contain;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.95);

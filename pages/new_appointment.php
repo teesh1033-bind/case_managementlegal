@@ -382,6 +382,45 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	<style>
+		#appointment_time option.lp-time-available {
+			color: #2dce89;
+			font-weight: 600;
+		}
+		#appointment_time option:disabled {
+			color: #adb5bd;
+		}
+		.time-slot-btn {
+			border: 1px solid #dee2e6;
+			background: #fff;
+			color: #525f7f;
+			font-size: 0.8125rem;
+			font-weight: 600;
+			padding: 0.35rem 0.75rem;
+			border-radius: 0.5rem;
+			cursor: pointer;
+			transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+		}
+		.time-slot-btn.lp-slot-available {
+			border-color: #2dce89;
+			color: #2dce89;
+			background: rgba(45, 206, 137, 0.08);
+		}
+		.time-slot-btn.lp-slot-available:hover,
+		.time-slot-btn.lp-slot-available:focus {
+			background: #2dce89;
+			color: #fff;
+		}
+		.time-slot-btn.lp-slot-selected {
+			background: #2dce89;
+			border-color: #2dce89;
+			color: #fff;
+		}
+		.time-slot-btn:disabled {
+			opacity: 0.45;
+			cursor: not-allowed;
+		}
+	</style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -458,12 +497,25 @@ $html = <<<'HTML'
 									<div class="col-md-6">
 										<div class="form-group mb-3">
 											<label class="form-control-label text-sm font-weight-bold">Time <span class="text-danger">*</span></label>
-											<input class="form-control" type="time" name="time" id="appointment_time" value="{TIME_VALUE}" required>
+											<select class="form-control" name="time" id="appointment_time" required>
+												<option value="">Select time</option>
+												<option value="09:00" class="time-option">9:00 AM</option>
+												<option value="10:00" class="time-option">10:00 AM</option>
+												<option value="11:00" class="time-option">11:00 AM</option>
+												<option value="12:00" class="time-option">12:00 PM</option>
+												<option value="13:00" class="time-option">1:00 PM</option>
+												<option value="14:00" class="time-option">2:00 PM</option>
+												<option value="15:00" class="time-option">3:00 PM</option>
+												<option value="16:00" class="time-option">4:00 PM</option>
+												<option value="17:00" class="time-option">5:00 PM</option>
+											</select>
+											<div id="timeSlotPicker" class="d-flex flex-wrap gap-2 mt-2" aria-label="Available time slots"></div>
+											<small class="text-muted d-block mt-2">Tap a <span class="text-success font-weight-bold">green</span> slot or pick a green time from the list. Gray options are outside the lawyer&apos;s schedule.</small>
 										</div>
 									</div>
 								</div>
 								<div id="availabilityMessage" class="mb-3" style="display: none;"></div>
-								<small class="text-muted d-block mb-3">If the lawyer has published availability, you can only book within their available hours. Unavailable times and existing appointment blocks cannot be booked.</small>
+								<small class="text-muted d-block mb-3">When a lawyer has published availability, only green time slots can be booked. Unavailable blocks and existing appointments are excluded.</small>
 
 								<div class="form-group mb-4">
 									<label class="form-control-label text-sm font-weight-bold">Notes</label>
@@ -491,6 +543,7 @@ $html = <<<'HTML'
 		const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
 		const lawyerAvailabilityByDay = {LAWYER_AVAILABILITY_BY_DAY_JSON};
 		const lawyerHasSchedule = {LAWYER_HAS_SCHEDULE_JSON};
+		const initialAppointmentTime = '{TIME_VALUE}';
 
 		document.addEventListener('DOMContentLoaded', function() {
 			var caseSelect = document.getElementById('case_select');
@@ -556,6 +609,7 @@ $html = <<<'HTML'
 			if (caseSelect) {
 				caseSelect.addEventListener('change', function() {
 					syncCaseDependentFields(true);
+					renderTimeOptions();
 				});
 
 				if (caseSelect.value) {
@@ -565,6 +619,7 @@ $html = <<<'HTML'
 
             var dateInput = document.getElementById('appointment_date');
             var timeInput = document.getElementById('appointment_time');
+            var timeSlotPicker = document.getElementById('timeSlotPicker');
             var appointmentForm = document.getElementById('appointmentForm');
             var availabilityMessage = document.getElementById('availabilityMessage');
 
@@ -641,6 +696,192 @@ $html = <<<'HTML'
                 availabilityMessage.innerHTML = html || '';
             }
 
+            function formatTimeLabel(timeValue) {
+                var parts = timeValue.split(':');
+                var hours = parseInt(parts[0], 10);
+                var minutes = parts[1] || '00';
+                var period = hours >= 12 ? 'PM' : 'AM';
+                var displayHours = hours % 12;
+                if (displayHours === 0) {
+                    displayHours = 12;
+                }
+                return displayHours + ':' + minutes + ' ' + period;
+            }
+
+            function normalizeSelectTime(timeValue) {
+                if (!timeValue) {
+                    return '';
+                }
+                var parts = timeValue.split(':');
+                if (parts.length < 2) {
+                    return timeValue;
+                }
+                return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
+            }
+
+            function isTimeSlotBookable(timeValue, lawyerId, dateValue, slots, hasSchedule) {
+                if (!timeValue) {
+                    return false;
+                }
+                var now = nowParts();
+                if (dateValue === now.date && timeValue < now.time) {
+                    return false;
+                }
+                if (!hasSchedule) {
+                    return true;
+                }
+                var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
+                if (!availableSlots.length) {
+                    return false;
+                }
+                return isWithinAvailable(timeValue, slots) && !isBlockedByUnavailable(timeValue, slots);
+            }
+
+            function syncTimeSlotPickerSelection() {
+                if (!timeSlotPicker || !timeInput) {
+                    return;
+                }
+                var selectedValue = timeInput.value;
+                timeSlotPicker.querySelectorAll('.time-slot-btn').forEach(function(btn) {
+                    btn.classList.toggle('lp-slot-selected', btn.getAttribute('data-time') === selectedValue);
+                });
+            }
+
+            function renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule) {
+                if (!timeSlotPicker) {
+                    return;
+                }
+
+                timeSlotPicker.innerHTML = '';
+
+                if (!lawyerId || !dateValue || !timeInput) {
+                    return;
+                }
+
+                var timeOptions = timeInput.querySelectorAll('.time-option');
+                timeOptions.forEach(function(option) {
+                    if (!option.value) {
+                        return;
+                    }
+
+                    var bookable = isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule);
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'time-slot-btn';
+                    btn.setAttribute('data-time', option.value);
+                    btn.textContent = option.textContent.trim();
+
+                    if (bookable) {
+                        if (hasSchedule) {
+                            btn.classList.add('lp-slot-available');
+                        }
+                        btn.addEventListener('click', function() {
+                            timeInput.value = option.value;
+                            syncTimeSlotPickerSelection();
+                            syncAppointmentMinDateTime();
+                            validateLawyerAvailabilitySelection();
+                        });
+                    } else if (hasSchedule) {
+                        btn.disabled = true;
+                    } else {
+                        btn.addEventListener('click', function() {
+                            timeInput.value = option.value;
+                            syncTimeSlotPickerSelection();
+                            syncAppointmentMinDateTime();
+                            validateLawyerAvailabilitySelection();
+                        });
+                    }
+
+                    timeSlotPicker.appendChild(btn);
+                });
+
+                syncTimeSlotPickerSelection();
+            }
+
+            function renderTimeOptions() {
+                if (!timeInput) {
+                    return;
+                }
+
+                var lawyerId = lawyerSelect ? lawyerSelect.value : '';
+                var dateValue = dateInput ? dateInput.value : '';
+                var preservedTime = normalizeSelectTime(timeInput.value || initialAppointmentTime);
+                var timeOptions = timeInput.querySelectorAll('.time-option');
+
+                timeOptions.forEach(function(option) {
+                    option.classList.remove('lp-time-available', 'text-success', 'font-weight-bold');
+                    option.disabled = false;
+                });
+
+                if (!lawyerId || !dateValue) {
+                    if (timeSlotPicker) {
+                        timeSlotPicker.innerHTML = '';
+                    }
+                    setAvailabilityMessage(
+                        lawyerId
+                            ? '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a date to see available time slots in green.</div>'
+                            : '',
+                        !!lawyerId
+                    );
+                    return;
+                }
+
+                var slots = getSlotsForLawyerAndDate(lawyerId, dateValue);
+                var hasSchedule = lawyerHasPublishedSchedule(lawyerId);
+                var hasBookableSlot = false;
+
+                timeOptions.forEach(function(option) {
+                    if (!option.value) {
+                        return;
+                    }
+
+                    if (isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule)) {
+                        if (hasSchedule) {
+                            option.classList.add('lp-time-available', 'text-success', 'font-weight-bold');
+                        }
+                        hasBookableSlot = true;
+                    } else if (hasSchedule) {
+                        option.disabled = true;
+                    }
+                });
+
+                if (preservedTime && !timeInput.querySelector('option[value="' + preservedTime + '"]')) {
+                    var customOption = document.createElement('option');
+                    customOption.value = preservedTime;
+                    customOption.textContent = formatTimeLabel(preservedTime);
+                    customOption.className = 'time-option';
+                    if (isTimeSlotBookable(preservedTime, lawyerId, dateValue, slots, hasSchedule)) {
+                        if (hasSchedule) {
+                            customOption.classList.add('lp-time-available', 'text-success', 'font-weight-bold');
+                        }
+                        hasBookableSlot = true;
+                    } else if (hasSchedule) {
+                        customOption.disabled = true;
+                    }
+                    timeInput.appendChild(customOption);
+                }
+
+                if (preservedTime) {
+                    timeInput.value = preservedTime;
+                    var selectedOption = timeInput.options[timeInput.selectedIndex];
+                    if (selectedOption && selectedOption.disabled) {
+                        timeInput.value = '';
+                    }
+                }
+
+                renderTimeSlotPicker(lawyerId, dateValue, slots, hasSchedule);
+
+                if (hasSchedule && !hasBookableSlot) {
+                    setAvailabilityMessage(
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> No available times on this date. Choose another date.</div>',
+                        true
+                    );
+                    return;
+                }
+
+                validateLawyerAvailabilitySelection();
+            }
+
             function validateLawyerAvailabilitySelection() {
                 if (!lawyerSelect || !dateInput || !timeInput) {
                     return true;
@@ -667,7 +908,17 @@ $html = <<<'HTML'
 
                 if (!timeValue) {
                     setAvailabilityMessage(
-                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a time that falls within the lawyer\'s published availability.</div>',
+                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a <span class="text-success font-weight-bold">green</span> time within the lawyer\'s published availability.</div>',
+                        true
+                    );
+                    return false;
+                }
+
+                var selectedOption = timeInput.options[timeInput.selectedIndex];
+                if (selectedOption && selectedOption.disabled) {
+                    timeInput.setCustomValidity('The selected time is not available.');
+                    setAvailabilityMessage(
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> The selected time is not available. Choose a green time slot.</div>',
                         true
                     );
                     return false;
@@ -724,43 +975,41 @@ $html = <<<'HTML'
             }
 
             function syncAppointmentMinDateTime() {
-                if (!dateInput || !timeInput) {
+                if (!dateInput) {
                     return;
                 }
 
                 var now = nowParts();
                 dateInput.setAttribute('min', now.date);
 
-                if (dateInput.value === now.date) {
-                    timeInput.setAttribute('min', now.time);
-                    if (timeInput.value && timeInput.value < now.time) {
-                        timeInput.setCustomValidity('Appointment time cannot be in the past.');
-                    } else {
-                        timeInput.setCustomValidity('');
-                    }
-                } else {
-                    timeInput.removeAttribute('min');
+                if (timeInput && timeInput.value && dateInput.value === now.date && timeInput.value < now.time) {
+                    timeInput.setCustomValidity('Appointment time cannot be in the past.');
+                } else if (timeInput) {
                     timeInput.setCustomValidity('');
                 }
             }
 
             if (lawyerSelect) {
                 lawyerSelect.addEventListener('change', function() {
-                    validateLawyerAvailabilitySelection();
+                    if (timeInput) {
+                        timeInput.value = '';
+                    }
+                    renderTimeOptions();
                 });
             }
 
             if (dateInput && timeInput) {
                 dateInput.addEventListener('change', function() {
                     syncAppointmentMinDateTime();
-                    validateLawyerAvailabilitySelection();
+                    renderTimeOptions();
                 });
-                timeInput.addEventListener('input', function() {
+                timeInput.addEventListener('change', function() {
                     syncAppointmentMinDateTime();
+                    syncTimeSlotPickerSelection();
                     validateLawyerAvailabilitySelection();
                 });
                 syncAppointmentMinDateTime();
-                validateLawyerAvailabilitySelection();
+                renderTimeOptions();
             }
 
             if (appointmentForm && dateInput && timeInput) {

@@ -40,12 +40,12 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 ?>
 
 <link href="../assets/css/legalpro-client-portal.css?v=11" rel="stylesheet" />
-<link href="../assets/css/legalpro-portal-shell.css?v=7" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=8" rel="stylesheet" />
 
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-portal-sidebar legalpro-client-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
         <a href="client-dashboard.php" class="legalpro-sidebar-brand__link">
-            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="32" height="32" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
+            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="42" height="42" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
             <span class="legalpro-sidebar-brand__text">
                 <span class="legalpro-sidebar-brand__name"><?php echo htmlspecialchars($companyName); ?></span>
                 <span class="legalpro-sidebar-brand__role">CLIENT</span>

@@ -206,6 +206,17 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	<style>
+		.settings-brand-logo-preview {
+			width: 52px;
+			height: 52px;
+			object-fit: contain;
+			border: 1px solid #e9ecef;
+			border-radius: 0.5rem;
+			padding: 0.25rem;
+			background: #fff;
+		}
+	</style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -241,7 +252,7 @@ $html = <<<'HTML'
 						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
 						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Settings</li>
 					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">Platform Customizer</h6>
+					<h6 class="font-weight-bolder text-white mb-0">Settings</h6>
 				</nav>
 			</div>
 		</nav>
@@ -272,7 +283,7 @@ $html = <<<'HTML'
 									</div>
 								</div>
 								<div class="d-flex align-items-center gap-3 mb-3">
-									<img src="{COMPANY_LOGO_URL}" alt="Current company logo" style="width: 40px; height: 40px; object-fit: contain; border: 1px solid #e9ecef; border-radius: 0.5rem; padding: 0.25rem; background: #fff;">
+									<img src="{COMPANY_LOGO_URL}" alt="Current company logo" class="settings-brand-logo-preview">
 									<div>
 										<p class="text-sm mb-0 font-weight-bold">Current sidebar logo</p>
 										<p class="text-xs text-muted mb-0">This appears at the top of every portal sidebar after saving.</p>

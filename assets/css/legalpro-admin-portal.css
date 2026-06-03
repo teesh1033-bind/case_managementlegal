@@ -125,6 +125,8 @@ body.legalpro-admin-portal .legalpro-sidebar-brand__link {
 }
 
 body.legalpro-admin-portal .legalpro-sidebar-brand__logo {
+    width: 42px;
+    height: 42px;
     object-fit: contain;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.95);
