@@ -7,7 +7,6 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 $clientMenuItems = [
     ['title' => 'Dashboard', 'url' => 'client-dashboard.php', 'icon' => 'ni ni-tv-2', 'id' => 'client-dashboard'],
-    ['title' => 'My Profile', 'url' => 'client-profile.php', 'icon' => 'ni ni-single-02', 'id' => 'client-profile'],
     ['title' => 'My Cases', 'url' => 'client-cases.php', 'icon' => 'ni ni-collection', 'id' => 'client-cases'],
     ['title' => 'Appointments', 'url' => 'client-appointments.php', 'icon' => 'ni ni-time-alarm', 'id' => 'client-appointments'],
     ['title' => 'Court Tracking', 'url' => 'client-court-tracking.php', 'icon' => 'ni ni-calendar-grid-58', 'id' => 'client-court-tracking'],
