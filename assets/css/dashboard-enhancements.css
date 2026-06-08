@@ -641,3 +641,25 @@ body.legalpro-dark-mode #dashboardCalendar .fc-daygrid-more-link,
 body.legalpro-dark-mode #courtTrackingCalendar .fc-daygrid-more-link {
     color: var(--legalpro-theme-primary, #5e72e4) !important;
 }
+
+body.legalpro-dark-mode .dashboard-upcoming-item__time {
+    color: #b8c8ff !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary {
+    color: var(--legalpro-theme-primary, #8b9eff) !important;
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .btn,
+body.legalpro-dark-mode.admin-court-tracking-page .court-actions .btn,
+body.legalpro-dark-mode.lawyer-court-tracking-page .court-actions .btn,
+body.legalpro-dark-mode.client-court-tracking-page .court-actions .btn {
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .btn-secondary,
+body.legalpro-dark-mode.admin-court-tracking-page .modal .btn-secondary,
+body.legalpro-dark-mode.lawyer-court-tracking-page .modal .btn-secondary,
+body.legalpro-dark-mode.client-court-tracking-page .modal .btn-secondary {
+    color: var(--lp-dark-text) !important;
+}

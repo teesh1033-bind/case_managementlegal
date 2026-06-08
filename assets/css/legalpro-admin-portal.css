@@ -441,6 +441,28 @@ body.legalpro-admin-portal .navbar-main .dashboard-quick-actions + .legalpro-nav
     font-weight: 500;
 }
 
+body.legalpro-dark-mode .legalpro-header-user__name {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode .legalpro-header-user__role {
+    color: var(--lp-dark-text-muted, #c5cede) !important;
+}
+
+body.legalpro-dark-mode .legalpro-header-user__toggle,
+body.legalpro-dark-mode .legalpro-header-user__toggle:hover,
+body.legalpro-dark-mode .legalpro-header-user__toggle:focus,
+body.legalpro-dark-mode .legalpro-header-user__toggle.show {
+    background: var(--lp-dark-surface-raised, #3d455c) !important;
+    border: 1px solid var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+    box-shadow: none !important;
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode .legalpro-header-user__caret {
+    color: var(--lp-dark-text-muted, #c5cede) !important;
+}
+
 /* —— Page navbar (title bar) —— */
 body.legalpro-admin-portal .navbar-main,
 body.legalpro-admin-portal .navbar-main.blur,
