@@ -215,6 +215,9 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '--lp-portal-content-bg: #2a3040;'
         . '--client-portal-content-bg: #2a3040;'
         . '--lawyer-portal-content-bg: #2a3040;'
+        . '--lp-task-card-bg: #3d455c;'
+        . '--lp-task-card-border: rgba(255, 255, 255, 0.1);'
+        . '--lp-task-card-body-bg: #3d455c;'
         . '}';
 
     $css .= $bodies . ' {'
@@ -634,6 +637,44 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode.admin-cases-page .legalpro-cases-table tbody tr:hover {'
         . 'background: ' . $soft12 . ' !important;'
+        . '}';
+
+    $lawyerCardSurfaces = 'body.legalpro-dark-mode.legalpro-lawyer-portal .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-dashboard-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-cases-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-clients-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-appointments-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-availability-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-case-view-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-client-view-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-court-tracking-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-tasks-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-profile-page .main-content .card';
+
+    $css .= $lawyerCardSurfaces . ' {'
+        . 'background-color: var(--lp-dark-surface) !important;'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed,'
+        . 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed .card-body {'
+        . 'background: var(--lp-task-card-body-bg) !important;'
+        . 'background-color: var(--lp-task-card-bg) !important;'
+        . 'border-color: var(--lp-task-card-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed h6 {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed .text-sm:not(.badge) {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed .text-muted {'
+        . 'color: var(--lp-dark-text-muted) !important;'
         . '}';
 
     return $css;

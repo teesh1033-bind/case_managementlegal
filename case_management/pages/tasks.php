@@ -458,11 +458,11 @@ $html = <<<'HTML'
             background-position: right 0.85rem center;
         }
         .lawyer-tasks-page .task-card-themed {
-            background: #f4f6fc;
-            border: 1px solid #dbe4f7;
+            background: var(--lp-task-card-bg, #f4f6fc);
+            border: 1px solid var(--lp-task-card-border, #dbe4f7);
         }
         .lawyer-tasks-page .task-card-themed .card-body {
-            background: linear-gradient(180deg, #ffffff 0%, #f0f3fa 100%);
+            background: var(--lp-task-card-body-bg, linear-gradient(180deg, #ffffff 0%, #f0f3fa 100%));
         }
         .lawyer-tasks-page .task-edit-btn {
             background: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
