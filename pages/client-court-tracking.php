@@ -155,8 +155,9 @@ if (!empty($_SESSION['error_message'])) {
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-<link href="../assets/css/dashboard-enhancements.css?v=7" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
+    <link href="../assets/css/dashboard-enhancements.css?v=9" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/portal-theme-calendar-dark.php'; ?>
     <style>
         .client-court-tracking-page { --cct-radius: 1.15rem; }
         .client-court-tracking-page .cct-hero {
@@ -231,6 +232,22 @@ if (!empty($_SESSION['error_message'])) {
         .client-court-tracking-page .cct-row:hover td { background: rgba(94, 114, 228, 0.04); }
         .client-court-tracking-page .min-width-0 { min-width: 0; }
         .court-date-modal .modal-dialog { max-width: 600px; }
+        body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar {
+            background: var(--lp-dark-surface, #343b4f) !important;
+            border: 1px solid var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+            box-shadow: none !important;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .dashboard-calendar-hub {
+            background: var(--lp-dark-surface, #343b4f) !important;
+            border: 1px solid var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-panel .card-header .text-muted,
+        body.legalpro-dark-mode.client-court-tracking-page .cct-panel .card-header h5.text-dark {
+            color: var(--lp-dark-text-muted, #a8b2c7) !important;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-panel .card-header h5.text-dark {
+            color: var(--lp-dark-text, #f2f4f8) !important;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-court-tracking-page">
