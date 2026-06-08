@@ -1,0 +1,239 @@
+/* Global Montserrat — load after argon-dashboard.css */
+@import url("legalpro-admin-portal.css");
+@import url("legalpro-lawyer-portal.css");
+@import url("legalpro-client-portal.css");
+@import url("legalpro-portal-shell.css");
+@import url("legalpro-gradient-text.css");
+
+
+
+:root,
+
+[data-bs-theme="light"],
+
+[data-bs-theme="dark"] {
+
+  --bs-font-sans-serif: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+}
+
+
+
+body {
+
+  font-family: var(--bs-font-sans-serif);
+
+}
+
+
+
+.card .card-body {
+
+  font-family: "Montserrat", sans-serif;
+
+}
+
+
+
+.text-sans-serif {
+
+  font-family: "Montserrat", sans-serif !important;
+
+}
+
+
+
+/* Argon zeros padding-left for any .form-control not first in .input-group, which makes
+
+   text sit under / flush with leading icons. Restore inset after prepend / input-group-text. */
+
+body .input-group > .input-group-text + .form-control,
+
+body .input-group > .input-group-text + textarea.form-control,
+
+body .input-group > .input-group-text + .form-select,
+
+body .input-group > .input-group-prepend + .form-control,
+
+body .input-group > .input-group-prepend + textarea.form-control,
+
+body .input-group > .input-group-prepend + .form-select {
+
+  padding-left: 0.5rem;
+
+}
+
+
+
+/* Top navbar search — text/placeholder flush to inner edge of input (after icon) */
+
+.navbar-main .legalpro-navbar-search .input-group {
+
+  max-width: min(22rem, 92vw);
+
+}
+
+.navbar-main .legalpro-navbar-search .input-group-text {
+
+  padding: 0.5rem 0.5rem 0.5rem 0.65rem;
+
+  min-width: auto;
+
+  border-right: 0;
+
+}
+
+.navbar-main .legalpro-navbar-search .input-group > .input-group-text + .form-control,
+.navbar-main .legalpro-navbar-search .input-group > .input-group-text + input[type="search"].form-control {
+
+  padding-left: 0 !important;
+
+  -webkit-appearance: none;
+
+  appearance: none;
+
+}
+
+.navbar-main .legalpro-navbar-search input[type="search"].form-control::-webkit-search-decoration,
+.navbar-main .legalpro-navbar-search input[type="search"].form-control::-webkit-search-cancel-button {
+
+  -webkit-appearance: none;
+
+  appearance: none;
+
+  margin: 0;
+
+}
+
+.legalpro-search-input-group {
+  position: relative;
+}
+
+.legalpro-search-input-group > .form-control,
+.legalpro-search-input-group > input[type="search"].form-control {
+  padding-right: 2.35rem !important;
+}
+
+.legalpro-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  z-index: 4;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #8392ab;
+  cursor: pointer;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.legalpro-search-clear i {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.legalpro-search-clear.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.legalpro-search-clear:hover,
+.legalpro-search-clear:focus {
+  color: #5e72e4;
+  background-color: rgba(94, 114, 228, 0.08);
+  outline: none;
+}
+
+.search-portal-page .search-hero-field.legalpro-search-input-group > .form-control,
+.search-portal-page .search-hero-field.legalpro-search-input-group > input[type="search"].form-control {
+  padding-right: 2.75rem !important;
+}
+
+.search-portal-page .search-hero-field .legalpro-search-clear {
+  width: 1.5rem;
+  height: 1.5rem;
+  right: 0.5rem;
+}
+
+.search-portal-page .search-hero-field .legalpro-search-clear i {
+  font-size: 0.78rem;
+}
+
+/* Checkboxes: visible box + tick when checked (no purple fill) */
+.form-check:not(.form-switch) .form-check-input[type=checkbox],
+.login-remember-checkbox,
+input.form-check-input[type=checkbox].lawyer-checkbox,
+input.form-check-input[type=checkbox].task-lawyer-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.15em;
+  flex-shrink: 0;
+  border: 2px solid #adb5bd;
+  border-radius: 0.25rem;
+  background-color: #fff;
+  background-image: none;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=checkbox]:hover,
+.login-remember-checkbox:hover,
+input.form-check-input[type=checkbox].lawyer-checkbox:hover,
+input.form-check-input[type=checkbox].task-lawyer-checkbox:hover {
+  border-color: #8392ab;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=checkbox]:focus,
+.login-remember-checkbox:focus,
+input.form-check-input[type=checkbox].lawyer-checkbox:focus,
+input.form-check-input[type=checkbox].task-lawyer-checkbox:focus {
+  outline: none;
+  border-color: #5e72e4;
+  box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.15);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=checkbox]:checked,
+.login-remember-checkbox:checked,
+input.form-check-input[type=checkbox].lawyer-checkbox:checked,
+input.form-check-input[type=checkbox].task-lawyer-checkbox:checked {
+  background-color: #fff !important;
+  background-image: none !important;
+  border-color: #344767 !important;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=checkbox]:checked::after,
+.login-remember-checkbox:checked::after,
+input.form-check-input[type=checkbox].lawyer-checkbox:checked::after,
+input.form-check-input[type=checkbox].task-lawyer-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 0.3rem;
+  height: 0.55rem;
+  border: solid #344767;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* Hide Argon knob pseudo on generic switches only; status toggles use .legalpro-status-switch */
+.form-switch:not(.legalpro-status-switch) .form-check-input[type=checkbox]::after {
+  display: none !important;
+  content: none !important;
+}
+

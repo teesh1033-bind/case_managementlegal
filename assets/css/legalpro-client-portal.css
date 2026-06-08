@@ -1,0 +1,147 @@
+/**
+ * LegalPro client portal — light page background (same as admin shell).
+ */
+:root {
+    --client-portal-content-bg: #f4f6f9;
+    --client-portal-gradient: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+    --client-portal-bg-fallback: #f4f6f9;
+}
+
+.bg-legalpro-client {
+    background: var(--client-portal-content-bg) !important;
+    background-color: var(--client-portal-content-bg) !important;
+    background-image: none !important;
+}
+
+body.client-dashboard-page,
+body.client-dashboard-page.bg-gray-100,
+body.client-cases-page,
+body.client-cases-page.bg-gray-100,
+body.client-appointments-page,
+body.client-appointments-page.bg-gray-100,
+body.client-court-tracking-page,
+body.client-court-tracking-page.bg-gray-100,
+body.client-payments-page,
+body.client-payments-page.bg-gray-100,
+body.client-portal-page,
+body.client-portal-page.bg-gray-100,
+body.client-profile-page,
+body.client-profile-page.bg-gray-100,
+body.g-sidenav-show.client-dashboard-page,
+body.g-sidenav-show.client-dashboard-page.bg-gray-100,
+body.g-sidenav-show.client-cases-page,
+body.g-sidenav-show.client-cases-page.bg-gray-100,
+body.g-sidenav-show.client-appointments-page,
+body.g-sidenav-show.client-appointments-page.bg-gray-100,
+body.g-sidenav-show.client-court-tracking-page,
+body.g-sidenav-show.client-court-tracking-page.bg-gray-100,
+body.g-sidenav-show.client-payments-page,
+body.g-sidenav-show.client-payments-page.bg-gray-100,
+body.g-sidenav-show.client-portal-page,
+body.g-sidenav-show.client-portal-page.bg-gray-100,
+body.g-sidenav-show.client-profile-page,
+.search-portal-page--client {
+    background: var(--client-portal-content-bg) !important;
+    background-color: var(--client-portal-content-bg) !important;
+    background-image: none !important;
+    min-height: 100vh;
+}
+
+body.client-dashboard-page > .min-height-300,
+body.client-cases-page > .min-height-300,
+body.client-appointments-page > .min-height-300,
+body.client-court-tracking-page > .min-height-300,
+body.client-payments-page > .min-height-300,
+body.client-portal-page > .min-height-300,
+body.client-profile-page > .min-height-300,
+body.client-profile-page .bg-legalpro-client.position-fixed,
+.search-portal-page--client > .min-height-300 {
+    display: none !important;
+}
+
+body.client-dashboard-page .main-content,
+body.client-cases-page .main-content,
+body.client-appointments-page .main-content,
+body.client-court-tracking-page .main-content,
+body.client-payments-page .main-content,
+body.client-portal-page .main-content,
+body.client-dashboard-page .main-content > .container-fluid,
+body.client-cases-page .main-content > .container-fluid,
+body.client-appointments-page .main-content > .container-fluid,
+body.client-court-tracking-page .main-content > .container-fluid,
+body.client-payments-page .main-content > .container-fluid,
+body.client-portal-page .main-content > .container-fluid {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.client-dashboard-page .main-content.border-radius-lg,
+body.client-cases-page .main-content.border-radius-lg,
+body.client-appointments-page .main-content.border-radius-lg,
+body.client-court-tracking-page .main-content.border-radius-lg,
+body.client-payments-page .main-content.border-radius-lg,
+body.client-portal-page .main-content.border-radius-lg {
+    border-radius: 0 !important;
+}
+
+body.client-dashboard-page .main-content .card:not([class*="-hero"]),
+body.client-cases-page .main-content .card:not([class*="-hero"]),
+body.client-appointments-page .main-content .card:not([class*="-hero"]),
+body.client-court-tracking-page .main-content .card:not([class*="-hero"]),
+body.client-payments-page .main-content .card:not([class*="-hero"]),
+body.client-portal-page .main-content .card:not([class*="-hero"]) {
+    background-color: #fff !important;
+}
+
+/* Client portal — soft status pills (shared across cases, appointments, payments, court) */
+.legalpro-client-portal .ca-status-pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.35em 0.85em;
+    border-radius: 999px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+.legalpro-client-portal .ca-status-pill--pending {
+    background: rgba(251, 140, 0, 0.14);
+    color: #c45c00;
+}
+.legalpro-client-portal .ca-status-pill--scheduled {
+    background: rgba(94, 114, 228, 0.14);
+    color: #5e72e4;
+}
+.legalpro-client-portal .ca-status-pill--done {
+    background: rgba(103, 116, 142, 0.12);
+    color: #67748e;
+}
+.legalpro-client-portal .ca-status-pill--declined {
+    background: rgba(245, 54, 92, 0.12);
+    color: #d6336c;
+}
+.legalpro-client-portal .ca-status-pill--muted {
+    background: rgba(103, 116, 142, 0.1);
+    color: #8392ab;
+}
+.legalpro-client-portal .cp-row-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .cc-case-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .cct-row-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+.legalpro-client-portal .cp-empty-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .cc-empty-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .cct-empty-icon.dashboard-stat-icon-wrap {
+    width: 3.25rem;
+    height: 3.25rem;
+    min-width: 3.25rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+/* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */

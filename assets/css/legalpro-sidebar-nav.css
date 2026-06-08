@@ -1,0 +1,83 @@
+/**
+ * Unified sidebar menunav — same sizing as inc/menunav.php (admin reference).
+ * Used by admin, lawyer, and client (#sidenav-main.legalpro-admin-sidebar).
+ */
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav-wrap,
+#sidenav-main.legalpro-admin-sidebar .navbar-collapse.legalpro-sidebar-nav-wrap {
+    flex: 1;
+    overflow-y: auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.75rem 0.65rem !important;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav,
+#sidenav-main.legalpro-admin-sidebar .navbar-nav.legalpro-sidebar-nav {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0;
+    margin: 0;
+}
+
+#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-nav > .nav-item {
+    width: 100% !important;
+    margin-top: 0 !important;
+}
+
+#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .legalpro-sidebar-nav .nav-link,
+#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-nav > .nav-item > .nav-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.7rem 1rem !important;
+    padding-top: 0.7rem !important;
+    padding-bottom: 0.7rem !important;
+    margin: 0.12rem 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 12px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.72) !important;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-link.active {
+    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(94, 114, 228, 0.35) !important;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__icon {
+    width: 2rem !important;
+    height: 2rem !important;
+    min-width: 2rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    font-size: 1rem !important;
+    background: transparent !important;
+    opacity: 0.95;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__icon i {
+    color: inherit !important;
+    opacity: 1 !important;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label,
+#sidenav-main.legalpro-admin-sidebar .nav-link-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+}
