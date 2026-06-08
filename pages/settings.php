@@ -11,6 +11,7 @@ if (isset($_GET['msg']) && isset($_GET['type'])) {
 $currencyOptionsList = getCurrencyOptions();
 $currencyConfig = getCurrencyConfig();
 $companyBranding = getCompanyBranding();
+$portalThemeSettingsHtml = renderPortalThemeSettingsHtml();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formType = isset($_POST['form_type']) ? $_POST['form_type'] : '';
@@ -19,6 +20,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $companyDetails = isset($_POST['company_details']) ? trim($_POST['company_details']) : '';
         $logoFile = isset($_FILES['company_logo']) ? $_FILES['company_logo'] : null;
         $result = saveCompanyBranding($companyName, $companyDetails, $logoFile);
+
+        if (!$result['ok']) {
+            $message = $result['message'];
+            $messageType = 'danger';
+        } else {
+            header('Location: settings.php?msg=' . urlencode($result['message']) . '&type=success');
+            exit;
+        }
+    } elseif ($formType === 'portal_theme') {
+        $themeMode = isset($_POST['theme_mode']) ? (string) $_POST['theme_mode'] : 'light';
+        $themeColor = isset($_POST['theme_color']) ? (string) $_POST['theme_color'] : 'primary';
+        $customPrimary = isset($_POST['custom_primary']) ? (string) $_POST['custom_primary'] : null;
+        $result = savePortalTheme($themeMode, $themeColor, $customPrimary);
 
         if (!$result['ok']) {
             $message = $result['message'];
@@ -216,7 +230,72 @@ $html = <<<'HTML'
 			padding: 0.25rem;
 			background: #fff;
 		}
+		.settings-theme-mode {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.75rem;
+		}
+		.settings-theme-mode__option {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.4rem;
+			padding: 0.55rem 1rem;
+			border: 1px solid #e9ecef;
+			border-radius: 0.65rem;
+			cursor: pointer;
+			font-size: 0.875rem;
+			font-weight: 600;
+			margin: 0;
+		}
+		.settings-theme-mode__option:has(input:checked) {
+			border-color: var(--legalpro-theme-primary, #5e72e4);
+			background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+		}
+		.settings-theme-mode__option input {
+			margin: 0;
+		}
+		.settings-theme-swatches {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.75rem;
+		}
+		.settings-theme-swatch {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 0.35rem;
+			cursor: pointer;
+			margin: 0;
+		}
+		.settings-theme-swatch input {
+			position: absolute;
+			opacity: 0;
+			pointer-events: none;
+		}
+		.settings-theme-swatch__dot {
+			width: 2.25rem;
+			height: 2.25rem;
+			border-radius: 999px;
+			border: 2px solid transparent;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+		}
+		.settings-theme-swatch.active .settings-theme-swatch__dot,
+		.settings-theme-swatch:has(input:checked) .settings-theme-swatch__dot {
+			border-color: #344767;
+			box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.25);
+		}
+		.settings-theme-swatch__label {
+			font-size: 0.75rem;
+			font-weight: 600;
+			color: #67748e;
+		}
+		.settings-theme-color-input {
+			width: 3.5rem;
+			height: 2.5rem;
+			padding: 0.15rem;
+		}
 	</style>
+	{PORTAL_THEME_HEAD}
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -313,6 +392,7 @@ $html = <<<'HTML'
                             </form>
 						</div>
 					</div>
+                    {PORTAL_THEME_SETTINGS}
 					<div class="card">
 						<div class="card-header pb-0 d-flex justify-content-between align-items-center">
 							<h6>Services Offered</h6>
@@ -441,6 +521,9 @@ ob_start(); include __DIR__ . '/../inc/menunav.php'; $sidebar = ob_get_clean();
 $html = preg_replace('/<aside[\s\S]*?<\/aside>/', $sidebar, $html, 1);
 ob_start(); include __DIR__ . '/../inc/footer.php'; $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
+ob_start(); include __DIR__ . '/../inc/portal-theme-head.php'; $portalThemeHead = ob_get_clean();
+$html = str_replace('{PORTAL_THEME_HEAD}', $portalThemeHead, $html);
+$html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CURRENCY_OPTIONS}', $currencyOptionsHtml, $html);
 $html = str_replace('{SERVICES_LIST}', $servicesListHtml, $html);

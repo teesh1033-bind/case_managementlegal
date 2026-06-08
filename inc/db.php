@@ -330,5 +330,6 @@ function buildCaseCategoryFieldHtml($currentCategory, $fallback = 'Civil') {
 }
 
 require_once __DIR__ . '/../lib/branding.php';
+require_once __DIR__ . '/../lib/portal-theme.php';
 
 ?>

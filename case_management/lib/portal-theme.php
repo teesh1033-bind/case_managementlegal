@@ -54,9 +54,77 @@ function getPortalThemeColorPresets(): array
     ];
 }
 
+function portalThemeNormalizeHex(string $hex): ?string
+{
+    $hex = strtolower(trim($hex));
+    if (preg_match('/^#([0-9a-f]{3})$/', $hex, $matches)) {
+        return '#' . $matches[1][0] . $matches[1][0] . $matches[1][1] . $matches[1][1] . $matches[1][2] . $matches[1][2];
+    }
+    if (preg_match('/^#([0-9a-f]{6})$/', $hex)) {
+        return $hex;
+    }
+
+    return null;
+}
+
+function portalThemeRgbFromHex(string $hex): array
+{
+    $hex = ltrim(portalThemeNormalizeHex($hex) ?? '#5e72e4', '#');
+    return [
+        hexdec(substr($hex, 0, 2)),
+        hexdec(substr($hex, 2, 2)),
+        hexdec(substr($hex, 4, 2)),
+    ];
+}
+
+function portalThemeHexFromRgb(int $r, int $g, int $b): string
+{
+    return sprintf('#%02x%02x%02x', max(0, min(255, $r)), max(0, min(255, $g)), max(0, min(255, $b)));
+}
+
+function portalThemeMixHex(string $hex1, string $hex2, float $ratio): string
+{
+    $ratio = max(0.0, min(1.0, $ratio));
+    $rgb1 = portalThemeRgbFromHex($hex1);
+    $rgb2 = portalThemeRgbFromHex($hex2);
+
+    return portalThemeHexFromRgb(
+        (int) round($rgb1[0] + (($rgb2[0] - $rgb1[0]) * $ratio)),
+        (int) round($rgb1[1] + (($rgb2[1] - $rgb1[1]) * $ratio)),
+        (int) round($rgb1[2] + (($rgb2[2] - $rgb1[2]) * $ratio))
+    );
+}
+
+function portalThemeBuildCustomPreset(string $primaryHex): array
+{
+    $primary = portalThemeNormalizeHex($primaryHex) ?? '#5e72e4';
+    $rgb = portalThemeRgbFromHex($primary);
+    $primaryDark = portalThemeHexFromRgb(
+        min(255, $rgb[0] + 36),
+        min(255, max(0, $rgb[1] - 1)),
+        min(255, $rgb[2])
+    );
+
+    return [
+        'label' => 'Custom',
+        'primary' => $primary,
+        'primary_dark' => $primaryDark,
+        'sidebar_bg' => portalThemeMixHex($primary, '#1a2035', 0.82),
+        'sidebar_deep' => portalThemeMixHex($primary, '#111525', 0.88),
+        'badge_class' => 'bg-gradient-primary',
+    ];
+}
+
+function getPortalThemeColorOptions(): array
+{
+    return array_merge(getPortalThemeColorPresets(), [
+        'custom' => portalThemeBuildCustomPreset((string) getSetting('portal_theme_custom_primary', '#5e72e4')),
+    ]);
+}
+
 function getPortalTheme(): array
 {
-    $presets = getPortalThemeColorPresets();
+    $presets = getPortalThemeColorOptions();
     $mode = strtolower(trim((string) getSetting('portal_theme_mode', 'light')));
     $color = strtolower(trim((string) getSetting('portal_theme_color', 'primary')));
 
@@ -71,12 +139,13 @@ function getPortalTheme(): array
         'mode' => $mode,
         'color' => $color,
         'preset' => $presets[$color],
+        'custom_primary' => portalThemeNormalizeHex((string) getSetting('portal_theme_custom_primary', '#5e72e4')) ?? '#5e72e4',
     ];
 }
 
-function savePortalTheme(string $mode, string $color): array
+function savePortalTheme(string $mode, string $color, ?string $customPrimary = null): array
 {
-    $presets = getPortalThemeColorPresets();
+    $presets = getPortalThemeColorOptions();
     $mode = strtolower(trim($mode));
     $color = strtolower(trim($color));
 
@@ -85,6 +154,14 @@ function savePortalTheme(string $mode, string $color): array
     }
     if (!isset($presets[$color])) {
         return ['ok' => false, 'message' => 'Invalid theme color selected.'];
+    }
+
+    if ($color === 'custom') {
+        $normalized = portalThemeNormalizeHex((string) $customPrimary);
+        if ($normalized === null) {
+            return ['ok' => false, 'message' => 'Please choose a valid custom color.'];
+        }
+        setSetting('portal_theme_custom_primary', $normalized);
     }
 
     setSetting('portal_theme_mode', $mode);
@@ -746,6 +823,7 @@ function renderPortalThemeSettingsHtml(): string
     $presets = getPortalThemeColorPresets();
     $currentMode = $theme['mode'];
     $currentColor = $theme['color'];
+    $customPrimary = $theme['custom_primary'];
 
     $lightChecked = $currentMode === 'light' ? ' checked' : '';
     $darkChecked = $currentMode === 'dark' ? ' checked' : '';
@@ -761,11 +839,23 @@ function renderPortalThemeSettingsHtml(): string
             . '</label>';
     }
 
+    $customPreset = portalThemeBuildCustomPreset($customPrimary);
+    $customGradient = 'linear-gradient(135deg, ' . $customPreset['primary'] . ' 0%, ' . $customPreset['primary_dark'] . ' 100%)';
+    $customActive = $currentColor === 'custom' ? ' active' : '';
+    $customChecked = $currentColor === 'custom' ? ' checked' : '';
+    $customPickerStyle = $currentColor === 'custom' ? '' : ' style="display:none;"';
+
+    $swatches .= '<label class="settings-theme-swatch settings-theme-swatch--custom' . $customActive . '" title="Custom">'
+        . '<input type="radio" name="theme_color" value="custom"' . $customChecked . '>'
+        . '<span class="settings-theme-swatch__dot settings-theme-swatch__dot--custom" style="background: ' . htmlspecialchars($customGradient) . ';"></span>'
+        . '<span class="settings-theme-swatch__label">Custom</span>'
+        . '</label>';
+
     return '<div class="card mb-4">'
         . '<div class="card-header pb-0"><h6>Appearance</h6></div>'
         . '<div class="card-body">'
         . '<p class="text-sm text-muted mb-4">Choose the default theme and accent color for the admin, lawyer, and client portals.</p>'
-        . '<form method="post">'
+        . '<form method="post" class="settings-theme-form">'
         . '<input type="hidden" name="form_type" value="portal_theme">'
         . '<div class="mb-4">'
         . '<label class="form-control-label d-block mb-2">Theme mode</label>'
@@ -778,8 +868,16 @@ function renderPortalThemeSettingsHtml(): string
         . '<label class="form-control-label d-block mb-2">Accent color</label>'
         . '<div class="settings-theme-swatches">' . $swatches . '</div>'
         . '</div>'
+        . '<div class="settings-theme-custom-picker mb-4"' . $customPickerStyle . '>'
+        . '<label class="form-control-label d-block mb-2">Custom color</label>'
+        . '<div class="d-flex align-items-center gap-3 flex-wrap">'
+        . '<input type="color" class="form-control form-control-color settings-theme-color-input" name="custom_primary" value="' . htmlspecialchars($customPrimary) . '" title="Pick a custom accent color">'
+        . '<span class="text-sm text-muted">Pick any color for buttons, links, and sidebar highlights.</span>'
+        . '</div>'
+        . '</div>'
         . '<button type="submit" class="btn btn-dark">Save Appearance</button>'
         . '</form>'
+        . '<script>(function(){var form=document.querySelector(".settings-theme-form");if(!form)return;var customInput=form.querySelector(\'input[name="theme_color"][value="custom"]\');var pickerWrap=form.querySelector(".settings-theme-custom-picker");var picker=form.querySelector(\'input[name="custom_primary"]\');var customDot=form.querySelector(".settings-theme-swatch--custom .settings-theme-swatch__dot");var sync=function(){if(pickerWrap)pickerWrap.style.display=customInput&&customInput.checked?"block":"none";};form.querySelectorAll(\'input[name="theme_color"]\').forEach(function(radio){radio.addEventListener("change",sync);});if(picker){picker.addEventListener("input",function(){if(customDot)customDot.style.background=picker.value;});}sync();})();</script>'
         . '</div>'
         . '</div>';
 }
