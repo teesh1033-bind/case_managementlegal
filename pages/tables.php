@@ -287,10 +287,12 @@ $html = <<<'HTML'
 									</thead>
 									<tbody id="casesTableBody">
 										{CASES_ROWS}
+										<tr id="casesFilterEmpty" class="d-none">
+											<td colspan="9" class="text-center text-muted text-sm py-4 border-0">No cases match your filters.</td>
+										</tr>
 									</tbody>
 								</table>
 							</div>
-							<p class="text-xs text-muted px-4 pb-3 mb-0 d-none" id="casesFilterEmpty">No cases match your filters.</p>
 						</div>
 					</div>
 				</div>

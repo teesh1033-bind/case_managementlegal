@@ -947,6 +947,11 @@ body.legalpro-admin-portal .lp-pill--priority-medium {
     color: #5e72e4;
 }
 
+body.legalpro-admin-portal .lp-pill--status-active {
+    background: rgba(45, 206, 137, 0.14);
+    color: #1aae6f;
+}
+
 body.legalpro-admin-portal .lp-pill--status-progress {
     background: rgba(17, 113, 239, 0.12);
     color: #1171ef;

@@ -349,6 +349,15 @@ function legalpro_court_date_status_badge(string $status): string
     return '<span class="lp-pill ' . $meta['pill'] . '">' . htmlspecialchars($meta['label']) . '</span>';
 }
 
+function legalpro_lawyer_active_status_badge(bool $isActive): string
+{
+    if ($isActive) {
+        return '<span class="lp-pill lp-pill--status-active">Active</span>';
+    }
+
+    return '<span class="lp-pill lp-pill--status-closed">Inactive</span>';
+}
+
 function client_court_date_status_badge(string $status): string
 {
     $key = strtolower(trim($status));

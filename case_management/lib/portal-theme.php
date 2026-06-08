@@ -668,6 +668,11 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: #ff9eb5 !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .lp-pill--status-active {'
+        . 'background: rgba(45, 206, 137, 0.2) !important;'
+        . 'color: #8ce8c0 !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode .lp-pill--status-closed,'
         . 'body.legalpro-dark-mode .ca-status-pill--done {'
         . 'background: rgba(255, 255, 255, 0.08) !important;'
