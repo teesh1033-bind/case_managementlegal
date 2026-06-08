@@ -49,11 +49,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 );
 ?>
 
-<<<<<<< HEAD
-<link href="../assets/css/legalpro-admin-portal.css?v=12" rel="stylesheet" />
-=======
-<link href="../assets/css/legalpro-admin-portal.css?v=14" rel="stylesheet" />
->>>>>>> 664800965a792d9a40888326069eb06e04c585fa
+<link href="../assets/css/legalpro-admin-portal.css?v=21" rel="stylesheet" />
 <link href="../assets/css/legalpro-sidebar-nav.css?v=1" rel="stylesheet" />
 <?php legalpro_icons_asset_links(); ?>
 

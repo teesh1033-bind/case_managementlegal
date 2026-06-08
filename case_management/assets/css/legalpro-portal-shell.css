@@ -182,7 +182,7 @@ body.legalpro-sidebar-collapsed .legalpro-sidebar-signout span {
 
 .legalpro-sidebar-brand__role {
     display: block;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.78);
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.14em;
@@ -593,6 +593,32 @@ body.legalpro-lawyer-portal .navbar-main p,
 body.client-dashboard-page .navbar-main p.text-sm {
     color: #67748e !important;
     font-weight: 500 !important;
+}
+
+/* Client portal — navbar welcome line readable on light header */
+body.legalpro-client-portal .navbar-main .nav-link.text-white,
+body.client-dashboard-page .navbar-main .nav-link.text-white,
+body.client-cases-page .navbar-main .nav-link.text-white,
+body.client-appointments-page .navbar-main .nav-link.text-white,
+body.client-court-tracking-page .navbar-main .nav-link.text-white,
+body.client-payments-page .navbar-main .nav-link.text-white,
+body.client-profile-page .navbar-main .nav-link.text-white,
+body.client-portal-page .navbar-main .nav-link.text-white {
+    color: #1a2332 !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}
+
+body.legalpro-client-portal .navbar-main .nav-link.text-white span,
+body.client-dashboard-page .navbar-main .nav-link.text-white span,
+body.client-cases-page .navbar-main .nav-link.text-white span,
+body.client-appointments-page .navbar-main .nav-link.text-white span,
+body.client-court-tracking-page .navbar-main .nav-link.text-white span,
+body.client-payments-page .navbar-main .nav-link.text-white span,
+body.client-profile-page .navbar-main .nav-link.text-white span,
+body.client-portal-page .navbar-main .nav-link.text-white span {
+    color: inherit !important;
+    opacity: 1 !important;
 }
 
 /* Cards */

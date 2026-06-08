@@ -92,7 +92,7 @@ $html = <<<'HTML'
 	<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 	{PORTAL_HEAD_CSS}
 	<style>
-		.chat-window { height: 460px; overflow-y: auto; background: #fff; border-radius: 0.75rem; border: 1px solid #e9ecef; padding: 1rem; }
+		.chat-window { height: 460px; overflow-y: auto; background: transparent; border-radius: 0.75rem; border: 1px solid #e9ecef; padding: 1rem; }
 		.chat-message-user { justify-content: flex-end; }
 		.chat-message-user .chat-bubble { background: #5e72e4; color: #fff; border-radius: 1rem 1rem 0.25rem 1rem; }
 		.chat-message-bot .chat-bubble { background: #f8f9fe; color: #344767; border-radius: 1rem 1rem 1rem 0.25rem; border: 1px solid #e9ecef; }

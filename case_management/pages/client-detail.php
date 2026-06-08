@@ -476,7 +476,7 @@ $html = <<<'HTML'
 										<input class="form-control" type="text" name="address" id="client_address" placeholder="Street, City, Country" value="{ADDRESS}">
 									</div>
 								</div>
-								<div id="corporate-fields" class="client-type-panel border rounded p-3 bg-light" style="display: none;">
+								<div id="corporate-fields" class="client-type-panel" style="display: none;">
 									<h6 class="text-sm mb-3">Business Details</h6>
 									<div class="form-group">
 										<label class="form-control-label">Business Name <span class="text-danger">*</span></label>
@@ -719,7 +719,7 @@ if ($client_id && $client && $client['user_id'] && $userData) {
         </div>
     </div>
 
-    <div id="user_account_fields" style="display: ' . $createUserDisplay . ';" class="mt-3 p-3 border rounded bg-light">
+    <div id="user_account_fields" style="display: ' . $createUserDisplay . ';" class="mt-3">
         <h6>User Account Details</h6>
         ' . legalpro_password_requirements_html() . '
         <div class="row">

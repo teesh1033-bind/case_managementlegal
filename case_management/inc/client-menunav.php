@@ -89,4 +89,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script src="../assets/js/legalpro-search-clear.js?v=1"></script>
 <?php legalpro_icons_footer_scripts(); ?>

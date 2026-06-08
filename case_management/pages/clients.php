@@ -168,7 +168,7 @@ $html = <<<'HTML'
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-clients-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
 		<div class="sidenav-header">
@@ -210,11 +210,19 @@ $html = <<<'HTML'
 			<div class="row">
 				<div class="col-12">
 					<div class="card mb-4">
+<<<<<<< HEAD
+						<div class="card-header legalpro-clients-card__head d-flex justify-content-between align-items-center">
+							<h6>Clients</h6>
+							<a href="client-detail.php" class="btn btn-sm bg-gradient-primary text-white mb-0">Add Client</a>
+						</div>
+						<div class="card-body px-0 legalpro-clients-card__body pb-2">
+=======
 						<div class="card-header pb-3 pt-3 d-flex justify-content-between align-items-center">
 							<h6 class="mb-0">Clients</h6>
 							<a href="client-detail.php" class="btn btn-sm bg-gradient-primary text-white mb-0">Add Client</a>
 						</div>
 						<div class="card-body px-0 pt-2 pb-2">
+>>>>>>> 4b34204a2dbb6ba4f16768796240e91d6a286cd8
 							{MESSAGE}
 							<div class="table-responsive p-0">
 								<table class="table align-items-center mb-0">
