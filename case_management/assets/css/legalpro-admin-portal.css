@@ -14,6 +14,8 @@
     --lp-admin-card-radius: 14px;
     --lp-admin-gradient: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
     --lp-admin-gradient-soft: linear-gradient(135deg, #3d4f7c 0%, #5d6ea3 50%, #8aa0d6 100%);
+    --lp-cases-accent-soft: rgba(94, 114, 228, 0.12);
+    --lp-cases-accent-border: rgba(94, 114, 228, 0.35);
     --lawyer-portal-gradient: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
     --lawyer-portal-bg-fallback: #2d3f6f;
 }
@@ -726,8 +728,6 @@ body.legalpro-admin-portal .dashboard-calendar-hub .lp-card-header-primary {
 body.admin-cases-page {
     --lp-cases-accent: var(--lp-admin-primary);
     --lp-cases-accent-dark: var(--lp-admin-primary-dark);
-    --lp-cases-accent-soft: rgba(94, 114, 228, 0.12);
-    --lp-cases-accent-border: rgba(94, 114, 228, 0.35);
 }
 
 body.admin-cases-page .legalpro-cases-hub {
@@ -742,8 +742,8 @@ body.admin-cases-page .legalpro-cases-hub__head {
     justify-content: space-between;
     gap: 1rem;
     padding: 1.35rem 1.5rem 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    background: #fff;
+    border-bottom: 1px solid var(--lp-cases-accent-border);
+    background: linear-gradient(135deg, var(--lp-cases-accent-soft) 0%, rgba(255, 255, 255, 0.92) 100%);
 }
 
 body.admin-cases-page .legalpro-cases-hub__title {

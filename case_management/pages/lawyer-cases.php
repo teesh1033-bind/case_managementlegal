@@ -174,7 +174,7 @@ $html = <<<'HTML'
                     <div class="card mb-4">
                         <div class="card-header pb-0 pt-3">
                             <div class="d-flex align-items-center">
-                                <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">' . $iconCardHeader . '</div>
+                                <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                 <div>
                                     <h6 class="mb-0">My Cases</h6>
                                     <p class="text-xs text-muted mb-0">Cases assigned to you</p>
@@ -228,6 +228,7 @@ $html = <<<'HTML'
 HTML;
 
 $replacements = [
+    '{ICON_CARD_HEADER}' => $iconCardHeader,
     '{NAVIGATION}' => $navHtml,
     '{SEARCH_VALUE}' => htmlspecialchars($search),
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
