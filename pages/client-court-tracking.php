@@ -155,7 +155,7 @@ if (!empty($_SESSION['error_message'])) {
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-<link href="../assets/css/dashboard-enhancements.css?v=4" rel="stylesheet" />
+<link href="../assets/css/dashboard-enhancements.css?v=7" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
     <style>
         .client-court-tracking-page { --cct-radius: 1.15rem; }
@@ -288,7 +288,7 @@ if (!empty($_SESSION['error_message'])) {
                     <div class="dashboard-calendar-hub">
                         <div class="dashboard-calendar-hub__head">
                             <div>
-                                <h6 class="text-capitalize mb-0 font-weight-bold" style="color: #344767;">Court Dates Calendar</h6>
+                                <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
                                 <p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
                                 <div class="dashboard-legend-pills">
                                     <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
