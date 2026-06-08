@@ -222,7 +222,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=22" rel="stylesheet" />
 	<?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-cases-page">
@@ -253,7 +253,7 @@ $html = <<<'HTML'
 						<div class="legalpro-cases-filters">
 							<div class="legalpro-cases-search">
 								{CASES_SEARCH_ICON}
-								<input type="search" class="form-control" style="margin-top: 10px;" id="casesSearchInput" placeholder="Search cases..." autocomplete="off" aria-label="Search cases">
+								<input type="search" class="form-control" id="casesSearchInput" placeholder="Search cases..." autocomplete="off" aria-label="Search cases">
 							</div>
 							<select class="form-select" id="casesStatusFilter" aria-label="Filter by status">
 								<option value="">All statuses</option>
