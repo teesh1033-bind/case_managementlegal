@@ -483,10 +483,107 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: var(--lp-dark-text) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .lp-pill--status-closed,'
-        . 'body.legalpro-dark-mode .ca-status-pill--done,'
-        . 'body.legalpro-dark-mode .ca-status-pill--muted {'
+    $primaryOnDark = portalThemeMixHex($primary, '#ffffff', 0.55);
+    $dangerSoft = 'rgba(245, 54, 92, 0.16)';
+    $dangerBorder = 'rgba(245, 54, 92, 0.28)';
+    $infoSoft = portalThemeHexToRgba($primary, 0.14);
+    $infoBorder = portalThemeHexToRgba($primary, 0.28);
+
+    $css .= 'body.legalpro-dark-mode tr.table-danger > td,'
+        . 'body.legalpro-dark-mode tr.table-danger > th {'
+        . 'background-color: ' . $dangerSoft . ' !important;'
+        . '--bs-table-bg: ' . $dangerSoft . ';'
+        . '--bs-table-color: var(--lp-dark-text-secondary);'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'border-color: ' . $dangerBorder . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode tr.table-danger h6,'
+        . 'body.legalpro-dark-mode tr.table-danger .text-sm,'
+        . 'body.legalpro-dark-mode tr.table-danger p,'
+        . 'body.legalpro-dark-mode tr.table-danger span:not(.ca-status-pill):not(.badge) {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode tr.table-danger .text-muted {'
         . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode tr.table-info > td,'
+        . 'body.legalpro-dark-mode tr.table-info > th {'
+        . 'background-color: ' . $infoSoft . ' !important;'
+        . '--bs-table-bg: ' . $infoSoft . ';'
+        . '--bs-table-color: var(--lp-dark-text-secondary);'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'border-color: ' . $infoBorder . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode tr.table-info h6,'
+        . 'body.legalpro-dark-mode tr.table-info .text-sm,'
+        . 'body.legalpro-dark-mode tr.table-info p {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode tr.table-info .text-muted {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .ca-status-pill--scheduled {'
+        . 'background: ' . portalThemeHexToRgba($primary, 0.22) . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .ca-status-pill--pending {'
+        . 'background: rgba(251, 140, 0, 0.2) !important;'
+        . 'color: #ffc978 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .ca-status-pill--declined {'
+        . 'background: rgba(245, 54, 92, 0.22) !important;'
+        . 'color: #ff9eb5 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-pill--status-closed,'
+        . 'body.legalpro-dark-mode .ca-status-pill--done {'
+        . 'background: rgba(255, 255, 255, 0.08) !important;'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .ca-status-pill--muted {'
+        . 'background: rgba(255, 255, 255, 0.06) !important;'
+        . 'color: var(--lp-dark-text-subtle) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .btn-outline-primary {'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . 'border-color: ' . portalThemeHexToRgba($primary, 0.5) . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .btn-outline-primary:hover,'
+        . 'body.legalpro-dark-mode .btn-outline-primary:focus {'
+        . 'background: ' . portalThemeHexToRgba($primary, 0.18) . ' !important;'
+        . 'color: #fff !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .btn-outline-dark {'
+        . 'color: var(--lp-dark-text) !important;'
+        . 'border-color: var(--lp-dark-border-strong) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .btn-outline-dark:hover,'
+        . 'body.legalpro-dark-mode .btn-outline-dark:focus {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'border-color: ' . portalThemeHexToRgba($primary, 0.45) . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-appointments-page .table thead th {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . 'opacity: 1 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-appointments-page .table tbody td {'
+        . 'vertical-align: middle;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .fc .fc-list-event:hover td {'
@@ -675,6 +772,74 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed .text-muted {'
         . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .nav-tabs {'
+        . 'border-bottom-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .card-header .nav-tabs {'
+        . 'border-bottom-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .nav-tabs .nav-link {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . 'border-color: transparent !important;'
+        . 'background: transparent !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .nav-tabs .nav-link:hover,'
+        . 'body.legalpro-dark-mode .nav-tabs .nav-link:focus {'
+        . 'color: var(--lp-dark-text) !important;'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'border-color: var(--lp-dark-border) var(--lp-dark-border) transparent !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .nav-tabs .nav-link.active,'
+        . 'body.legalpro-dark-mode .nav-tabs .nav-item.show .nav-link {'
+        . 'color: var(--lp-dark-text) !important;'
+        . 'background-color: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) var(--lp-dark-border) var(--lp-dark-surface-raised) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .table-striped > tbody > tr:nth-of-type(odd) > * {'
+        . 'background-color: var(--lp-dark-surface-raised) !important;'
+        . '--bs-table-accent-bg: var(--lp-dark-surface-raised) !important;'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .table-striped > tbody > tr:nth-of-type(even) > * {'
+        . 'background-color: var(--lp-dark-surface) !important;'
+        . '--bs-table-accent-bg: var(--lp-dark-surface) !important;'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .table tbody tr.table-active > td,'
+        . 'body.legalpro-dark-mode .table tbody tr.table-active > th {'
+        . 'background-color: ' . $soft12 . ' !important;'
+        . '--bs-table-accent-bg: ' . $soft12 . ' !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .table tbody tr.table-active strong {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .tab-content .table thead th {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . 'font-weight: 600;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .tab-content .table tbody td,'
+        . 'body.legalpro-dark-mode .tab-content .table tbody td strong {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .tab-content .text-center.text-muted {'
+        . 'color: var(--lp-dark-text-subtle) !important;'
         . '}';
 
     return $css;

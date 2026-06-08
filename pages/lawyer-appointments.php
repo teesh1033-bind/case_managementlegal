@@ -225,7 +225,7 @@ function buildLawyerAppointmentCaseLink(array $appointment): string
         return '<span class="text-muted text-xs">—</span>';
     }
 
-    return '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-dark mb-0">Case</a>';
+    return '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-primary mb-0">Case</a>';
 }
 
 /**
