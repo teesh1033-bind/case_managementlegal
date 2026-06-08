@@ -591,6 +591,28 @@
     }
 }
 
+/* Dark mode — dashboard stat & glance cards (no visible border artifact) */
+body.legalpro-dark-mode .dashboard-stat-card,
+body.legalpro-dark-mode .dashboard-stat-card .card-body,
+body.legalpro-dark-mode .dashboard-glance__item {
+    border: none !important;
+    outline: none !important;
+    background-color: var(--lp-dark-surface) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2) !important;
+}
+
+body.legalpro-dark-mode .dashboard-glance {
+    background: transparent !important;
+}
+
+body.legalpro-dark-mode .dashboard-glance__value {
+    color: var(--lp-dark-text) !important;
+}
+
+body.legalpro-dark-mode .dashboard-glance__label {
+    color: var(--lp-dark-text-muted) !important;
+}
+
 /* Dark mode — dashboard / court tracking calendar hub */
 body.legalpro-dark-mode .dashboard-calendar-hub__title,
 body.legalpro-dark-mode .dashboard-calendar-hub__head h6 {
@@ -642,6 +664,28 @@ body.legalpro-dark-mode #courtTrackingCalendar .fc-daygrid-more-link {
     color: var(--legalpro-theme-primary, #5e72e4) !important;
 }
 
+<<<<<<< HEAD
+body.legalpro-dark-mode .dashboard-upcoming-item__time {
+    color: #b8c8ff !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary {
+    color: var(--legalpro-theme-primary, #8b9eff) !important;
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .btn,
+body.legalpro-dark-mode.admin-court-tracking-page .court-actions .btn,
+body.legalpro-dark-mode.lawyer-court-tracking-page .court-actions .btn,
+body.legalpro-dark-mode.client-court-tracking-page .court-actions .btn {
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .btn-secondary,
+body.legalpro-dark-mode.admin-court-tracking-page .modal .btn-secondary,
+body.legalpro-dark-mode.lawyer-court-tracking-page .modal .btn-secondary,
+body.legalpro-dark-mode.client-court-tracking-page .modal .btn-secondary {
+    color: var(--lp-dark-text) !important;
+=======
 body.legalpro-dark-mode .dashboard-calendar-hub {
     background: var(--lp-dark-surface) !important;
     border: 1px solid var(--lp-dark-border) !important;
@@ -718,4 +762,5 @@ body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary {
 
 body.legalpro-dark-mode .dashboard-cal-event__dot {
     opacity: 0.95;
+>>>>>>> ff40ef8f9d524475194b566f0d318ce3446c428b
 }

@@ -591,6 +591,28 @@
     }
 }
 
+/* Dark mode — dashboard stat & glance cards (no visible border artifact) */
+body.legalpro-dark-mode .dashboard-stat-card,
+body.legalpro-dark-mode .dashboard-stat-card .card-body,
+body.legalpro-dark-mode .dashboard-glance__item {
+    border: none !important;
+    outline: none !important;
+    background-color: var(--lp-dark-surface) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2) !important;
+}
+
+body.legalpro-dark-mode .dashboard-glance {
+    background: transparent !important;
+}
+
+body.legalpro-dark-mode .dashboard-glance__value {
+    color: var(--lp-dark-text) !important;
+}
+
+body.legalpro-dark-mode .dashboard-glance__label {
+    color: var(--lp-dark-text-muted) !important;
+}
+
 /* Dark mode — dashboard / court tracking calendar hub */
 body.legalpro-dark-mode .dashboard-calendar-hub__title,
 body.legalpro-dark-mode .dashboard-calendar-hub__head h6 {
