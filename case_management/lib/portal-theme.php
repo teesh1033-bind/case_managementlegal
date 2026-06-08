@@ -673,6 +673,31 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: #8ce8c0 !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .lp-pill--status-progress {'
+        . 'background: ' . portalThemeHexToRgba($primary, 0.22) . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-pill--status-pending {'
+        . 'background: rgba(251, 140, 0, 0.2) !important;'
+        . 'color: #ffc978 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-pill--status-waiting {'
+        . 'background: rgba(130, 94, 228, 0.22) !important;'
+        . 'color: #c4b5fd !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-pill--status-declined {'
+        . 'background: rgba(245, 54, 92, 0.22) !important;'
+        . 'color: #ff9eb5 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-pill--status-default {'
+        . 'background: rgba(255, 255, 255, 0.08) !important;'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode .lp-pill--status-closed,'
         . 'body.legalpro-dark-mode .ca-status-pill--done {'
         . 'background: rgba(255, 255, 255, 0.08) !important;'
