@@ -532,5 +532,10 @@ $html = str_replace('{SPECIALIZATIONS_LIST}', $specializationsListHtml, $html);
 $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name']), $html);
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
+$html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
+ob_start();
+include __DIR__ . '/../inc/portal-theme-head.php';
+$portalThemeHead = ob_get_clean();
+$html = str_replace('{PORTAL_THEME_HEAD}', $portalThemeHead, $html);
 echo $html;
 ?>

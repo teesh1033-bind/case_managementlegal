@@ -216,6 +216,9 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '--lp-portal-content-bg: #2a3040;'
         . '--client-portal-content-bg: #2a3040;'
         . '--lawyer-portal-content-bg: #2a3040;'
+        . '--lp-task-card-bg: #3d455c;'
+        . '--lp-task-card-border: rgba(255, 255, 255, 0.1);'
+        . '--lp-task-card-body-bg: #3d455c;'
         . '}';
 
     $css .= $bodies . ' {'
@@ -491,6 +494,127 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'background: var(--lp-dark-surface-hover) !important;'
         . '}';
 
+    $clientCardSurfaces = 'body.legalpro-dark-mode.legalpro-client-portal .main-content .card,'
+        . 'body.legalpro-dark-mode.client-dashboard-page .main-content .card,'
+        . 'body.legalpro-dark-mode.client-cases-page .main-content .card,'
+        . 'body.legalpro-dark-mode.client-appointments-page .main-content .card,'
+        . 'body.legalpro-dark-mode.client-court-tracking-page .main-content .card,'
+        . 'body.legalpro-dark-mode.client-payments-page .main-content .card,'
+        . 'body.legalpro-dark-mode.client-portal-page .main-content .card,'
+        . 'body.legalpro-dark-mode.client-profile-page .main-content .card,'
+        . 'body.legalpro-dark-mode .cd-hero,'
+        . 'body.legalpro-dark-mode .cc-hero,'
+        . 'body.legalpro-dark-mode .ca-hero,'
+        . 'body.legalpro-dark-mode .cp-hero,'
+        . 'body.legalpro-dark-mode .cct-hero,'
+        . 'body.legalpro-dark-mode .cd-panel,'
+        . 'body.legalpro-dark-mode .cc-panel,'
+        . 'body.legalpro-dark-mode .ca-panel,'
+        . 'body.legalpro-dark-mode .cp-panel,'
+        . 'body.legalpro-dark-mode .cct-panel,'
+        . 'body.legalpro-dark-mode .cc-comments-panel,'
+        . 'body.legalpro-dark-mode .cd-stat-card,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub';
+
+    $css .= $clientCardSurfaces . ' {'
+        . 'background-color: var(--lp-dark-surface) !important;'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cc-hero-stat,'
+        . 'body.legalpro-dark-mode .ca-hero-pill,'
+        . 'body.legalpro-dark-mode .cp-hero-pill,'
+        . 'body.legalpro-dark-mode .cct-hero-pill,'
+        . 'body.legalpro-dark-mode .cd-list-item {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cd-hero-title,'
+        . 'body.legalpro-dark-mode .cc-hero-title,'
+        . 'body.legalpro-dark-mode .ca-hero-title,'
+        . 'body.legalpro-dark-mode .cp-hero-title,'
+        . 'body.legalpro-dark-mode .cct-hero-title,'
+        . 'body.legalpro-dark-mode .cc-hero-stat-value,'
+        . 'body.legalpro-dark-mode .ca-hero-pill-value,'
+        . 'body.legalpro-dark-mode .cp-hero-pill-value,'
+        . 'body.legalpro-dark-mode .cct-hero-pill-value,'
+        . 'body.legalpro-dark-mode .cd-panel .card-header h6,'
+        . 'body.legalpro-dark-mode .cc-panel .card-header h5,'
+        . 'body.legalpro-dark-mode .ca-panel .card-header h5,'
+        . 'body.legalpro-dark-mode .cp-panel .card-header h5,'
+        . 'body.legalpro-dark-mode .cct-panel .card-header h5 {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cd-hero-text,'
+        . 'body.legalpro-dark-mode .cc-hero-text,'
+        . 'body.legalpro-dark-mode .ca-hero-text,'
+        . 'body.legalpro-dark-mode .cp-hero-text,'
+        . 'body.legalpro-dark-mode .cp-hero-meta,'
+        . 'body.legalpro-dark-mode .cct-hero-text,'
+        . 'body.legalpro-dark-mode .cc-hero-stat-label,'
+        . 'body.legalpro-dark-mode .ca-hero-pill-label,'
+        . 'body.legalpro-dark-mode .cp-hero-pill-label,'
+        . 'body.legalpro-dark-mode .cct-hero-pill-label,'
+        . 'body.legalpro-dark-mode .cd-panel .cd-panel-sub {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cd-list-item:hover {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'border-color: ' . $soft20 . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cc-panel .table thead th,'
+        . 'body.legalpro-dark-mode .ca-panel .table thead th,'
+        . 'body.legalpro-dark-mode .cp-panel .table thead th,'
+        . 'body.legalpro-dark-mode .cct-panel .table thead th {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cc-panel .card-header,'
+        . 'body.legalpro-dark-mode .ca-panel .card-header,'
+        . 'body.legalpro-dark-mode .cp-panel .card-header,'
+        . 'body.legalpro-dark-mode .cct-panel .card-header,'
+        . 'body.legalpro-dark-mode .cd-panel .card-header,'
+        . 'body.legalpro-dark-mode .cc-comments-panel .card-header {'
+        . 'border-bottom-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.legalpro-client-portal .navbar-main,'
+        . 'body.legalpro-dark-mode.client-dashboard-page .navbar-main,'
+        . 'body.legalpro-dark-mode.client-cases-page .navbar-main,'
+        . 'body.legalpro-dark-mode.client-appointments-page .navbar-main,'
+        . 'body.legalpro-dark-mode.client-court-tracking-page .navbar-main,'
+        . 'body.legalpro-dark-mode.client-payments-page .navbar-main,'
+        . 'body.legalpro-dark-mode.client-portal-page .navbar-main,'
+        . 'body.legalpro-dark-mode.client-profile-page .navbar-main {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'background-color: var(--lp-dark-surface) !important;'
+        . 'box-shadow: 0 1px 0 var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-header-user__toggle {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border: 1px solid var(--lp-dark-border) !important;'
+        . 'box-shadow: none !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-header-user__caret {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cc-pill {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'color: ' . $primary . ' !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode.admin-cases-page .legalpro-cases-hub__head {'
         . 'background: linear-gradient(135deg, ' . $soft12 . ' 0%, var(--lp-dark-surface-raised) 100%) !important;'
         . 'border-bottom-color: var(--lp-dark-border) !important;'
@@ -514,6 +638,44 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode.admin-cases-page .legalpro-cases-table tbody tr:hover {'
         . 'background: ' . $soft12 . ' !important;'
+        . '}';
+
+    $lawyerCardSurfaces = 'body.legalpro-dark-mode.legalpro-lawyer-portal .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-dashboard-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-cases-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-clients-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-appointments-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-availability-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-case-view-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-client-view-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-court-tracking-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-tasks-page .main-content .card,'
+        . 'body.legalpro-dark-mode.lawyer-profile-page .main-content .card';
+
+    $css .= $lawyerCardSurfaces . ' {'
+        . 'background-color: var(--lp-dark-surface) !important;'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed,'
+        . 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed .card-body {'
+        . 'background: var(--lp-task-card-body-bg) !important;'
+        . 'background-color: var(--lp-task-card-bg) !important;'
+        . 'border-color: var(--lp-task-card-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed h6 {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed .text-sm:not(.badge) {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed .text-muted {'
+        . 'color: var(--lp-dark-text-muted) !important;'
         . '}';
 
     return $css;
