@@ -843,6 +843,68 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: var(--lp-dark-text-subtle) !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .availability-hero {'
+        . 'background: linear-gradient(140deg, ' . $soft12 . ' 0%, var(--lp-dark-surface-raised) 100%) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-hero h6,'
+        . 'body.legalpro-dark-mode .availability-hero .font-weight-bolder {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-hero .text-muted {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-calendar {'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'background: var(--lp-dark-surface) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-toolbar {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-bottom-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-header > div {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-day-name {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-day-date {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-week-label {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-day {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-day:hover {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-fallback-day .text-muted,'
+        . 'body.legalpro-dark-mode .availability-fallback-day .text-sm.text-muted {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .availability-week-nav .btn-outline-primary {'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . 'border-color: ' . portalThemeHexToRgba($primary, 0.5) . ' !important;'
+        . '}';
+
     return $css;
 }
 
