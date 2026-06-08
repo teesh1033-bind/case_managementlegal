@@ -664,50 +664,49 @@ body.legalpro-dark-mode #courtTrackingCalendar .fc-daygrid-more-link {
     color: var(--legalpro-theme-primary, #5e72e4) !important;
 }
 
-<<<<<<< HEAD
-body.legalpro-dark-mode .dashboard-upcoming-item__time {
-    color: #b8c8ff !important;
-}
-
-body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary {
-    color: var(--legalpro-theme-primary, #8b9eff) !important;
-}
-
-body.legalpro-dark-mode .dashboard-calendar-hub .btn,
-body.legalpro-dark-mode.admin-court-tracking-page .court-actions .btn,
-body.legalpro-dark-mode.lawyer-court-tracking-page .court-actions .btn,
-body.legalpro-dark-mode.client-court-tracking-page .court-actions .btn {
-    color: #fff !important;
-}
-
-body.legalpro-dark-mode .dashboard-calendar-hub .btn-secondary,
-body.legalpro-dark-mode.admin-court-tracking-page .modal .btn-secondary,
-body.legalpro-dark-mode.lawyer-court-tracking-page .modal .btn-secondary,
-body.legalpro-dark-mode.client-court-tracking-page .modal .btn-secondary {
-    color: var(--lp-dark-text) !important;
-=======
 body.legalpro-dark-mode .dashboard-calendar-hub {
     background: var(--lp-dark-surface) !important;
     border: 1px solid var(--lp-dark-border) !important;
     box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;
 }
 
+body.legalpro-dark-mode .dashboard-calendar-hub__body {
+    background: transparent !important;
+}
+
 body.legalpro-dark-mode #dashboardCalendar,
 body.legalpro-dark-mode #courtTrackingCalendar {
     background: var(--lp-dark-surface) !important;
+    border: 1px solid var(--lp-dark-border) !important;
     border-color: var(--lp-dark-border) !important;
     color: var(--lp-dark-text-secondary) !important;
     box-shadow: none !important;
 }
 
+body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar,
+body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc,
+body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc-view-harness,
+body.legalpro-dark-mode.lawyer-court-tracking-page #courtTrackingCalendar,
+body.legalpro-dark-mode.lawyer-court-tracking-page #courtTrackingCalendar .fc,
+body.legalpro-dark-mode.lawyer-court-tracking-page #courtTrackingCalendar .fc-view-harness {
+    background: var(--lp-dark-surface) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
 body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid,
-body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid {
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid,
+body.legalpro-dark-mode #dashboardCalendar .fc-theme-standard .fc-scrollgrid,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard .fc-scrollgrid {
     background: var(--lp-dark-surface) !important;
     border-color: var(--lp-dark-border) !important;
 }
 
 body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid-section > *,
-body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > * {
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > *,
+body.legalpro-dark-mode #dashboardCalendar .fc-theme-standard td,
+body.legalpro-dark-mode #dashboardCalendar .fc-theme-standard th,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard td,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard th {
     border-color: var(--lp-dark-border) !important;
 }
 
@@ -760,7 +759,20 @@ body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary {
     color: var(--legalpro-theme-primary, #9aaeff) !important;
 }
 
+body.legalpro-dark-mode .dashboard-calendar-hub .btn,
+body.legalpro-dark-mode.admin-court-tracking-page .court-actions .btn,
+body.legalpro-dark-mode.lawyer-court-tracking-page .court-actions .btn,
+body.legalpro-dark-mode.client-court-tracking-page .court-actions .btn {
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .btn-secondary,
+body.legalpro-dark-mode.admin-court-tracking-page .modal .btn-secondary,
+body.legalpro-dark-mode.lawyer-court-tracking-page .modal .btn-secondary,
+body.legalpro-dark-mode.client-court-tracking-page .modal .btn-secondary {
+    color: var(--lp-dark-text) !important;
+}
+
 body.legalpro-dark-mode .dashboard-cal-event__dot {
     opacity: 0.95;
->>>>>>> ff40ef8f9d524475194b566f0d318ce3446c428b
 }
