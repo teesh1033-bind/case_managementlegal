@@ -144,4 +144,86 @@ body.client-portal-page .main-content .card:not([class*="-hero"]) {
     box-shadow: none;
 }
 
+/* —— Client portal search bars (navbar + search page) —— */
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group,
+body.legalpro-client-portal .search-hero-field {
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    background: #fff;
+    overflow: hidden;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+body.legalpro-client-portal .search-hero-field {
+    border-radius: 0.65rem;
+}
+
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group:hover,
+body.legalpro-client-portal .search-hero-field:hover {
+    border-color: rgba(94, 114, 228, 0.42);
+}
+
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group:focus-within,
+body.legalpro-client-portal .search-hero-field:focus-within {
+    border-color: var(--lp-portal-primary, var(--bs-primary, #5e72e4));
+    box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.12);
+}
+
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group-text,
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .form-control,
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search input[type="search"].form-control,
+body.legalpro-client-portal .search-hero-field .input-group-text,
+body.legalpro-client-portal .search-hero-field .form-control,
+body.legalpro-client-portal .search-hero-field input[type="search"].form-control {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group-text {
+    padding: 0.5rem 0.5rem 0.5rem 0.65rem;
+    min-width: auto;
+    color: #67748e !important;
+}
+
+body.legalpro-client-portal .search-hero-field .input-group-text {
+    padding: 0.65rem 0.5rem 0.65rem 0.85rem;
+    min-width: auto;
+    color: #67748e !important;
+}
+
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group > .input-group-text + .form-control,
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group > .input-group-text + input[type="search"].form-control,
+body.legalpro-client-portal .search-hero-field .form-control,
+body.legalpro-client-portal .search-hero-field input[type="search"].form-control {
+    padding-left: 0 !important;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group .form-control:focus,
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group input[type="search"].form-control:focus,
+body.legalpro-client-portal .search-hero-field .form-control:focus,
+body.legalpro-client-portal .search-hero-field input[type="search"].form-control:focus {
+    border-color: transparent !important;
+    box-shadow: none !important;
+    outline: none;
+}
+
+body.legalpro-client-portal .search-hero-query {
+    display: flex;
+    align-items: stretch;
+    gap: 0.75rem;
+}
+
+body.legalpro-client-portal .search-hero-field.legalpro-search-input-group > .form-control,
+body.legalpro-client-portal .search-hero-field.legalpro-search-input-group > input[type="search"].form-control {
+    padding-right: 2.75rem !important;
+}
+
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group.legalpro-search-input-group > .form-control,
+body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group.legalpro-search-input-group > input[type="search"].form-control {
+    padding-right: 2.35rem !important;
+}
+
 /* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */

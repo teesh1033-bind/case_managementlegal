@@ -328,45 +328,44 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'opacity: 1 !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .legalpro-navbar-search .input-group {'
+    $clientSearch = 'body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group,'
+        . 'body.legalpro-dark-mode.legalpro-client-portal .search-hero-field,'
+        . 'body.legalpro-dark-mode .legalpro-navbar-search .input-group,'
+        . 'body.legalpro-dark-mode .search-portal-page .search-hero-field';
+
+    $css .= $clientSearch . ' {'
         . 'background: var(--lp-dark-input-bg) !important;'
         . 'border-color: var(--lp-dark-border-strong) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .legalpro-navbar-search .input-group:hover {'
+    $css .= 'body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group:hover,'
+        . 'body.legalpro-dark-mode.legalpro-client-portal .search-hero-field:hover,'
+        . 'body.legalpro-dark-mode .legalpro-navbar-search .input-group:hover,'
+        . 'body.legalpro-dark-mode .search-portal-page .search-hero-field:hover {'
         . 'border-color: ' . $soft20 . ' !important;'
         . 'background: var(--lp-dark-surface-hover) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .legalpro-navbar-search .input-group:focus-within {'
+    $css .= 'body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group:focus-within,'
+        . 'body.legalpro-dark-mode.legalpro-client-portal .search-hero-field:focus-within,'
+        . 'body.legalpro-dark-mode .legalpro-navbar-search .input-group:focus-within,'
+        . 'body.legalpro-dark-mode .search-portal-page .search-hero-field:focus-within {'
         . 'border-color: ' . $primary . ' !important;'
         . 'box-shadow: 0 0 0 0.2rem rgba(' . $rgb . ', 0.18) !important;'
         . 'background: var(--lp-dark-input-bg) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .legalpro-navbar-search .input-group-text,'
-        . 'body.legalpro-dark-mode .legalpro-navbar-search .form-control {'
-        . 'background: transparent !important;'
-        . 'color: var(--lp-dark-text) !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .search-portal-page .search-hero-field {'
-        . 'background: var(--lp-dark-input-bg) !important;'
-        . 'border-color: var(--lp-dark-border-strong) !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .search-portal-page .search-hero-field:hover {'
-        . 'border-color: ' . $soft20 . ' !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .search-portal-page .search-hero-field:focus-within {'
-        . 'border-color: ' . $primary . ' !important;'
-        . 'box-shadow: 0 0 0 0.2rem rgba(' . $rgb . ', 0.18) !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .search-portal-page .search-hero-field .input-group-text,'
+    $css .= 'body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group-text,'
+        . 'body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-navbar-search .form-control,'
+        . 'body.legalpro-dark-mode.legalpro-client-portal .search-hero-field .input-group-text,'
+        . 'body.legalpro-dark-mode.legalpro-client-portal .search-hero-field .form-control,'
+        . 'body.legalpro-dark-mode .legalpro-navbar-search .input-group-text,'
+        . 'body.legalpro-dark-mode .legalpro-navbar-search .form-control,'
+        . 'body.legalpro-dark-mode .search-portal-page .search-hero-field .input-group-text,'
         . 'body.legalpro-dark-mode .search-portal-page .search-hero-field .form-control {'
         . 'background: transparent !important;'
+        . 'border-color: transparent !important;'
+        . 'box-shadow: none !important;'
         . 'color: var(--lp-dark-text) !important;'
         . '}';
 
@@ -648,6 +647,11 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode .dashboard-glance__label {'
         . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .chat-window {'
+        . 'background: transparent !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .chat-message-bot .chat-bubble {'
@@ -1305,6 +1309,9 @@ function renderPortalThemeCss(): string
         . '}';
 
     $css .= '.legalpro-navbar-search .input-group .form-control:focus,'
+        . '.legalpro-navbar-search .input-group input[type="search"].form-control:focus,'
+        . 'body.legalpro-client-portal .search-hero-field .form-control:focus,'
+        . 'body.legalpro-client-portal .search-hero-field input[type="search"].form-control:focus,'
         . '.search-portal-page .search-hero-field .form-control:focus {'
         . 'border-color: transparent !important;'
         . 'box-shadow: none !important;'

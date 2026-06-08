@@ -155,7 +155,7 @@ if (!empty($_SESSION['error_message'])) {
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-<link href="../assets/css/dashboard-enhancements.css?v=4" rel="stylesheet" />
+<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
     <style>
         .client-court-tracking-page { --cct-radius: 1.15rem; }

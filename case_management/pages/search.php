@@ -259,9 +259,10 @@ $resultsQueryClass = 'text-white';
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-    <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php if ($portal === 'client'): ?>
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <?php else: ?>
+    <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
     <?php endif; ?>
     <style>
         .search-portal-page--lawyer .navbar-main,
@@ -319,53 +320,9 @@ $resultsQueryClass = 'text-white';
         .search-portal-page--client .search-hero .cd-hero-text {
             color: #67748e;
         }
-        .search-portal-page--client .search-hero-field {
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            box-shadow: none;
-        }
-        .search-portal-page .search-hero-query {
-            display: flex;
-            align-items: stretch;
-            gap: 0.75rem;
-        }
         .search-portal-page .search-hero-field {
             flex: 1;
             min-width: 0;
-            box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.12);
-            border-radius: 0.65rem;
-            background: #fff;
-            overflow: visible;
-        }
-        .search-portal-page .search-hero-field .input-group-text {
-            border: none;
-            min-width: auto;
-            padding: 0.65rem 0.5rem;
-            flex-shrink: 0;
-            z-index: 2;
-            background: #fff !important;
-            color: #67748e !important;
-        }
-        .search-portal-page .search-hero-field .input-group-text i {
-            opacity: 1;
-            font-size: 0.95rem;
-        }
-        .search-portal-page .search-hero-field .form-control,
-        .search-portal-page .search-hero-field input[type="search"].form-control {
-            border: none;
-            padding-left: 0 !important;
-            background: #fff;
-            box-shadow: none;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        .search-portal-page .search-hero-field input[type="search"].form-control::-webkit-search-decoration,
-        .search-portal-page .search-hero-field input[type="search"].form-control::-webkit-search-cancel-button {
-            -webkit-appearance: none;
-            appearance: none;
-            margin: 0;
-        }
-        .search-portal-page .search-hero-field .form-control:focus {
-            box-shadow: none;
         }
         .search-portal-page .search-hero-query .btn-search-submit {
             flex-shrink: 0;
@@ -464,7 +421,7 @@ $resultsQueryClass = 'text-white';
                             <form method="get" action="search.php" class="mb-0" role="search">
                                 <label class="<?php echo h($heroLabelClass); ?>">Search query</label>
                                 <div class="search-hero-query">
-                                    <div class="input-group input-group-lg search-hero-field">
+                                    <div class="input-group input-group-lg search-hero-field legalpro-search-input-group">
                                         <span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span>
                                         <input type="search" name="q" class="form-control" placeholder="Try a keyword or case number…" value="<?php echo $qDisp; ?>" autocomplete="off" maxlength="200" aria-label="Search">
                                     </div>
