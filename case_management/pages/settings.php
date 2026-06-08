@@ -31,7 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($formType === 'portal_theme') {
         $themeMode = isset($_POST['theme_mode']) ? (string) $_POST['theme_mode'] : 'light';
         $themeColor = isset($_POST['theme_color']) ? (string) $_POST['theme_color'] : 'primary';
-        $result = savePortalTheme($themeMode, $themeColor);
+        $customPrimary = isset($_POST['custom_primary']) ? (string) $_POST['custom_primary'] : null;
+        $result = savePortalTheme($themeMode, $themeColor, $customPrimary);
 
         if (!$result['ok']) {
             $message = $result['message'];

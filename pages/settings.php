@@ -31,7 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($formType === 'portal_theme') {
         $themeMode = isset($_POST['theme_mode']) ? (string) $_POST['theme_mode'] : 'light';
         $themeColor = isset($_POST['theme_color']) ? (string) $_POST['theme_color'] : 'primary';
-        $result = savePortalTheme($themeMode, $themeColor);
+        $customPrimary = isset($_POST['custom_primary']) ? (string) $_POST['custom_primary'] : null;
+        $result = savePortalTheme($themeMode, $themeColor, $customPrimary);
 
         if (!$result['ok']) {
             $message = $result['message'];
@@ -288,6 +289,11 @@ $html = <<<'HTML'
 			font-weight: 600;
 			color: #67748e;
 		}
+		.settings-theme-color-input {
+			width: 3.5rem;
+			height: 2.5rem;
+			padding: 0.15rem;
+		}
 	</style>
 	{PORTAL_THEME_HEAD}
 </head>
@@ -386,7 +392,7 @@ $html = <<<'HTML'
                             </form>
 						</div>
 					</div>
-					{PORTAL_THEME_SETTINGS}
+                    {PORTAL_THEME_SETTINGS}
 					<div class="card">
 						<div class="card-header pb-0 d-flex justify-content-between align-items-center">
 							<h6>Services Offered</h6>
@@ -515,6 +521,9 @@ ob_start(); include __DIR__ . '/../inc/menunav.php'; $sidebar = ob_get_clean();
 $html = preg_replace('/<aside[\s\S]*?<\/aside>/', $sidebar, $html, 1);
 ob_start(); include __DIR__ . '/../inc/footer.php'; $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
+ob_start(); include __DIR__ . '/../inc/portal-theme-head.php'; $portalThemeHead = ob_get_clean();
+$html = str_replace('{PORTAL_THEME_HEAD}', $portalThemeHead, $html);
+$html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CURRENCY_OPTIONS}', $currencyOptionsHtml, $html);
 $html = str_replace('{SERVICES_LIST}', $servicesListHtml, $html);
