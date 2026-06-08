@@ -563,12 +563,38 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode .bg-white,'
-        . 'body.legalpro-dark-mode .dashboard-glance,'
         . 'body.legalpro-dark-mode .dashboard-upcoming-panel,'
-        . 'body.legalpro-dark-mode .dashboard-stat-card .card-body,'
         . 'body.legalpro-dark-mode .legalpro-header-search .form-control {'
         . 'background-color: var(--lp-dark-surface-raised) !important;'
         . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-stat-card,'
+        . 'body.legalpro-dark-mode .dashboard-glance__item {'
+        . 'border: none !important;'
+        . 'outline: none !important;'
+        . 'background-color: var(--lp-dark-surface) !important;'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22) !important;'
+        . 'overflow: hidden;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-stat-card .card-body {'
+        . 'border: none !important;'
+        . 'background-color: var(--lp-dark-surface) !important;'
+        . 'background: var(--lp-dark-surface) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-glance {'
+        . 'background: transparent !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-glance__value {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-glance__label {'
+        . 'color: var(--lp-dark-text-muted) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .chat-message-bot .chat-bubble {'
@@ -582,51 +608,6 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: var(--lp-dark-text) !important;'
         . '}';
 
-<<<<<<< HEAD
-    $css .= 'body.legalpro-dark-mode .lp-pill--status-progress {'
-        . 'background: ' . portalThemeHexToRgba($primary, 0.22) . ' !important;'
-        . 'color: #b8c8ff !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .lp-pill--status-pending,'
-        . 'body.legalpro-dark-mode .lp-pill--status-waiting {'
-        . 'background: rgba(251, 186, 116, 0.2) !important;'
-        . 'color: #ffd4a8 !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .lp-pill--status-declined {'
-        . 'background: rgba(252, 165, 165, 0.2) !important;'
-        . 'color: #ffc9c9 !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .lp-pill--status-closed,'
-        . 'body.legalpro-dark-mode .lp-pill--status-default,'
-        . 'body.legalpro-dark-mode .ca-status-pill--done,'
-        . 'body.legalpro-dark-mode .ca-status-pill--muted {'
-        . 'background: rgba(255, 255, 255, 0.1) !important;'
-        . 'color: var(--lp-dark-text-secondary) !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .lp-pill--priority-high,'
-        . 'body.legalpro-dark-mode .lp-pill--priority-medium,'
-        . 'body.legalpro-dark-mode .lp-pill--priority-urgent {'
-        . 'color: var(--lp-dark-text) !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .ca-status-pill--scheduled {'
-        . 'background: ' . portalThemeHexToRgba($primary, 0.22) . ' !important;'
-        . 'color: #b8c8ff !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .ca-status-pill--pending {'
-        . 'background: rgba(251, 186, 116, 0.2) !important;'
-        . 'color: #ffd4a8 !important;'
-        . '}';
-
-    $css .= 'body.legalpro-dark-mode .ca-status-pill--declined {'
-        . 'background: rgba(252, 165, 165, 0.2) !important;'
-        . 'color: #ffc9c9 !important;'
-=======
     $primaryOnDark = portalThemeMixHex($primary, '#ffffff', 0.55);
     $dangerSoft = 'rgba(245, 54, 92, 0.16)';
     $dangerBorder = 'rgba(245, 54, 92, 0.28)';
@@ -651,7 +632,6 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode tr.table-danger .text-muted {'
         . 'color: var(--lp-dark-text-muted) !important;'
->>>>>>> a058c5bf8d32213945178d68b963aa2225fe2010
         . '}';
 
     $css .= 'body.legalpro-dark-mode tr.table-info > td,'
