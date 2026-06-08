@@ -1,6 +1,7 @@
 <?php
 // inc/footer.php
 // Put common script includes and closing tags here. Intended to be included just before </body> in converted pages.
+require_once __DIR__ . '/portal-theme-head.php';
 ?>
 
 <!-- Common scripts (Perfect Scrollbar required before Argon on Windows) -->
