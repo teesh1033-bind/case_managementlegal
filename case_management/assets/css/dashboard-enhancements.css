@@ -641,3 +641,81 @@ body.legalpro-dark-mode #dashboardCalendar .fc-daygrid-more-link,
 body.legalpro-dark-mode #courtTrackingCalendar .fc-daygrid-more-link {
     color: var(--legalpro-theme-primary, #5e72e4) !important;
 }
+
+body.legalpro-dark-mode .dashboard-calendar-hub {
+    background: var(--lp-dark-surface) !important;
+    border: 1px solid var(--lp-dark-border) !important;
+    box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar,
+body.legalpro-dark-mode #courtTrackingCalendar {
+    background: var(--lp-dark-surface) !important;
+    border-color: var(--lp-dark-border) !important;
+    color: var(--lp-dark-text-secondary) !important;
+    box-shadow: none !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid {
+    background: var(--lp-dark-surface) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid-section > *,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > * {
+    border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-col-header-cell,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell {
+    background: var(--lp-dark-surface-raised) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-col-header-cell-cushion,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell-cushion {
+    color: var(--lp-dark-text-muted) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day {
+    background: var(--lp-dark-surface) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day-number {
+    color: var(--lp-dark-text-secondary) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-day-other .fc-daygrid-day-number,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-other .fc-daygrid-day-number {
+    color: var(--lp-dark-text-subtle) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-day-today,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-today {
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-list-event td,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-list-event td,
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-list-day-cushion,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-list-day-cushion {
+    background: var(--lp-dark-surface) !important;
+    border-color: var(--lp-dark-border) !important;
+    color: var(--lp-dark-text-secondary) !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-item__time {
+    color: var(--legalpro-theme-primary, #9aaeff) !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary {
+    color: var(--legalpro-theme-primary, #9aaeff) !important;
+}
+
+body.legalpro-dark-mode .dashboard-cal-event__dot {
+    opacity: 0.95;
+}
