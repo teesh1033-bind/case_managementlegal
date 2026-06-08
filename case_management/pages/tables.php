@@ -253,7 +253,7 @@ $html = <<<'HTML'
 						<div class="legalpro-cases-filters">
 							<div class="legalpro-cases-search">
 								{CASES_SEARCH_ICON}
-								<input type="search" class="form-control" id="casesSearchInput" placeholder="Search cases..." autocomplete="off" aria-label="Search cases">
+								<input type="search" class="form-control" style="margin-top: 10px;" id="casesSearchInput" placeholder="Search cases..." autocomplete="off" aria-label="Search cases">
 							</div>
 							<select class="form-select" id="casesStatusFilter" aria-label="Filter by status">
 								<option value="">All statuses</option>

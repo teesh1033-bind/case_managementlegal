@@ -284,7 +284,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=8" rel="stylesheet" />
     <link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page">

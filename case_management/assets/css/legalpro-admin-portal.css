@@ -149,7 +149,7 @@ body.legalpro-admin-portal .legalpro-sidebar-brand__name {
 
 body.legalpro-admin-portal .legalpro-sidebar-brand__role {
     display: block;
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.78);
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.14em;
@@ -722,6 +722,16 @@ body.legalpro-admin-portal .dashboard-calendar-hub .lp-card-header-primary {
     cursor: pointer;
     font-weight: 600;
     color: #344767;
+}
+
+/* —— Clients list —— */
+body.admin-clients-page .legalpro-clients-card__head {
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+body.admin-clients-page .legalpro-clients-card__body {
+    padding-top: 1.25rem !important;
 }
 
 /* —— Cases hub (Eagle-style table) —— */

@@ -116,10 +116,11 @@ $html = <<<'HTML'
             opacity: 1;
         }
         .client-dashboard-page .cd-hero .cd-hero-title {
-            color: #344767;
+            color: #1a2332;
+            font-weight: 800;
         }
         .client-dashboard-page .cd-hero .cd-hero-text {
-            color: #67748e;
+            color: #4a5568;
         }
         .client-dashboard-page .cd-stat-card {
             border-radius: var(--cd-radius-lg);
