@@ -670,22 +670,37 @@ body.legalpro-dark-mode .dashboard-calendar-hub {
     box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;
 }
 
+body.legalpro-dark-mode .dashboard-calendar-hub__body {
+    background: transparent !important;
+}
+
 body.legalpro-dark-mode #dashboardCalendar,
 body.legalpro-dark-mode #courtTrackingCalendar {
     background: var(--lp-dark-surface) !important;
+    border: 1px solid var(--lp-dark-border) !important;
     border-color: var(--lp-dark-border) !important;
     color: var(--lp-dark-text-secondary) !important;
     box-shadow: none !important;
 }
 
+body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar,
+body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc,
+body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc-view-harness {
+    background: var(--lp-dark-surface) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
 body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid,
-body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid {
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard .fc-scrollgrid {
     background: var(--lp-dark-surface) !important;
     border-color: var(--lp-dark-border) !important;
 }
 
 body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid-section > *,
-body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > * {
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > *,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard td,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard th {
     border-color: var(--lp-dark-border) !important;
 }
 

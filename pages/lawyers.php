@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/password-validation.php';
 
 // Check if admin is logged in
@@ -272,7 +273,7 @@ if (empty($lawyers)) {
     $lawyersTable = '<tr><td colspan="5" class="text-center text-muted py-4">No lawyers added yet.</td></tr>';
 } else {
     foreach ($lawyers as $lawyer) {
-        $statusBadge = $lawyer['is_active'] ? '<span class="badge bg-gradient-success">Active</span>' : '<span class="badge bg-gradient-secondary">Inactive</span>';
+        $statusBadge = legalpro_lawyer_active_status_badge((bool) $lawyer['is_active']);
         $activeCases = (int)$lawyer['active_cases'];
 
         $lawyersTable .= '
@@ -377,7 +378,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-admin-portal.css?v=16" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=17" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -423,7 +424,7 @@ $html = <<<'HTML'
                 <!-- Lawyers Table -->
                 <div class="col-12">
                     <div class="card mb-4">
-                        <div class="card-header pb-0 pt-3">
+                        <div class="card-header pb-3 pt-3">
                             <div class="d-flex align-items-center">
                                 <div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-md me-3">
                                     <i class="ni ni-single-02 text-white text-lg opacity-10"></i>
@@ -434,7 +435,7 @@ $html = <<<'HTML'
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body px-0 pt-0 pb-2">
+                        <div class="card-body px-0 pt-2 pb-2">
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>

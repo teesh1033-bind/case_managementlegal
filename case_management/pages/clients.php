@@ -210,11 +210,19 @@ $html = <<<'HTML'
 			<div class="row">
 				<div class="col-12">
 					<div class="card mb-4">
+<<<<<<< HEAD
 						<div class="card-header legalpro-clients-card__head d-flex justify-content-between align-items-center">
 							<h6>Clients</h6>
 							<a href="client-detail.php" class="btn btn-sm bg-gradient-primary text-white mb-0">Add Client</a>
 						</div>
 						<div class="card-body px-0 legalpro-clients-card__body pb-2">
+=======
+						<div class="card-header pb-3 pt-3 d-flex justify-content-between align-items-center">
+							<h6 class="mb-0">Clients</h6>
+							<a href="client-detail.php" class="btn btn-sm bg-gradient-primary text-white mb-0">Add Client</a>
+						</div>
+						<div class="card-body px-0 pt-2 pb-2">
+>>>>>>> 4b34204a2dbb6ba4f16768796240e91d6a286cd8
 							{MESSAGE}
 							<div class="table-responsive p-0">
 								<table class="table align-items-center mb-0">

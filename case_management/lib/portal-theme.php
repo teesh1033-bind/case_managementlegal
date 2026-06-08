@@ -725,6 +725,11 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: #ff9eb5 !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .lp-pill--status-active {'
+        . 'background: rgba(45, 206, 137, 0.2) !important;'
+        . 'color: #8ce8c0 !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode .lp-pill--status-closed,'
         . 'body.legalpro-dark-mode .ca-status-pill--done {'
         . 'background: rgba(255, 255, 255, 0.08) !important;'
@@ -1162,7 +1167,129 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'border-color: ' . portalThemeHexToRgba($primary, 0.5) . ' !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .cct-hero-kicker {'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cct-panel .card-header .text-muted,'
+        . 'body.legalpro-dark-mode .cct-panel .card-header p.text-sm {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cct-panel .card-header .text-dark,'
+        . 'body.legalpro-dark-mode .cct-panel .card-header h5 {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cct-panel .table .text-secondary,'
+        . 'body.legalpro-dark-mode .cct-panel .table thead th.text-secondary {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . 'opacity: 1 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cct-row td {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'border-bottom-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cct-row:hover td {'
+        . 'background: ' . portalThemeHexToRgba($primary, 0.08) . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cct-panel .card-body h5.font-weight-bolder {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .cct-panel .card-body .text-muted {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
     return $css;
+}
+
+function getPortalThemeCalendarDarkCss(): string
+{
+    $theme = getPortalTheme();
+    if ($theme['mode'] !== 'dark') {
+        return '';
+    }
+
+    $primary = $theme['preset']['primary'];
+    $rgb = portalThemePrimaryRgb($primary);
+
+    $css = 'body.legalpro-dark-mode .dashboard-calendar-hub {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border: 1px solid var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub__body {'
+        . 'background: transparent !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #dashboardCalendar,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar,'
+        . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar,'
+        . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc,'
+        . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc-view-harness {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'box-shadow: none !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard .fc-scrollgrid {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard td,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard th,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > * {'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell-cushion,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day-number {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-other .fc-daygrid-day-number {'
+        . 'color: var(--lp-dark-text-subtle) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-today {'
+        . 'background: rgba(' . $rgb . ', 0.12) !important;'
+        . '}';
+
+    return $css;
+}
+
+function renderPortalThemeCalendarDarkHead(): void
+{
+    static $rendered = false;
+    if ($rendered) {
+        return;
+    }
+
+    $css = getPortalThemeCalendarDarkCss();
+    if ($css === '') {
+        return;
+    }
+
+    $rendered = true;
+    echo '<style id="legalpro-portal-calendar-dark">' . $css . '</style>';
 }
 
 function portalThemePrimaryRgb(string $hex): string
