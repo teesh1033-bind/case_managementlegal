@@ -118,12 +118,16 @@
     overflow: hidden;
 }
 
+.dashboard-calendar-hub__title {
+    color: #344767;
+}
+
 .dashboard-calendar-hub__head {
-    padding: 1.25rem 1.5rem 0;
+    padding: 1.25rem 1.5rem 0.75rem;
 }
 
 .dashboard-calendar-hub__body {
-    padding: 0 1.25rem 1.25rem;
+    padding: 0.75rem 1.25rem 1.25rem;
 }
 
 .dashboard-calendar-layout {
@@ -144,6 +148,7 @@
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
 .dashboard-legend-pill {
@@ -584,4 +589,55 @@
     .dashboard-upcoming-item:hover {
         transform: none;
     }
+}
+
+/* Dark mode — dashboard / court tracking calendar hub */
+body.legalpro-dark-mode .dashboard-calendar-hub__title,
+body.legalpro-dark-mode .dashboard-calendar-hub__head h6 {
+    color: var(--lp-dark-text) !important;
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .text-muted {
+    color: var(--lp-dark-text-muted) !important;
+}
+
+body.legalpro-dark-mode .dashboard-legend-pill {
+    color: var(--lp-dark-text-secondary) !important;
+    background: var(--lp-dark-surface-raised) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-panel {
+    background: var(--lp-dark-surface-raised) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-panel__title,
+body.legalpro-dark-mode .dashboard-upcoming-panel__title span {
+    color: var(--lp-dark-text) !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-item {
+    background: var(--lp-dark-surface-hover) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-item__title {
+    color: var(--lp-dark-text) !important;
+}
+
+body.legalpro-dark-mode .dashboard-upcoming-item__sub,
+body.legalpro-dark-mode .dashboard-upcoming-empty {
+    color: var(--lp-dark-text-muted) !important;
+}
+
+body.legalpro-dark-mode .dashboard-cal-event__text,
+body.legalpro-dark-mode #dashboardCalendar .fc-event,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-event {
+    color: var(--lp-dark-text-secondary) !important;
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc-daygrid-more-link,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-daygrid-more-link {
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
 }

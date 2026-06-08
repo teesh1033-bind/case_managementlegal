@@ -344,7 +344,7 @@ if (empty($upcomingCourtDates)) {
                         <div class="dashboard-calendar-hub__head">
                             <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                 <div>
-                                    <h6 class="text-capitalize mb-0 font-weight-bold" style="color: #344767;">Court Dates Calendar</h6>
+                                    <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
                                     <p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
                                     <div class="dashboard-legend-pills">
                                         <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>

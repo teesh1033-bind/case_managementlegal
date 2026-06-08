@@ -216,7 +216,7 @@ if (empty($upcomingCourtDates)) {
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=7" rel="stylesheet" />
     <link href="../assets/css/legalpro-admin-portal.css?v=19" rel="stylesheet" />
     <?php legalpro_icons_asset_links(); ?>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
@@ -263,7 +263,7 @@ if (empty($upcomingCourtDates)) {
                         <li class="nav-item d-flex align-items-center">
                             <a href="admin-logout.php" class="nav-link text-white font-weight-bold px-0">
                                 <i class="fa fa-user me-sm-1"></i>
-                                <span class="d-sm-inline d-none">Logout</span>
+                                <!-- <span class="d-sm-inline d-none">Logout</span> -->
                             </a>
                         </li>
                     </ul>
@@ -294,7 +294,7 @@ if (empty($upcomingCourtDates)) {
                         <div class="dashboard-calendar-hub__head">
                             <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
                                 <div>
-                                    <h6 class="text-capitalize mb-0 font-weight-bold" style="color: #344767;">Court Dates Calendar</h6>
+                                    <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
                                     <p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
                                     <div class="dashboard-legend-pills">
                                         <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>

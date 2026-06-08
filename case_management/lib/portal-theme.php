@@ -195,7 +195,8 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'body.legalpro-dark-mode.lawyer-client-view-page,'
         . 'body.legalpro-dark-mode.lawyer-court-tracking-page,'
         . 'body.legalpro-dark-mode.lawyer-tasks-page,'
-        . 'body.legalpro-dark-mode.lawyer-profile-page';
+        . 'body.legalpro-dark-mode.lawyer-profile-page,'
+        . 'body.legalpro-dark-mode.admin-court-tracking-page';
 
     $css = 'html.legalpro-theme-dark { background: #2a3040; }';
 
@@ -206,10 +207,10 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '--lp-dark-surface-hover: #464f68;'
         . '--lp-dark-border: rgba(255, 255, 255, 0.1);'
         . '--lp-dark-border-strong: rgba(255, 255, 255, 0.16);'
-        . '--lp-dark-text: #f2f4f8;'
-        . '--lp-dark-text-secondary: #d1d8e6;'
-        . '--lp-dark-text-muted: #a8b2c7;'
-        . '--lp-dark-text-subtle: #8893a8;'
+        . '--lp-dark-text: #f8f9fc;'
+        . '--lp-dark-text-secondary: #e2e8f2;'
+        . '--lp-dark-text-muted: #c5cede;'
+        . '--lp-dark-text-subtle: #9aa8bc;'
         . '--lp-dark-input-bg: #2f3547;'
         . '--lp-admin-content-bg: #2a3040;'
         . '--lp-portal-content-bg: #2a3040;'
