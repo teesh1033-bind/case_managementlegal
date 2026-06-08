@@ -405,6 +405,10 @@ foreach ($lawyerCases as $lawyerCase) {
     $caseOptions .= '<option value="' . (int)$lawyerCase['id'] . '"' . $selected . '>' . htmlspecialchars($lawyerCase['title']) . '</option>';
 }
 
+ob_start();
+include __DIR__ . '/../inc/lawyer-menunav.php';
+$navHtml = ob_get_clean();
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -421,16 +425,37 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <style>
-        /* More space between option text and dropdown chevron */
-        .lawyer-tasks-page select.form-select {
+        .lawyer-tasks-page .lawyer-tasks-toolbar {
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+        .lawyer-tasks-page .lawyer-tasks-toolbar .btn {
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            height: 2rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8125rem;
+            line-height: 1.25;
+            --bs-btn-padding-y: 0.25rem;
+            --bs-btn-padding-x: 0.75rem;
+        }
+        .lawyer-tasks-page .lawyer-tasks-toolbar .form-select {
+            width: auto;
+            height: 2rem;
+            min-width: 8.5rem;
+            padding: 0.2rem 1.75rem 0.2rem 0.65rem;
+            font-size: 0.8125rem;
+            line-height: 1.25;
+            background-position: right 0.5rem center;
+        }
+        /* More space between option text and dropdown chevron (in-card filters) */
+        .lawyer-tasks-page .task-actions-row .form-select,
+        .lawyer-tasks-page #taskModal .form-select {
             padding-left: 0.875rem;
             padding-right: 2.85rem;
             background-position: right 0.85rem center;
-        }
-        .lawyer-tasks-page select.form-select-sm {
-            padding-left: 0.75rem;
-            padding-right: 2.65rem;
-            background-position: right 0.65rem center;
         }
         .lawyer-tasks-page .task-card-themed {
             background: #f4f6fc;
@@ -471,83 +496,9 @@ $html = <<<'HTML'
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-tasks-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
-    <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4">
-        <div class="sidenav-header">
-            <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
-            <a class="navbar-brand m-0" href="lawyer-dashboard.php">
-                <img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="LegalPro logo">
-                <span class="ms-1 font-weight-bold">LegalPro</span>
-            </a>
-        </div>
-        <hr class="horizontal dark mt-0">
-        <div class="collapse navbar-collapse w-auto">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="lawyer-dashboard.php">
-                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="ni ni-tv-2 text-primary text-sm opacity-10"></i>
-                        </div>
-                        <span class="nav-link-text ms-1">Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="tasks.php">
-                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="ni ni-check-bold text-success text-sm opacity-10"></i>
-                        </div>
-                        <span class="nav-link-text ms-1">My Tasks</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="lawyer-cases.php">
-                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="ni ni-folder-17 text-warning text-sm opacity-10"></i>
-                        </div>
-                        <span class="nav-link-text ms-1">My Cases</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="lawyer-clients.php">
-                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="ni ni-circle-08 text-info text-sm opacity-10"></i>
-                        </div>
-                        <span class="nav-link-text ms-1">My Clients</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="lawyer-appointments.php">
-                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="ni ni-calendar-grid-58 text-primary text-sm opacity-10"></i>
-                        </div>
-                        <span class="nav-link-text ms-1">Appointments</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="lawyer-court-tracking.php">
-                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="ni ni-collection text-primary text-sm opacity-10"></i>
-                        </div>
-                        <span class="nav-link-text ms-1">Court Tracking</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="lawyer-availability.php">
-                        <div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center">
-                            <i class="ni ni-time-alarm text-danger text-sm opacity-10"></i>
-                        </div>
-                        <span class="nav-link-text ms-1">My Availability</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-        <div class="sidenav-footer position-absolute bottom-0 w-100">
-            <div class="text-center">
-                <p class="text-xs text-muted mb-1">Logged in as</p>
-                <p class="text-sm font-weight-bold mb-2">{LAWYER_NAME}</p>
-                <a href="lawyer-logout.php" class="btn btn-sm btn-outline-danger">Logout</a>
-            </div>
-        </div>
-    </aside>
+
+    {NAVIGATION}
+
     <main class="main-content position-relative border-radius-lg">
         <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
             <div class="container-fluid py-1 px-3">
@@ -575,7 +526,7 @@ $html = <<<'HTML'
                         <div class="card-header pb-0">
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6>My Tasks</h6>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex lawyer-tasks-toolbar">
                                     <button class="btn btn-sm btn-primary mb-0" type="button" onclick="showAddTaskModal()">
                                         <i class="ni ni-fat-add me-1"></i>Add Task
                                     </button>
@@ -704,6 +655,7 @@ HTML;
 
 // Replace placeholders
 $replacements = [
+    '{NAVIGATION}' => $navHtml,
     '{MESSAGE}' => $messageHtml,
     '{TASKS_HTML}' => $tasksHtml,
     '{TASK_CASE_OPTIONS}' => $caseOptions,

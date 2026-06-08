@@ -1,0 +1,92 @@
+<?php
+// inc/client-menunav.php — Client portal sidebar + header utilities (same shell as menunav.php)
+
+require_once __DIR__ . '/admin-layout.php';
+require_once __DIR__ . '/legalpro-icons.php';
+
+$currentPage = basename($_SERVER['PHP_SELF'], '.php');
+
+$clientMenuItems = [
+    ['title' => 'Dashboard', 'url' => 'client-dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'client-dashboard'],
+    ['title' => 'My Cases', 'url' => 'client-cases.php', 'icon' => 'briefcase', 'id' => 'client-cases'],
+    ['title' => 'Appointments', 'url' => 'client-appointments.php', 'icon' => 'calendar', 'id' => 'client-appointments'],
+    ['title' => 'Court Tracking', 'url' => 'client-court-tracking.php', 'icon' => 'landmark', 'id' => 'client-court-tracking'],
+    ['title' => 'Payments', 'url' => 'client-payments.php', 'icon' => 'credit-card', 'id' => 'client-payments'],
+    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
+];
+
+if (!function_exists('clientNavIsActive')) {
+    function clientNavIsActive($itemId, $currentPage)
+    {
+        if ($itemId === 'client-cases' && in_array($currentPage, ['client-cases', 'client-case-view'], true)) {
+            return true;
+        }
+        if ($itemId === 'chatbot' && $currentPage === 'chatbot') {
+            return true;
+        }
+
+        return $itemId === $currentPage;
+    }
+}
+
+$companyBranding = getCompanyBranding();
+$companyName = $companyBranding['name'];
+$companyLogoUrl = $companyBranding['logo_url'];
+
+global $pdo;
+$navbarUtilitiesMount = legalpro_navbar_utilities_mount(
+    legalpro_render_client_header_utilities(isset($pdo) ? $pdo : null)
+);
+?>
+
+<?php
+if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
+    ob_start();
+    include __DIR__ . '/client-portal-head.php';
+    echo ob_get_clean();
+}
+?>
+
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
+    <div class="legalpro-sidebar-brand">
+        <a href="client-dashboard.php" class="legalpro-sidebar-brand__link">
+            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="42" height="42" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
+            <span class="legalpro-sidebar-brand__text">
+                <span class="legalpro-sidebar-brand__name"><?php echo htmlspecialchars($companyName); ?></span>
+                <span class="legalpro-sidebar-brand__role">CLIENT</span>
+            </span>
+        </a>
+        <button type="button" class="legalpro-sidebar-collapse btn btn-link p-0 d-none d-xl-inline-flex" id="legalproSidebarCollapse" aria-label="Collapse sidebar">
+            <?php echo legalpro_icon('chevron-left'); ?>
+        </button>
+        <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
+    </div>
+
+    <div class="collapse navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
+        <ul class="navbar-nav legalpro-sidebar-nav">
+            <?php foreach ($clientMenuItems as $item): ?>
+                <?php $active = clientNavIsActive($item['id'], $currentPage); ?>
+                <li class="nav-item">
+                    <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
+                        <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
+                        <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+</aside>
+
+<?php echo $navbarUtilitiesMount; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var collapseBtn = document.getElementById('legalproSidebarCollapse');
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', function() {
+            document.body.classList.toggle('legalpro-sidebar-collapsed');
+        });
+    }
+});
+</script>
+<?php legalpro_icons_footer_scripts(); ?>

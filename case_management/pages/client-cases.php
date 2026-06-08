@@ -1,0 +1,273 @@
+<?php
+session_start();
+require_once __DIR__ . '/../inc/db.php';
+
+// Check if client is logged in
+if (!isset($_SESSION['client_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+$client_id = $_SESSION['client_id'];
+$client_name = $_SESSION['client_name'];
+
+$message = '';
+$messageType = '';
+
+try {
+    // Get all client cases with lawyer information
+    $stmt = $pdo->prepare("
+        SELECT
+            c.*,
+            GROUP_CONCAT(DISTINCT CONCAT(l.first_name, ' ', l.last_name) SEPARATOR ', ') as lawyer_names
+        FROM cases c
+        LEFT JOIN case_lawyers cl ON cl.case_id = c.id
+        LEFT JOIN lawyers l ON l.id = cl.lawyer_id
+        WHERE c.client_id = ?
+        GROUP BY c.id
+        ORDER BY c.updated_at DESC
+    ");
+    $stmt->execute([$client_id]);
+    $cases = $stmt->fetchAll();
+
+} catch (PDOException $e) {
+    $message = 'Error loading cases: ' . htmlspecialchars($e->getMessage());
+    $messageType = 'danger';
+    $cases = [];
+}
+
+$messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
+
+require_once __DIR__ . '/../inc/admin-layout.php';
+$iconCaseRow = legalpro_icon('briefcase');
+$iconCaseEmpty = legalpro_icon('briefcase');
+
+$caseCount = count($cases);
+
+// Build cases table rows
+$casesRows = '';
+if (empty($cases)) {
+    $casesRows = '<tr><td colspan="6" class="border-0">
+        <div class="text-center py-5 px-4">
+            <div class="cc-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseEmpty . '</div>
+            <h5 class="font-weight-bolder mt-4 mb-2">No cases yet</h5>
+            <p class="text-sm text-muted mb-4 mx-auto" style="max-width: 22rem;">When your legal team opens a matter for you, it will appear in this list with status, priority, and assigned counsel.</p>
+            <a href="client-dashboard.php" class="btn btn-sm btn-primary mb-0">Go to dashboard</a>
+        </div>
+    </td></tr>';
+} else {
+    foreach ($cases as $case) {
+        $caseId = (int) $case['id'];
+        $caseNumber = 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
+        $lawyerNames = $case['lawyer_names'] ?: 'Unassigned';
+
+        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+        $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+
+        $updated = isset($case['updated_at']) ? date('M j, Y', strtotime($case['updated_at'])) : '';
+
+        $casesRows .= '<tr class="cc-case-row">
+            <td class="ps-4">
+                <div class="d-flex align-items-center gap-3 py-1">
+                    <div class="cc-case-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconCaseRow . '</div>
+                    <div class="min-width-0">
+                        <p class="text-xs text-primary font-weight-bold mb-0">' . htmlspecialchars($caseNumber) . '</p>
+                        <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 14rem;">' . htmlspecialchars($case['title']) . '</h6>
+                        <p class="text-xs text-muted mb-0">Updated ' . htmlspecialchars($updated) . '</p>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="cc-pill text-xs font-weight-bold">' . htmlspecialchars($case['category']) . '</span>
+            </td>
+            <td class="align-middle text-center">
+                ' . $statusBadge . '
+            </td>
+            <td class="align-middle text-center">
+                ' . $priorityBadge . '
+            </td>
+            <td>
+                <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 10rem;" title="' . htmlspecialchars($lawyerNames) . '">' . htmlspecialchars($lawyerNames) . '</p>
+            </td>
+            <td class="align-middle text-end pe-4">
+                <a href="client-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-primary mb-0">View</a>
+            </td>
+        </tr>';
+    }
+}
+
+require_once __DIR__ . '/../inc/client-portal-navbar.php';
+$clientPageNavbar = legalpro_render_client_page_navbar('My Cases', 'My Cases', 'Search cases…');
+
+$html = <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+    <title>LegalPro - My Cases</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+    <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
+<link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <style>
+        .client-cases-page { --cc-radius: 1.15rem; }
+        .client-cases-page .cc-hero {
+            border-radius: var(--cc-radius);
+            background: #fff;
+            box-shadow: 0 0.25rem 1rem rgba(52, 71, 103, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .client-cases-page .cc-hero .cc-hero-kicker {
+            letter-spacing: 0.12em;
+            color: #5e72e4;
+            opacity: 1;
+        }
+        .client-cases-page .cc-hero .cc-hero-title {
+            color: #344767;
+        }
+        .client-cases-page .cc-hero .cc-hero-text {
+            color: #67748e;
+        }
+        .client-cases-page .cc-hero-stat {
+            background: #f8f9fe;
+            border-radius: 0.75rem;
+            padding: 0.65rem 1rem;
+            border: 1px solid rgba(94, 114, 228, 0.15);
+        }
+        .client-cases-page .cc-hero-stat .cc-hero-stat-label {
+            color: #67748e;
+        }
+        .client-cases-page .cc-hero-stat .cc-hero-stat-value {
+            color: #344767;
+        }
+        .client-cases-page .cc-panel {
+            border-radius: var(--cc-radius);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 0.25rem 1.1rem rgba(52, 71, 103, 0.07);
+            overflow: hidden;
+        }
+        .client-cases-page .cc-panel .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 1.15rem 1.35rem 1rem;
+        }
+        .client-cases-page .cc-panel .card-header h5 {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+        .client-cases-page .cc-panel .table thead th {
+            font-size: 0.65rem;
+            letter-spacing: 0.06em;
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+            background: rgba(248, 249, 250, 0.95);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .client-cases-page .cc-case-row td {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            vertical-align: middle;
+        }
+        .client-cases-page .cc-case-row:hover td {
+            background: rgba(94, 114, 228, 0.04);
+        }
+        .client-cases-page .min-width-0 { min-width: 0; }
+        .client-cases-page .cc-pill {
+            display: inline-block;
+            padding: 0.2rem 0.55rem;
+            border-radius: 2rem;
+            background: rgba(94, 114, 228, 0.08);
+            color: #324cdd;
+        }
+    </style>
+</head>
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-cases-page">
+    <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
+    <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
+    <main class="main-content position-relative border-radius-lg">
+        {CLIENT_NAVBAR}
+        <!-- End Navbar -->
+        <div class="container-fluid py-4">
+            {MESSAGE}
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card cc-hero mb-0">
+                        <div class="card-body p-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                            <div>
+                                <p class="cc-hero-kicker text-xs text-uppercase font-weight-bold mb-1">Your matters</p>
+                                <h4 class="cc-hero-title font-weight-bolder mb-1">All cases in one place</h4>
+                                <p class="cc-hero-text text-sm mb-0">Review status, priority, and who is representing you on each file.</p>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-3">
+                                <div class="cc-hero-stat text-center text-md-start">
+                                    <p class="cc-hero-stat-label text-xs mb-0">Total cases</p>
+                                    <p class="cc-hero-stat-value font-weight-bolder mb-0" style="font-size: 1.75rem; line-height: 1.2;">{CASE_COUNT}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card cc-panel mb-4">
+                        <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2">
+                            <div>
+                                <h5 class="text-dark">Case list</h5>
+                                <p class="text-sm text-muted mb-0">Sorted by most recently updated.</p>
+                            </div>
+                            <a href="client-dashboard.php" class="btn btn-sm btn-outline-primary mb-0">Dashboard</a>
+                        </div>
+                        <div class="card-body px-0 pt-0 pb-0">
+                            <div class="table-responsive">
+                                <table class="table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Case</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Category</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Lawyer(s)</th>
+                                            <th class="text-secondary opacity-7"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {CASES_ROWS}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../assets/js/core/popper.min.js"></script>
+    <script src="../assets/js/core/bootstrap.min.js"></script>
+    <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+    <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+</body>
+</html>
+HTML;
+
+// Replace placeholders
+$html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
+$html = str_replace('{CLIENT_NAME}', htmlspecialchars($client_name), $html);
+$html = str_replace('{CASE_COUNT}', (string) $caseCount, $html);
+$html = str_replace('{CASES_ROWS}', $casesRows, $html);
+
+require_once __DIR__ . '/../inc/client-sidebar.php';
+$html = inject_client_sidebar($html);
+
+echo $html;

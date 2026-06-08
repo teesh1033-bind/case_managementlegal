@@ -1,0 +1,380 @@
+/**
+ * LegalPro lawyer portal — light page background (same as admin shell).
+ */
+:root {
+    --lawyer-portal-content-bg: #f4f6f9;
+    --lawyer-portal-gradient: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+    --lawyer-portal-bg-fallback: #f4f6f9;
+}
+
+.bg-legalpro-lawyer {
+    background: var(--lawyer-portal-content-bg) !important;
+    background-color: var(--lawyer-portal-content-bg) !important;
+    background-image: none !important;
+}
+
+body.legalpro-lawyer-portal,
+body.legalpro-lawyer-portal.bg-gray-100,
+body.g-sidenav-show.legalpro-lawyer-portal,
+body.g-sidenav-show.legalpro-lawyer-portal.bg-gray-100,
+body.lawyer-dashboard-page,
+body.lawyer-cases-page,
+body.lawyer-clients-page,
+body.lawyer-appointments-page,
+body.lawyer-availability-page,
+body.lawyer-case-view-page,
+body.lawyer-client-view-page,
+body.lawyer-court-tracking-page,
+body.lawyer-tasks-page,
+body.lawyer-profile-page,
+body.lawyer-profile-page.bg-gray-100,
+.search-portal-page--lawyer {
+    background: var(--lawyer-portal-content-bg) !important;
+    background-color: var(--lawyer-portal-content-bg) !important;
+    background-image: none !important;
+    min-height: 100vh;
+}
+
+body.legalpro-lawyer-portal > .min-height-300,
+body.lawyer-dashboard-page > .min-height-300,
+body.lawyer-cases-page > .min-height-300,
+body.lawyer-clients-page > .min-height-300,
+body.lawyer-appointments-page > .min-height-300,
+body.lawyer-availability-page > .min-height-300,
+body.lawyer-case-view-page > .min-height-300,
+body.lawyer-client-view-page > .min-height-300,
+body.lawyer-court-tracking-page > .min-height-300,
+body.lawyer-tasks-page > .min-height-300,
+body.lawyer-profile-page > .min-height-300,
+.search-portal-page--lawyer > .min-height-300 {
+    display: none !important;
+}
+
+body.legalpro-lawyer-portal .main-content,
+body.legalpro-lawyer-portal .main-content > .container-fluid,
+body.legalpro-lawyer-portal .max-height-vh-100,
+body.lawyer-dashboard-page .main-content,
+body.lawyer-cases-page .main-content,
+body.lawyer-clients-page .main-content,
+body.lawyer-appointments-page .main-content,
+body.lawyer-availability-page .main-content,
+body.lawyer-case-view-page .main-content,
+body.lawyer-client-view-page .main-content,
+body.lawyer-court-tracking-page .main-content,
+body.lawyer-tasks-page .main-content,
+body.lawyer-profile-page .main-content,
+body.lawyer-dashboard-page .main-content > .container-fluid,
+body.lawyer-cases-page .main-content > .container-fluid,
+body.lawyer-clients-page .main-content > .container-fluid,
+body.lawyer-appointments-page .main-content > .container-fluid,
+body.lawyer-availability-page .main-content > .container-fluid,
+body.lawyer-case-view-page .main-content > .container-fluid,
+body.lawyer-client-view-page .main-content > .container-fluid,
+body.lawyer-court-tracking-page .main-content > .container-fluid,
+body.lawyer-tasks-page .main-content > .container-fluid,
+body.lawyer-profile-page .main-content > .container-fluid,
+.search-portal-page--lawyer .main-content,
+.search-portal-page--lawyer .main-content > .container-fluid {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+body.legalpro-lawyer-portal .main-content.border-radius-lg,
+body.lawyer-dashboard-page .main-content.border-radius-lg,
+body.lawyer-cases-page .main-content.border-radius-lg,
+body.lawyer-clients-page .main-content.border-radius-lg,
+body.lawyer-appointments-page .main-content.border-radius-lg,
+body.lawyer-availability-page .main-content.border-radius-lg,
+body.lawyer-case-view-page .main-content.border-radius-lg,
+body.lawyer-client-view-page .main-content.border-radius-lg,
+body.lawyer-court-tracking-page .main-content.border-radius-lg,
+body.lawyer-tasks-page .main-content.border-radius-lg {
+    border-radius: 0 !important;
+}
+
+body.legalpro-lawyer-portal .main-content .card,
+body.lawyer-dashboard-page .main-content .card,
+body.lawyer-cases-page .main-content .card,
+body.lawyer-clients-page .main-content .card,
+body.lawyer-appointments-page .main-content .card,
+body.lawyer-availability-page .main-content .card,
+body.lawyer-case-view-page .main-content .card,
+body.lawyer-client-view-page .main-content .card,
+body.lawyer-court-tracking-page .main-content .card,
+body.lawyer-tasks-page .main-content .card,
+body.lawyer-profile-page .main-content .card,
+.search-portal-page--lawyer .main-content .card {
+    background-color: #fff !important;
+}
+
+/* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */
+
+/* Legacy lawyer sidenav overrides disabled — do not re-enable without scoping away #sidenav-main.legalpro-admin-sidebar
+body.legalpro-lawyer-portal .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-dashboard-page .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-cases-page .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-clients-page .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-appointments-page .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-availability-page .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-case-view-page .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-client-view-page .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-court-tracking-page .sidenav .navbar-nav > .nav-item > .nav-link,
+body.lawyer-tasks-page .sidenav .navbar-nav > .nav-item > .nav-link,
+.search-portal-page--lawyer .sidenav .navbar-nav > .nav-item > .nav-link,
+.legalpro-lawyer-nav .navbar-nav > .nav-item > .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    margin: 0.15rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #344767;
+    transition: all 0.15s ease;
+}
+
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link .icon,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link .icon,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link .icon,
+.legalpro-lawyer-nav .nav-link .legalpro-lawyer-nav-icon,
+.legalpro-lawyer-nav .nav-link .icon {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    background-color: rgba(94, 114, 228, 0.08) !important;
+    color: #5e72e4;
+    transition: all 0.15s ease;
+}
+
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link .icon i,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link .icon i,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link .icon i,
+.legalpro-lawyer-nav .nav-link .legalpro-lawyer-nav-icon i,
+.legalpro-lawyer-nav .nav-link .icon i {
+    color: #5e72e4 !important;
+    opacity: 0.9 !important;
+}
+
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link.active,
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link:hover,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link.active,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link:hover,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link.active,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link:hover,
+.legalpro-lawyer-nav .navbar-nav .nav-link.active,
+.legalpro-lawyer-nav .navbar-nav .nav-link:hover {
+    background: linear-gradient(135deg, #5e72e4, #825ee4) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 20px rgba(94, 114, 228, 0.25);
+}
+
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link.active .icon,
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link:hover .icon,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link.active .icon,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link:hover .icon,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link.active .icon,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link:hover .icon,
+.legalpro-lawyer-nav .navbar-nav .nav-link.active .legalpro-lawyer-nav-icon,
+.legalpro-lawyer-nav .navbar-nav .nav-link:hover .legalpro-lawyer-nav-icon,
+.legalpro-lawyer-nav .navbar-nav .nav-link.active .icon,
+.legalpro-lawyer-nav .navbar-nav .nav-link:hover .icon {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+}
+
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link.active .icon i,
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link:hover .icon i,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link.active .icon i,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link:hover .icon i,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link.active .icon i,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link:hover .icon i,
+.legalpro-lawyer-nav .navbar-nav .nav-link.active .legalpro-lawyer-nav-icon i,
+.legalpro-lawyer-nav .navbar-nav .nav-link:hover .legalpro-lawyer-nav-icon i,
+.legalpro-lawyer-nav .navbar-nav .nav-link.active .icon i,
+.legalpro-lawyer-nav .navbar-nav .nav-link:hover .icon i {
+    color: #fff !important;
+}
+
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link.active .nav-link-text,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link.active .nav-link-text,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link:hover .nav-link-text,
+.legalpro-lawyer-nav .navbar-nav .nav-link.active .legalpro-lawyer-nav-text,
+.legalpro-lawyer-nav .navbar-nav .nav-link:hover .legalpro-lawyer-nav-text,
+.legalpro-lawyer-nav .navbar-nav .nav-link.active .nav-link-text,
+.legalpro-lawyer-nav .navbar-nav .nav-link:hover .nav-link-text {
+    color: #fff !important;
+}
+
+/* Beat Argon .text-success / .text-warning etc. — inactive sidenav icons only */
+body.legalpro-lawyer-portal .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-dashboard-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-cases-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-clients-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-appointments-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-availability-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-case-view-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-client-view-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-court-tracking-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+body.lawyer-tasks-page .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+.search-portal-page--lawyer .sidenav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni,
+.legalpro-lawyer-nav .navbar-nav .nav-link:not(.active):not(:hover) .legalpro-lawyer-nav-icon i,
+.legalpro-lawyer-nav .navbar-nav .nav-link:not(.active):not(:hover) .icon i.ni {
+    color: #5e72e4 !important;
+    opacity: 0.9 !important;
+}
+
+/* Active / hover — white icons (must follow purple inactive rules) */
+body.legalpro-lawyer-portal .legalpro-lawyer-nav .nav-link.active .legalpro-lawyer-nav-icon i,
+body.legalpro-lawyer-portal .legalpro-lawyer-nav .nav-link:hover .legalpro-lawyer-nav-icon i,
+body.lawyer-dashboard-page .legalpro-lawyer-nav .nav-link.active .legalpro-lawyer-nav-icon i,
+body.lawyer-dashboard-page .legalpro-lawyer-nav .nav-link:hover .legalpro-lawyer-nav-icon i,
+.legalpro-lawyer-nav .nav-link.active .legalpro-lawyer-nav-icon i,
+.legalpro-lawyer-nav .nav-link:hover .legalpro-lawyer-nav-icon i,
+.legalpro-lawyer-nav .nav-link.active .icon i,
+.legalpro-lawyer-nav .nav-link:hover .icon i {
+    color: #fff !important;
+    opacity: 1 !important;
+}
+*/
+
+/* Lawyer portal — soft status pills + table row icons (matches client portal) */
+.legalpro-lawyer-portal .ca-status-pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.35em 0.85em;
+    border-radius: 999px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+.legalpro-lawyer-portal .ca-status-pill--pending {
+    background: rgba(251, 140, 0, 0.14);
+    color: #c45c00;
+}
+.legalpro-lawyer-portal .ca-status-pill--scheduled {
+    background: rgba(94, 114, 228, 0.14);
+    color: #5e72e4;
+}
+.legalpro-lawyer-portal .ca-status-pill--done {
+    background: rgba(103, 116, 142, 0.12);
+    color: #67748e;
+}
+.legalpro-lawyer-portal .ca-status-pill--declined {
+    background: rgba(245, 54, 92, 0.12);
+    color: #d6336c;
+}
+.legalpro-lawyer-portal .ca-status-pill--muted {
+    background: rgba(103, 116, 142, 0.1);
+    color: #8392ab;
+}
+.legalpro-lawyer-portal .lp-row-icon.dashboard-stat-icon-wrap,
+.legalpro-lawyer-portal .lawyer-cases-row-icon.dashboard-stat-icon-wrap,
+.legalpro-lawyer-portal .lawyer-client-row-icon.dashboard-stat-icon-wrap,
+.legalpro-lawyer-portal .lawyer-appt-row-icon.dashboard-stat-icon-wrap,
+.legalpro-lawyer-portal .lawyer-ct-row-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+.legalpro-lawyer-portal .lp-empty-icon.dashboard-stat-icon-wrap {
+    width: 3.25rem;
+    height: 3.25rem;
+    min-width: 3.25rem;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    box-shadow: none;
+}
+body.lawyer-court-tracking-page .dashboard-upcoming-empty .dashboard-stat-icon-wrap {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    margin: 0 auto 0.5rem;
+    border-radius: 50%;
+}

@@ -1,0 +1,39 @@
+{
+  "topics": [
+    {
+      "id": "help",
+      "patterns": ["help", "what can you", "what do you", "how do i use", "commands", "examples"],
+      "response": "__HELP__"
+    },
+    {
+      "id": "greeting",
+      "patterns": ["hello", "hi ", "hey", "good morning", "good afternoon"],
+      "response": "__GREETING__"
+    },
+    {
+      "id": "navigation_cases",
+      "patterns": ["where are cases", "open cases page", "go to cases", "case list"],
+      "response": "Open the **Cases** section to browse, filter, and manage all matters.",
+      "links": [{ "label": "Cases", "url": "__CASES_URL__" }]
+    },
+    {
+      "id": "navigation_appointments",
+      "patterns": ["book appointment", "schedule appointment", "new appointment"],
+      "response": "Use **Appointments** to view the calendar or book a new meeting.",
+      "links": [{ "label": "Appointments", "url": "__APPOINTMENTS_URL__" }]
+    },
+    {
+      "id": "navigation_documents",
+      "patterns": ["upload document", "document template", "generate document"],
+      "response": "Go to **Documents** to upload files, manage templates, or generate legal drafts.",
+      "links": [{ "label": "Documents", "url": "__DOCUMENTS_URL__" }]
+    },
+    {
+      "id": "navigation_settings",
+      "patterns": ["company branding", "change logo", "currency setting", "services offered"],
+      "response": "Admins can update branding, currency, and offered services under **Settings**.",
+      "links": [{ "label": "Settings", "url": "settings.php" }],
+      "roles": ["admin"]
+    }
+  ]
+}

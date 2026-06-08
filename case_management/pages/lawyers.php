@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim(isset($_POST['email']) ? $_POST['email'] : '');
         $phone = trim(isset($_POST['phone']) ? $_POST['phone'] : '');
         $licenseNumber = trim(isset($_POST['license_number']) ? $_POST['license_number'] : '');
-        $specialization = trim(isset($_POST['specialization']) ? $_POST['specialization'] : '');
+        $specialization = trim(isset($_POST['specialization_select']) ? $_POST['specialization_select'] : '');
         $experienceYears = isset($_POST['experience_years']) ? (int)$_POST['experience_years'] : 0;
         $bio = trim(isset($_POST['bio']) ? $_POST['bio'] : '');
         $officeAddress = trim(isset($_POST['office_address']) ? $_POST['office_address'] : '');
@@ -230,12 +230,10 @@ $lawyers = [];
 try {
     $stmt = $pdo->query("
         SELECT l.*, u.username,
-               COUNT(DISTINCT cl.case_id) as active_cases,
-               GROUP_CONCAT(DISTINCT la.day_of_week ORDER BY FIELD(la.day_of_week, 'monday','tuesday','wednesday','thursday','friday','saturday','sunday')) as available_days
+               COUNT(DISTINCT cl.case_id) as active_cases
         FROM lawyers l
         LEFT JOIN users u ON u.id = l.user_id
         LEFT JOIN case_lawyers cl ON cl.lawyer_id = l.id
-        LEFT JOIN lawyer_availability la ON la.lawyer_id = l.id AND la.is_available = 1
         GROUP BY l.id
         ORDER BY l.last_name, l.first_name
     ");
@@ -271,7 +269,7 @@ foreach ($availableUsers as $user) {
 
 $lawyersTable = '';
 if (empty($lawyers)) {
-    $lawyersTable = '<tr><td colspan="6" class="text-center text-muted py-4">No lawyers added yet.</td></tr>';
+    $lawyersTable = '<tr><td colspan="5" class="text-center text-muted py-4">No lawyers added yet.</td></tr>';
 } else {
     foreach ($lawyers as $lawyer) {
         $statusBadge = $lawyer['is_active'] ? '<span class="badge bg-gradient-success">Active</span>' : '<span class="badge bg-gradient-secondary">Inactive</span>';
@@ -298,9 +296,6 @@ if (empty($lawyers)) {
             <td class="text-center">
                 <span class="text-sm font-weight-bold">' . $activeCases . '</span>
                 <p class="text-xs text-muted mb-0">active cases</p>
-            </td>
-            <td class="text-center">
-                <p class="text-sm mb-0">' . htmlspecialchars($lawyer['available_days'] ?: 'Not set') . '</p>
             </td>
             <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
@@ -333,6 +328,36 @@ $formData = [
     'username' => isset($editLawyer['username']) ? $editLawyer['username'] : ''
 ];
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POST['form_type'] === 'save_lawyer' && $messageType === 'danger') {
+    $formData['lawyer_id'] = isset($_POST['lawyer_id']) ? (int) $_POST['lawyer_id'] : '';
+    $formData['first_name'] = trim((string) ($_POST['first_name'] ?? ''));
+    $formData['last_name'] = trim((string) ($_POST['last_name'] ?? ''));
+    $formData['email'] = trim((string) ($_POST['email'] ?? ''));
+    $formData['phone'] = trim((string) ($_POST['phone'] ?? ''));
+    $formData['license_number'] = trim((string) ($_POST['license_number'] ?? ''));
+    $formData['experience_years'] = isset($_POST['experience_years']) ? (int) $_POST['experience_years'] : '';
+    $formData['bio'] = trim((string) ($_POST['bio'] ?? ''));
+    $formData['office_address'] = trim((string) ($_POST['office_address'] ?? ''));
+    $formData['is_active'] = isset($_POST['is_active']) ? 1 : 0;
+
+    $formData['specialization'] = trim((string) ($_POST['specialization_select'] ?? ''));
+}
+
+$lawyerSpecializations = getLawyerSpecializations();
+$currentSpecialization = trim((string) $formData['specialization']);
+$isLegacySpecialization = $currentSpecialization !== '' && !in_array($currentSpecialization, $lawyerSpecializations, true);
+
+$specializationOptionsHtml = '<option value="">Select specialization...</option>';
+foreach ($lawyerSpecializations as $specName) {
+    $selected = $currentSpecialization === $specName ? ' selected' : '';
+    $specializationOptionsHtml .= '<option value="' . htmlspecialchars($specName) . '"' . $selected . '>' . htmlspecialchars($specName) . '</option>';
+}
+if ($isLegacySpecialization) {
+    $specializationOptionsHtml .= '<option value="' . htmlspecialchars($currentSpecialization) . '" selected>'
+        . htmlspecialchars($currentSpecialization)
+        . ' (legacy)</option>';
+}
+
 $isEditing = !empty($formData['lawyer_id']);
 $formTitle = $isEditing ? 'Edit Lawyer' : 'Add New Lawyer';
 $submitLabel = $isEditing ? 'Update Lawyer' : 'Add Lawyer';
@@ -351,8 +376,8 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <style></style>
+<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=16" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -381,7 +406,7 @@ $html = <<<'HTML'
                             <div class="row align-items-center">
                                 <div class="col-lg-8">
                                     <h5 class="mb-0">Lawyer Management</h5>
-                                    <p class="text-sm text-muted mb-0">Manage lawyers, their information, and availability</p>
+                                    <p class="text-sm text-muted mb-0">Manage lawyers and their information</p>
                                 </div>
                                 <div class="col-lg-4 text-end">
                                     <button class="btn btn-dark btn-sm mb-0" onclick="showLawyerForm()">
@@ -418,7 +443,6 @@ $html = <<<'HTML'
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Specialization</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cases</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Availability</th>
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
@@ -477,9 +501,9 @@ $html = <<<'HTML'
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Status</label>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_active" value="1" {IS_ACTIVE_CHECKED}>
-                                        <label class="form-check-label">Active</label>
+                                    <div class="form-check form-switch legalpro-status-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" name="is_active" value="1" id="lawyer_is_active" {IS_ACTIVE_CHECKED}>
+                                        <label class="form-check-label" for="lawyer_is_active">Active</label>
                                     </div>
                                 </div>
                             </div>
@@ -590,7 +614,10 @@ $html = <<<'HTML'
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Specialization</label>
-                                <input type="text" class="form-control" name="specialization" value="{SPECIALIZATION}" placeholder="e.g., Criminal Law, Corporate Law">
+                                <select class="form-control" name="specialization_select" id="specialization_select">
+                                    {SPECIALIZATION_OPTIONS}
+                                </select>
+                                <small class="text-muted d-block mt-1">Specializations are managed in <a href="settings.php">Settings</a>.</small>
                             </div>
                         </div>
                         
@@ -691,7 +718,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
     if (!empty($_POST['new_username'])) {
         $showCreateUserForm = true;
     }
-    if (!empty($_POST['lawyer_id']) && $messageType === 'danger') {
+    if ($messageType === 'danger') {
         $showEditModalOnPost = true;
     }
 }
@@ -708,7 +735,7 @@ $replacements = [
     '{EMAIL}' => htmlspecialchars($formData['email']),
     '{PHONE}' => htmlspecialchars($formData['phone']),
     '{LICENSE_NUMBER}' => htmlspecialchars($formData['license_number']),
-    '{SPECIALIZATION}' => htmlspecialchars($formData['specialization']),
+    '{SPECIALIZATION_OPTIONS}' => $specializationOptionsHtml,
     '{EXPERIENCE_YEARS}' => htmlspecialchars($formData['experience_years']),
     '{BIO}' => htmlspecialchars($formData['bio']),
     '{OFFICE_ADDRESS}' => htmlspecialchars($formData['office_address']),
