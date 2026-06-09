@@ -74,6 +74,7 @@ try {
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
 
 require_once __DIR__ . '/../inc/legalpro-icons.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
 $clientPageNavbar = legalpro_render_client_page_navbar('Dashboard', 'Dashboard', 'Search cases…');
 $iconStatTotal = legalpro_icon('briefcase');
@@ -345,20 +346,7 @@ if (empty($recentCases)) {
     foreach ($recentCases as $case) {
         $lawyerNames = $case['lawyer_names'] ?: 'Unassigned';
         $caseId = (int) $case['id'];
-        switch ($case['status']) {
-            case 'open':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-success">Open</span>';
-                break;
-            case 'closed':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">Closed</span>';
-                break;
-            case 'pending':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
-                break;
-            default:
-                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($case['status']) . '</span>';
-                break;
-        }
+        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
 
         $recentCasesHtml .= '
             <a href="client-case-view.php?id=' . $caseId . '" class="cd-list-item d-block text-decoration-none text-reset mb-2 p-3">

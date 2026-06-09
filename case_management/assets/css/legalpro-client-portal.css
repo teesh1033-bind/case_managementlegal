@@ -127,7 +127,9 @@ body.client-portal-page .main-content .card:not([class*="-hero"]) {
 }
 .legalpro-client-portal .cp-row-icon.dashboard-stat-icon-wrap,
 .legalpro-client-portal .cc-case-icon.dashboard-stat-icon-wrap,
-.legalpro-client-portal .cct-row-icon.dashboard-stat-icon-wrap {
+.legalpro-client-portal .cct-row-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .ccv-service-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .ccv-appt-icon.dashboard-stat-icon-wrap {
     width: 2.5rem;
     height: 2.5rem;
     min-width: 2.5rem;
@@ -136,7 +138,9 @@ body.client-portal-page .main-content .card:not([class*="-hero"]) {
 }
 .legalpro-client-portal .cp-empty-icon.dashboard-stat-icon-wrap,
 .legalpro-client-portal .cc-empty-icon.dashboard-stat-icon-wrap,
-.legalpro-client-portal .cct-empty-icon.dashboard-stat-icon-wrap {
+.legalpro-client-portal .cct-empty-icon.dashboard-stat-icon-wrap,
+.legalpro-client-portal .ccv-service-icon.dashboard-stat-icon-wrap.mx-auto,
+.legalpro-client-portal .ccv-appt-icon.dashboard-stat-icon-wrap.mx-auto {
     width: 3.25rem;
     height: 3.25rem;
     min-width: 3.25rem;
