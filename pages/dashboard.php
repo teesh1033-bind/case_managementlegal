@@ -352,7 +352,6 @@ echo ob_get_clean();
                 <a href="clients.php"      class="btn btn-sm btn-outline-secondary mb-0">Clients</a>
             </div>
 
-            <?php include __DIR__ . '/../inc/menunav.php'; // re-use navbar utilities if separate ?>
         </div>
     </nav>
 

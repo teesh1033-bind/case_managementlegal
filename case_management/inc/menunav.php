@@ -4,6 +4,11 @@
 require_once __DIR__ . '/admin-layout.php';
 require_once __DIR__ . '/legalpro-icons.php';
 
+if (defined('LEGALPRO_ADMIN_MENUNAV_LOADED')) {
+    return;
+}
+define('LEGALPRO_ADMIN_MENUNAV_LOADED', true);
+
 $companyBranding = getCompanyBranding();
 $companyName = $companyBranding['name'];
 $companyLogoUrl = $companyBranding['logo_url'];
@@ -25,22 +30,24 @@ $menuItems = [
     ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
 
-function isActive($itemId, $currentPage)
-{
-    if ($itemId === 'tables' && in_array($currentPage, ['tables', 'case-detail', 'case-view', 'case-edit', 'case-new'], true)) {
-        return true;
-    }
-    if ($itemId === 'clients' && in_array($currentPage, ['clients', 'client-detail'], true)) {
-        return true;
-    }
-    if ($itemId === 'appointments' && in_array($currentPage, ['appointments', 'new_appointment'], true)) {
-        return true;
-    }
-    if ($itemId === 'court-tracking' && $currentPage === 'court-tracking') {
-        return true;
-    }
+if (!function_exists('legalpro_admin_menu_is_active')) {
+    function legalpro_admin_menu_is_active($itemId, $currentPage)
+    {
+        if ($itemId === 'tables' && in_array($currentPage, ['tables', 'case-detail', 'case-view', 'case-edit', 'case-new'], true)) {
+            return true;
+        }
+        if ($itemId === 'clients' && in_array($currentPage, ['clients', 'client-detail'], true)) {
+            return true;
+        }
+        if ($itemId === 'appointments' && in_array($currentPage, ['appointments', 'new_appointment'], true)) {
+            return true;
+        }
+        if ($itemId === 'court-tracking' && $currentPage === 'court-tracking') {
+            return true;
+        }
 
-    return $itemId === $currentPage;
+        return $itemId === $currentPage;
+    }
 }
 
 global $pdo;
@@ -71,7 +78,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
     <div class="collapse navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
         <ul class="navbar-nav legalpro-sidebar-nav">
             <?php foreach ($menuItems as $item): ?>
-                <?php $active = isActive($item['id'], $currentPage); ?>
+                <?php $active = legalpro_admin_menu_is_active($item['id'], $currentPage); ?>
                 <li class="nav-item">
                     <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
                         <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
