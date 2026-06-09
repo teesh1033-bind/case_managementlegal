@@ -21,10 +21,11 @@ function legalpro_render_client_page_navbar(
         $titleTag = 'h5';
     }
 
-    $welcomeName = (string) ($options['client_name'] ?? '{CLIENT_NAME}');
-    if ($welcomeName !== '{CLIENT_NAME}') {
-        $welcomeName = htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8');
+    $welcomeName = (string) ($options['client_name'] ?? '');
+    if ($welcomeName === '' || $welcomeName === '{CLIENT_NAME}') {
+        $welcomeName = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'] : 'Client';
     }
+    $welcomeName = htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8');
 
     $includeSearch = (bool) ($options['include_search'] ?? ($searchPlaceholder !== ''));
     $searchValue = htmlspecialchars((string) ($options['search_value'] ?? ''), ENT_QUOTES, 'UTF-8');
