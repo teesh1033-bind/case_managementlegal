@@ -174,6 +174,15 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 {
     $soft12 = portalThemeHexToRgba($primary, 0.12);
     $soft20 = portalThemeHexToRgba($primary, 0.2);
+    $soft35 = portalThemeHexToRgba($primary, 0.35);
+    $primaryOnDark = portalThemeMixHex($primary, '#ffffff', 0.55);
+    $rgbParts = array_map('intval', explode(',', $rgb));
+    $primaryDark = portalThemeHexFromRgb(
+        min(255, $rgbParts[0] + 36),
+        min(255, max(0, $rgbParts[1] - 1)),
+        min(255, $rgbParts[2])
+    );
+    $gradient310 = 'linear-gradient(310deg, ' . $primary . ' 0%, ' . $primaryDark . ' 100%)';
 
     $bodies = 'body.legalpro-dark-mode,'
         . 'body.legalpro-dark-mode.legalpro-admin-portal,'
@@ -192,6 +201,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'body.legalpro-dark-mode.lawyer-appointments-page,'
         . 'body.legalpro-dark-mode.lawyer-availability-page,'
         . 'body.legalpro-dark-mode.lawyer-case-view-page,'
+        . 'body.legalpro-dark-mode.admin-case-view-page,'
         . 'body.legalpro-dark-mode.lawyer-client-view-page,'
         . 'body.legalpro-dark-mode.lawyer-court-tracking-page,'
         . 'body.legalpro-dark-mode.lawyer-tasks-page,'
@@ -498,10 +508,23 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: #fff !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .dashboard-quick-actions .btn-outline-white {'
+    $css .= 'body.legalpro-dark-mode.legalpro-admin-portal .dashboard-quick-actions .btn-outline-white {'
         . 'background: transparent !important;'
-        . 'border-color: ' . portalThemeHexToRgba($primary, 0.45) . ' !important;'
-        . 'color: ' . $primary . ' !important;'
+        . 'border-color: ' . portalThemeHexToRgba($primary, 0.55) . ' !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.legalpro-admin-portal .dashboard-quick-actions .btn-outline-white:hover,'
+        . 'body.legalpro-dark-mode.legalpro-admin-portal .dashboard-quick-actions .btn-outline-white:focus {'
+        . 'background: ' . portalThemeHexToRgba($primary, 0.18) . ' !important;'
+        . 'border-color: ' . portalThemeHexToRgba($primary, 0.7) . ' !important;'
+        . 'color: #fff !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.legalpro-admin-portal .dashboard-quick-actions .btn-white {'
+        . 'background: ' . $primary . ' !important;'
+        . 'border-color: ' . $primary . ' !important;'
+        . 'color: #fff !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode hr,'
@@ -665,7 +688,6 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: var(--lp-dark-text) !important;'
         . '}';
 
-    $primaryOnDark = portalThemeMixHex($primary, '#ffffff', 0.55);
     $dangerSoft = 'rgba(245, 54, 92, 0.16)';
     $dangerBorder = 'rgba(245, 54, 92, 0.28)';
     $infoSoft = portalThemeHexToRgba($primary, 0.14);
@@ -759,6 +781,21 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'body.legalpro-dark-mode .ca-status-pill--done {'
         . 'background: rgba(255, 255, 255, 0.08) !important;'
         . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-pill--priority-high {'
+        . 'background: ' . portalThemeHexToRgba($primary, 0.22) . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-pill--priority-urgent {'
+        . 'background: rgba(245, 54, 92, 0.22) !important;'
+        . 'color: #ff9eb5 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-pill--priority-medium {'
+        . 'background: rgba(130, 94, 228, 0.22) !important;'
+        . 'color: #c4b5fd !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .ca-status-pill--muted {'
@@ -1036,6 +1073,31 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'background: ' . $soft12 . ' !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode.admin-cases-page .legalpro-case-number {'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-cases-page .legalpro-case-number:hover {'
+        . 'color: #fff !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-cases-page .legalpro-case-fee {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-cases-page .btn-legalpro-case-open {'
+        . 'background: ' . portalThemeHexToRgba($primary, 0.18) . ' !important;'
+        . 'border-color: ' . portalThemeHexToRgba($primary, 0.55) . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-cases-page .btn-legalpro-case-open:hover,'
+        . 'body.legalpro-dark-mode.admin-cases-page .btn-legalpro-case-open:focus {'
+        . 'background: ' . $primary . ' !important;'
+        . 'border-color: ' . $primary . ' !important;'
+        . 'color: #fff !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode.admin-court-tracking-page .card h6,'
         . 'body.legalpro-dark-mode.admin-court-tracking-page .dashboard-calendar-hub__title {'
         . 'color: var(--lp-dark-text) !important;'
@@ -1257,6 +1319,175 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode .cct-panel .card-body .text-muted {'
         . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-hub {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-hub__header {'
+        . 'background: linear-gradient(135deg, ' . $soft12 . ' 0%, var(--lp-dark-surface-raised) 100%) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-hub__body {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-tabs .nav-link {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . 'box-shadow: none !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-tabs .nav-link:hover {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-tabs .nav-link.active {'
+        . 'background: ' . $gradient310 . ' !important;'
+        . 'color: #fff !important;'
+        . 'box-shadow: 0 6px 16px ' . portalThemeHexToRgba($primary, 0.35) . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-tabs__icon {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-tabs__icon .lp-icon svg {'
+        . 'stroke: currentColor !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-feed-item__icon.dashboard-stat-icon-wrap .lp-icon svg,'
+        . 'body.legalpro-dark-mode .case-feed-empty__icon.dashboard-stat-icon-wrap .lp-icon svg {'
+        . 'stroke: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-tabs .nav-link.active .case-detail-tabs__icon {'
+        . 'background: rgba(255, 255, 255, 0.22) !important;'
+        . 'color: #fff !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-tabs__count {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-tabs .nav-link.active .case-detail-tabs__count {'
+        . 'background: rgba(255, 255, 255, 0.25) !important;'
+        . 'color: #fff !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-feed-item {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: none !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-feed-item:hover {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-feed-item__title {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-feed-item__subtitle {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-feed-empty {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: ' . $soft35 . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-feed-empty__icon {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-feed-empty p {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $caseDetailSurfaces = 'body.legalpro-dark-mode .case-detail-table-wrap,'
+        . 'body.legalpro-dark-mode .case-detail-form-card,'
+        . 'body.legalpro-dark-mode .case-detail-hub .timeline-block,'
+        . 'body.legalpro-dark-mode .case-detail-hub .chat-messages,'
+        . 'body.legalpro-dark-mode .case-detail-hub .card.mb-3';
+
+    $css .= $caseDetailSurfaces . ' {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: none !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-form-card .card-header,'
+        . 'body.legalpro-dark-mode .case-detail-hub .card.mb-3 .card-header {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'border-bottom-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-table-wrap .table td,'
+        . 'body.legalpro-dark-mode .case-detail-table-wrap .table th {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-hub .chat-message.bg-light {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-hub .chat-message.text-dark,'
+        . 'body.legalpro-dark-mode .case-detail-hub .chat-message strong {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .case-detail-hub .chat-message .text-muted {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-case-view-page .card .card {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-case-view-page .services-list .border-bottom,'
+        . 'body.legalpro-dark-mode.admin-case-view-page .services-list .border-top {'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-case-view-page hr.horizontal.dark {'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'opacity: 1 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-case-view-page .btn-outline-primary {'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . 'border-color: ' . $soft35 . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-case-view-page .btn-outline-primary:hover,'
+        . 'body.legalpro-dark-mode.admin-case-view-page .btn-outline-primary:focus {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'color: #fff !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-case-view-page .case-detail-form-card input[type="file"].form-control {'
+        . 'background-color: var(--lp-dark-input-bg) !important;'
+        . 'border-color: var(--lp-dark-border-strong) !important;'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.admin-case-view-page .case-detail-form-card input[type="file"].form-control::file-selector-button {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'border-color: var(--lp-dark-border-strong) !important;'
+        . 'color: var(--lp-dark-text) !important;'
         . '}';
 
     return $css;

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
@@ -164,20 +165,7 @@ if (empty($appointments)) {
         } else {
             $editActionHtml = '<a href="new_appointment.php?id=' . (int) $appointment['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>';
         }
-        switch ($status) {
-            case 'accepted':
-                $badgeClass = 'bg-gradient-success';
-                $statusText = 'Accepted';
-                break;
-            case 'rejected':
-                $badgeClass = 'bg-gradient-danger';
-                $statusText = 'Rejected';
-                break;
-            default:
-                $badgeClass = 'bg-gradient-warning';
-                $statusText = 'Pending';
-                break;
-        }
+        $statusBadge = lawyer_appointment_status_badge($appointment);
 
         $appointmentsRows .= '
         <tr>
@@ -199,9 +187,7 @@ if (empty($appointments)) {
             <td class="text-center">
                 <p class="text-sm font-weight-bold mb-0">' . htmlspecialchars($startsAt) . '</p>
             </td>
-            <td class="text-center">
-                <span class="badge ' . $badgeClass . ' badge-sm">' . $statusText . '</span>
-            </td>
+            <td class="text-center">' . $statusBadge . '</td>
             <td class="text-end pe-3">
                 <div class="d-flex gap-1 justify-content-end">
                     ' . $editActionHtml . '
