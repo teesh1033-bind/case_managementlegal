@@ -164,17 +164,42 @@ if (!$case) {
     exit;
 }
 
+require_once __DIR__ . '/../inc/admin-layout.php';
+
+$iconServiceRow = legalpro_icon('receipt');
+$iconServiceEmpty = legalpro_icon('receipt');
+$iconApptRow = legalpro_icon('calendar-clock');
+$iconApptEmpty = legalpro_icon('calendar');
+
 // Build services list
 $servicesHtml = '';
 $totalFees = 0;
 if (!empty($services)) {
     foreach ($services as $service) {
-        $servicesHtml .= '<li class="list-group-item d-flex justify-content-between align-items-center">' . htmlspecialchars($service['service_name']) . '<span class="badge bg-primary rounded-pill">$ ' . number_format($service['price'], 2) . '</span></li>';
+        $pricePill = '<span class="ca-status-pill ca-status-pill--muted">$ ' . number_format($service['price'], 2) . '</span>';
+        $servicesHtml .= '<li class="list-group-item border-0 px-0">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3 min-width-0">
+                    <div class="ccv-service-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconServiceRow . '</div>
+                    <span class="text-sm font-weight-bold">' . htmlspecialchars($service['service_name']) . '</span>
+                </div>
+                ' . $pricePill . '
+            </div>
+        </li>';
         $totalFees += $service['price'];
     }
-    $servicesHtml .= '<li class="list-group-item d-flex justify-content-between align-items-center fw-bold">Total Fees<span class="badge bg-success rounded-pill">$ ' . number_format($totalFees, 2) . '</span></li>';
+    $totalPill = '<span class="ca-status-pill ca-status-pill--done">$ ' . number_format($totalFees, 2) . '</span>';
+    $servicesHtml .= '<li class="list-group-item border-0 px-0 pt-3">
+        <div class="d-flex align-items-center justify-content-between gap-3">
+            <span class="text-sm font-weight-bold">Total Fees</span>
+            ' . $totalPill . '
+        </div>
+    </li>';
 } else {
-    $servicesHtml = '<li class="list-group-item text-muted">No services defined yet.</li>';
+    $servicesHtml = '<div class="text-center py-4">
+        <div class="ccv-service-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconServiceEmpty . '</div>
+        <p class="text-sm text-muted mb-0 mt-3">No services defined yet.</p>
+    </div>';
 }
 
 // Build stages list
@@ -305,20 +330,24 @@ if (!empty($documents)) {
 $appointmentsHtml = '';
 if (!empty($appointments)) {
     foreach ($appointments as $apt) {
-        $status = strtotime($apt['starts_at']) > time() ? '<span class="badge badge-sm bg-gradient-info">Upcoming</span>' : '<span class="badge badge-sm bg-gradient-success">Completed</span>';
-        $appointmentsHtml .= '<div class="d-flex align-items-center mb-3">
-            <div class="w-100">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 text-sm">' . date('M d, Y g:i A', strtotime($apt['starts_at'])) . '</h6>
-                    ' . $status . '
+        $statusBadge = client_appointment_status_badge($apt);
+        $appointmentsHtml .= '<div class="d-flex align-items-start gap-3 mb-3">
+            <div class="ccv-appt-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconApptRow . '</div>
+            <div class="w-100 min-width-0">
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                    <h6 class="mb-0 text-sm font-weight-bold">' . date('M d, Y g:i A', strtotime($apt['starts_at'])) . '</h6>
+                    ' . $statusBadge . '
                 </div>
-                <p class="text-xs text-secondary mb-0">Lawyer: ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
+                <p class="text-xs text-secondary mb-0 mt-1">Lawyer: ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
                 <p class="text-xs text-secondary mb-0">Notes: ' . htmlspecialchars($apt['notes'] ?: 'No notes') . '</p>
             </div>
         </div>';
     }
 } else {
-    $appointmentsHtml = '<p class="text-muted text-sm">No appointments scheduled.</p>';
+    $appointmentsHtml = '<div class="text-center py-4">
+        <div class="ccv-appt-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconApptEmpty . '</div>
+        <p class="text-sm text-muted mb-0 mt-3">No appointments scheduled.</p>
+    </div>';
 }
 
 // Build events HTML using the new CaseEvents class
@@ -327,7 +356,6 @@ $eventsHtml = CaseEvents::renderEventsTimeline($case_id);
 $caseNumber = 'C-' . str_pad($case['id'], 4, '0', STR_PAD_LEFT);
 $lawyerNames = $case['lawyer_names'] ?: 'Unassigned';
 
-require_once __DIR__ . '/../inc/admin-layout.php';
 $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
 $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
 $categoryBadge = '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars((string) ($case['category'] ?? '')) . '</span>';

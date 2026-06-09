@@ -415,6 +415,35 @@ function client_case_priority_badge(string $priority): string
     return '<span class="ca-status-pill ' . $pill . '">' . htmlspecialchars($label) . '</span>';
 }
 
+function client_appointment_status_badge(array $appointment): string
+{
+    $status = strtolower((string) ($appointment['status'] ?? ''));
+    $startsAt = !empty($appointment['starts_at']) ? strtotime($appointment['starts_at']) : 0;
+    $endsAt = !empty($appointment['ends_at']) ? strtotime($appointment['ends_at']) : null;
+    $now = time();
+
+    if ($status === 'pending') {
+        return '<span class="ca-status-pill ca-status-pill--pending">Pending approval</span>';
+    }
+    if ($status === 'accepted') {
+        if ($endsAt && $endsAt < $now) {
+            return '<span class="ca-status-pill ca-status-pill--done">Completed</span>';
+        }
+        if ($startsAt > $now) {
+            return '<span class="ca-status-pill ca-status-pill--scheduled">Upcoming</span>';
+        }
+
+        return '<span class="ca-status-pill ca-status-pill--scheduled">In progress</span>';
+    }
+    if ($status === 'rejected') {
+        return '<span class="ca-status-pill ca-status-pill--declined">Rejected</span>';
+    }
+
+    $label = ucfirst($status ?: 'unknown');
+
+    return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+}
+
 function lawyer_appointment_status_badge(array $appointment): string
 {
     $status = strtolower((string) ($appointment['status'] ?? ''));
