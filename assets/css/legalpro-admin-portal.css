@@ -922,7 +922,8 @@ body.admin-cases-page .btn-legalpro-case-open:hover {
     border-color: var(--lp-cases-accent) !important;
 }
 
-body.legalpro-admin-portal .lp-pill {
+body.legalpro-admin-portal .lp-pill,
+body.legalpro-admin-portal .ca-status-pill {
     display: inline-block;
     font-size: 0.72rem;
     font-weight: 700;
@@ -930,6 +931,31 @@ body.legalpro-admin-portal .lp-pill {
     border-radius: 999px;
     line-height: 1.2;
     white-space: nowrap;
+}
+
+body.legalpro-admin-portal .ca-status-pill--pending {
+    background: rgba(251, 140, 0, 0.14);
+    color: #c45c00;
+}
+
+body.legalpro-admin-portal .ca-status-pill--scheduled {
+    background: rgba(94, 114, 228, 0.14);
+    color: #5e72e4;
+}
+
+body.legalpro-admin-portal .ca-status-pill--done {
+    background: rgba(103, 116, 142, 0.12);
+    color: #67748e;
+}
+
+body.legalpro-admin-portal .ca-status-pill--declined {
+    background: rgba(245, 54, 92, 0.12);
+    color: #d6336c;
+}
+
+body.legalpro-admin-portal .ca-status-pill--muted {
+    background: rgba(103, 116, 142, 0.1);
+    color: #8392ab;
 }
 
 body.legalpro-admin-portal .lp-pill--priority-high {

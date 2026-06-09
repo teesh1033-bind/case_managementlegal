@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../inc/legalpro-icons.php';
 require_once __DIR__ . '/../lib/case_events.php';
 
 $message = '';
@@ -253,21 +255,42 @@ if (empty($services)) {
     </div>';
 }
 
-function caseDetailFeedEmpty($icon, $message)
+function caseDetailFeedEmpty(string $iconName, string $message): string
 {
-    return '<div class="case-feed-empty"><div class="case-feed-empty__icon"><i class="ni ' . htmlspecialchars($icon) . '"></i></div><p>' . htmlspecialchars($message) . '</p></div>';
+    return '<div class="case-feed-empty"><div class="case-feed-empty__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary d-inline-flex align-items-center justify-content-center">'
+        . legalpro_icon($iconName)
+        . '</div><p>' . htmlspecialchars($message) . '</p></div>';
 }
 
-function caseDetailFeedItem($accent, $icon, $title, $subtitle, $asideHtml)
+function caseDetailFeedItem(string $accent, string $iconName, string $title, string $subtitle, string $asideHtml): string
 {
+    $accentKey = preg_replace('/[^a-z]/', '', strtolower($accent));
+    if ($accentKey === '') {
+        $accentKey = 'primary';
+    }
+
     return '<article class="case-feed-item">
-        <div class="case-feed-item__icon case-feed-item__icon--' . htmlspecialchars($accent) . '"><i class="ni ' . htmlspecialchars($icon) . '"></i></div>
+        <div class="case-feed-item__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--' . htmlspecialchars($accentKey) . ' flex-shrink-0">'
+        . legalpro_icon($iconName)
+        . '</div>
         <div class="case-feed-item__body">
             <h6 class="case-feed-item__title">' . $title . '</h6>
             <p class="case-feed-item__subtitle">' . $subtitle . '</p>
         </div>
         <div class="case-feed-item__aside">' . $asideHtml . '</div>
     </article>';
+}
+
+function legalpro_case_detail_tab(string $href, string $icon, string $label, int $count, bool $active = false): string
+{
+    $activeClass = $active ? ' active' : '';
+
+    return '<li class="nav-item" role="presentation">'
+        . '<a class="nav-link' . $activeClass . '" data-bs-toggle="tab" href="' . htmlspecialchars($href) . '" role="tab">'
+        . '<span class="case-detail-tabs__icon">' . legalpro_icon($icon) . '</span>'
+        . '<span class="case-detail-tabs__label">' . htmlspecialchars($label) . '</span>'
+        . '<span class="case-detail-tabs__count">' . (int) $count . '</span>'
+        . '</a></li>';
 }
 
 function caseDetailFeedWrap($inner)
@@ -278,7 +301,7 @@ function caseDetailFeedWrap($inner)
 // Build stages HTML
 $stagesHtml = '';
 if (empty($stages)) {
-    $stagesHtml = caseDetailFeedEmpty('ni-collection', 'No case stages recorded yet.');
+    $stagesHtml = caseDetailFeedEmpty('layers', 'No case stages recorded yet.');
 } else {
     foreach ($stages as $stage) {
         $stagesHtml .= '
@@ -460,14 +483,8 @@ foreach ($assignedLawyers as $lawyer) {
 }
 $lawyerName = !empty($lawyerNames) ? implode(', ', $lawyerNames) : 'No lawyers assigned';
 
-$statusBadgeClass = 'bg-gradient-info';
-$caseStatus = isset($case['status']) ? $case['status'] : 'open';
-$statusText = ucfirst(str_replace('_', ' ', $caseStatus));
-if ($caseStatus === 'in_progress') {
-    $statusBadgeClass = 'bg-gradient-warning';
-} elseif ($caseStatus === 'closed') {
-    $statusBadgeClass = 'bg-gradient-success';
-}
+$caseStatus = isset($case['status']) ? (string) $case['status'] : 'open';
+$caseStatusBadgeHtml = legalpro_case_status_badge($caseStatus);
 
 // Build HTML sections
 $messageHtml = '';
@@ -481,7 +498,7 @@ if ($message) {
 // Appointments section
 $appointmentsHtml = '';
 if (empty($appointments)) {
-    $appointmentsHtml = caseDetailFeedEmpty('ni-time-alarm', 'No appointments scheduled for this case.');
+    $appointmentsHtml = caseDetailFeedEmpty('calendar', 'No appointments scheduled for this case.');
 } else {
     $items = '';
     foreach ($appointments as $appointment) {
@@ -489,7 +506,7 @@ if (empty($appointments)) {
         $lawyer = isset($appointment['lawyer_name']) ? $appointment['lawyer_name'] : 'Unassigned';
         $items .= caseDetailFeedItem(
             'info',
-            'ni-time-alarm',
+            'calendar',
             'Appointment',
             htmlspecialchars($startDate) . ' · with ' . htmlspecialchars($lawyer),
             '<span class="case-status-pill case-status-pill--scheduled">Scheduled</span>'
@@ -501,7 +518,7 @@ if (empty($appointments)) {
 // Invoices section
 $invoicesHtml = '';
 if (empty($invoices)) {
-    $invoicesHtml = caseDetailFeedEmpty('ni-credit-card', 'No invoices have been created for this case.');
+    $invoicesHtml = caseDetailFeedEmpty('file-text', 'No invoices have been created for this case.');
 } else {
     $items = '';
     foreach ($invoices as $invoice) {
@@ -512,7 +529,7 @@ if (empty($invoices)) {
         $pillClass = $status === 'Paid' ? 'case-status-pill--paid' : 'case-status-pill--pending';
         $items .= caseDetailFeedItem(
             'primary',
-            'ni-credit-card',
+            'file-text',
             htmlspecialchars($invoiceNumber),
             htmlspecialchars($amount),
             '<span class="case-status-pill ' . $pillClass . '">' . htmlspecialchars($status) . '</span>
@@ -527,7 +544,7 @@ if (empty($invoices)) {
 // Payments/Receipts section
 $paymentsHtml = '';
 if (empty($payments)) {
-    $paymentsHtml = caseDetailFeedEmpty('ni-money-coins', 'No payments recorded for this case.');
+    $paymentsHtml = caseDetailFeedEmpty('banknote', 'No payments recorded for this case.');
 } else {
     $items = '';
     foreach ($payments as $payment) {
@@ -536,7 +553,7 @@ if (empty($payments)) {
         $method = ucfirst(isset($payment['method']) ? $payment['method'] : 'cash');
         $items .= caseDetailFeedItem(
             'success',
-            'ni-money-coins',
+            'banknote',
             htmlspecialchars($amount),
             htmlspecialchars($method) . ' · ' . htmlspecialchars($date),
             '<a href="payment-receipt.php?id=' . (int)$payment['id'] . '" class="btn btn-sm bg-gradient-success mb-0" target="_blank">
@@ -550,7 +567,7 @@ if (empty($payments)) {
 // Documents section
 $documentsHtml = '';
 if (empty($documents)) {
-    $documentsHtml = caseDetailFeedEmpty('ni-folder-17', 'No documents uploaded for this case.');
+    $documentsHtml = caseDetailFeedEmpty('folder-open', 'No documents uploaded for this case.');
 } else {
     $items = '';
     foreach ($documents as $document) {
@@ -560,14 +577,14 @@ if (empty($documents)) {
         $fileUrl = '../' . ltrim($document['filepath'], '/');
 
         $fileExtension = strtolower(pathinfo($document['filename'], PATHINFO_EXTENSION));
-        $iconClass = 'ni-single-copy-04';
+        $iconName = 'file-text';
         if (in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
-            $iconClass = 'ni-image';
+            $iconName = 'image';
         }
 
         $items .= caseDetailFeedItem(
             'info',
-            $iconClass,
+            $iconName,
             htmlspecialchars($displayName),
             'Uploaded ' . htmlspecialchars($uploadedDate) . ' · by ' . htmlspecialchars($uploadedBy),
             '<a href="' . htmlspecialchars($fileUrl) . '" class="btn btn-sm btn-outline-primary mb-0" target="_blank">
@@ -580,6 +597,17 @@ if (empty($documents)) {
     }
     $documentsHtml = caseDetailFeedWrap($items);
 }
+
+$caseDetailTabsNav = '<ul class="nav case-detail-tabs" role="tablist">'
+    . legalpro_case_detail_tab('#appointments', 'calendar', 'Appointments', count($appointments), true)
+    . legalpro_case_detail_tab('#invoices', 'file-text', 'Invoices', count($invoices))
+    . legalpro_case_detail_tab('#payments', 'banknote', 'Payments', count($payments))
+    . legalpro_case_detail_tab('#documents', 'folder-open', 'Documents', count($documents))
+    . legalpro_case_detail_tab('#stages', 'layers', 'Summary', count($stages))
+    . legalpro_case_detail_tab('#tasks', 'list-checks', 'Tasks', count($tasks))
+    . legalpro_case_detail_tab('#comments', 'message-circle', 'Comments', count($comments))
+    . legalpro_case_detail_tab('#events', 'activity', 'Activity', count($caseEvents))
+    . '</ul>';
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -596,9 +624,9 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/case-detail-tabs.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/case-detail-tabs.css?v=2" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
     </aside>
@@ -644,7 +672,7 @@ $html = <<<'HTML'
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <p class="text-xs text-uppercase text-muted mb-1">Status</p>
-                                            <span class="badge {STATUS_BADGE_CLASS}">{STATUS_TEXT}</span>
+                                            {STATUS_BADGE_HTML}
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <p class="text-xs text-uppercase text-muted mb-1">Client</p>
@@ -722,64 +750,7 @@ $html = <<<'HTML'
                     <div class="card case-detail-hub border-0 shadow-sm">
                         <div class="card-header case-detail-hub__header border-0">
                             <div class="case-detail-tabs-wrap">
-                                <ul class="nav case-detail-tabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link active" data-bs-toggle="tab" href="#appointments" role="tab">
-                                            <span class="case-detail-tabs__icon"><i class="ni ni-time-alarm"></i></span>
-                                            <span class="case-detail-tabs__label">Appointments</span>
-                                            <span class="case-detail-tabs__count">{APPOINTMENTS_COUNT}</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#invoices" role="tab">
-                                            <span class="case-detail-tabs__icon"><i class="ni ni-credit-card"></i></span>
-                                            <span class="case-detail-tabs__label">Invoices</span>
-                                            <span class="case-detail-tabs__count">{INVOICES_COUNT}</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#payments" role="tab">
-                                            <span class="case-detail-tabs__icon"><i class="ni ni-money-coins"></i></span>
-                                            <span class="case-detail-tabs__label">Payments</span>
-                                            <span class="case-detail-tabs__count">{PAYMENTS_COUNT}</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#documents" role="tab">
-                                            <span class="case-detail-tabs__icon"><i class="ni ni-folder-17"></i></span>
-                                            <span class="case-detail-tabs__label">Documents</span>
-                                            <span class="case-detail-tabs__count">{DOCUMENTS_COUNT}</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#stages" role="tab">
-                                            <span class="case-detail-tabs__icon"><i class="ni ni-collection"></i></span>
-                                            <span class="case-detail-tabs__label">Summary</span>
-                                            <span class="case-detail-tabs__count">{STAGES_COUNT}</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#tasks" role="tab">
-                                            <span class="case-detail-tabs__icon"><i class="ni ni-check-bold"></i></span>
-                                            <span class="case-detail-tabs__label">Tasks</span>
-                                            <span class="case-detail-tabs__count">{TASKS_COUNT}</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#comments" role="tab">
-                                            <span class="case-detail-tabs__icon"><i class="ni ni-chat-round"></i></span>
-                                            <span class="case-detail-tabs__label">Comments</span>
-                                            <span class="case-detail-tabs__count">{COMMENTS_COUNT}</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#events" role="tab">
-                                            <span class="case-detail-tabs__icon"><i class="ni ni-watch-time"></i></span>
-                                            <span class="case-detail-tabs__label">Activity</span>
-                                            <span class="case-detail-tabs__count">{EVENTS_COUNT}</span>
-                                        </a>
-                                    </li>
-                                </ul>
+                                {CASE_DETAIL_TABS_NAV}
                             </div>
                         </div>
                         <div class="card-body case-detail-hub__body">
@@ -810,7 +781,7 @@ $html = <<<'HTML'
                                             <div class="card-body pt-0">
                                                 <form method="POST" action="">
                                                     <textarea class="form-control" name="comment" rows="3" placeholder="Write a comment for this case..." required></textarea>
-                                                    <button type="submit" class="btn bg-gradient-primary btn-sm mt-3 mb-0">Post Comment</button>
+                                                    <button type="submit" class="btn btn-dark btn-sm mt-3 mb-0">Post Comment</button>
                                                 </form>
                                             </div>
                                         </div>
@@ -831,7 +802,7 @@ $html = <<<'HTML'
                                                             <input type="file" class="form-control" name="file" required>
                                                         </div>
                                                     </div>
-                                                    <button type="submit" class="btn bg-gradient-success btn-sm mt-3 mb-0">Upload File</button>
+                                                    <button type="submit" class="btn btn-dark btn-sm mt-3 mb-0">Upload File</button>
                                                 </form>
                                             </div>
                                         </div>
@@ -881,22 +852,7 @@ if (!empty($comments)) {
         $alignment = 'justify-content-start';
         $marginClass = 'me-3';
 
-        // Add user type badge
-        $userTypeBadge = '';
-        switch ($comment['comment_type']) {
-            case 'client':
-                $userTypeBadge = '<span class="badge badge-sm bg-info">Client</span>';
-                break;
-            case 'lawyer':
-                $userTypeBadge = '<span class="badge badge-sm bg-success">Lawyer</span>';
-                break;
-            case 'admin':
-                $userTypeBadge = '<span class="badge badge-sm bg-warning">Admin</span>';
-                break;
-            case 'staff':
-                $userTypeBadge = '<span class="badge badge-sm bg-secondary">Staff</span>';
-                break;
-        }
+        $userTypeBadge = legalpro_comment_role_badge((string) ($comment['comment_type'] ?? ''));
 
         $commentsHtml .= '<div class="d-flex ' . $alignment . ' mb-3">
             <div class="chat-message ' . $bgColor . ' ' . $textColor . ' rounded-lg p-3 ' . $marginClass . '" style="max-width: 70%;">
@@ -913,7 +869,7 @@ if (!empty($comments)) {
     }
     $commentsHtml .= '</div>';
 } else {
-    $commentsHtml = caseDetailFeedEmpty('ni-chat-round', 'No comments yet. Start the conversation below.');
+    $commentsHtml = caseDetailFeedEmpty('message-circle', 'No comments yet. Start the conversation below.');
 }
 
 // Build tasks HTML
@@ -934,43 +890,8 @@ if (!empty($tasks)) {
             <tbody>';
 
     foreach ($tasks as $task) {
-        $statusBadge = '';
-        $statusClass = '';
-        switch ($task['status']) {
-            case 'pending':
-                $statusBadge = 'Pending';
-                $statusClass = 'bg-warning';
-                break;
-            case 'in_progress':
-                $statusBadge = 'In Progress';
-                $statusClass = 'bg-info';
-                break;
-            case 'completed':
-                $statusBadge = 'Completed';
-                $statusClass = 'bg-success';
-                break;
-            case 'cancelled':
-                $statusBadge = 'Cancelled';
-                $statusClass = 'bg-secondary';
-                break;
-        }
-
-        $priorityBadge = '';
-        $priorityClass = '';
-        switch ($task['priority']) {
-            case 'low':
-                $priorityBadge = 'Low';
-                $priorityClass = 'bg-light text-dark';
-                break;
-            case 'medium':
-                $priorityBadge = 'Medium';
-                $priorityClass = 'bg-warning';
-                break;
-            case 'high':
-                $priorityBadge = 'High';
-                $priorityClass = 'bg-danger';
-                break;
-        }
+        $statusBadgeHtml = legalpro_task_status_badge((string) ($task['status'] ?? ''));
+        $priorityBadgeHtml = legalpro_task_priority_badge((string) ($task['priority'] ?? ''));
 
         $dueDate = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
         $lawyerName = htmlspecialchars($task['lawyer_first_name'] . ' ' . $task['lawyer_last_name']);
@@ -985,16 +906,14 @@ if (!empty($tasks)) {
         $tasksHtml .= '</div>
             </td>
             <td class="text-sm">' . $lawyerName . '</td>
-            <td><span class="badge badge-sm ' . $statusClass . '">' . $statusBadge . '</span></td>
-            <td><span class="badge badge-sm ' . $priorityClass . '">' . $priorityBadge . '</span></td>
+            <td>' . $statusBadgeHtml . '</td>
+            <td>' . $priorityBadgeHtml . '</td>
             <td class="text-sm">' . $dueDate . '</td>
             <td>
                 <form method="POST" action="" style="display: inline;" onsubmit="return confirm(\'Are you sure you want to delete this task? This will remove it from the assigned lawyer\'s task list.\')">
                     <input type="hidden" name="action" value="delete_task">
                     <input type="hidden" name="task_id" value="' . $task['id'] . '">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                        <i class="ni ni-fat-remove"></i>
-                    </button>
+                    <button type="submit" class="btn btn-sm btn-danger mb-0">Delete</button>
                 </form>
             </td>
         </tr>';
@@ -1002,7 +921,7 @@ if (!empty($tasks)) {
 
     $tasksHtml .= '</tbody></table></div></div>';
 } else {
-    $tasksHtml = caseDetailFeedEmpty('ni-check-bold', 'No tasks assigned to this case yet.');
+    $tasksHtml = caseDetailFeedEmpty('list-checks', 'No tasks assigned to this case yet.');
 }
 
 
@@ -1022,8 +941,7 @@ $replacements = [
     '{CASE_TITLE}' => htmlspecialchars($case['title']),
     '{CLIENT_NAME}' => htmlspecialchars($clientName),
     '{LAWYER_NAME}' => htmlspecialchars($lawyerName),
-    '{STATUS_BADGE_CLASS}' => $statusBadgeClass,
-    '{STATUS_TEXT}' => $statusText,
+    '{STATUS_BADGE_HTML}' => $caseStatusBadgeHtml,
     '{PRIORITY}' => htmlspecialchars(isset($case['priority']) ? $case['priority'] : 'Normal'),
     '{CATEGORY}' => htmlspecialchars(isset($case['category']) ? $case['category'] : 'Civil'),
     '{START_DATE}' => $case['start_date'] ? date('M j, Y', strtotime($case['start_date'])) : 'Not set',
@@ -1033,6 +951,7 @@ $replacements = [
     '{TOTAL_FEES}' => $totalFees,
     '{TOTAL_INVOICED}' => $totalInvoiced,
     '{TOTAL_PAID}' => $totalPaid,
+    '{CASE_DETAIL_TABS_NAV}' => $caseDetailTabsNav,
     '{APPOINTMENTS_COUNT}' => count($appointments),
     '{INVOICES_COUNT}' => count($invoices),
     '{PAYMENTS_COUNT}' => count($payments),

@@ -323,6 +323,63 @@ function legalpro_case_status_badge(string $status): string
     return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
 }
 
+function legalpro_comment_role_badge(string $commentType): string
+{
+    $key = strtolower(trim($commentType));
+    $map = [
+        'client' => ['label' => 'Client', 'class' => 'lp-pill--status-progress'],
+        'lawyer' => ['label' => 'Lawyer', 'class' => 'lp-pill--status-active'],
+        'admin' => ['label' => 'Admin', 'class' => 'lp-pill--status-pending'],
+        'staff' => ['label' => 'Staff', 'class' => 'lp-pill--status-closed'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+}
+
+function legalpro_task_status_badge(string $status): string
+{
+    $key = strtolower(str_replace(' ', '_', trim($status)));
+    $map = [
+        'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
+        'completed' => ['label' => 'Completed', 'class' => 'lp-pill--status-active'],
+        'cancelled' => ['label' => 'Cancelled', 'class' => 'lp-pill--status-declined'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+}
+
+function legalpro_task_priority_badge(string $priority): string
+{
+    $key = strtolower(trim($priority));
+    $map = [
+        'low' => ['label' => 'Low', 'class' => 'lp-pill--status-closed'],
+        'medium' => ['label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
+        'high' => ['label' => 'High', 'class' => 'lp-pill--priority-high'],
+        'urgent' => ['label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = $priority !== '' ? ucwords($priority) : 'Medium';
+
+        return '<span class="lp-pill lp-pill--priority-medium">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+}
+
 function legalpro_court_date_status_meta(string $status): array
 {
     $key = strtolower(trim($status));
