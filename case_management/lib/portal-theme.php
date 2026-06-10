@@ -865,6 +865,62 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'box-shadow: none !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-panel__title,'
+        . 'body.legalpro-dark-mode .dashboard-upcoming-panel__title > span {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item__time {'
+        . 'color: #9aaeff !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item__time small {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . 'opacity: 1 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item__title {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item__sub {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item:hover {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: none !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item--scheduled .dashboard-upcoming-item__time {'
+        . 'color: #7dd3fc !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item--completed .dashboard-upcoming-item__time {'
+        . 'color: #6ee7b7 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item--postponed .dashboard-upcoming-item__time {'
+        . 'color: #fbbf24 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item--cancelled .dashboard-upcoming-item__time,'
+        . 'body.legalpro-dark-mode .dashboard-upcoming-item--rejected .dashboard-upcoming-item__time {'
+        . 'color: #f87171 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item--pending .dashboard-upcoming-item__time,'
+        . 'body.legalpro-dark-mode .dashboard-upcoming-item--accepted .dashboard-upcoming-item__time,'
+        . 'body.legalpro-dark-mode .dashboard-upcoming-item--approved .dashboard-upcoming-item__time {'
+        . 'color: #6ee7b7 !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode.legalpro-dashboard-page .dashboard-calendar-hub__head {'
         . 'border-bottom-color: var(--lp-dark-border) !important;'
         . '}';

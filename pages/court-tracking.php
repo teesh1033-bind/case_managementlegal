@@ -2,6 +2,8 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../inc/court-time-picker.php';
+require_once __DIR__ . '/../lib/court_time_booking.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -36,11 +38,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['add_court_date'])) {
         $case_id = (int)$_POST['case_id'];
-        $court_date = $_POST['court_date'] . ' ' . $_POST['court_time'];
+        $courtDatePart = trim((string) ($_POST['court_date'] ?? ''));
+        $courtTimePart = legalpro_normalize_time_hm($_POST['court_time'] ?? '');
+        $court_date = $courtDatePart . ' ' . $courtTimePart;
         $title = trim($_POST['title']);
         $description = trim($_POST['description']);
         $location = trim($_POST['location']);
         $created_by = (int)$_SESSION['admin_id'];
+
+        $bookingCheck = legalpro_validate_court_booking_datetime($pdo, $courtDatePart, $courtTimePart);
+        if (!$bookingCheck['ok']) {
+            $_SESSION['error_message'] = $bookingCheck['message'];
+            header('Location: court-tracking.php');
+            exit;
+        }
 
         try {
             $stmt = $pdo->prepare("
@@ -64,11 +75,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_court_date'])) {
         $id = (int)$_POST['id'];
         $case_id = (int)$_POST['case_id'];
-        $court_date = $_POST['court_date'] . ' ' . $_POST['court_time'];
+        $courtDatePart = trim((string) ($_POST['court_date'] ?? ''));
+        $courtTimePart = legalpro_normalize_time_hm($_POST['court_time'] ?? '');
+        $court_date = $courtDatePart . ' ' . $courtTimePart;
         $title = trim($_POST['title']);
         $description = trim($_POST['description']);
         $location = trim($_POST['location']);
         $status = $_POST['status'];
+
+        $bookingCheck = legalpro_validate_court_booking_datetime($pdo, $courtDatePart, $courtTimePart, $id, $status);
+        if (!$bookingCheck['ok']) {
+            $_SESSION['error_message'] = $bookingCheck['message'];
+            header('Location: court-tracking.php');
+            exit;
+        }
 
         try {
             $stmt = $pdo->prepare("
@@ -135,6 +155,8 @@ try {
 } catch (PDOException $e) {
     $cases = [];
 }
+
+$courtBookingEntries = legalpro_court_booking_entries_from_rows($court_dates);
 
 // Prepare calendar events for FullCalendar (dashboard-style dots)
 $calendar_events = [];
@@ -222,7 +244,7 @@ if (empty($upcomingCourtDates)) {
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
         .court-date-modal .modal-dialog {
-            max-width: 600px;
+            max-width: 640px;
         }
         .court-actions {
             display: inline-flex;
@@ -237,6 +259,7 @@ if (empty($upcomingCourtDates)) {
             text-align: center;
         }
     </style>
+    <?php legalpro_render_time_slot_picker_styles(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -402,13 +425,13 @@ if (empty($upcomingCourtDates)) {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label">Court Date *</label>
-                                <input type="date" name="court_date" class="form-control" required>
+                                <input type="date" name="court_date" id="add_court_date" class="form-control" required>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label">Court Time *</label>
-                                <input type="time" name="court_time" class="form-control" required>
+                                <?php echo legalpro_render_time_slot_picker('court_time', 'add_court_time_grid', 'add_court_time'); ?>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Title *</label>
@@ -456,13 +479,13 @@ if (empty($upcomingCourtDates)) {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label">Court Date *</label>
                                 <input type="date" name="court_date" id="edit_court_date" class="form-control" required>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label">Court Time *</label>
-                                <input type="time" name="court_time" id="edit_court_time" class="form-control" required>
+                                <?php echo legalpro_render_time_slot_picker('court_time', 'edit_court_time_grid', 'edit_court_time'); ?>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Title *</label>
@@ -648,6 +671,37 @@ if (empty($upcomingCourtDates)) {
             }
         }
 
+        var courtBookingEntries = <?php echo json_encode($courtBookingEntries, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
+
+        function getCourtBookedTimesForDate(dateValue, excludeId) {
+            return courtBookingEntries
+                .filter(function(entry) {
+                    if (!dateValue || entry.date !== dateValue) {
+                        return false;
+                    }
+                    if (excludeId && String(entry.id) === String(excludeId)) {
+                        return false;
+                    }
+                    return entry.status === 'scheduled';
+                })
+                .map(function(entry) { return entry.time; });
+        }
+
+        function refreshAddCourtTimeAvailability() {
+            var dateValue = document.getElementById('add_court_date') ? document.getElementById('add_court_date').value : '';
+            if (typeof updateLegalproTimeSlotAvailability === 'function') {
+                updateLegalproTimeSlotAvailability('add_court_time_grid', 'add_court_time', getCourtBookedTimesForDate(dateValue, null));
+            }
+        }
+
+        function refreshEditCourtTimeAvailability() {
+            var dateValue = document.getElementById('edit_court_date') ? document.getElementById('edit_court_date').value : '';
+            var excludeId = document.getElementById('edit_id') ? document.getElementById('edit_id').value : '';
+            if (typeof updateLegalproTimeSlotAvailability === 'function') {
+                updateLegalproTimeSlotAvailability('edit_court_time_grid', 'edit_court_time', getCourtBookedTimesForDate(dateValue, excludeId), { preserveSelection: true });
+            }
+        }
+
         function editCourtDate(id) {
             var events = <?php echo json_encode($court_dates, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
             var eventData = events.find(function(e) { return String(e.id) === String(id); });
@@ -656,8 +710,15 @@ if (empty($upcomingCourtDates)) {
                 document.getElementById('edit_id').value = eventData.id;
                 document.getElementById('edit_case_id').value = eventData.case_id;
                 var dateTime = new Date(eventData.court_date);
-                document.getElementById('edit_court_date').value = dateTime.toISOString().split('T')[0];
-                document.getElementById('edit_court_time').value = dateTime.toTimeString().split(' ')[0].substring(0, 5);
+                var dateValue = dateTime.toISOString().split('T')[0];
+                document.getElementById('edit_court_date').value = dateValue;
+                var editTime = dateTime.toTimeString().split(' ')[0].substring(0, 5);
+                var bookedTimes = getCourtBookedTimesForDate(dateValue, eventData.id);
+                if (typeof setLegalproTimeSlotSelection === 'function') {
+                    setLegalproTimeSlotSelection('edit_court_time_grid', 'edit_court_time', editTime, bookedTimes);
+                } else {
+                    document.getElementById('edit_court_time').value = editTime;
+                }
                 document.getElementById('edit_title').value = eventData.title;
                 document.getElementById('edit_description').value = eventData.description || '';
                 document.getElementById('edit_location').value = eventData.location || '';
@@ -676,5 +737,30 @@ if (empty($upcomingCourtDates)) {
                 form.submit();
             }
         }
+        var addCourtDateModal = document.getElementById('addCourtDateModal');
+        if (addCourtDateModal) {
+            addCourtDateModal.addEventListener('shown.bs.modal', function () {
+                if (typeof setLegalproTimeSlotSelection === 'function') {
+                    setLegalproTimeSlotSelection('add_court_time_grid', 'add_court_time', '', []);
+                }
+                refreshAddCourtTimeAvailability();
+            });
+        }
+
+        var addCourtDateInput = document.getElementById('add_court_date');
+        if (addCourtDateInput) {
+            addCourtDateInput.addEventListener('change', refreshAddCourtTimeAvailability);
+        }
+
+        var editCourtDateInput = document.getElementById('edit_court_date');
+        if (editCourtDateInput) {
+            editCourtDateInput.addEventListener('change', refreshEditCourtTimeAvailability);
+        }
+
+        var editCourtStatus = document.getElementById('edit_status');
+        if (editCourtStatus) {
+            editCourtStatus.addEventListener('change', refreshEditCourtTimeAvailability);
+        }
     </script>
+    <?php legalpro_render_time_slot_picker_script(); ?>
 <?php include __DIR__ . '/../inc/footer.php'; ?>
