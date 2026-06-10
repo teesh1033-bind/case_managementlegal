@@ -551,6 +551,46 @@ function client_case_priority_badge(string $priority): string
     return '<span class="ca-status-pill ' . $pill . '">' . htmlspecialchars($label) . '</span>';
 }
 
+function lawyer_task_status_badge(string $status): string
+{
+    $key = strtolower(str_replace(' ', '_', trim($status)));
+    $map = [
+        'pending' => ['label' => 'Pending', 'pill' => 'ca-status-pill--pending'],
+        'in_progress' => ['label' => 'In Progress', 'pill' => 'ca-status-pill--scheduled'],
+        'completed' => ['label' => 'Completed', 'pill' => 'ca-status-pill--done'],
+        'cancelled' => ['label' => 'Cancelled', 'pill' => 'ca-status-pill--muted'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+}
+
+function lawyer_task_priority_badge(string $priority): string
+{
+    $key = strtolower(trim($priority));
+    $labels = [
+        'low' => 'Low',
+        'medium' => 'Medium',
+        'high' => 'High',
+    ];
+    $label = $labels[$key] ?? ucwords($priority !== '' ? $priority : 'medium');
+
+    if ($key === 'high') {
+        $pill = 'ca-status-pill--declined';
+    } elseif ($key === 'low') {
+        $pill = 'ca-status-pill--muted';
+    } else {
+        $pill = 'ca-status-pill--pending';
+    }
+
+    return '<span class="ca-status-pill ' . $pill . '">' . htmlspecialchars($label) . '</span>';
+}
+
 function client_appointment_status_badge(array $appointment): string
 {
     $status = strtolower((string) ($appointment['status'] ?? ''));
