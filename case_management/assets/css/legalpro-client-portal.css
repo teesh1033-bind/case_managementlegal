@@ -27,6 +27,8 @@ body.client-portal-page,
 body.client-portal-page.bg-gray-100,
 body.client-profile-page,
 body.client-profile-page.bg-gray-100,
+body.client-chatbot-page,
+body.client-chatbot-page.bg-gray-100,
 body.g-sidenav-show.client-dashboard-page,
 body.g-sidenav-show.client-dashboard-page.bg-gray-100,
 body.g-sidenav-show.client-cases-page,
@@ -40,6 +42,8 @@ body.g-sidenav-show.client-payments-page.bg-gray-100,
 body.g-sidenav-show.client-portal-page,
 body.g-sidenav-show.client-portal-page.bg-gray-100,
 body.g-sidenav-show.client-profile-page,
+body.g-sidenav-show.client-chatbot-page,
+body.g-sidenav-show.client-chatbot-page.bg-gray-100,
 .search-portal-page--client {
     background: var(--client-portal-content-bg) !important;
     background-color: var(--client-portal-content-bg) !important;
@@ -54,6 +58,7 @@ body.client-court-tracking-page > .min-height-300,
 body.client-payments-page > .min-height-300,
 body.client-portal-page > .min-height-300,
 body.client-profile-page > .min-height-300,
+body.client-chatbot-page > .min-height-300,
 body.client-profile-page .bg-legalpro-client.position-fixed,
 .search-portal-page--client > .min-height-300 {
     display: none !important;
@@ -65,12 +70,14 @@ body.client-appointments-page .main-content,
 body.client-court-tracking-page .main-content,
 body.client-payments-page .main-content,
 body.client-portal-page .main-content,
+body.client-chatbot-page .main-content,
 body.client-dashboard-page .main-content > .container-fluid,
 body.client-cases-page .main-content > .container-fluid,
 body.client-appointments-page .main-content > .container-fluid,
 body.client-court-tracking-page .main-content > .container-fluid,
 body.client-payments-page .main-content > .container-fluid,
-body.client-portal-page .main-content > .container-fluid {
+body.client-portal-page .main-content > .container-fluid,
+body.client-chatbot-page .main-content > .container-fluid {
     background: transparent !important;
     background-color: transparent !important;
     background-image: none !important;
@@ -228,6 +235,74 @@ body.legalpro-client-portal .search-hero-field.legalpro-search-input-group > inp
 body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group.legalpro-search-input-group > .form-control,
 body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group.legalpro-search-input-group > input[type="search"].form-control {
     padding-right: 2.35rem !important;
+}
+
+/* Light mode — hero gradient cards: headings/paragraphs must be white (Argon sets dark h4/p colors) */
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-card,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-card,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-card,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-card,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-card,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-card {
+    color: #fff;
+}
+
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-meta,
+body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] h4,
+body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] p,
+body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] strong {
+    color: #fff !important;
+}
+
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-stat-pill .num,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-stat-pill .lbl,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-stat-pill .num,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-stat-pill .lbl,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-stat-pill .num,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-stat-pill .lbl,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-stat-pill .num,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-stat-pill .lbl {
+    color: #fff !important;
+}
+
+/* Client portal dark mode — neutral accents (no purple); theme overrides in portal-theme.php */
+body.legalpro-dark-mode.legalpro-client-portal {
+    --client-portal-gradient: linear-gradient(135deg, #464f68 0%, #3d455c 100%);
+    --lp-portal-primary: #e2e8f2;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .ca-status-pill--scheduled {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e2e8f2;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group:hover,
+body.legalpro-dark-mode.legalpro-client-portal .search-hero-field:hover {
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.22));
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group:focus-within,
+body.legalpro-dark-mode.legalpro-client-portal .search-hero-field:focus-within {
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.22));
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
 }
 
 /* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */

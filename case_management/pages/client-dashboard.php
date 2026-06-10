@@ -155,7 +155,7 @@ $html = <<<'HTML'
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>My Dashboard — LegalPro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -164,92 +164,94 @@ $html = <<<'HTML'
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
 
     <style>
+    *, *::before, *::after { box-sizing: border-box; }
     .client-dashboard-page {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: #f0f2f8;
         --cp-primary: var(--legalpro-theme-primary, #5e72e4);
         --cp-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
         --cp-primary-light: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
         --cp-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
         --cp-primary-border: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
-        --cp-primary-shadow: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.3);
         --cp-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
         --cp-success: #2dce89;
         --cp-warning: #fb6340;
-        --cp-danger: #f5365c;
         --cp-text: #1e293b;
         --cp-muted: #94a3b8;
         --cp-surface: #ffffff;
-        --cp-bg: #f1f5f9;
         --cp-border: rgba(0,0,0,0.07);
-        --cp-r: 14px;
+        --cp-r: 16px;
         --cp-ease: 0.18s cubic-bezier(.4,0,.2,1);
         --cp-shadow: 0 2px 12px rgba(0,0,0,0.07);
         --cp-shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
     }
 
-    .cd-hero {
-        background: var(--cp-surface);
-        border-radius: var(--cp-r) !important;
-        border: 1px solid var(--cp-border) !important;
-        box-shadow: var(--cp-shadow) !important;
-        overflow: hidden;
+    .cd-hero-card {
+        background: var(--cp-gradient);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        color: #fff;
+        margin-bottom: 1.5rem;
         position: relative;
-    }
-    .cd-hero::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--cp-primary), var(--cp-primary-dark), var(--cp-primary));
-    }
-    .cd-hero-inner {
-        padding: 2rem 2rem 1.75rem;
+        overflow: hidden;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
         gap: 1.5rem;
     }
+    .cd-hero-card::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 200px; height: 200px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.08);
+    }
+    .cd-hero-main { flex: 1; min-width: 0; position: relative; z-index: 1; }
     .cd-hero-kicker {
-        font-size: .65rem; font-weight: 800;
-        letter-spacing: .15em; text-transform: uppercase;
-        color: var(--cp-primary); margin-bottom: .5rem;
+        font-size: 11px; font-weight: 600;
+        letter-spacing: .12em; text-transform: uppercase;
+        opacity: .75; margin-bottom: .35rem;
     }
     .cd-hero-title {
         font-size: 1.45rem; font-weight: 800;
-        color: var(--cp-text); letter-spacing: -.02em;
-        margin-bottom: .45rem; line-height: 1.2;
+        letter-spacing: -.02em; margin-bottom: .45rem; line-height: 1.2;
     }
     .cd-hero-sub {
-        font-size: .82rem; color: #64748b; line-height: 1.55;
+        font-size: .82rem; opacity: .85; line-height: 1.55;
         max-width: 34rem; margin-bottom: .9rem;
     }
     .cd-next-appt {
         display: inline-flex; align-items: center; gap: .5rem;
-        font-size: .76rem; color: var(--cp-text); font-weight: 600;
-        background: var(--cp-primary-light);
-        border: 1px solid var(--cp-primary-border);
+        font-size: .76rem; font-weight: 600;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
         padding: .45rem 1rem; border-radius: 99px;
-        width: fit-content;
+        width: fit-content; color: #fff;
     }
-    .cd-next-appt svg { color: var(--cp-primary); flex-shrink: 0; }
-    .cd-hero-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .cd-next-appt svg { flex-shrink: 0; opacity: .9; }
+    .cd-hero-actions {
+        display: flex; flex-wrap: wrap; gap: .5rem;
+        position: relative; z-index: 1; flex-shrink: 0;
+    }
     .cd-hero-actions .btn {
         border-radius: 99px !important;
         font-size: .78rem !important; font-weight: 700 !important;
         padding: .45rem 1.15rem !important;
+        text-decoration: none;
     }
     .cd-hero-actions .btn-primary-solid {
-        background: var(--cp-gradient);
-        color: #fff; border: none;
-        box-shadow: 0 4px 14px var(--cp-primary-shadow);
+        background: #fff; color: var(--cp-primary); border: none;
+        box-shadow: 0 4px 14px rgba(0,0,0,.12);
     }
+    .cd-hero-actions .btn-primary-solid:hover { opacity: .92; color: var(--cp-primary); }
     .cd-hero-actions .btn-ghost {
-        background: transparent; color: var(--cp-primary);
-        border: 1.5px solid var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
+        background: transparent; color: #fff;
+        border: 1.5px solid rgba(255,255,255,.45);
     }
     .cd-hero-actions .btn-ghost:hover {
-        background: var(--cp-primary-light);
-        color: var(--cp-primary);
+        background: rgba(255,255,255,.12); color: #fff;
     }
 
     .cd-kpi-grid {
@@ -300,21 +302,31 @@ $html = <<<'HTML'
 
     .cd-panel {
         background: var(--cp-surface);
-        border: 1px solid var(--cp-border) !important;
-        border-radius: var(--cp-r) !important;
-        box-shadow: var(--cp-shadow) !important;
+        border: 1px solid #e9ecf3;
+        border-radius: var(--cp-r);
+        box-shadow: var(--cp-shadow);
         overflow: hidden;
+        height: 100%;
     }
-    .cd-panel .card-header {
-        background: transparent !important;
-        border-bottom: 1px solid var(--cp-border) !important;
-        padding: 1rem 1.25rem !important;
+    .cd-panel-hdr {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
         display: flex; align-items: center; justify-content: space-between;
         flex-wrap: wrap; gap: .5rem;
     }
-    .cd-panel-title { font-size: .9rem; font-weight: 700; color: var(--cp-text); margin: 0; }
-    .cd-panel-sub { font-size: .74rem; color: var(--cp-muted); margin: 2px 0 0; }
-    .cd-panel .card-body { padding: .75rem 1rem !important; }
+    .cd-panel-title { font-size: 15px; font-weight: 700; color: var(--cp-text); margin: 0; }
+    .cd-panel-sub { font-size: 12px; color: var(--cp-muted); margin: 2px 0 0; }
+    .cd-panel-body { padding: .75rem 1rem; }
+    .btn-cd-link {
+        padding: .35rem .9rem; border-radius: 8px;
+        border: 1.5px solid var(--cp-primary); color: var(--cp-primary);
+        font-size: 12px; font-weight: 600; background: none;
+        text-decoration: none; display: inline-block;
+        transition: background .15s, color .15s;
+    }
+    .btn-cd-link:hover { background: var(--cp-primary); color: #fff; }
+    .cd-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2rem; }
+    @media (max-width: 991px) { .cd-layout { grid-template-columns: 1fr; } }
 
     .cd-list-row {
         display: flex; align-items: center; gap: .85rem;
@@ -387,7 +399,7 @@ $html = <<<'HTML'
         .cd-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 767px) {
-        .cd-hero-inner { padding: 1.4rem 1.25rem 1.2rem; }
+        .cd-hero-card { padding: 1.4rem 1.25rem; }
         .cd-hero-title { font-size: 1.2rem; }
         .cd-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -404,23 +416,17 @@ $html = <<<'HTML'
     <div class="container-fluid py-4 px-4">
         {MESSAGE}
 
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="cd-hero">
-                    <div class="cd-hero-inner">
-                        <div style="flex:1;min-width:0;">
-                            <p class="cd-hero-kicker">Your legal workspace</p>
-                            <h4 class="cd-hero-title">Welcome back, {CLIENT_NAME}</h4>
-                            <p class="cd-hero-sub">Track your cases, prepare for upcoming meetings, and stay on top of court dates — all from one place.</p>
-                            {NEXT_APPT_BANNER}
-                        </div>
-                        <div class="cd-hero-actions">
-                            <a href="client-cases.php" class="btn btn-primary-solid">My Cases</a>
-                            <a href="client-appointments.php" class="btn btn-ghost">Appointments</a>
-                            <a href="client-court-tracking.php" class="btn btn-ghost">Court Dates</a>
-                        </div>
-                    </div>
-                </div>
+        <div class="cd-hero-card">
+            <div class="cd-hero-main">
+                <p class="cd-hero-kicker">Your legal workspace</p>
+                <h4 class="cd-hero-title">Welcome back, {CLIENT_NAME}</h4>
+                <p class="cd-hero-sub">Track your cases, prepare for upcoming meetings, and stay on top of court dates — all from one place.</p>
+                {NEXT_APPT_BANNER}
+            </div>
+            <div class="cd-hero-actions">
+                <a href="client-cases.php" class="btn btn-primary-solid">My Cases</a>
+                <a href="client-appointments.php" class="btn btn-ghost">Appointments</a>
+                <a href="client-court-tracking.php" class="btn btn-ghost">Court Dates</a>
             </div>
         </div>
 
@@ -463,33 +469,29 @@ $html = <<<'HTML'
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-lg-6 mb-4">
-                <div class="card cd-panel h-100">
-                    <div class="card-header">
-                        <div>
-                            <p class="cd-panel-title">Recent Cases</p>
-                            <p class="cd-panel-sub">Latest updates on your matters</p>
-                        </div>
-                        <a href="client-cases.php" class="btn btn-sm btn-outline-primary mb-0" style="border-radius:99px!important;font-size:.74rem!important;">View all</a>
+        <div class="cd-layout">
+            <div class="cd-panel">
+                <div class="cd-panel-hdr">
+                    <div>
+                        <p class="cd-panel-title">Recent Cases</p>
+                        <p class="cd-panel-sub">Latest updates on your matters</p>
                     </div>
-                    <div class="card-body">
-                        {RECENT_CASES}
-                    </div>
+                    <a href="client-cases.php" class="btn-cd-link">View all</a>
+                </div>
+                <div class="cd-panel-body">
+                    {RECENT_CASES}
                 </div>
             </div>
-            <div class="col-lg-6 mb-4">
-                <div class="card cd-panel h-100">
-                    <div class="card-header">
-                        <div>
-                            <p class="cd-panel-title">Upcoming Appointments</p>
-                            <p class="cd-panel-sub">Confirmed meetings on your calendar</p>
-                        </div>
-                        <a href="client-appointments.php" class="btn btn-sm btn-outline-primary mb-0" style="border-radius:99px!important;font-size:.74rem!important;">Book one</a>
+            <div class="cd-panel">
+                <div class="cd-panel-hdr">
+                    <div>
+                        <p class="cd-panel-title">Upcoming Appointments</p>
+                        <p class="cd-panel-sub">Confirmed meetings on your calendar</p>
                     </div>
-                    <div class="card-body">
-                        {UPCOMING_APPOINTMENTS}
-                    </div>
+                    <a href="client-appointments.php" class="btn-cd-link">Book one</a>
+                </div>
+                <div class="cd-panel-body">
+                    {UPCOMING_APPOINTMENTS}
                 </div>
             </div>
         </div>
