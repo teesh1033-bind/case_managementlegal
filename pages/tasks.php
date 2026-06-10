@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -301,43 +302,8 @@ if ($message) {
 $tasksHtml = '';
 if (!empty($tasks)) {
     foreach ($tasks as $task) {
-        $statusBadge = '';
-        $statusClass = '';
-        switch ($task['status']) {
-            case 'pending':
-                $statusBadge = 'Pending';
-                $statusClass = 'bg-warning';
-                break;
-            case 'in_progress':
-                $statusBadge = 'In Progress';
-                $statusClass = 'bg-info';
-                break;
-            case 'completed':
-                $statusBadge = 'Completed';
-                $statusClass = 'bg-success';
-                break;
-            case 'cancelled':
-                $statusBadge = 'Cancelled';
-                $statusClass = 'bg-secondary';
-                break;
-        }
-
-        $priorityBadge = '';
-        $priorityClass = '';
-        switch ($task['priority']) {
-            case 'low':
-                $priorityBadge = 'Low';
-                $priorityClass = 'bg-light text-dark';
-                break;
-            case 'medium':
-                $priorityBadge = 'Medium';
-                $priorityClass = 'bg-warning';
-                break;
-            case 'high':
-                $priorityBadge = 'High';
-                $priorityClass = 'bg-danger';
-                break;
-        }
+        $statusBadge = legalpro_task_status_badge((string) ($task['status'] ?? ''));
+        $priorityBadge = legalpro_task_priority_badge((string) ($task['priority'] ?? 'medium'));
 
         $dueDate = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
         $isOverdue = $task['due_date'] && strtotime($task['due_date']) < time() && $task['status'] !== 'completed';
@@ -361,8 +327,8 @@ if (!empty($tasks)) {
         $tasksHtml .= '</div>
                     <div class="col-md-3">
                         <div class="d-flex flex-column gap-2">
-                            <span class="badge ' . $statusClass . '">' . $statusBadge . '</span>
-                            <span class="badge ' . $priorityClass . '">' . $priorityBadge . '</span>
+                            ' . $statusBadge . '
+                            ' . $priorityBadge . '
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -424,6 +390,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
     <style>
         .lawyer-tasks-page .lawyer-tasks-toolbar {
             align-items: center;

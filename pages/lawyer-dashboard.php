@@ -50,7 +50,7 @@ try {
 
     // Recent cases
     $stmt = $pdo->prepare("
-        SELECT c.id, c.title, c.status, c.created_at, cl.first_name, cl.last_name
+        SELECT c.id, c.title, c.status, c.priority, c.created_at, cl.first_name, cl.last_name
         FROM cases c
         INNER JOIN case_lawyers cl2 ON cl2.case_id = c.id
         INNER JOIN clients cl ON cl.id = c.client_id
@@ -96,6 +96,7 @@ if (empty($recentCases)) {
 } else {
     foreach ($recentCases as $case) {
         $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+        $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
 
         $recentCasesHtml .= '
         <tr>
@@ -108,7 +109,9 @@ if (empty($recentCases)) {
                     </div>
                 </div>
             </td>
-            <td class="text-center align-middle">' . $statusBadge . '</td>
+            <td class="text-center align-middle">
+                <div class="d-flex flex-column gap-1 align-items-center">' . $statusBadge . $priorityBadge . '</div>
+            </td>
             <td class="text-center">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
