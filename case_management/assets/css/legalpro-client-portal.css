@@ -247,29 +247,39 @@ body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-card {
     color: #fff;
 }
 
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-kicker,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-title,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-sub,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-kicker,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-title,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-sub,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-kicker,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-title,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-sub,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-kicker,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-title,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-sub,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-kicker,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-title,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-sub,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-kicker,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-title,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-sub,
-body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-meta,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-card .cd-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-card .cd-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cd-hero-card .cd-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-card .cc-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-card .cc-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-hero-card .cc-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-card .ca-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-card .ca-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-hero-card .ca-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-card .cct-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-card .cct-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cct-hero-card .cct-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-card .cp-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-card .cp-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-hero-card .cp-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-card .cb-hero-kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-card .cb-hero-title,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-card .cb-hero-sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-card .cb-hero-meta,
 body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] h4,
 body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] p,
 body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] strong {
     color: #fff !important;
+}
+
+body.legalpro-client-portal [class*="-hero-card"] .btn-primary-solid,
+body.legalpro-client-portal [class*="-hero-card"] .search-hero-submit {
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal [class*="-hero-card"] .btn-primary-solid,
+body.legalpro-dark-mode.legalpro-client-portal [class*="-hero-card"] .search-hero-submit {
+    color: var(--lp-dark-surface, #464f68) !important;
 }
 
 body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-stat-pill .num,
@@ -284,9 +294,30 @@ body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-stat-pill .lbl {
 }
 
 /* Client portal dark mode — neutral accents (no purple); theme overrides in portal-theme.php */
+html.legalpro-theme-dark body.legalpro-client-portal,
 body.legalpro-dark-mode.legalpro-client-portal {
     --client-portal-gradient: linear-gradient(135deg, #464f68 0%, #3d455c 100%);
+    --legalpro-theme-gradient: linear-gradient(135deg, #464f68 0%, #3d455c 100%);
     --lp-portal-primary: #e2e8f2;
+}
+
+html.legalpro-theme-dark body.legalpro-client-portal [class*="-hero-card"] {
+    background: linear-gradient(135deg, #464f68 0%, #3d455c 100%) !important;
+    background-image: none !important;
+}
+
+html.legalpro-theme-dark body.legalpro-client-portal .cd-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .cc-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .ca-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .ca-book-card,
+html.legalpro-theme-dark body.legalpro-client-portal .cct-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .cp-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .cb-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .cd-kpi,
+html.legalpro-theme-dark body.legalpro-client-portal .search-panel {
+    background: var(--lp-dark-surface, #343b4f) !important;
+    background-color: var(--lp-dark-surface, #343b4f) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
 }
 
 body.legalpro-dark-mode.legalpro-client-portal .ca-status-pill--scheduled {

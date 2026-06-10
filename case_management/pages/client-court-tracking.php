@@ -293,7 +293,7 @@ if (!empty($_SESSION['error_message'])) {
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-court-tracking-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 

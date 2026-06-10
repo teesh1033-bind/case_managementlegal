@@ -143,6 +143,11 @@ function getPortalTheme(): array
     ];
 }
 
+function legalpro_portal_theme_body_class(): string
+{
+    return (getPortalTheme()['mode'] ?? 'light') === 'dark' ? ' legalpro-dark-mode' : '';
+}
+
 function savePortalTheme(string $mode, string $color, ?string $customPrimary = null): array
 {
     $presets = getPortalThemeColorOptions();
@@ -1726,9 +1731,48 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
     $clientAccentRgb = '226, 232, 242';
     $clientSoft = 'rgba(255, 255, 255, 0.08)';
     $clientSoftBorder = 'rgba(255, 255, 255, 0.14)';
+    $clientIconSoft = portalThemeHexToRgba($primary, 0.14);
+    $clientIconSoftMid = portalThemeHexToRgba($primary, 0.2);
     $clientHeroGradient = 'linear-gradient(135deg, #464f68 0%, #3d455c 100%)';
 
+    // Apply as soon as html.legalpro-theme-dark is set (before body.legalpro-dark-mode) to prevent accent flash on navigation.
+    $clientEarly = 'html.legalpro-theme-dark body.legalpro-client-portal';
+    $css .= $clientEarly . ' {'
+        . '--legalpro-theme-gradient: ' . $clientHeroGradient . ';'
+        . '--client-portal-gradient: ' . $clientHeroGradient . ';'
+        . '--client-portal-content-bg: var(--lp-dark-bg);'
+        . '--cp-gradient: ' . $clientHeroGradient . ';'
+        . '--cc-gradient: ' . $clientHeroGradient . ';'
+        . '--ca-gradient: ' . $clientHeroGradient . ';'
+        . '--cct-gradient: ' . $clientHeroGradient . ';'
+        . '--cp-pay-gradient: ' . $clientHeroGradient . ';'
+        . '--cb-gradient: ' . $clientHeroGradient . ';'
+        . 'background: var(--lp-dark-bg) !important;'
+        . 'background-color: var(--lp-dark-bg) !important;'
+        . '}';
+    $css .= $clientEarly . ' [class*="-hero-card"] {'
+        . 'background: ' . $clientHeroGradient . ' !important;'
+        . 'background-image: none !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+    $css .= $clientEarly . ' .cd-panel,'
+        . $clientEarly . ' .cc-panel,'
+        . $clientEarly . ' .ca-panel,'
+        . $clientEarly . ' .ca-book-card,'
+        . $clientEarly . ' .cct-panel,'
+        . $clientEarly . ' .cp-panel,'
+        . $clientEarly . ' .cb-panel,'
+        . $clientEarly . ' .cd-kpi,'
+        . $clientEarly . ' .search-panel {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'background-color: var(--lp-dark-surface) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
     $css .= $clientPages . ' {'
+        . '--lp-client-icon-primary: ' . $primary . ';'
+        . '--lp-client-icon-soft: ' . $clientIconSoft . ';'
+        . '--lp-client-icon-rgb: ' . $rgb . ';'
         . '--legalpro-theme-primary: ' . $clientAccent . ';'
         . '--legalpro-theme-primary-dark: ' . $clientAccentMuted . ';'
         . '--legalpro-theme-primary-rgb: ' . $clientAccentRgb . ';'
@@ -1901,7 +1945,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: #fff !important;'
         . '}';
 
-    $css .= $clientDark . ' .cd-list-row__icon,'
+    $clientIconSurfaces = $clientDark . ' .cd-list-row__icon,'
         . $clientDark . ' .cc-list-row__icon,'
         . $clientDark . ' .ca-apt-icon,'
         . $clientDark . ' .cct-row-icon,'
@@ -1911,10 +1955,53 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . $clientDark . ' .cct-empty-icon,'
         . $clientDark . ' .cp-empty-icon,'
         . $clientDark . ' .ca-empty-icon,'
-        . $clientDark . ' .cd-kpi__icon--primary {'
-        . 'background: ' . $clientSoft . ' !important;'
-        . 'color: ' . $clientAccent . ' !important;'
+        . $clientDark . ' .empty-icon,'
+        . $clientDark . ' .legalpro-icon-wrap--soft-primary,'
+        . $clientDark . ' .dashboard-stat-icon-wrap--primary,'
+        . $clientDark . ' .dashboard-glance-icon-wrap--primary,'
+        . $clientDark . ' .cc-case-icon.dashboard-stat-icon-wrap,'
+        . $clientDark . ' .cc-empty-icon.dashboard-stat-icon-wrap,'
+        . $clientDark . ' .ccv-service-icon.dashboard-stat-icon-wrap,'
+        . $clientDark . ' .ccv-appt-icon.dashboard-stat-icon-wrap,'
+        . $clientDark . ' .cd-kpi__icon--primary';
+
+    $css .= $clientIconSurfaces . ' {'
+        . 'background: ' . $clientIconSoft . ' !important;'
+        . 'color: ' . $primary . ' !important;'
         . '}';
+
+    $css .= $clientDark . ' .dashboard-stat-icon-wrap--primary .lp-icon svg,'
+        . $clientDark . ' .dashboard-glance-icon-wrap--primary .lp-icon svg,'
+        . $clientDark . ' .legalpro-icon-wrap--soft-primary .lp-icon svg,'
+        . $clientDark . ' .cc-case-icon.dashboard-stat-icon-wrap .lp-icon svg,'
+        . $clientDark . ' .cc-empty-icon.dashboard-stat-icon-wrap .lp-icon svg,'
+        . $clientDark . ' .ccv-service-icon.dashboard-stat-icon-wrap .lp-icon svg,'
+        . $clientDark . ' .ccv-appt-icon.dashboard-stat-icon-wrap .lp-icon svg,'
+        . $clientDark . ' .cct-row-icon .lp-icon svg,'
+        . $clientDark . ' .cp-row-icon .lp-icon svg,'
+        . $clientDark . ' .cct-empty-icon .lp-icon svg,'
+        . $clientDark . ' .cp-empty-icon .lp-icon svg {'
+        . 'stroke: ' . $primary . ' !important;'
+        . '}';
+
+    $clientSemanticIconWraps = [
+        'info' => ['bg' => 'rgba(17, 205, 239, 0.14)', 'stroke' => '#11cdef'],
+        'success' => ['bg' => 'rgba(45, 206, 137, 0.14)', 'stroke' => '#2dce89'],
+        'warning' => ['bg' => 'rgba(251, 99, 64, 0.14)', 'stroke' => '#fb6340'],
+        'danger' => ['bg' => 'rgba(245, 54, 92, 0.14)', 'stroke' => '#f5365c'],
+        'dark' => ['bg' => 'rgba(103, 116, 142, 0.16)', 'stroke' => '#c5cede'],
+    ];
+    foreach ($clientSemanticIconWraps as $tone => $meta) {
+        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ','
+            . $clientDark . ' .dashboard-glance-icon-wrap--' . $tone . ' {'
+            . 'background: ' . $meta['bg'] . ' !important;'
+            . 'color: ' . $meta['stroke'] . ' !important;'
+            . '}';
+        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ' .lp-icon svg,'
+            . $clientDark . ' .dashboard-glance-icon-wrap--' . $tone . ' .lp-icon svg {'
+            . 'stroke: ' . $meta['stroke'] . ' !important;'
+            . '}';
+    }
 
     $css .= $clientDark . ' .cc-row-count,'
         . $clientDark . ' .ca-count,'
@@ -1922,6 +2009,20 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . $clientDark . ' .cp-count {'
         . 'background: ' . $clientSoft . ' !important;'
         . 'color: ' . $clientAccent . ' !important;'
+        . '}';
+
+    $css .= $clientDark . ' .lawyer-stack__name,'
+        . $clientDark . ' .lawyer-name {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .lawyer-stack__unassigned,'
+        . $clientDark . ' .lawyer-stack__more {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .lawyer-stack .avatar {'
+        . 'border-color: var(--lp-dark-surface) !important;'
         . '}';
 
     $css .= $clientDark . ' .ca-status-pill--scheduled,'
@@ -1980,7 +2081,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= $clientDark . ' .cd-kpi--primary {'
-        . '--kpi-color: ' . $clientAccent . ' !important;'
+        . '--kpi-color: ' . $primary . ' !important;'
         . '}';
 
     $css .= $clientDark . ' .text-primary,'
@@ -2005,6 +2106,77 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= $clientDark . ' .ca-book-hdr {'
         . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-bottom-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-book-hdr p,'
+        . $clientDark . ' .ca-avail-hint {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-fld label {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-fld label span {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-fld select,'
+        . $clientDark . ' .ca-fld input[type="date"],'
+        . $clientDark . ' .ca-fld textarea {'
+        . 'background: var(--lp-dark-input-bg) !important;'
+        . 'border-color: var(--lp-dark-border-strong) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-fld input[type="date"] {'
+        . 'color-scheme: dark;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-fld select option {'
+        . 'background: var(--lp-dark-surface) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-fld textarea::placeholder {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . 'opacity: 1;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-time-btn {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-time-btn.available {'
+        . 'background: rgba(45, 206, 137, 0.14) !important;'
+        . 'border-color: rgba(45, 206, 137, 0.4) !important;'
+        . 'color: #86efac !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-time-btn.available:hover {'
+        . 'background: rgba(45, 206, 137, 0.22) !important;'
+        . 'border-color: rgba(45, 206, 137, 0.55) !important;'
+        . 'color: #bbf7d0 !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-avail-alert.warning {'
+        . 'background: rgba(251, 191, 36, 0.14) !important;'
+        . 'color: #fcd34d !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-avail-alert.info {'
+        . 'background: ' . $clientSoft . ' !important;'
+        . 'color: ' . $clientAccent . ' !important;'
+        . 'border: 1px solid ' . $clientSoftBorder . ' !important;'
+        . '}';
+
+    $css .= $clientDark . ' .ca-book-btn:hover:not(:disabled),'
+        . $clientDark . ' .ca-book-btn:focus:not(:disabled) {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'color: #fff !important;'
         . '}';
 
     $css .= $clientDark . ' .cd-next-appt,'
@@ -2056,15 +2228,40 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: #fff !important;'
         . '}';
 
-    $css .= $clientDark . ' .legalpro-icon-wrap--soft-primary,'
-        . $clientDark . ' .dashboard-stat-icon-wrap--primary {'
-        . 'background: ' . $clientSoft . ' !important;'
-        . 'color: ' . $clientAccent . ' !important;'
-        . '}';
-
     $css .= $clientDark . ' .client-chatbot-page .chat-window {'
         . 'background: var(--lp-dark-surface) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .cb-tips,'
+        . $clientDark . ' .client-chatbot-page .cb-tips {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .cb-tips p,'
+        . $clientDark . ' .chat-tips p {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .cb-tips p strong,'
+        . $clientDark . ' .chat-tips p strong {'
+        . 'color: ' . $clientAccent . ' !important;'
+        . '}';
+
+    $css .= $clientDark . ' .cb-panel-hdr p,'
+        . $clientDark . ' .client-chatbot-page .cb-hint,'
+        . $clientDark . ' .client-chatbot-page .chat-message-bot .cb-hint {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . 'opacity: 1 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .chat-tips p {'
+        . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .chat-tips p strong {'
+        . 'color: var(--lp-dark-text) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar {'
@@ -2510,10 +2707,10 @@ function renderPortalThemeHead(): void
     $css = renderPortalThemeCss();
     $isDark = $theme['mode'] === 'dark';
 
-    echo '<style id="legalpro-portal-theme">' . $css . '</style>';
     if ($isDark) {
-        echo '<script>(function(){var d=document;d.documentElement.classList.add("legalpro-theme-dark");var apply=function(){if(d.body)d.body.classList.add("legalpro-dark-mode");};if(d.body)apply();else d.addEventListener("DOMContentLoaded",apply);})();</script>';
+        echo '<script>(function(){var d=document;d.documentElement.classList.add("legalpro-theme-dark");var apply=function(){if(d.body&&!d.body.classList.contains("legalpro-dark-mode"))d.body.classList.add("legalpro-dark-mode");};if(d.body)apply();else d.addEventListener("DOMContentLoaded",apply);})();</script>';
     }
+    echo '<style id="legalpro-portal-theme">' . $css . '</style>';
 }
 
 function renderPortalThemeSettingsHtml(): string
