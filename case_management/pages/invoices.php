@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 $message = '';
 $messageType = '';
@@ -320,21 +321,7 @@ if (empty($invoices)) {
     $invoiceRows = '<tr><td colspan="7" class="text-center text-muted py-4">No invoices recorded yet.</td></tr>';
 } else {
     foreach ($invoices as $invoice) {
-        $statusLabel = isset($statusOptions[strtolower($invoice['status'])]) ? $statusOptions[strtolower($invoice['status'])] : ucfirst($invoice['status']);
-        $badgeClass = 'bg-gradient-secondary';
-        switch (strtolower($invoice['status'])) {
-            case 'paid':
-                $badgeClass = 'bg-gradient-success';
-                break;
-            case 'overdue':
-                $badgeClass = 'bg-gradient-danger';
-                break;
-            case 'sent':
-                $badgeClass = 'bg-gradient-info';
-                break;
-            default:
-                $badgeClass = 'bg-gradient-secondary';
-        }
+        $statusBadge = legalpro_invoice_status_badge((string) ($invoice['status'] ?? 'draft'));
         $invoiceRows .= '
         <tr>
             <td>
@@ -348,9 +335,7 @@ if (empty($invoices)) {
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($invoice['case_title'] ?: 'No case linked') . '</p>
             </td>
             <td class="text-center">' . htmlspecialchars(formatCurrency($invoice['amount'])) . '</td>
-            <td class="text-center">
-                <span class="badge ' . $badgeClass . '">' . htmlspecialchars($statusLabel) . '</span>
-            </td>
+            <td class="text-center">' . $statusBadge . '</td>
             <td class="text-center">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
             <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
