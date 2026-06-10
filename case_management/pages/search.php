@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/legalpro-icons.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 $q = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
 $qDisp = htmlspecialchars($q, ENT_QUOTES, 'UTF-8');
@@ -89,7 +91,7 @@ if ($q !== '') {
             $cases = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $stmt = $pdo->prepare('
-                SELECT a.id, a.starts_at, a.status, a.notes, c.title AS case_title
+                SELECT a.id, a.starts_at, a.ends_at, a.status, a.notes, c.title AS case_title
                 FROM appointments a
                 LEFT JOIN cases c ON c.id = a.case_id
                 WHERE a.client_id = ?
@@ -169,26 +171,6 @@ function h($s)
     return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
 }
 
-function legalpro_search_status_badge(string $status): string
-{
-    switch (strtolower($status)) {
-        case 'in_progress':
-            return '<span class="badge badge-sm bg-gradient-primary">In progress</span>';
-        case 'open':
-            return '<span class="badge badge-sm bg-gradient-success">Open</span>';
-        case 'closed':
-            return '<span class="badge badge-sm bg-gradient-secondary">Closed</span>';
-        case 'pending':
-            return '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
-        case 'accepted':
-            return '<span class="badge badge-sm bg-gradient-success">Accepted</span>';
-        case 'rejected':
-            return '<span class="badge badge-sm bg-gradient-danger">Rejected</span>';
-        default:
-            return '<span class="badge badge-sm bg-gradient-info">' . h($status) . '</span>';
-    }
-}
-
 $un = h($userLabel);
 
 if ($portal === 'admin') {
@@ -212,6 +194,8 @@ if ($portal === 'client') {
     $bodyExtra .= ' legalpro-client-portal client-portal-page';
 } elseif ($portal === 'lawyer') {
     $bodyExtra .= ' legalpro-lawyer-portal';
+} elseif ($portal === 'admin') {
+    $bodyExtra .= ' legalpro-admin-portal';
 }
 $navBreadcrumbMuted = 'opacity-6 text-white';
 $navHeadingClass = 'font-weight-bolder text-white mb-0';
@@ -219,31 +203,34 @@ $navUserClass = 'text-white';
 $navbarBlurAttr = $portal === 'client' ? 'navbar-scroll="true"' : 'data-scroll="false"';
 $caseCount = count($cases);
 $aptCount = count($appointments);
+$iconSearchCases = legalpro_icon('briefcase');
+$iconSearchAppts = legalpro_icon('calendar');
 
 $heroCardClass = $portal === 'client'
-    ? 'card search-hero cd-hero border-0 mb-4'
+    ? 'search-hero cd-hero-card mb-4'
     : 'card search-hero text-white mb-4';
+$heroInnerClass = $portal === 'client' ? 'cd-hero-inner' : 'card-body';
 $heroKickerClass = $portal === 'client'
     ? 'cd-hero-kicker mb-2'
     : 'text-xs text-uppercase font-weight-bold mb-1';
 $heroKickerStyle = $portal === 'client' ? '' : ' style="letter-spacing: 0.12em; opacity: 0.85;"';
 $heroTitleClass = $portal === 'client'
-    ? 'cd-hero-title font-weight-bolder mb-2'
+    ? 'cd-hero-title mb-2'
     : 'text-white font-weight-bolder mb-2';
 $heroTextClass = $portal === 'client'
     ? 'cd-hero-text text-sm mb-0'
     : 'text-sm mb-0';
-$heroTextStyle = $portal === 'client' ? ' style="line-height: 1.55;"' : ' style="opacity: 0.88; line-height: 1.55;"';
+$heroTextStyle = $portal === 'client' ? ' style="line-height: 1.55; opacity: 0.88;"' : ' style="opacity: 0.88; line-height: 1.55;"';
 $heroLabelClass = $portal === 'client'
-    ? 'form-label text-xs text-muted mb-1 d-block'
+    ? 'form-label text-xs mb-1 d-block search-hero-label'
     : 'form-label text-white text-xs mb-1 d-block';
 $heroSubmitClass = $portal === 'client'
-    ? 'btn bg-gradient-primary btn-lg mb-0 px-4 font-weight-bold btn-search-submit text-white'
+    ? 'btn btn-lg mb-0 px-4 font-weight-bold btn-search-submit search-hero-submit'
     : 'btn btn-white btn-lg mb-0 px-4 font-weight-bold btn-search-submit';
-$resultsTitleClass = 'font-weight-bolder text-white mb-1 mt-5';
-$resultsSummaryClass = 'text-sm text-white mb-0';
-$resultsSummaryStyle = ' style="opacity: 0.9;"';
-$resultsQueryClass = 'text-white';
+$resultsTitleClass = 'font-weight-bolder mb-1 mt-5 search-results-title';
+$resultsSummaryClass = 'text-sm mb-0 search-results-summary';
+$resultsSummaryStyle = '';
+$resultsQueryClass = 'search-results-query';
 
 ?>
 <!DOCTYPE html>
@@ -263,6 +250,11 @@ $resultsQueryClass = 'text-white';
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <?php else: ?>
     <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
+    <?php legalpro_icons_asset_links(); ?>
+    <?php if ($portal === 'lawyer'): ?>
+    <?php include __DIR__ . '/../inc/lawyer-portal-badges-css.php'; ?>
+    <?php endif; ?>
     <?php endif; ?>
     <style>
         .search-portal-page--lawyer .navbar-main,
@@ -276,23 +268,38 @@ $resultsQueryClass = 'text-white';
             border: none !important;
             box-shadow: none !important;
         }
-        .search-portal-page--lawyer .navbar-main .breadcrumb-item,
-        .search-portal-page--lawyer .navbar-main .breadcrumb-item a,
-        .search-portal-page--lawyer .navbar-main h5,
-        .search-portal-page--lawyer .navbar-main .nav-link,
-        .search-portal-page--admin .navbar-main .breadcrumb-item,
-        .search-portal-page--admin .navbar-main .breadcrumb-item a,
-        .search-portal-page--admin .navbar-main h5,
-        .search-portal-page--admin .navbar-main .nav-link {
+        body.legalpro-dark-mode.search-portal-page--lawyer .navbar-main .breadcrumb-item,
+        body.legalpro-dark-mode.search-portal-page--lawyer .navbar-main .breadcrumb-item a,
+        body.legalpro-dark-mode.search-portal-page--lawyer .navbar-main h5,
+        body.legalpro-dark-mode.search-portal-page--lawyer .navbar-main .nav-link,
+        body.legalpro-dark-mode.search-portal-page--admin .navbar-main .breadcrumb-item,
+        body.legalpro-dark-mode.search-portal-page--admin .navbar-main .breadcrumb-item a,
+        body.legalpro-dark-mode.search-portal-page--admin .navbar-main h5,
+        body.legalpro-dark-mode.search-portal-page--admin .navbar-main .nav-link {
             color: #fff !important;
         }
-        .search-portal-page--lawyer .navbar-main .breadcrumb-item a,
-        .search-portal-page--admin .navbar-main .breadcrumb-item a {
+        body.legalpro-dark-mode.search-portal-page--lawyer .navbar-main .breadcrumb-item a,
+        body.legalpro-dark-mode.search-portal-page--admin .navbar-main .breadcrumb-item a {
             opacity: 0.9;
         }
-        .search-portal-page--lawyer .navbar-main .sidenav-toggler-line,
-        .search-portal-page--admin .navbar-main .sidenav-toggler-line {
+        body.legalpro-dark-mode.search-portal-page--lawyer .navbar-main .sidenav-toggler-line,
+        body.legalpro-dark-mode.search-portal-page--admin .navbar-main .sidenav-toggler-line {
             background-color: #fff !important;
+        }
+        .search-portal-page--lawyer:not(.legalpro-dark-mode) .navbar-main .breadcrumb-item,
+        .search-portal-page--lawyer:not(.legalpro-dark-mode) .navbar-main .breadcrumb-item a,
+        .search-portal-page--lawyer:not(.legalpro-dark-mode) .navbar-main h5,
+        .search-portal-page--lawyer:not(.legalpro-dark-mode) .navbar-main .nav-link,
+        .search-portal-page--admin:not(.legalpro-dark-mode) .navbar-main .breadcrumb-item,
+        .search-portal-page--admin:not(.legalpro-dark-mode) .navbar-main .breadcrumb-item a,
+        .search-portal-page--admin:not(.legalpro-dark-mode) .navbar-main h5,
+        .search-portal-page--admin:not(.legalpro-dark-mode) .navbar-main .nav-link {
+            color: #344767 !important;
+            opacity: 1 !important;
+        }
+        .search-portal-page--lawyer:not(.legalpro-dark-mode) .navbar-main .sidenav-toggler-line,
+        .search-portal-page--admin:not(.legalpro-dark-mode) .navbar-main .sidenav-toggler-line {
+            background-color: #344767 !important;
         }
         .search-portal-page--lawyer .search-hero,
         .search-portal-page--admin .search-hero {
@@ -301,24 +308,64 @@ $resultsQueryClass = 'text-white';
             box-shadow: 0 1rem 2.25rem rgba(23, 43, 77, 0.16);
             border: none;
         }
-        .search-portal-page--client .search-hero.cd-hero {
-            border-radius: 1.25rem;
-            background: #fff;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            box-shadow: 0 0.25rem 1rem rgba(52, 71, 103, 0.08);
+        body.search-portal-page--client {
+            --cs-primary: var(--legalpro-theme-primary, #5e72e4);
+            --cs-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
         }
-        .search-portal-page--client .search-hero .cd-hero-kicker {
+        .search-portal-page--client .search-hero.cd-hero-card {
+            background: var(--cs-gradient);
+            border-radius: 20px;
+            padding: 2rem 2.5rem;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 4px 20px rgba(15, 20, 35, 0.12);
+        }
+        .search-portal-page--client .search-hero.cd-hero-card::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .search-portal-page--client .search-hero.cd-hero-card .cd-hero-inner {
+            position: relative;
+            z-index: 1;
+            padding: 0;
+        }
+        .search-portal-page--client .search-hero.cd-hero-card .cd-hero-kicker {
+            font-size: 11px;
+            font-weight: 600;
             letter-spacing: 0.12em;
-            font-size: 0.68rem;
-            font-weight: 700;
             text-transform: uppercase;
-            color: #5e72e4;
+            opacity: 0.75;
         }
-        .search-portal-page--client .search-hero .cd-hero-title {
-            color: #344767;
+        .search-portal-page--client .search-hero.cd-hero-card .cd-hero-title {
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
         }
-        .search-portal-page--client .search-hero .cd-hero-text {
-            color: #67748e;
+        .search-portal-page--client .search-hero.cd-hero-card .cd-hero-text strong {
+            color: #fff;
+        }
+        .search-portal-page--client .search-hero-label {
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 600;
+        }
+        .search-portal-page--client .search-hero-submit {
+            background: #fff !important;
+            color: var(--cs-primary) !important;
+            border: none !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        }
+        .search-portal-page--client .search-hero-submit:hover {
+            opacity: 0.92;
+            color: var(--cs-primary) !important;
         }
         .search-portal-page .search-hero-field {
             flex: 1;
@@ -350,6 +397,47 @@ $resultsQueryClass = 'text-white';
             box-shadow: 0 0.35rem 1rem rgba(94, 114, 228, 0.08);
         }
         .search-portal-page .search-result-row .flex-grow-1 { min-width: 0; }
+        .search-portal-page .search-results-title {
+            color: #344767;
+        }
+        .search-portal-page .search-results-summary {
+            color: #67748e;
+        }
+        .search-portal-page .search-results-query {
+            color: #344767;
+        }
+        body.legalpro-dark-mode.search-portal-page .search-results-title,
+        body.legalpro-dark-mode.search-portal-page .search-results-query {
+            color: var(--lp-dark-text, #f8f9fc) !important;
+        }
+        body.legalpro-dark-mode.search-portal-page .search-results-summary {
+            color: var(--lp-dark-text-muted, #c5cede) !important;
+        }
+        .search-portal-page .search-result-counts {
+            gap: 0.65rem;
+        }
+        .search-portal-page .search-result-count {
+            cursor: default;
+            padding: 0.65rem 0.95rem;
+            min-width: 8.5rem;
+        }
+        .search-portal-page .search-result-count:hover {
+            transform: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        body.legalpro-dark-mode.search-portal-page .search-result-count {
+            background: var(--lp-dark-surface, #2d3748);
+            border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.08));
+        }
+        body.legalpro-dark-mode.search-portal-page .search-result-count .dashboard-glance__value {
+            color: var(--lp-dark-text, #f8f9fc);
+        }
+        body.legalpro-dark-mode.search-portal-page .search-result-count .dashboard-glance__label {
+            color: var(--lp-dark-text-muted, #c5cede);
+        }
+        .search-portal-page .search-result-row .ca-status-pill {
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 <?php echo h($bodyExtra); ?>">
@@ -410,7 +498,7 @@ $resultsQueryClass = 'text-white';
             <?php endif; ?>
 
             <div class="<?php echo h($heroCardClass); ?>">
-                <div class="card-body p-4 p-lg-5">
+                <div class="<?php echo h($heroInnerClass); ?><?php echo $portal === 'client' ? '' : ' p-4 p-lg-5'; ?>">
                     <div class="row align-items-center g-3">
                         <div class="col-lg-5">
                             <p class="<?php echo h($heroKickerClass); ?>"<?php echo $heroKickerStyle; ?>>LegalPro search</p>
@@ -449,10 +537,22 @@ $resultsQueryClass = 'text-white';
                         <h5 class="<?php echo h($resultsTitleClass); ?>">Results</h5>
                         <p class="<?php echo h($resultsSummaryClass); ?>"<?php echo $resultsSummaryStyle; ?>>Showing matches for <strong class="<?php echo h($resultsQueryClass); ?>">“<?php echo $qDisp; ?>”</strong></p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <span class="badge rounded-pill bg-gradient-primary"><?php echo (int) $caseCount; ?> case<?php echo $caseCount === 1 ? '' : 's'; ?></span>
+                    <div class="d-flex flex-wrap search-result-counts">
+                        <div class="dashboard-glance__item search-result-count">
+                            <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--primary"><?php echo $iconSearchCases; ?></div>
+                            <div>
+                                <div class="dashboard-glance__value"><?php echo (int) $caseCount; ?></div>
+                                <div class="dashboard-glance__label"><?php echo $caseCount === 1 ? 'Case' : 'Cases'; ?></div>
+                            </div>
+                        </div>
                         <?php if ($portal === 'client'): ?>
-                            <span class="badge rounded-pill bg-gradient-info"><?php echo (int) $aptCount; ?> appointment<?php echo $aptCount === 1 ? '' : 's'; ?></span>
+                            <div class="dashboard-glance__item search-result-count">
+                                <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--info"><?php echo $iconSearchAppts; ?></div>
+                                <div>
+                                    <div class="dashboard-glance__value"><?php echo (int) $aptCount; ?></div>
+                                    <div class="dashboard-glance__label"><?php echo $aptCount === 1 ? 'Appointment' : 'Appointments'; ?></div>
+                                </div>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -493,7 +593,7 @@ $resultsQueryClass = 'text-white';
                                             </p>
                                         </div>
                                         <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
-                                            <?php echo legalpro_search_status_badge($row['status']); ?>
+                                            <?php echo client_case_status_badge((string) ($row['status'] ?? '')); ?>
                                             <span class="text-xs text-primary font-weight-bold">Open <i class="ni ni-bold-right ms-1" aria-hidden="true"></i></span>
                                         </div>
                                     </div>
@@ -527,7 +627,7 @@ $resultsQueryClass = 'text-white';
                                                 </p>
                                             </div>
                                             <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
-                                                <?php echo legalpro_search_status_badge($a['status']); ?>
+                                                <?php echo client_appointment_status_badge($a); ?>
                                                 <span class="text-xs text-primary font-weight-bold">Calendar <i class="ni ni-bold-right ms-1" aria-hidden="true"></i></span>
                                             </div>
                                         </div>
