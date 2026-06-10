@@ -15,6 +15,7 @@ $lawyerMenuItems = [
     ['title' => 'Court Tracking', 'url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'id' => 'lawyer-court-tracking'],
     ['title' => 'My Availability', 'url' => 'lawyer-availability.php', 'icon' => 'clock', 'id' => 'lawyer-availability'],
     ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
+    ['title' => 'Settings', 'url' => 'lawyer-settings.php', 'icon' => 'settings', 'id' => 'lawyer-settings'],
 ];
 
 function lawyerNavIsActive($itemId, $currentPage)
