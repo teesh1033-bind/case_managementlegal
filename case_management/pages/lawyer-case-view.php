@@ -234,7 +234,10 @@ $caseEvents = CaseEvents::getCaseEvents($caseId);
 
 $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
 $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
-$categoryBadge = '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars((string) ($case['category'] ?? '')) . '</span>';
+$categoryLabel = trim((string) ($case['category'] ?? ''));
+$categoryBadge = $categoryLabel !== ''
+    ? '<span class="lc-category-pill">' . htmlspecialchars($categoryLabel) . '</span>'
+    : '<span class="ca-status-pill ca-status-pill--muted">—</span>';
 $iconDocRow = legalpro_icon('file-text');
 $iconCommentEmpty = legalpro_icon('message-circle');
 

@@ -77,7 +77,7 @@ if (empty($clients)) {
                 </div>
             </td>
             <td>' . htmlspecialchars($client['phone'] ?: 'Not provided') . '</td>
-            <td class="text-center">
+            <td class="align-middle text-center">
                 <span class="ca-status-pill ca-status-pill--scheduled d-inline-block mb-1">' . (int)$client['total_cases'] . ' total</span><br>
                 <span class="ca-status-pill ca-status-pill--done d-inline-block">' . (int)$client['active_cases'] . ' active</span>
             </td>

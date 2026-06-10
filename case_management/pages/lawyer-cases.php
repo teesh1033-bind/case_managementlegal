@@ -59,7 +59,7 @@ $iconCardHeader = legalpro_icon('briefcase');
 // Build cases table HTML
 $casesTable = '';
 if (empty($cases)) {
-    $casesTable = '<tr><td colspan="6" class="border-0"><div class="text-center py-5 px-4">
+    $casesTable = '<tr><td colspan="7" class="border-0"><div class="text-center py-5 px-4">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseEmpty . '</div>
         <h5 class="font-weight-bolder mt-3 mb-2">No cases found</h5>
         <p class="text-sm text-muted mb-0">Try adjusting your search or status filter.</p>
@@ -68,6 +68,10 @@ if (empty($cases)) {
     foreach ($cases as $case) {
         $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
         $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+        $categoryLabel = trim((string) ($case['category'] ?? ''));
+        $categoryPill = $categoryLabel !== ''
+            ? '<span class="lc-category-pill">' . htmlspecialchars($categoryLabel) . '</span>'
+            : '<span class="ca-status-pill ca-status-pill--muted">—</span>';
 
         $casesTable .= '
         <tr>
@@ -80,12 +84,13 @@ if (empty($cases)) {
                     </div>
                 </div>
             </td>
+            <td class="align-middle">' . $categoryPill . '</td>
             <td>
                 <h6 class="mb-0 text-sm">' . htmlspecialchars($case['first_name'] . ' ' . $case['last_name']) . '</h6>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($case['email']) . '</p>
             </td>
-            <td class="text-center">' . $statusBadge . '</td>
-            <td class="text-center">' . $priorityBadge . '</td>
+            <td class="align-middle text-center">' . $statusBadge . '</td>
+            <td class="align-middle text-center">' . $priorityBadge . '</td>
             <td class="text-center">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
@@ -187,6 +192,7 @@ $html = <<<'HTML'
                                     <thead>
                                         <tr>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case Details</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Category</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
