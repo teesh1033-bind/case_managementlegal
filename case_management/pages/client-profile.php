@@ -167,7 +167,7 @@ $html = <<<'HTML'
     <link href="../assets/css/app-font-montserrat.css?v=5" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-profile-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-profile-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 

@@ -16,5 +16,8 @@ function inject_client_sidebar(string $html): string
 
     $marker = "<?php include __DIR__ . '/../inc/client-menunav.php'; ?>";
 
-    return str_replace($marker, $sidebarHtml, $html);
+    $html = str_replace($marker, $sidebarHtml, $html);
+    $html = str_replace('{PORTAL_THEME_BODY_CLASS}', legalpro_portal_theme_body_class(), $html);
+
+    return $html;
 }

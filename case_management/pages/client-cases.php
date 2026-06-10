@@ -74,7 +74,7 @@ function modern_priority_badge(string $priority): string {
 // ── Lawyer avatar stack ───────────────────────────────────────────────────────
 function lawyer_stack(string $names): string {
     if (!$names || $names === 'Unassigned') {
-        return '<span style="font-size:12px;color:#94a3b8">Unassigned</span>';
+        return '<span class="lawyer-stack__unassigned">Unassigned</span>';
     }
     $people  = array_map('trim', explode(',', $names));
     $colors  = [
@@ -94,10 +94,10 @@ function lawyer_stack(string $names): string {
         $html    .= '<div class="avatar" style="background:' . $c['bg'] . ';color:' . $c['fg'] . '"' . $offset . ' title="' . htmlspecialchars($name) . '">' . htmlspecialchars($initials) . '</div>';
     }
     if ($extra > 0) {
-        $html .= '<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:6px">+' . $extra . '</span>';
+        $html .= '<span class="lawyer-stack__more">+' . $extra . '</span>';
     } else {
         // Show first name only when single lawyer
-        $html .= '<span style="font-size:12px;font-weight:500;color:#475569;margin-left:8px">' . htmlspecialchars($people[0]) . '</span>';
+        $html .= '<span class="lawyer-stack__name">' . htmlspecialchars($people[0]) . '</span>';
     }
     $html .= '</div>';
     return $html;
@@ -465,6 +465,22 @@ ob_start(); ?>
             display: flex;
             align-items: center;
         }
+        .lawyer-stack__unassigned {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .lawyer-stack__name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #334155;
+            margin-left: 8px;
+        }
+        .lawyer-stack__more {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            margin-left: 6px;
+        }
         .avatar {
             width: 26px; height: 26px;
             border-radius: 50%;
@@ -527,7 +543,7 @@ ob_start(); ?>
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-cases-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-cases-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
 
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>

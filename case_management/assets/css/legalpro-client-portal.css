@@ -272,6 +272,16 @@ body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] stron
     color: #fff !important;
 }
 
+body.legalpro-client-portal [class*="-hero-card"] .btn-primary-solid,
+body.legalpro-client-portal [class*="-hero-card"] .search-hero-submit {
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal [class*="-hero-card"] .btn-primary-solid,
+body.legalpro-dark-mode.legalpro-client-portal [class*="-hero-card"] .search-hero-submit {
+    color: var(--lp-dark-surface, #464f68) !important;
+}
+
 body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-stat-pill .num,
 body.legalpro-client-portal:not(.legalpro-dark-mode) .cc-stat-pill .lbl,
 body.legalpro-client-portal:not(.legalpro-dark-mode) .ca-stat-pill .num,
@@ -284,9 +294,30 @@ body.legalpro-client-portal:not(.legalpro-dark-mode) .cp-stat-pill .lbl {
 }
 
 /* Client portal dark mode — neutral accents (no purple); theme overrides in portal-theme.php */
+html.legalpro-theme-dark body.legalpro-client-portal,
 body.legalpro-dark-mode.legalpro-client-portal {
     --client-portal-gradient: linear-gradient(135deg, #464f68 0%, #3d455c 100%);
+    --legalpro-theme-gradient: linear-gradient(135deg, #464f68 0%, #3d455c 100%);
     --lp-portal-primary: #e2e8f2;
+}
+
+html.legalpro-theme-dark body.legalpro-client-portal [class*="-hero-card"] {
+    background: linear-gradient(135deg, #464f68 0%, #3d455c 100%) !important;
+    background-image: none !important;
+}
+
+html.legalpro-theme-dark body.legalpro-client-portal .cd-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .cc-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .ca-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .ca-book-card,
+html.legalpro-theme-dark body.legalpro-client-portal .cct-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .cp-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .cb-panel,
+html.legalpro-theme-dark body.legalpro-client-portal .cd-kpi,
+html.legalpro-theme-dark body.legalpro-client-portal .search-panel {
+    background: var(--lp-dark-surface, #343b4f) !important;
+    background-color: var(--lp-dark-surface, #343b4f) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
 }
 
 body.legalpro-dark-mode.legalpro-client-portal .ca-status-pill--scheduled {

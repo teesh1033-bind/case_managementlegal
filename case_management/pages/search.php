@@ -225,7 +225,7 @@ $heroLabelClass = $portal === 'client'
     ? 'form-label text-xs mb-1 d-block search-hero-label'
     : 'form-label text-white text-xs mb-1 d-block';
 $heroSubmitClass = $portal === 'client'
-    ? 'btn btn-lg mb-0 px-4 font-weight-bold btn-search-submit search-hero-submit'
+    ? 'btn btn-lg mb-0 px-4 font-weight-bold btn-search-submit search-hero-submit btn-primary-solid'
     : 'btn btn-white btn-lg mb-0 px-4 font-weight-bold btn-search-submit';
 $resultsTitleClass = 'font-weight-bolder mb-1 mt-5 search-results-title';
 $resultsSummaryClass = 'text-sm mb-0 search-results-summary';
@@ -357,15 +357,26 @@ $resultsQueryClass = 'search-results-query';
             color: rgba(255, 255, 255, 0.85);
             font-weight: 600;
         }
-        .search-portal-page--client .search-hero-submit {
+        .search-portal-page--client .search-hero.cd-hero-card .search-hero-submit,
+        .search-portal-page--client .search-hero.cd-hero-card .btn-primary-solid {
             background: #fff !important;
-            color: var(--cs-primary) !important;
+            color: var(--legalpro-theme-primary, #5e72e4) !important;
             border: none !important;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
         }
-        .search-portal-page--client .search-hero-submit:hover {
+        .search-portal-page--client .search-hero.cd-hero-card .search-hero-submit:hover,
+        .search-portal-page--client .search-hero.cd-hero-card .btn-primary-solid:hover {
             opacity: 0.92;
-            color: var(--cs-primary) !important;
+            background: #fff !important;
+            color: var(--legalpro-theme-primary, #5e72e4) !important;
+        }
+        body.legalpro-dark-mode.search-portal-page--client .search-hero.cd-hero-card .search-hero-submit,
+        body.legalpro-dark-mode.search-portal-page--client .search-hero.cd-hero-card .btn-primary-solid {
+            color: var(--lp-dark-surface, #464f68) !important;
+        }
+        body.legalpro-dark-mode.search-portal-page--client .search-hero.cd-hero-card .search-hero-submit:hover,
+        body.legalpro-dark-mode.search-portal-page--client .search-hero.cd-hero-card .btn-primary-solid:hover {
+            color: var(--lp-dark-surface, #464f68) !important;
         }
         .search-portal-page .search-hero-field {
             flex: 1;
@@ -440,7 +451,7 @@ $resultsQueryClass = 'search-results-query';
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 <?php echo h($bodyExtra); ?>">
+<body class="g-sidenav-show bg-gray-100 <?php echo h($bodyExtra); ?><?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 <?php echo h($stripClass); ?> position-absolute w-100"></div>
 
     <?php echo $sidebarHtml; ?>

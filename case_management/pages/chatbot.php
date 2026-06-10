@@ -53,6 +53,7 @@ if ($role === 'admin') {
 } else {
     $portalBodyClass .= ' legalpro-client-portal client-portal-page client-chatbot-page';
 }
+$portalBodyClass .= legalpro_portal_theme_body_class();
 
 $headerBgClass = ($role === 'client') ? 'bg-primary' : 'bg-legalpro-admin';
 
@@ -115,7 +116,7 @@ if ($role === 'client') {
 					</div>
 					<div class="cb-panel">
 						<div class="cb-panel-hdr"><h5>Tips</h5></div>
-						<div class="cb-panel-body cb-tips">
+						<div class="cb-panel-body cb-tips chat-tips">
 							<p>• Mention a case number like <strong>C-0007</strong> for details.</p>
 							<p>• Say <strong>help</strong> for more examples.</p>
 							<p class="mb-0">• Answers respect your role — you only see data you are allowed to access.</p>
@@ -158,10 +159,10 @@ if ($role === 'client') {
 					</div>
 					<div class="card">
 						<div class="card-header pb-0"><h6>Tips</h6></div>
-						<div class="card-body">
-							<p class="text-sm mb-2">• Mention a case number like <strong>C-0007</strong> for details.</p>
-							<p class="text-sm mb-2">• Say <strong>help</strong> for more examples.</p>
-							<p class="text-sm mb-0">• Answers respect your role — you only see data you are allowed to access.</p>
+						<div class="card-body chat-tips">
+							<p class="mb-2">• Mention a case number like <strong>C-0007</strong> for details.</p>
+							<p class="mb-2">• Say <strong>help</strong> for more examples.</p>
+							<p class="mb-0">• Answers respect your role — you only see data you are allowed to access.</p>
 						</div>
 					</div>
 				</div>
@@ -308,8 +309,35 @@ $html = <<<'HTML'
 		}
 		.cb-shortcut:hover { background: var(--cb-primary); color: #fff; }
 		.cb-shortcut--outline { text-align: center; }
-		.cb-tips p { font-size: 13px; color: #64748b; margin-bottom: .5rem; }
-		.cb-hint { font-size: 12px; opacity: .85; }
+		.chat-tips p,
+		.cb-tips p {
+			font-size: 13px;
+			line-height: 1.55;
+			color: #334155;
+			font-weight: 500;
+			margin-bottom: .55rem;
+		}
+		.chat-tips p strong,
+		.cb-tips p strong {
+			color: var(--legalpro-theme-primary, #5e72e4);
+			font-weight: 700;
+		}
+		.client-chatbot-page .cb-tips {
+			background: #f8fafc;
+			border-radius: 12px;
+			border: 1px solid #e9ecf3;
+		}
+		.cb-hint {
+			display: block;
+			margin-top: .35rem;
+			font-size: 12px;
+			line-height: 1.5;
+			color: #475569;
+			opacity: 1;
+		}
+		.client-chatbot-page .chat-message-bot .cb-hint {
+			color: #334155;
+		}
 		.client-chatbot-page .chat-window { border-color: #e9ecf3; background: #fafbfc; }
 	</style>
 </head>
