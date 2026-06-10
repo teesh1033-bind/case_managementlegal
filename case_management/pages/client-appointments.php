@@ -462,7 +462,7 @@ ob_start(); ?>
             margin: 0 0 1px;
         }
         .apt-date  { font-size: 11px; color: #94a3b8; margin: 0; }
-        .lawyer-name { font-size: 12px; font-weight: 500; color: #475569; }
+        .lawyer-name { font-size: 12px; font-weight: 500; color: #334155; }
         .apt-notes { font-size: 12px; color: #94a3b8; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
 
         /* ── Badges ─────────────────────────────────────────────────── */
@@ -610,7 +610,7 @@ ob_start(); ?>
         .ca-detail-field p.val { font-size: 13px; color: #1e293b; font-weight: 500; margin: 0; }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-appointments-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-appointments-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
 
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
