@@ -301,14 +301,17 @@ body.client-profile-page .main-content,
     padding-top: var(--lp-portal-header-height) !important;
 }
 
+body.legalpro-lawyer-portal.legalpro-sidebar-collapsed .main-content,
 body.legalpro-sidebar-collapsed.legalpro-lawyer-portal .main-content,
-body.legalpro-sidebar-collapsed.lawyer-dashboard-page .main-content,
+body.legalpro-client-portal.legalpro-sidebar-collapsed .main-content,
+body.legalpro-sidebar-collapsed.legalpro-client-portal .main-content,
 body.legalpro-sidebar-collapsed.client-dashboard-page .main-content,
 body.legalpro-sidebar-collapsed.client-cases-page .main-content,
 body.legalpro-sidebar-collapsed.client-appointments-page .main-content,
 body.legalpro-sidebar-collapsed.client-profile-page .main-content,
 body.legalpro-sidebar-collapsed.client-payments-page .main-content,
-body.legalpro-sidebar-collapsed.client-court-tracking-page .main-content {
+body.legalpro-sidebar-collapsed.client-court-tracking-page .main-content,
+body.legalpro-sidebar-collapsed.client-portal-page .main-content {
     margin-left: var(--lp-portal-sidebar-collapsed) !important;
     width: calc(100% - var(--lp-portal-sidebar-collapsed)) !important;
 }
@@ -459,9 +462,14 @@ body.client-profile-page .navbar-main .container-fluid {
     overflow: visible !important;
 }
 
+body.legalpro-lawyer-portal.legalpro-sidebar-collapsed .navbar-main,
+body.legalpro-lawyer-portal.legalpro-sidebar-collapsed #navbarBlur,
 body.legalpro-sidebar-collapsed.legalpro-lawyer-portal .navbar-main,
-body.legalpro-sidebar-collapsed.lawyer-dashboard-page .navbar-main,
+body.legalpro-sidebar-collapsed.legalpro-lawyer-portal #navbarBlur,
+body.legalpro-client-portal.legalpro-sidebar-collapsed .navbar-main,
+body.legalpro-client-portal.legalpro-sidebar-collapsed #navbarBlur,
 body.legalpro-sidebar-collapsed.legalpro-client-portal .navbar-main,
+body.legalpro-sidebar-collapsed.legalpro-client-portal #navbarBlur,
 body.legalpro-sidebar-collapsed.client-dashboard-page .navbar-main,
 body.legalpro-sidebar-collapsed.client-cases-page .navbar-main,
 body.legalpro-sidebar-collapsed.client-appointments-page .navbar-main,
