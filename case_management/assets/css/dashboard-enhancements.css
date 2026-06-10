@@ -116,6 +116,7 @@
     background: #fff;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .dashboard-calendar-hub__title {
@@ -123,11 +124,22 @@
 }
 
 .dashboard-calendar-hub__head {
-    padding: 1.25rem 1.5rem 1rem;
+    padding: 1.35rem 1.75rem 1.15rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-calendar-hub__head > .d-flex {
+    gap: 1.25rem;
+}
+
+.dashboard-calendar-hub__head .btn {
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .dashboard-calendar-hub__body {
-    padding: 0.75rem 1.25rem 1.25rem;
+    padding: 1.25rem 1.75rem 1.5rem;
 }
 
 .dashboard-calendar-layout {
@@ -667,6 +679,8 @@ body.legalpro-dark-mode #courtTrackingCalendar .fc-daygrid-more-link {
 body.legalpro-dark-mode .dashboard-calendar-hub {
     background: var(--lp-dark-surface) !important;
     border: 1px solid var(--lp-dark-border) !important;
+    border-radius: 1rem !important;
+    overflow: hidden !important;
     box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;
 }
 

@@ -302,6 +302,8 @@ $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCate
         .lp-section-sub {
             font-size: 0.75rem; color: #94a3b8; margin-top: 2px;
         }
+        .cat-legend-label { color: #64748b; }
+        .cat-legend-pct { color: #1e293b; }
         /* Command palette hint */
         .lp-cmd-hint {
             display: flex; align-items: center; gap: 6px;
@@ -744,8 +746,8 @@ echo ob_get_clean();
         var pct = total > 0 ? Math.round(data[i]/total*100) : 0;
         leg.innerHTML += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">'+
             '<span style="width:10px;height:10px;border-radius:3px;background:'+colors[i]+';flex-shrink:0;"></span>'+
-            '<span style="flex:1;color:#64748b;">'+l+'</span>'+
-            '<span style="font-weight:700;color:#1e293b;">'+pct+'%</span></div>';
+            '<span class="cat-legend-label" style="flex:1;">'+l+'</span>'+
+            '<span class="cat-legend-pct" style="font-weight:700;">'+pct+'%</span></div>';
     });
 })();
 </script>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 $message = '';
 $messageType = '';
@@ -127,14 +128,7 @@ foreach ($cases as $case) {
     }
 
     $percent = $estimated > 0 ? min(100, round(($paid / $estimated) * 100)) : 0;
-    $badgeClass = 'bg-gradient-dark';
-    if ($status === 'closed') {
-        $badgeClass = 'bg-gradient-success';
-    } elseif ($status === 'open') {
-        $badgeClass = 'bg-gradient-info';
-    } elseif ($status === 'on hold') {
-        $badgeClass = 'bg-gradient-warning';
-    }
+    $statusBadge = legalpro_case_status_badge($status);
 
     $caseRows .= '
         <tr>
@@ -155,7 +149,7 @@ foreach ($cases as $case) {
                 <small class="text-xs text-muted">' . $percent . '% paid</small>
             </div>
         </td>
-        <td class="text-center"><span class="badge ' . $badgeClass . '">' . htmlspecialchars(ucfirst($status)) . '</span></td>
+        <td class="text-center">' . $statusBadge . '</td>
         <td class="text-center">' . ($paymentCount ? $paymentCount : '—') . '</td>
         <td class="text-center">' . ($lastPayment !== '—' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
         <td class="text-end">

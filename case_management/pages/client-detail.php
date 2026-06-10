@@ -371,28 +371,8 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-	<style>
-		/* Plain checkbox for "Create user account" — avoids broken Font Awesome glyph box */
-		#create_user_account.form-check-input::after {
-			content: none !important;
-			display: none !important;
-		}
-		#create_user_account.form-check-input:not(:checked) {
-			background-color: #fff !important;
-			background-image: none !important;
-			border: 1px solid #d2d6da !important;
-		}
-		#create_user_account.form-check-input:checked {
-			background-color: #5e72e4 !important;
-			background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3 8-8'/%3e%3c/svg%3e") !important;
-			background-size: 75% 75% !important;
-			background-position: center !important;
-			background-repeat: no-repeat !important;
-			border: 0 !important;
-		}
-	</style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-client-detail-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
 		<div class="sidenav-header">
@@ -476,7 +456,7 @@ $html = <<<'HTML'
 										<input class="form-control" type="text" name="address" id="client_address" placeholder="Street, City, Country" value="{ADDRESS}">
 									</div>
 								</div>
-								<div id="corporate-fields" class="client-type-panel" style="display: none;">
+								<div id="corporate-fields" class="client-type-panel legalpro-form-panel border rounded p-3" style="display: none;">
 									<h6 class="text-sm mb-3">Business Details</h6>
 									<div class="form-group">
 										<label class="form-control-label">Business Name <span class="text-danger">*</span></label>
@@ -673,6 +653,7 @@ if ($client_id && $client && $client['user_id'] && $userData) {
     <div class="mt-4">
         <h6>Update User Account</h6>
         <p class="text-sm text-muted mb-2">Update the client\'s login credentials. Leave password fields empty to keep current values.</p>
+        <div class="legalpro-form-panel border rounded p-3 mt-2">
         ' . legalpro_password_requirements_html() . '
         <div class="row">
             <div class="col-md-6">
@@ -700,8 +681,9 @@ if ($client_id && $client && $client['user_id'] && $userData) {
                 </div>
             </div>
         </div>
-        <div class="alert alert-warning mt-3">
+        <div class="alert alert-warning mt-3 mb-0">
             <strong>Important:</strong> Updating username or password will invalidate the client\'s current login credentials. They will need to use the new credentials to login.
+        </div>
         </div>
     </div>';
 } elseif (!$client_id) {
@@ -712,14 +694,14 @@ if ($client_id && $client && $client['user_id'] && $userData) {
     $newUserAccountSection = '
     <div class="mt-4">
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="create_user_account" name="create_user_account" value="1"' . $createUserChecked . ' onchange="toggleUserAccountFields()">
+            <input class="form-check-input legalpro-client-user-check" type="checkbox" id="create_user_account" name="create_user_account" value="1"' . $createUserChecked . ' onchange="toggleUserAccountFields()">
             <label class="form-check-label" for="create_user_account">
                 Create user account for client login
             </label>
         </div>
     </div>
 
-    <div id="user_account_fields" style="display: ' . $createUserDisplay . ';" class="mt-3">
+    <div id="user_account_fields" style="display: ' . $createUserDisplay . ';" class="mt-3 p-3 border rounded legalpro-form-panel">
         <h6>User Account Details</h6>
         ' . legalpro_password_requirements_html() . '
         <div class="row">
@@ -748,7 +730,7 @@ if ($client_id && $client && $client['user_id'] && $userData) {
             </div>
         </div>
         <div class="form-check mt-3">
-            <input class="form-check-input" type="checkbox" id="send_credentials_email" name="send_credentials_email" value="1"' . $sendCredentialsEmailChecked . '>
+            <input class="form-check-input legalpro-client-user-check" type="checkbox" id="send_credentials_email" name="send_credentials_email" value="1"' . $sendCredentialsEmailChecked . '>
             <label class="form-check-label" for="send_credentials_email">
                 Envoyer les identifiants par email (nom, utilisateur, mot de passe)
             </label>

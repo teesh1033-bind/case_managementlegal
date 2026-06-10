@@ -653,6 +653,44 @@ body.legalpro-admin-portal .dashboard-calendar-hub .lp-card-header-primary {
     background: var(--lp-admin-gradient) !important;
 }
 
+/* —— Court tracking calendar hub —— */
+body.admin-court-tracking-page .dashboard-calendar-hub {
+    border-radius: var(--lp-admin-card-radius) !important;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+body.admin-court-tracking-page .dashboard-calendar-hub__head {
+    padding: 1.35rem 1.75rem 1.15rem !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.admin-court-tracking-page .dashboard-calendar-hub__head > .d-flex {
+    gap: 1.25rem !important;
+}
+
+body.admin-court-tracking-page .dashboard-calendar-hub__head .btn {
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+body.admin-court-tracking-page .dashboard-calendar-hub__body {
+    padding: 1.25rem 1.75rem 1.5rem !important;
+}
+
+body.admin-court-tracking-page .dashboard-upcoming-panel {
+    border-radius: calc(var(--lp-admin-card-radius) - 2px);
+    overflow: hidden;
+}
+
+body.admin-court-tracking-page #courtTrackingCalendar {
+    border-radius: calc(var(--lp-admin-card-radius) - 2px);
+    overflow: hidden;
+}
+
 /* —— Search portal (admin) —— */
 .search-portal-page--admin {
     background: var(--lp-admin-content-bg) !important;

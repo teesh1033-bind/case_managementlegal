@@ -311,6 +311,7 @@ function legalpro_case_status_badge(string $status): string
         'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
         'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
         'waiting_for_client' => ['label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
+        'on_hold' => ['label' => 'On Hold', 'class' => 'lp-pill--status-waiting'],
         'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
     ];
 
@@ -413,6 +414,83 @@ function legalpro_lawyer_active_status_badge(bool $isActive): string
     }
 
     return '<span class="lp-pill lp-pill--status-closed">Inactive</span>';
+}
+
+function legalpro_invoice_status_badge(string $status): string
+{
+    $key = strtolower(trim($status));
+    $map = [
+        'draft' => ['label' => 'Draft', 'class' => 'lp-pill--status-default'],
+        'sent' => ['label' => 'Sent', 'class' => 'lp-pill--status-progress'],
+        'paid' => ['label' => 'Paid', 'class' => 'lp-pill--status-active'],
+        'overdue' => ['label' => 'Overdue', 'class' => 'lp-pill--status-declined'],
+        'cancelled' => ['label' => 'Cancelled', 'class' => 'lp-pill--status-closed'],
+    ];
+
+    if (!isset($map[$key])) {
+        $label = ucwords(str_replace('_', ' ', $key));
+
+        return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+}
+
+function legalpro_document_file_icon_meta(string $filename): array
+{
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+    switch ($ext) {
+        case 'pdf':
+            return ['icon' => 'file-text', 'accent' => 'danger'];
+        case 'doc':
+        case 'docx':
+            return ['icon' => 'file-text', 'accent' => 'info'];
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+        case 'webp':
+            return ['icon' => 'image', 'accent' => 'success'];
+        case 'xls':
+        case 'xlsx':
+        case 'csv':
+            return ['icon' => 'file-spreadsheet', 'accent' => 'success'];
+        case 'txt':
+            return ['icon' => 'file-text', 'accent' => 'dark'];
+        default:
+            return ['icon' => 'file', 'accent' => 'dark'];
+    }
+}
+
+function legalpro_document_file_icon_wrap(string $filename, string $extraClass = ''): string
+{
+    $meta = legalpro_document_file_icon_meta($filename);
+    $class = 'dashboard-stat-icon-wrap dashboard-stat-icon-wrap--' . $meta['accent']
+        . ' document-item-icon flex-shrink-0 me-3';
+    if (trim($extraClass) !== '') {
+        $class .= ' ' . trim($extraClass);
+    }
+
+    return '<div class="' . $class . '">' . legalpro_icon($meta['icon']) . '</div>';
+}
+
+function legalpro_document_count_badge(int $count, bool $compact = false): string
+{
+    if ($compact) {
+        $class = $count > 0 ? 'lp-pill--status-progress' : 'lp-pill--status-default';
+        $label = (string) max(0, $count);
+
+        return '<span class="lp-pill ' . $class . ' me-2">' . htmlspecialchars($label) . '</span>';
+    }
+
+    if ($count > 0) {
+        $label = $count === 1 ? '1 file' : $count . ' files';
+
+        return '<span class="lp-pill lp-pill--status-progress">' . htmlspecialchars($label) . '</span>';
+    }
+
+    return '<span class="lp-pill lp-pill--status-default">No files</span>';
 }
 
 function client_court_date_status_badge(string $status): string
