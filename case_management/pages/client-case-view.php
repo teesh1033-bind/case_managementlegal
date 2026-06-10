@@ -361,11 +361,14 @@ $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Norm
 $categoryBadge = '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars((string) ($case['category'] ?? '')) . '</span>';
 
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('Case {CASE_NUMBER}', 'Case Details', 'Search cases…', [
-    'parent_label' => 'My Cases',
-    'parent_url' => 'client-cases.php',
-    'title_tag' => 'h6',
-]);
+$clientPageNavbar = legalpro_render_client_page_navbar('Case {CASE_NUMBER}', 'Case Details', 'Search cases…', array_merge(
+    legalpro_client_page_search_options('client-cases.php'),
+    [
+        'parent_label' => 'My Cases',
+        'parent_url' => 'client-cases.php',
+        'title_tag' => 'h6',
+    ]
+));
 
 $html = <<<'HTML'
 <!DOCTYPE html>

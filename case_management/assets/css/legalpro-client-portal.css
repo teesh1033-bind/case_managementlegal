@@ -1,6 +1,30 @@
 /**
  * LegalPro client portal — light page background (same as admin shell).
  */
+body.legalpro-client-portal,
+body.client-dashboard-page,
+body.client-cases-page,
+body.client-appointments-page,
+body.client-court-tracking-page,
+body.client-payments-page,
+body.client-portal-page,
+body.client-profile-page,
+body.client-chatbot-page,
+.search-portal-page--client {
+    font-family: var(--bs-font-sans-serif, "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif) !important;
+}
+
+body.legalpro-client-portal .card .card-body,
+body.legalpro-client-portal input,
+body.legalpro-client-portal select,
+body.legalpro-client-portal textarea,
+body.legalpro-client-portal button,
+body.legalpro-client-portal .form-control,
+body.legalpro-client-portal .form-select,
+body.legalpro-client-portal .btn {
+    font-family: inherit;
+}
+
 :root {
     --client-portal-content-bg: #f4f6f9;
     --client-portal-gradient: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);

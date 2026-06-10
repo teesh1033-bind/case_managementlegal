@@ -71,7 +71,12 @@ require_once __DIR__ . '/../inc/legalpro-icons.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
 
-$clientPageNavbar = legalpro_render_client_page_navbar('Dashboard', 'Dashboard', 'Search cases…');
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'Dashboard',
+    'Dashboard',
+    'Search cases…',
+    legalpro_client_page_search_options('client-cases.php')
+);
 
 $nextApptBanner = '';
 if ($nextAppt) {
@@ -155,7 +160,6 @@ $html = <<<'HTML'
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>My Dashboard — LegalPro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -166,7 +170,6 @@ $html = <<<'HTML'
     <style>
     *, *::before, *::after { box-sizing: border-box; }
     .client-dashboard-page {
-        font-family: 'Inter', system-ui, sans-serif;
         background: #f0f2f8;
         --cp-primary: var(--legalpro-theme-primary, #5e72e4);
         --cp-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);

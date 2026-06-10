@@ -71,7 +71,12 @@ $topNavbarHtml = '
 		</nav>';
 if ($role === 'client') {
     require_once __DIR__ . '/../inc/client-portal-navbar.php';
-    $topNavbarHtml = legalpro_render_client_page_navbar('AI Assistant', 'AI Assistant', 'Search cases…');
+    $topNavbarHtml = legalpro_render_client_page_navbar(
+        'AI Assistant',
+        'AI Assistant',
+        'Search cases…',
+        legalpro_client_page_search_options('client-cases.php')
+    );
 }
 
 $welcomeHint = '<br><span class="cb-hint">' . htmlspecialchars($welcomeText) . '</span>';
@@ -178,7 +183,6 @@ $html = <<<'HTML'
 	<link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
 	<link rel="icon" type="image/png" href="../assets/img/favicon.png">
 	<title>{ASSISTANT_NAME} · AI Assistant</title>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -223,7 +227,6 @@ $html = <<<'HTML'
 
 		/* Client portal chatbot */
 		body.client-chatbot-page {
-			font-family: 'Inter', system-ui, sans-serif;
 			background: #f0f2f8;
 			--cb-primary: var(--legalpro-theme-primary, #5e72e4);
 			--cb-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
