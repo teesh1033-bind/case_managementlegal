@@ -218,6 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Get filter parameters
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
 $priorityFilter = isset($_GET['priority']) ? $_GET['priority'] : 'all';
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Build query to get tasks for this lawyer
 $query = "
@@ -239,6 +240,15 @@ if ($statusFilter !== 'all') {
 if ($priorityFilter !== 'all') {
     $query .= " AND t.priority = ?";
     $params[] = $priorityFilter;
+}
+
+if ($search !== '') {
+    $query .= " AND (t.title LIKE ? OR c.title LIKE ? OR cl.first_name LIKE ? OR cl.last_name LIKE ?)";
+    $searchParam = '%' . $search . '%';
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $params[] = $searchParam;
+    $params[] = $searchParam;
 }
 
 $query .= " ORDER BY
@@ -276,19 +286,7 @@ try {
     $lawyerCases = [];
 }
 
-// Count tasks by status
-$statusCounts = [
-    'all' => 0,
-    'pending' => 0,
-    'in_progress' => 0,
-    'completed' => 0,
-    'cancelled' => 0
-];
-
-foreach ($tasks as $task) {
-    $statusCounts['all']++;
-    $statusCounts[$task['status']]++;
-}
+$iconTaskHeader = legalpro_icon('list-checks');
 
 // Build HTML
 $messageHtml = '';
@@ -383,7 +381,7 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>Argon Dashboard - My Tasks</title>
+    <title>LegalPro - My Tasks</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -392,31 +390,6 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
     <style>
-        .lawyer-tasks-page .lawyer-tasks-toolbar {
-            align-items: center;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
-        .lawyer-tasks-page .lawyer-tasks-toolbar .btn {
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            height: 2rem;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.8125rem;
-            line-height: 1.25;
-            --bs-btn-padding-y: 0.25rem;
-            --bs-btn-padding-x: 0.75rem;
-        }
-        .lawyer-tasks-page .lawyer-tasks-toolbar .form-select {
-            width: auto;
-            height: 2rem;
-            min-width: 8.5rem;
-            padding: 0.2rem 1.75rem 0.2rem 0.65rem;
-            font-size: 0.8125rem;
-            line-height: 1.25;
-            background-position: right 0.5rem center;
-        }
         /* More space between option text and dropdown chevron (in-card filters) */
         .lawyer-tasks-page .task-actions-row .form-select,
         .lawyer-tasks-page #taskModal .form-select {
@@ -443,9 +416,15 @@ $html = <<<'HTML'
         .lawyer-tasks-page #taskModal .modal-header {
             background: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
             color: #fff;
+            border-bottom: none;
+        }
+        .lawyer-tasks-page #taskModal .modal-header .modal-title {
+            color: #fff !important;
+            font-weight: 700;
         }
         .lawyer-tasks-page #taskModal .modal-header .btn-close {
             filter: invert(1) grayscale(1) brightness(200%);
+            opacity: 0.9;
         }
         .lawyer-tasks-page .task-actions-row {
             flex-wrap: wrap;
@@ -471,46 +450,72 @@ $html = <<<'HTML'
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="../pages/lawyer-dashboard.html">Dashboard</a></li>
+                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-dashboard.php">Lawyer Portal</a></li>
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Tasks</li>
                     </ol>
                     <h6 class="font-weight-bolder text-white mb-0">My Tasks</h6>
                 </nav>
-                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
-                        <div class="input-group">
-                            <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="Search cases or tasks…" value="" autocomplete="off" maxlength="200" aria-label="Search">
-                        </div>
-                    </form>
-                </div>
             </div>
         </nav>
         <div class="container-fluid py-4">
-            <div class="row">
+            <!-- Filters -->
+            <div class="row mb-4">
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header pb-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h6>My Tasks</h6>
-                                <div class="d-flex lawyer-tasks-toolbar">
-                                    <button class="btn btn-sm btn-primary mb-0" type="button" onclick="showAddTaskModal()">
-                                        <i class="ni ni-fat-add me-1"></i>Add Task
-                                    </button>
-                                    <select class="form-select form-select-sm" onchange="filterByStatus(this.value)">
-                                        <option value="all" {STATUS_ALL_SELECTED}>All Status ({STATUS_ALL_COUNT})</option>
-                                        <option value="pending" {STATUS_PENDING_SELECTED}>Pending ({STATUS_PENDING_COUNT})</option>
-                                        <option value="in_progress" {STATUS_IN_PROGRESS_SELECTED}>In Progress ({STATUS_IN_PROGRESS_COUNT})</option>
-                                        <option value="completed" {STATUS_COMPLETED_SELECTED}>Completed ({STATUS_COMPLETED_COUNT})</option>
-                                        <option value="cancelled" {STATUS_CANCELLED_SELECTED}>Cancelled ({STATUS_CANCELLED_COUNT})</option>
-                                    </select>
-                                    <select class="form-select form-select-sm" onchange="filterByPriority(this.value)">
-                                        <option value="all" {PRIORITY_ALL_SELECTED}>All Priorities</option>
-                                        <option value="high" {PRIORITY_HIGH_SELECTED}>High Priority</option>
-                                        <option value="medium" {PRIORITY_MEDIUM_SELECTED}>Medium Priority</option>
-                                        <option value="low" {PRIORITY_LOW_SELECTED}>Low Priority</option>
+                        <div class="card-body p-3">
+                            <form method="GET" class="row align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label">Search Tasks</label>
+                                    <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="Task title, case or client">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Status Filter</label>
+                                    <select class="form-select" name="status">
+                                        <option value="all"{STATUS_ALL_SELECTED}>All Status</option>
+                                        <option value="pending"{STATUS_PENDING_SELECTED}>Pending</option>
+                                        <option value="in_progress"{STATUS_IN_PROGRESS_SELECTED}>In Progress</option>
+                                        <option value="completed"{STATUS_COMPLETED_SELECTED}>Completed</option>
+                                        <option value="cancelled"{STATUS_CANCELLED_SELECTED}>Cancelled</option>
                                     </select>
                                 </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Priority Filter</label>
+                                    <select class="form-select" name="priority">
+                                        <option value="all"{PRIORITY_ALL_SELECTED}>All Priorities</option>
+                                        <option value="high"{PRIORITY_HIGH_SELECTED}>High</option>
+                                        <option value="medium"{PRIORITY_MEDIUM_SELECTED}>Medium</option>
+                                        <option value="low"{PRIORITY_LOW_SELECTED}>Low</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label d-block invisible">Filter</label>
+                                    <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <p class="text-sm text-muted mb-0">Total: {TOTAL_TASKS} tasks</p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks list -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mb-4">
+                        <div class="card-header pb-0 pt-3">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_TASK_HEADER}</div>
+                                    <div>
+                                        <h6 class="mb-0">My Tasks</h6>
+                                        <p class="text-xs text-muted mb-0">Tasks assigned to you</p>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-primary mb-0" type="button" onclick="showAddTaskModal()">
+                                    <i class="ni ni-fat-add me-1"></i>Add Task
+                                </button>
                             </div>
                         </div>
                         <div class="card-body">
@@ -578,18 +583,6 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
-        function filterByStatus(status) {
-            const url = new URL(window.location);
-            url.searchParams.set('status', status);
-            window.location.href = url.toString();
-        }
-
-        function filterByPriority(priority) {
-            const url = new URL(window.location);
-            url.searchParams.set('priority', priority);
-            window.location.href = url.toString();
-        }
-
         function showAddTaskModal() {
             document.getElementById('taskModalTitle').textContent = 'Add Task';
             document.getElementById('taskSaveButton').textContent = 'Add Task';
@@ -635,20 +628,18 @@ $replacements = [
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
     '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
     '{LAWYER_NAME}' => htmlspecialchars($lawyerName),
-    '{STATUS_ALL_COUNT}' => $statusCounts['all'],
-    '{STATUS_PENDING_COUNT}' => $statusCounts['pending'],
-    '{STATUS_IN_PROGRESS_COUNT}' => $statusCounts['in_progress'],
-    '{STATUS_COMPLETED_COUNT}' => $statusCounts['completed'],
-    '{STATUS_CANCELLED_COUNT}' => $statusCounts['cancelled'],
-    '{STATUS_ALL_SELECTED}' => $statusFilter === 'all' ? 'selected' : '',
-    '{STATUS_PENDING_SELECTED}' => $statusFilter === 'pending' ? 'selected' : '',
-    '{STATUS_IN_PROGRESS_SELECTED}' => $statusFilter === 'in_progress' ? 'selected' : '',
-    '{STATUS_COMPLETED_SELECTED}' => $statusFilter === 'completed' ? 'selected' : '',
-    '{STATUS_CANCELLED_SELECTED}' => $statusFilter === 'cancelled' ? 'selected' : '',
-    '{PRIORITY_ALL_SELECTED}' => $priorityFilter === 'all' ? 'selected' : '',
-    '{PRIORITY_HIGH_SELECTED}' => $priorityFilter === 'high' ? 'selected' : '',
-    '{PRIORITY_MEDIUM_SELECTED}' => $priorityFilter === 'medium' ? 'selected' : '',
-    '{PRIORITY_LOW_SELECTED}' => $priorityFilter === 'low' ? 'selected' : '',
+    '{SEARCH_VALUE}' => htmlspecialchars($search),
+    '{TOTAL_TASKS}' => count($tasks),
+    '{ICON_TASK_HEADER}' => $iconTaskHeader,
+    '{STATUS_ALL_SELECTED}' => $statusFilter === 'all' ? ' selected' : '',
+    '{STATUS_PENDING_SELECTED}' => $statusFilter === 'pending' ? ' selected' : '',
+    '{STATUS_IN_PROGRESS_SELECTED}' => $statusFilter === 'in_progress' ? ' selected' : '',
+    '{STATUS_COMPLETED_SELECTED}' => $statusFilter === 'completed' ? ' selected' : '',
+    '{STATUS_CANCELLED_SELECTED}' => $statusFilter === 'cancelled' ? ' selected' : '',
+    '{PRIORITY_ALL_SELECTED}' => $priorityFilter === 'all' ? ' selected' : '',
+    '{PRIORITY_HIGH_SELECTED}' => $priorityFilter === 'high' ? ' selected' : '',
+    '{PRIORITY_MEDIUM_SELECTED}' => $priorityFilter === 'medium' ? ' selected' : '',
+    '{PRIORITY_LOW_SELECTED}' => $priorityFilter === 'low' ? ' selected' : '',
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

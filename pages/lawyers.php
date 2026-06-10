@@ -511,7 +511,7 @@ $html = <<<'HTML'
                         </div>
 
                         <!-- User Account Update Section (for existing lawyers) -->
-                        <div id="user_update_section" style="display: none;">
+                        <div id="user_update_section" style="display: none;" class="legalpro-form-panel border rounded p-3 mb-3">
                             <p class="text-xs text-muted mb-2">Leave password fields empty to keep the current password.</p>
                             {PASSWORD_REQUIREMENTS}
                             <div class="row">
@@ -540,8 +540,8 @@ $html = <<<'HTML'
                         </div>
 
                         <!-- New User Account Creation Form (hidden by default) -->
-                        <div id="create_user_form" style="display: none;" class="border border-primary border-2 rounded p-3 mb-3 bg-light">
-                            <h6 class="mb-1 text-primary fw-bold">Create New User Account</h6>
+                        <div id="create_user_form" style="display: none;" class="legalpro-form-panel border rounded p-3 mb-3">
+                            <h6 class="mb-1 fw-bold">Create New User Account</h6>
                             <p class="text-xs text-muted mb-2">Fill in the fields below, then save the lawyer at the bottom of this form.</p>
                             {PASSWORD_REQUIREMENTS}
                             <div class="row">
@@ -574,7 +574,7 @@ $html = <<<'HTML'
                                     <option value="staff">Staff</option>
                                 </select>
                             </div>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="hideCreateUserForm()">
+                            <button type="button" class="btn btn-sm btn-dark" onclick="hideCreateUserForm()">
                                 <i class="fas fa-times me-1"></i> Cancel
                             </button>
                         </div>

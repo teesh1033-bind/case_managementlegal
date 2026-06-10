@@ -305,4 +305,25 @@ body.legalpro-dark-mode.legalpro-client-portal .search-hero-field:focus-within {
     box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
 }
 
+/* Dark mode — hero gradient cards need white headings (Argon h4/p colors override inheritance) */
+body.legalpro-dark-mode.legalpro-client-portal .cct-hero-card .cct-hero-title,
+body.legalpro-dark-mode.legalpro-client-portal .cct-hero-card .cct-hero-sub,
+body.legalpro-dark-mode.legalpro-client-portal .cct-hero-card .cct-hero-kicker,
+body.legalpro-dark-mode.legalpro-client-portal .cct-hero-card p,
+body.legalpro-dark-mode.legalpro-client-portal .cct-hero-card strong,
+body.legalpro-dark-mode.legalpro-client-portal .cct-stat-pill .num,
+body.legalpro-dark-mode.legalpro-client-portal .cct-stat-pill .lbl,
+body.legalpro-dark-mode.legalpro-client-portal [class*="-hero-card"] h4,
+body.legalpro-dark-mode.legalpro-client-portal [class*="-hero-card"] p {
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal.client-court-tracking-page .cct-empty h5 {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal.client-court-tracking-page .cct-empty p {
+    color: var(--lp-dark-text-muted, #c5cede) !important;
+}
+
 /* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */
