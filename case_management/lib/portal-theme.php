@@ -170,6 +170,80 @@ function savePortalTheme(string $mode, string $color, ?string $customPrimary = n
     return ['ok' => true, 'message' => 'Appearance settings updated successfully.'];
 }
 
+function lawyerPortalThemeModeSettingKey(int $lawyerId): string
+{
+    return 'lawyer_portal_theme_mode_' . max(0, $lawyerId);
+}
+
+function getLawyerPortalThemeMode(int $lawyerId): string
+{
+    if ($lawyerId <= 0) {
+        return (string) (getPortalTheme()['mode'] ?? 'light');
+    }
+
+    $stored = strtolower(trim((string) getSetting(lawyerPortalThemeModeSettingKey($lawyerId), '')));
+    if (in_array($stored, ['light', 'dark'], true)) {
+        return $stored;
+    }
+
+    return (string) (getPortalTheme()['mode'] ?? 'light');
+}
+
+function saveLawyerPortalThemeMode(int $lawyerId, string $mode): array
+{
+    if ($lawyerId <= 0) {
+        return ['ok' => false, 'message' => 'Invalid lawyer account.'];
+    }
+
+    $mode = strtolower(trim($mode));
+    if (!in_array($mode, ['light', 'dark'], true)) {
+        return ['ok' => false, 'message' => 'Invalid theme mode selected.'];
+    }
+
+    setSetting(lawyerPortalThemeModeSettingKey($lawyerId), $mode);
+
+    return ['ok' => true, 'message' => 'Appearance updated successfully.'];
+}
+
+function getEffectivePortalThemeMode(): string
+{
+    if (!empty($_SESSION['lawyer_id'])) {
+        return getLawyerPortalThemeMode((int) $_SESSION['lawyer_id']);
+    }
+
+    return (string) (getPortalTheme()['mode'] ?? 'light');
+}
+
+function isEffectivePortalThemeDark(): bool
+{
+    return getEffectivePortalThemeMode() === 'dark';
+}
+
+function renderLawyerPortalThemeSettingsHtml(int $lawyerId): string
+{
+    $currentMode = getLawyerPortalThemeMode($lawyerId);
+    $lightChecked = $currentMode === 'light' ? ' checked' : '';
+    $darkChecked = $currentMode === 'dark' ? ' checked' : '';
+
+    return '<div class="card mb-4">'
+        . '<div class="card-header pb-0"><h6>Appearance</h6></div>'
+        . '<div class="card-body">'
+        . '<p class="text-sm text-muted mb-4">Choose light or dark mode for your lawyer portal. This applies only to your account.</p>'
+        . '<form method="post" class="settings-theme-form">'
+        . '<input type="hidden" name="action" value="save_appearance">'
+        . '<div class="mb-4">'
+        . '<label class="form-control-label d-block mb-2">Theme mode</label>'
+        . '<div class="settings-theme-mode">'
+        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> Light</label>'
+        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> Dark</label>'
+        . '</div>'
+        . '</div>'
+        . '<button type="submit" class="btn btn-primary mb-0">Save appearance</button>'
+        . '</form>'
+        . '</div>'
+        . '</div>';
+}
+
 function renderPortalThemeDarkCss(string $primary, string $rgb): string
 {
     $soft12 = portalThemeHexToRgba($primary, 0.12);
@@ -207,6 +281,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'body.legalpro-dark-mode.lawyer-court-tracking-page,'
         . 'body.legalpro-dark-mode.lawyer-tasks-page,'
         . 'body.legalpro-dark-mode.lawyer-profile-page,'
+        . 'body.legalpro-dark-mode.lawyer-settings-page,'
         . 'body.legalpro-dark-mode.admin-court-tracking-page';
 
     $css = 'html.legalpro-theme-dark { background: #2a3040; }';
@@ -1296,11 +1371,30 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'body.legalpro-dark-mode.lawyer-tasks-page .main-content .card,'
         . 'body.legalpro-dark-mode.lawyer-profile-page .main-content .card';
 
-    $css .= $lawyerCardSurfaces . ' {'
+    $css .= $lawyerCardSurfaces . ','
+        . 'body.legalpro-dark-mode.lawyer-settings-page .main-content .card {'
         . 'background-color: var(--lp-dark-surface) !important;'
         . 'background: var(--lp-dark-surface) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . 'box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;'
+        . '}';
+
+    $lawyerShellPages = 'body.legalpro-dark-mode.legalpro-lawyer-portal,'
+        . 'body.legalpro-dark-mode.lawyer-dashboard-page,'
+        . 'body.legalpro-dark-mode.lawyer-cases-page,'
+        . 'body.legalpro-dark-mode.lawyer-clients-page,'
+        . 'body.legalpro-dark-mode.lawyer-appointments-page,'
+        . 'body.legalpro-dark-mode.lawyer-availability-page,'
+        . 'body.legalpro-dark-mode.lawyer-case-view-page,'
+        . 'body.legalpro-dark-mode.lawyer-client-view-page,'
+        . 'body.legalpro-dark-mode.lawyer-court-tracking-page,'
+        . 'body.legalpro-dark-mode.lawyer-tasks-page,'
+        . 'body.legalpro-dark-mode.lawyer-profile-page,'
+        . 'body.legalpro-dark-mode.lawyer-settings-page';
+
+    $css .= $lawyerShellPages . ' {'
+        . 'background: var(--lawyer-portal-content-bg) !important;'
+        . 'background-color: var(--lawyer-portal-content-bg) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.lawyer-tasks-page .task-card-themed,'
@@ -2418,7 +2512,7 @@ function renderPortalThemeCss(): string
         . 'color: ' . $primary . ' !important;'
         . '}';
 
-    if ($theme['mode'] === 'dark') {
+    if (isEffectivePortalThemeDark()) {
         $css .= renderPortalThemeDarkCss($primary, $rgb);
     }
 
@@ -2450,9 +2544,8 @@ function renderPortalThemeHead(): void
     }
     $rendered = true;
 
-    $theme = getPortalTheme();
     $css = renderPortalThemeCss();
-    $isDark = $theme['mode'] === 'dark';
+    $isDark = isEffectivePortalThemeDark();
 
     echo '<style id="legalpro-portal-theme">' . $css . '</style>';
     if ($isDark) {

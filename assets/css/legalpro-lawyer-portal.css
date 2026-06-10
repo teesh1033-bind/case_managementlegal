@@ -27,7 +27,9 @@ body.lawyer-client-view-page,
 body.lawyer-court-tracking-page,
 body.lawyer-tasks-page,
 body.lawyer-profile-page,
+body.lawyer-settings-page,
 body.lawyer-profile-page.bg-gray-100,
+body.lawyer-settings-page.bg-gray-100,
 .search-portal-page--lawyer {
     background: var(--lawyer-portal-content-bg) !important;
     background-color: var(--lawyer-portal-content-bg) !important;
@@ -46,6 +48,7 @@ body.lawyer-client-view-page > .min-height-300,
 body.lawyer-court-tracking-page > .min-height-300,
 body.lawyer-tasks-page > .min-height-300,
 body.lawyer-profile-page > .min-height-300,
+body.lawyer-settings-page > .min-height-300,
 .search-portal-page--lawyer > .min-height-300 {
     display: none !important;
 }
@@ -63,6 +66,7 @@ body.lawyer-client-view-page .main-content,
 body.lawyer-court-tracking-page .main-content,
 body.lawyer-tasks-page .main-content,
 body.lawyer-profile-page .main-content,
+body.lawyer-settings-page .main-content,
 body.lawyer-dashboard-page .main-content > .container-fluid,
 body.lawyer-cases-page .main-content > .container-fluid,
 body.lawyer-clients-page .main-content > .container-fluid,
@@ -73,6 +77,7 @@ body.lawyer-client-view-page .main-content > .container-fluid,
 body.lawyer-court-tracking-page .main-content > .container-fluid,
 body.lawyer-tasks-page .main-content > .container-fluid,
 body.lawyer-profile-page .main-content > .container-fluid,
+body.lawyer-settings-page .main-content > .container-fluid,
 .search-portal-page--lawyer .main-content,
 .search-portal-page--lawyer .main-content > .container-fluid {
     background: transparent !important;
@@ -377,4 +382,57 @@ body.lawyer-court-tracking-page .dashboard-upcoming-empty .dashboard-stat-icon-w
     min-width: 2.75rem;
     margin: 0 auto 0.5rem;
     border-radius: 50%;
+}
+
+/* Dark mode — match admin portal shell (portal-theme.php sets --lawyer-portal-content-bg) */
+body.legalpro-dark-mode.legalpro-lawyer-portal,
+body.legalpro-dark-mode.lawyer-dashboard-page,
+body.legalpro-dark-mode.lawyer-cases-page,
+body.legalpro-dark-mode.lawyer-clients-page,
+body.legalpro-dark-mode.lawyer-appointments-page,
+body.legalpro-dark-mode.lawyer-availability-page,
+body.legalpro-dark-mode.lawyer-case-view-page,
+body.legalpro-dark-mode.lawyer-client-view-page,
+body.legalpro-dark-mode.lawyer-court-tracking-page,
+body.legalpro-dark-mode.lawyer-tasks-page,
+body.legalpro-dark-mode.lawyer-profile-page,
+body.legalpro-dark-mode.lawyer-settings-page {
+    background: var(--lawyer-portal-content-bg, var(--lp-dark-bg, #2a3040)) !important;
+    background-color: var(--lawyer-portal-content-bg, var(--lp-dark-bg, #2a3040)) !important;
+}
+
+body.legalpro-dark-mode.legalpro-lawyer-portal .main-content .card,
+body.legalpro-dark-mode.lawyer-dashboard-page .main-content .card,
+body.legalpro-dark-mode.lawyer-cases-page .main-content .card,
+body.legalpro-dark-mode.lawyer-clients-page .main-content .card,
+body.legalpro-dark-mode.lawyer-appointments-page .main-content .card,
+body.legalpro-dark-mode.lawyer-availability-page .main-content .card,
+body.legalpro-dark-mode.lawyer-case-view-page .main-content .card,
+body.legalpro-dark-mode.lawyer-client-view-page .main-content .card,
+body.legalpro-dark-mode.lawyer-court-tracking-page .main-content .card,
+body.legalpro-dark-mode.lawyer-tasks-page .main-content .card,
+body.legalpro-dark-mode.lawyer-profile-page .main-content .card,
+body.legalpro-dark-mode.lawyer-settings-page .main-content .card,
+body.legalpro-dark-mode.search-portal-page--lawyer .main-content .card {
+    background-color: var(--lp-dark-surface, #343b4f) !important;
+    background: var(--lp-dark-surface, #343b4f) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+}
+
+body.legalpro-dark-mode.legalpro-lawyer-portal .form-control,
+body.legalpro-dark-mode.legalpro-lawyer-portal .form-select,
+body.legalpro-dark-mode.lawyer-tasks-page .form-control,
+body.legalpro-dark-mode.lawyer-tasks-page .form-select,
+body.legalpro-dark-mode.lawyer-cases-page .form-control,
+body.legalpro-dark-mode.lawyer-cases-page .form-select {
+    background-color: var(--lp-dark-input-bg, #2f3547) !important;
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16)) !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+}
+
+body.legalpro-dark-mode.lawyer-settings-page .settings-theme-mode__option {
+    background: var(--lp-dark-surface-raised, #3d455c) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
 }
