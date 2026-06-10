@@ -298,7 +298,9 @@ if (!empty($_SESSION['error_message'])) {
     <main class="main-content position-relative border-radius-lg">
         <?php
         require_once __DIR__ . '/../inc/client-portal-navbar.php';
-        echo legalpro_render_client_page_navbar('Court tracking', 'Court tracking', 'Search hearings & cases…');
+        echo legalpro_render_client_page_navbar('Court tracking', 'Court tracking', 'Search hearings & cases…', [
+            'client_name' => $clientName,
+        ]);
         ?>
 
         <div class="container-fluid py-4">

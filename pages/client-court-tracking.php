@@ -148,105 +148,146 @@ if (!empty($_SESSION['error_message'])) {
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>Court Tracking - LegalPro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
-    <link href="../assets/css/dashboard-enhancements.css?v=9" rel="stylesheet" />
-    <?php include __DIR__ . '/../inc/portal-theme-calendar-dark.php'; ?>
     <style>
-        .client-court-tracking-page { --cct-radius: 1.15rem; }
-        .client-court-tracking-page .cct-hero {
-            border-radius: var(--cct-radius);
-            background: #fff;
-            box-shadow: 0 0.25rem 1rem rgba(52, 71, 103, 0.08);
-            border: 1px solid rgba(0, 0, 0, 0.06);
+        *, *::before, *::after { box-sizing: border-box; }
+        body.client-court-tracking-page {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f0f2f8;
+            --cct-primary: var(--legalpro-theme-primary, #5e72e4);
+            --cct-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
+            --cct-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
+            --cct-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
+            --cct-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            --cct-r: 16px;
+            --cct-shadow: 0 2px 12px rgba(0,0,0,0.07);
         }
-        .client-court-tracking-page .cct-hero .cct-hero-kicker {
-            letter-spacing: 0.12em;
-            color: #5e72e4;
-            opacity: 1;
+
+        .cct-hero-card {
+            background: var(--cct-gradient);
+            border-radius: 20px;
+            padding: 2rem 2.5rem;
+            color: #fff;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
         }
-        .client-court-tracking-page .cct-hero .cct-hero-title {
-            color: #344767;
+        .cct-hero-card::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.08);
         }
-        .client-court-tracking-page .cct-hero .cct-hero-text {
-            color: #67748e;
+        .cct-hero-kicker {
+            font-size: 11px; font-weight: 600;
+            letter-spacing: .12em; text-transform: uppercase;
+            opacity: .75; margin-bottom: .35rem;
         }
-        .client-court-tracking-page .cct-hero-pill {
-            background: #f8f9fe;
-            border-radius: 0.75rem;
-            padding: 0.55rem 0.9rem;
-            border: 1px solid rgba(94, 114, 228, 0.15);
+        .cct-hero-title { font-size: 22px; font-weight: 800; margin-bottom: .3rem; }
+        .cct-hero-sub { font-size: 13px; opacity: .8; margin-bottom: 1.5rem; max-width: 36rem; }
+        .cct-hero-stats { display: flex; gap: .85rem; flex-wrap: wrap; position: relative; z-index: 1; }
+        .cct-stat-pill {
+            background: rgba(255,255,255,.15);
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 12px;
+            padding: .6rem 1.1rem;
+            backdrop-filter: blur(10px);
             min-width: 5rem;
             text-align: center;
         }
-        .client-court-tracking-page .cct-hero-pill .cct-hero-pill-label {
-            color: #67748e;
-        }
-        .client-court-tracking-page .cct-hero-pill .cct-hero-pill-value {
-            color: #344767;
+        .cct-stat-pill .num { font-size: 20px; font-weight: 700; line-height: 1; }
+        .cct-stat-pill .lbl { font-size: 11px; opacity: .75; margin-top: 2px; }
+
+        .client-court-tracking-page .dashboard-calendar-hub {
+            border-radius: var(--cct-r);
+            border: 1px solid #e9ecf3;
+            box-shadow: var(--cct-shadow);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
         }
         .client-court-tracking-page .cct-panel {
-            border-radius: var(--cct-radius);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 0.25rem 1.1rem rgba(52, 71, 103, 0.07);
+            background: #fff;
+            border-radius: var(--cct-r);
+            border: 1px solid #e9ecf3;
+            box-shadow: var(--cct-shadow);
             overflow: hidden;
+            margin-bottom: 2rem;
         }
-        .client-court-tracking-page .cct-panel.cct-panel-calendar {
-            overflow: visible;
+        .cct-panel-hdr {
+            padding: 1.1rem 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+            flex-wrap: wrap;
         }
-        .client-court-tracking-page .cct-panel .card-header {
-            background: transparent;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-            padding: 1.1rem 1.25rem 0.9rem;
+        .cct-panel-hdr h5 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0; }
+        .cct-panel-hdr p { font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
+        .cct-count {
+            background: var(--cct-primary-soft);
+            color: var(--cct-primary);
+            font-size: 11px; font-weight: 700;
+            padding: .2rem .65rem; border-radius: 99px;
         }
-        .client-court-tracking-page .cct-panel .card-header h5 {
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin: 0;
+        .cct-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .cct-table thead th {
+            background: #f8fafc; color: #94a3b8;
+            font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+            padding: .7rem 1rem; border-bottom: 1px solid #f1f5f9; white-space: nowrap;
         }
-        .client-court-tracking-page .cct-cal-wrap {
-            padding: 0 1rem 1.25rem;
+        .cct-table thead th:first-child { padding-left: 1.5rem; }
+        .cct-table thead th:last-child { padding-right: 1.5rem; text-align: right; }
+        .cct-table tbody tr { border-bottom: 1px solid #f8fafc; transition: background .1s; }
+        .cct-table tbody tr:hover { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04); }
+        .cct-table tbody td { padding: .85rem 1rem; vertical-align: middle; }
+        .cct-table tbody td:first-child { padding-left: 1.5rem; }
+        .cct-table tbody td:last-child { padding-right: 1.5rem; text-align: right; }
+
+        .cct-row-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--cct-primary-soft); color: var(--cct-primary);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
-        .client-court-tracking-page .cct-cal-wrap #courtTrackingCalendar {
-            min-height: 28rem;
+        .cct-row-icon .lp-icon svg { stroke: currentColor; }
+        .btn-cct-view {
+            padding: .35rem .9rem; border-radius: 8px;
+            border: 1.5px solid var(--cct-primary); color: var(--cct-primary);
+            font-size: 12px; font-weight: 600; background: none; cursor: pointer;
+            transition: background .15s, color .15s;
         }
+        .btn-cct-view:hover { background: var(--cct-primary); color: #fff; }
+
+        .cct-empty {
+            padding: 3.5rem 1.5rem; text-align: center;
+        }
+        .cct-empty-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            background: var(--cct-primary-soft); color: var(--cct-primary);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .cct-empty h5 { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: .35rem; }
+        .cct-empty p { font-size: 13px; color: #94a3b8; max-width: 24rem; margin: 0 auto; }
+
         .client-court-tracking-page .fc-event { cursor: pointer; }
-        .client-court-tracking-page .cct-panel .table thead th {
-            font-size: 0.65rem;
-            letter-spacing: 0.06em;
-            padding-top: 0.85rem;
-            padding-bottom: 0.85rem;
-            background: rgba(248, 249, 250, 0.95);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        }
-        .client-court-tracking-page .cct-row td {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-            vertical-align: middle;
-        }
-        .client-court-tracking-page .cct-row:hover td { background: rgba(94, 114, 228, 0.04); }
+        .client-court-tracking-page #courtTrackingCalendar { min-height: 28rem; }
         .client-court-tracking-page .min-width-0 { min-width: 0; }
         .court-date-modal .modal-dialog { max-width: 600px; }
-        body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar {
-            background: var(--lp-dark-surface, #343b4f) !important;
-            border: 1px solid var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
-            box-shadow: none !important;
-        }
-        body.legalpro-dark-mode.client-court-tracking-page .dashboard-calendar-hub {
-            background: var(--lp-dark-surface, #343b4f) !important;
-            border: 1px solid var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
-        }
-        body.legalpro-dark-mode.client-court-tracking-page .cct-panel .card-header .text-muted,
-        body.legalpro-dark-mode.client-court-tracking-page .cct-panel .card-header h5.text-dark {
-            color: var(--lp-dark-text-muted, #a8b2c7) !important;
-        }
-        body.legalpro-dark-mode.client-court-tracking-page .cct-panel .card-header h5.text-dark {
-            color: var(--lp-dark-text, #f2f4f8) !important;
+
+        @media (max-width: 640px) {
+            .cct-hero-card { padding: 1.5rem; }
         }
     </style>
 </head>
@@ -257,7 +298,9 @@ if (!empty($_SESSION['error_message'])) {
     <main class="main-content position-relative border-radius-lg">
         <?php
         require_once __DIR__ . '/../inc/client-portal-navbar.php';
-        echo legalpro_render_client_page_navbar('Court tracking', 'Court tracking', 'Search hearings & cases…', ['client_name' => $clientName]);
+        echo legalpro_render_client_page_navbar('Court tracking', 'Court tracking', 'Search hearings & cases…', [
+            'client_name' => $clientName,
+        ]);
         ?>
 
         <div class="container-fluid py-4">
@@ -268,34 +311,26 @@ if (!empty($_SESSION['error_message'])) {
             </div>
             <?php endif; ?>
 
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card cct-hero mb-0">
-                        <div class="card-body p-4 d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-4">
-                            <div>
-                                <p class="cct-hero-kicker text-xs text-uppercase font-weight-bold mb-1">Docket</p>
-                                <h4 class="cct-hero-title font-weight-bolder mb-1">Hearings & appearances</h4>
-                                <p class="cct-hero-text text-sm mb-0" style="max-width: 36rem;">Use the calendar for a month view, or scan the list for dates, titles, and status. Click an event or <strong>Details</strong> for full information.</p>
-                            </div>
-                            <div class="d-flex flex-wrap gap-3 justify-content-lg-end">
-                                <div class="cct-hero-pill">
-                                    <p class="cct-hero-pill-label text-xs mb-0">Total</p>
-                                    <p class="cct-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;"><?php echo (int) $ctTotal; ?></p>
-                                </div>
-                                <div class="cct-hero-pill">
-                                    <p class="cct-hero-pill-label text-xs mb-0">Upcoming</p>
-                                    <p class="cct-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;"><?php echo (int) $ctUpcoming; ?></p>
-                                </div>
-                                <div class="cct-hero-pill">
-                                    <p class="cct-hero-pill-label text-xs mb-0">Scheduled</p>
-                                    <p class="cct-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;"><?php echo (int) $ctScheduled; ?></p>
-                                </div>
-                                <div class="cct-hero-pill">
-                                    <p class="cct-hero-pill-label text-xs mb-0">Completed</p>
-                                    <p class="cct-hero-pill-value font-weight-bolder mb-0" style="font-size: 1.35rem;"><?php echo (int) $ctCompleted; ?></p>
-                                </div>
-                            </div>
-                        </div>
+            <div class="cct-hero-card">
+                <p class="cct-hero-kicker">Docket</p>
+                <h4 class="cct-hero-title">Hearings &amp; appearances</h4>
+                <p class="cct-hero-sub">Use the calendar for a month view, or scan the list for dates, titles, and status. Click an event or <strong>View</strong> for full information.</p>
+                <div class="cct-hero-stats">
+                    <div class="cct-stat-pill">
+                        <div class="num"><?php echo (int) $ctTotal; ?></div>
+                        <div class="lbl">Total</div>
+                    </div>
+                    <div class="cct-stat-pill">
+                        <div class="num"><?php echo (int) $ctUpcoming; ?></div>
+                        <div class="lbl">Upcoming</div>
+                    </div>
+                    <div class="cct-stat-pill">
+                        <div class="num"><?php echo (int) $ctScheduled; ?></div>
+                        <div class="lbl">Scheduled</div>
+                    </div>
+                    <div class="cct-stat-pill">
+                        <div class="num"><?php echo (int) $ctCompleted; ?></div>
+                        <div class="lbl">Completed</div>
                     </div>
                 </div>
             </div>
@@ -305,7 +340,7 @@ if (!empty($_SESSION['error_message'])) {
                     <div class="dashboard-calendar-hub">
                         <div class="dashboard-calendar-hub__head">
                             <div>
-                                <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
+                                <h6 class="text-capitalize mb-0 font-weight-bold" style="color: #344767;">Court Dates Calendar</h6>
                                 <p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
                                 <div class="dashboard-legend-pills">
                                     <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
@@ -333,76 +368,71 @@ if (!empty($_SESSION['error_message'])) {
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="card cct-panel">
-                        <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2">
-                            <div>
-                                <h5 class="text-dark">All court dates</h5>
-                                <p class="text-sm text-muted mb-0">Sorted by date, earliest first.</p>
-                            </div>
-                            <a href="client-cases.php" class="btn btn-sm btn-outline-primary mb-0">My cases</a>
-                        </div>
-                        <div class="card-body px-0 pt-0 pb-0">
-                            <?php if (empty($court_dates)): ?>
-                                <div class="text-center py-5 px-4">
-                                    <div class="cct-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center"><?php echo $iconCourtEmpty; ?></div>
-                                    <h5 class="font-weight-bolder mt-4 mb-2">No court dates yet</h5>
-                                    <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 24rem;">When your legal team adds hearings or appearances for your matters, they will appear here and on the calendar above.</p>
-                                </div>
-                            <?php else: ?>
-                                <div class="table-responsive">
-                                    <table class="table align-items-center mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Case</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date &amp; time</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Title</th>
-                                                <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 pe-4 text-end">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($court_dates as $date):
-                                                $cid = (int) ($date['case_id'] ?? 0);
-                                                $rowStatusBadge = client_court_date_status_badge((string) ($date['status'] ?? ''));
-                                                ?>
-                                                <tr class="cct-row">
-                                                    <td class="ps-4">
-                                                        <div class="d-flex align-items-center gap-3 py-1">
-                                                            <div class="cct-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0"><?php echo $iconCourtRow; ?></div>
-                                                            <div class="min-width-0">
-                                                                <?php if ($cid > 0): ?>
-                                                                <a href="client-case-view.php?id=<?php echo $cid; ?>" class="text-sm font-weight-bold mb-0 d-inline-block text-truncate" style="max-width: 14rem;"><?php echo htmlspecialchars($date['case_title']); ?></a>
-                                                                <?php else: ?>
-                                                                <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 14rem;"><?php echo htmlspecialchars($date['case_title']); ?></h6>
-                                                                <?php endif; ?>
-                                                                <p class="text-xs text-muted mb-0">Matter</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <p class="text-xs font-weight-bold mb-0"><?php echo date('M j, Y', strtotime($date['court_date'])); ?></p>
-                                                        <p class="text-xs text-muted mb-0"><?php echo date('g:i A', strtotime($date['court_date'])); ?></p>
-                                                    </td>
-                                                    <td>
-                                                        <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 12rem;" title="<?php echo htmlspecialchars($date['title']); ?>"><?php echo htmlspecialchars($date['title']); ?></p>
-                                                    </td>
-                                                    <td class="align-middle text-center">
-                                                        <?php echo $rowStatusBadge; ?>
-                                                    </td>
-                                                    <td class="align-middle text-end pe-4">
-                                                        <button type="button" class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            <?php endif; ?>
-                        </div>
+            <div class="cct-panel" id="courtDatesTable">
+                <div class="cct-panel-hdr">
+                    <div>
+                        <h5>All court dates</h5>
+                        <p>Sorted by date, earliest first.</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+                        <span class="cct-count"><?php echo (int) $ctTotal; ?> total</span>
+                        <a href="client-cases.php" class="btn-cct-view text-decoration-none">My cases</a>
                     </div>
                 </div>
+                <?php if (empty($court_dates)): ?>
+                    <div class="cct-empty">
+                        <div class="cct-empty-icon"><?php echo $iconCourtEmpty; ?></div>
+                        <h5>No court dates yet</h5>
+                        <p>When your legal team adds hearings or appearances for your matters, they will appear here and on the calendar above.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="cct-table">
+                            <thead>
+                                <tr>
+                                    <th>Case</th>
+                                    <th>Date &amp; time</th>
+                                    <th>Title</th>
+                                    <th style="text-align:center">Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($court_dates as $date):
+                                    $cid = (int) ($date['case_id'] ?? 0);
+                                    $rowStatusBadge = client_court_date_status_badge((string) ($date['status'] ?? ''));
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-3 py-1">
+                                                <div class="cct-row-icon"><?php echo $iconCourtRow; ?></div>
+                                                <div class="min-width-0">
+                                                    <?php if ($cid > 0): ?>
+                                                    <a href="client-case-view.php?id=<?php echo $cid; ?>" class="text-sm font-weight-bold mb-0 d-inline-block text-truncate text-reset" style="max-width: 14rem;"><?php echo htmlspecialchars($date['case_title']); ?></a>
+                                                    <?php else: ?>
+                                                    <span class="text-sm font-weight-bold d-inline-block text-truncate" style="max-width: 14rem;"><?php echo htmlspecialchars($date['case_title']); ?></span>
+                                                    <?php endif; ?>
+                                                    <p class="text-xs text-muted mb-0">Matter</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <p class="text-xs font-weight-bold mb-0"><?php echo date('M j, Y', strtotime($date['court_date'])); ?></p>
+                                            <p class="text-xs text-muted mb-0"><?php echo date('g:i A', strtotime($date['court_date'])); ?></p>
+                                        </td>
+                                        <td>
+                                            <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 12rem;" title="<?php echo htmlspecialchars($date['title']); ?>"><?php echo htmlspecialchars($date['title']); ?></p>
+                                        </td>
+                                        <td class="text-center"><?php echo $rowStatusBadge; ?></td>
+                                        <td>
+                                            <button type="button" class="btn-cct-view" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </main>

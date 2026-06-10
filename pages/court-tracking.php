@@ -313,7 +313,7 @@ if (empty($upcomingCourtDates)) {
                                 <div id="courtTrackingCalendar"></div>
                                 <aside class="dashboard-upcoming-panel">
                                     <div class="dashboard-upcoming-panel__title">
-                                        <span class="padding-left-1000">Upcoming</span>
+                                        <span>Upcoming</span>
                                         <a href="#courtDatesTable" class="text-xs text-primary font-weight-bold">View all</a>
                                     </div>
                                     <div class="dashboard-upcoming-list" id="upcomingCourtDatesList">
