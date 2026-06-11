@@ -210,7 +210,29 @@ function lawyerHasOverlappingAppointment(
 }
 
 /**
+ * True when the lawyer has published at least one date-specific available slot.
+ */
+function lawyerHasPublishedAvailabilitySchedule(PDO $pdo, int $lawyerId): bool
+{
+    if ($lawyerId <= 0) {
+        return false;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) FROM lawyer_time_slots
+        WHERE lawyer_id = ?
+          AND slot_type = 'available'
+          AND slot_date IS NOT NULL
+    ");
+    $stmt->execute([$lawyerId]);
+
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+/**
  * Block booking outside published availability or during unavailable slots.
+ * When no availability is published, the lawyer is treated as available by default
+ * (only unavailable slots and overlapping appointments are enforced).
  *
  * @return array{ok: bool, message?: string}
  */
@@ -256,6 +278,17 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
             'ok' => false,
             'message' => 'This lawyer is unavailable at the selected date and time. Please choose another slot.',
         ];
+    }
+
+    if (!lawyerHasPublishedAvailabilitySchedule($pdo, $lawyerId)) {
+        if (lawyerHasOverlappingAppointment($pdo, $lawyerId, $appointmentDate, $appointmentTime, $durationMinutes, $excludeAppointmentId)) {
+            return [
+                'ok' => false,
+                'message' => 'This lawyer already has an appointment at the selected time. Please choose another slot.',
+            ];
+        }
+
+        return ['ok' => true];
     }
 
     // Booking requires availability published for the exact calendar date (lawyer availability UI).

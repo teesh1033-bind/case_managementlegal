@@ -862,14 +862,17 @@ $html = <<<'HTML'
                 if (dateValue === now.date && timeValue < now.time) {
                     return false;
                 }
-                if (!hasSchedule) {
+                if (isBlockedByUnavailable(timeValue, slots, durationMinutes)) {
                     return false;
+                }
+                if (!hasSchedule) {
+                    return true;
                 }
                 var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
                 if (!availableSlots.length) {
                     return false;
                 }
-                return isWithinAvailable(timeValue, slots, durationMinutes) && !isBlockedByUnavailable(timeValue, slots, durationMinutes);
+                return isWithinAvailable(timeValue, slots, durationMinutes);
             }
 
             function rebuildTimeSelectOptions(durationMinutes, preservedTime) {
@@ -919,7 +922,7 @@ $html = <<<'HTML'
                 var hasSchedule = lawyerHasPublishedSchedule(lawyerId);
                 var hasBookableSlot = false;
 
-                if (!hasSchedule || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                if (hasSchedule && !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
                     timeInput.querySelectorAll('.time-option').forEach(function(option) {
                         if (option.value) {
                             option.disabled = true;
@@ -941,11 +944,9 @@ $html = <<<'HTML'
                     }
 
                     if (isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule, durationMinutes)) {
-                        if (hasSchedule) {
-                            option.classList.add('lp-time-available', 'text-success', 'font-weight-bold');
-                        }
+                        option.classList.add('lp-time-available', 'text-success', 'font-weight-bold');
                         hasBookableSlot = true;
-                    } else if (hasSchedule) {
+                    } else {
                         option.disabled = true;
                         option.classList.add('lp-time-unavailable');
                     }
