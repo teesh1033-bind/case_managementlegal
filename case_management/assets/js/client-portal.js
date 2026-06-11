@@ -40,7 +40,8 @@
                 + '<strong class="legalpro-client-notif-item__title">' + escapeHtml(n.title) + '</strong>'
                 + '<span class="legalpro-client-notif-item__text">' + escapeHtml(n.body || '') + '</span>'
                 + '</span>'
-                + '<time class="legalpro-client-notif-item__time">' + escapeHtml(n.time_ago || '') + '</time>'
+                + '<time class="legalpro-client-notif-item__time" datetime="' + escapeHtml(n.time_iso || '') + '" title="' + escapeHtml(n.time_label || n.time_ago || '') + '">'
+                + escapeHtml(n.time_label || n.time_ago || '') + '</time>'
                 + '</a>';
         }).join('');
     }

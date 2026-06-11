@@ -212,7 +212,8 @@ function legalpro_client_create_notification(
     string $linkUrl,
     string $icon = 'bell',
     ?string $refType = null,
-    ?int $refId = null
+    ?int $refId = null,
+    ?string $eventAt = null
 ): void {
     if ($pdo === null || $clientId <= 0) {
         return;
@@ -220,22 +221,70 @@ function legalpro_client_create_notification(
 
     legalpro_client_portal_ensure_tables($pdo);
 
+    $createdAt = legalpro_client_notification_normalize_datetime($eventAt);
+
     try {
         $stmt = $pdo->prepare("
             INSERT INTO client_notifications
-            (client_id, type, title, body, link_url, icon, ref_type, ref_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (client_id, type, title, body, link_url, icon, ref_type, ref_id, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 title = VALUES(title),
                 body = VALUES(body),
                 link_url = VALUES(link_url),
-                icon = VALUES(icon),
-                created_at = IF(is_read = 1, created_at, VALUES(created_at))
+                icon = VALUES(icon)
         ");
-        $stmt->execute([$clientId, $type, $title, $body, $linkUrl, $icon, $refType, $refId]);
+        $stmt->execute([$clientId, $type, $title, $body, $linkUrl, $icon, $refType, $refId, $createdAt]);
     } catch (PDOException $e) {
         error_log('client notification: ' . $e->getMessage());
     }
+}
+
+function legalpro_client_notification_normalize_datetime(?string $value): string
+{
+    if ($value !== null && trim($value) !== '') {
+        $ts = strtotime($value);
+        if ($ts !== false) {
+            return date('Y-m-d H:i:s', $ts);
+        }
+    }
+
+    return date('Y-m-d H:i:s');
+}
+
+/**
+ * @return array{label: string, ago: string, iso: string}
+ */
+function legalpro_client_notification_time_parts(string $datetime): array
+{
+    $ts = strtotime($datetime);
+    if ($ts === false) {
+        return ['label' => '', 'ago' => '', 'iso' => ''];
+    }
+
+    $iso = date('c', $ts);
+    $now = time();
+    $diff = $now - $ts;
+    $todayStart = strtotime('today');
+    $yesterdayStart = strtotime('yesterday');
+
+    if ($diff < 45) {
+        $ago = 'Just now';
+    } elseif ($diff < 3600) {
+        $ago = (int) floor($diff / 60) . 'm ago';
+    } elseif ($ts >= $todayStart) {
+        $ago = date('g:i A', $ts);
+    } elseif ($ts >= $yesterdayStart) {
+        $ago = 'Yesterday ' . date('g:i A', $ts);
+    } elseif ($diff < 604800) {
+        $ago = (int) floor($diff / 86400) . 'd ago';
+    } else {
+        $ago = date('M j', $ts);
+    }
+
+    $label = date('M j, Y g:i A', $ts);
+
+    return ['label' => $label, 'ago' => $ago, 'iso' => $iso];
 }
 
 function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
@@ -248,7 +297,7 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
 
     try {
         $stmt = $pdo->prepare("
-            SELECT d.id, d.label, d.filename, d.case_id, c.title AS case_title
+            SELECT d.id, d.label, d.filename, d.case_id, d.uploaded_at, c.title AS case_title
             FROM documents d
             INNER JOIN cases c ON c.id = d.case_id
             WHERE c.client_id = ?
@@ -269,22 +318,24 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
                 'client-documents.php?case_id=' . (int) $doc['case_id'],
                 'file-text',
                 'document',
-                (int) $doc['id']
+                (int) $doc['id'],
+                (string) ($doc['uploaded_at'] ?? '')
             );
         }
 
         $stmt = $pdo->prepare("
-            SELECT a.id, a.starts_at, a.status, c.title AS case_title, a.case_id
+            SELECT a.id, a.starts_at, a.status, a.updated_at, a.created_at, c.title AS case_title, a.case_id
             FROM appointments a
             LEFT JOIN cases c ON c.id = a.case_id
             WHERE a.client_id = ?
-              AND a.updated_at >= DATE_SUB(NOW(), INTERVAL 60 DAY)
-            ORDER BY a.updated_at DESC
+              AND COALESCE(a.updated_at, a.created_at) >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+            ORDER BY COALESCE(a.updated_at, a.created_at) DESC
             LIMIT 30
         ");
         $stmt->execute([$clientId]);
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $apt) {
             $status = strtolower((string) ($apt['status'] ?? ''));
+            $eventAt = (string) ($apt['updated_at'] ?? $apt['created_at'] ?? $apt['starts_at'] ?? '');
             if ($status === 'accepted') {
                 $dt = date('M j, g:i A', strtotime((string) $apt['starts_at']));
                 legalpro_client_create_notification(
@@ -296,7 +347,8 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
                     'client-appointments.php',
                     'calendar-check',
                     'appointment',
-                    (int) $apt['id']
+                    (int) $apt['id'],
+                    $eventAt
                 );
             } elseif ($status === 'pending') {
                 legalpro_client_create_notification(
@@ -308,22 +360,24 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
                     'client-appointments.php',
                     'calendar-clock',
                     'appointment',
-                    (int) $apt['id']
+                    (int) $apt['id'],
+                    $eventAt
                 );
             }
         }
 
         $stmt = $pdo->prepare("
-            SELECT i.id, i.invoice_number, i.amount, i.case_id, c.title AS case_title
+            SELECT i.id, i.invoice_number, i.amount, i.case_id, i.created_at, i.issue_date, c.title AS case_title
             FROM invoices i
             LEFT JOIN cases c ON c.id = i.case_id
             WHERE i.client_id = ?
-              AND i.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
-            ORDER BY i.created_at DESC
+              AND COALESCE(i.issue_date, i.created_at) >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+            ORDER BY COALESCE(i.issue_date, i.created_at) DESC
             LIMIT 30
         ");
         $stmt->execute([$clientId]);
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $inv) {
+            $eventAt = (string) ($inv['issue_date'] ?? $inv['created_at'] ?? '');
             legalpro_client_create_notification(
                 $pdo,
                 $clientId,
@@ -333,12 +387,13 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
                 'client-payments.php',
                 'receipt',
                 'invoice',
-                (int) $inv['id']
+                (int) $inv['id'],
+                $eventAt
             );
         }
 
         $stmt = $pdo->prepare("
-            SELECT cd.id, cd.court_date, cd.title, cd.case_id, c.title AS case_title
+            SELECT cd.id, cd.court_date, cd.title, cd.created_at, cd.case_id, c.title AS case_title
             FROM court_dates cd
             INNER JOIN cases c ON c.id = cd.case_id
             WHERE c.client_id = ?
@@ -358,11 +413,59 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
                 'client-court-tracking.php',
                 'landmark',
                 'court_date',
-                (int) $court['id']
+                (int) $court['id'],
+                (string) ($court['created_at'] ?? '')
             );
         }
     } catch (PDOException $e) {
         error_log('client sync notifications: ' . $e->getMessage());
+    }
+
+    legalpro_client_repair_notification_timestamps($pdo, $clientId);
+}
+
+function legalpro_client_repair_notification_timestamps(?PDO $pdo, int $clientId): void
+{
+    if ($pdo === null || $clientId <= 0) {
+        return;
+    }
+
+    $repairs = [
+        "
+            UPDATE client_notifications n
+            INNER JOIN documents d ON n.ref_type = 'document' AND n.ref_id = d.id
+            INNER JOIN cases c ON c.id = d.case_id AND c.client_id = n.client_id
+            SET n.created_at = d.uploaded_at
+            WHERE n.client_id = ? AND d.uploaded_at IS NOT NULL
+        ",
+        "
+            UPDATE client_notifications n
+            INNER JOIN appointments a ON n.ref_type = 'appointment' AND n.ref_id = a.id
+            SET n.created_at = COALESCE(a.updated_at, a.created_at, a.starts_at)
+            WHERE n.client_id = ? AND a.client_id = n.client_id
+        ",
+        "
+            UPDATE client_notifications n
+            INNER JOIN invoices i ON n.ref_type = 'invoice' AND n.ref_id = i.id
+            SET n.created_at = COALESCE(i.issue_date, i.created_at)
+            WHERE n.client_id = ? AND i.client_id = n.client_id
+        ",
+        "
+            UPDATE client_notifications n
+            INNER JOIN court_dates cd ON n.ref_type = 'court_date' AND n.ref_id = cd.id
+            INNER JOIN cases c ON c.id = cd.case_id AND c.client_id = n.client_id
+            SET n.created_at = cd.created_at
+            WHERE n.client_id = ? AND cd.created_at IS NOT NULL
+        ",
+    ];
+
+    try {
+        foreach ($repairs as $sql) {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$clientId]);
+        }
+    } catch (PDOException $e) {
+        error_log('repair notification timestamps: ' . $e->getMessage());
     }
 }
 

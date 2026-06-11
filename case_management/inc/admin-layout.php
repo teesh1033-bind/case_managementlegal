@@ -99,9 +99,11 @@ function legalpro_render_portal_header_utilities(
     string $logoutUrl,
     string $profileUrl = '',
     string $extraMenuHtml = '',
-    bool $notifPanelMode = false
+    bool $notifPanelMode = false,
+    ?int $notifBadgeCount = null
 ): string {
     $initials = legalpro_portal_initials($displayName);
+    $notifCount = $notifBadgeCount ?? count($notifications);
     $notifBadge = '<span class="legalpro-header-notif__badge" data-notif-count' . ($notifCount > 0 ? '' : ' style="display:none"') . '>'
         . ($notifCount > 0 ? ($notifCount > 9 ? '9+' : (string) $notifCount) : '')
         . '</span>';
@@ -110,11 +112,16 @@ function legalpro_render_portal_header_utilities(
         ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . 'Profile</a></li>'
         : '';
 
-    $notifControl = $notifPanelMode
-        ? '<button type="button" class="legalpro-header-notif" id="clientNotifBell" title="Notifications" aria-expanded="false" aria-controls="clientNotifPanel">'
+    if ($notifPanelMode) {
+        $notifControl = '<button type="button" class="legalpro-header-notif" id="clientNotifBell" title="Notifications" aria-expanded="false" aria-controls="clientNotifPanel">'
+            . legalpro_icon('bell') . $notifBadge . '</button>';
+    } else {
+        $notifControl = '<div class="legalpro-header-notif-wrap">'
+            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="Notifications">'
             . legalpro_icon('bell') . $notifBadge . '</button>'
-        : '<a href="' . htmlspecialchars($notifUrl) . '" class="legalpro-header-notif" title="Notifications">'
-            . legalpro_icon('bell') . $notifBadge . '</a>';
+            . legalpro_render_notification_panel($notifications, $viewAllUrl)
+            . '</div>';
+    }
 
     return '
     <div class="legalpro-navbar-actions d-flex align-items-center gap-3 flex-shrink-0">
@@ -316,11 +323,13 @@ function legalpro_render_client_header_utilities(?PDO $pdo = null): string
     return legalpro_render_portal_header_utilities(
         $displayName,
         $clientLabel,
+        $notifications,
         'client-appointments.php',
         'client-logout.php',
         'client-profile.php',
         '<li><a class="dropdown-item" href="client-settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars($settingsLabel) . '</a></li>',
-        true
+        true,
+        legalpro_client_notification_count($pdo, $clientId)
     );
 }
 
