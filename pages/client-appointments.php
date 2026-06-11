@@ -557,21 +557,17 @@ ob_start(); ?>
             padding: .42rem 0; border: 1.5px solid #e2e8f0; border-radius: 8px;
             font-size: 12px; font-weight: 600; color: #94a3b8; background: #f8fafc;
             cursor: not-allowed; text-align: center; transition: all .15s;
+            opacity: .55;
         }
-        .ca-time-btn.available {
-            border-color: #6ee7b7; color: #047857; background: #f0fdf4; cursor: pointer;
+        .ca-time-btn.bookable {
+            border-color: #cbd5e1; color: #1e293b; background: #fff; cursor: pointer; opacity: 1;
         }
-        .ca-time-btn.available:hover { border-color: #10b981; background: #dcfce7; }
+        .ca-time-btn.bookable:hover { border-color: var(--ca-primary); color: var(--ca-primary); }
         .ca-time-btn.selected  {
-            border-color: var(--ca-primary); background: var(--ca-primary); color: #fff; cursor: pointer;
+            border-color: var(--ca-primary); background: var(--ca-primary); color: #fff; cursor: pointer; opacity: 1;
         }
         .ca-avail-hint {
-            display: flex; align-items: center; gap: 6px;
             font-size: 11px; color: #64748b; margin-top: .5rem;
-        }
-        .ca-avail-hint-dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: #6ee7b7; flex-shrink: 0;
         }
 
         /* ── Availability alert ─────────────────────────────────────── */
@@ -718,10 +714,7 @@ ob_start(); ?>
                                     <?php endforeach; ?>
                                 </div>
                                 <input type="hidden" name="appointment_time" id="appointment_time">
-                                <div class="ca-avail-hint">
-                                    <div class="ca-avail-hint-dot"></div>
-                                    Green slots are open for booking
-                                </div>
+                                <div class="ca-avail-hint">Unavailable times cannot be selected.</div>
                             </div>
                             <div class="ca-fld">
                                 <label>Notes
@@ -822,13 +815,12 @@ ob_start(); ?>
 
     function selectTime(val) {
         var btn = document.querySelector('[data-time="' + val + '"]');
-        if (!btn || btn.classList.contains('ca-time-btn') && !btn.classList.contains('available') && !btn.classList.contains('selected')) return;
-        if (!btn.classList.contains('available') && !btn.classList.contains('selected')) return;
+        if (!btn || !btn.classList.contains('bookable')) return;
         document.querySelectorAll('.ca-time-btn.selected').forEach(function(b) {
             b.classList.remove('selected');
-            b.classList.add('available');
+            b.classList.add('bookable');
         });
-        btn.classList.remove('available');
+        btn.classList.remove('bookable');
         btn.classList.add('selected');
         selectedTime = val;
         document.getElementById('appointment_time').value = val;
@@ -882,7 +874,7 @@ ob_start(); ?>
                 return;
             }
             if (!published || isAvailable(t, availableSlots)) {
-                b.className = 'ca-time-btn available';
+                b.className = 'ca-time-btn bookable';
                 anyAvail = true;
             } else {
                 b.className = 'ca-time-btn';
@@ -903,13 +895,13 @@ ob_start(); ?>
         var allSlots = getSlotsForDate(lawyerId, dateVal);
         var published = hasSchedule(lawyerId);
         if (isPastTime(dateVal, timeVal) || isBlockedByUnavailable(timeVal, allSlots)) {
-            alert('Selected time is not available. Please choose a green slot.');
+            alert('Selected time is not available. Please choose another slot.');
             return false;
         }
         if (published) {
             var slots = getAvailableSlots(lawyerId, dateVal);
             if (!slots.length || !isAvailable(timeVal, slots)) {
-                alert('Selected time is not available. Please choose a green slot.');
+                alert('Selected time is not available. Please choose another slot.');
                 return false;
             }
         }

@@ -634,26 +634,27 @@ ob_start(); ?>
         .ca-time-dd-opt {
             padding: .5rem .65rem; border-radius: 8px;
             font-size: 13px; font-weight: 600; color: var(--ca-field-muted);
-            cursor: not-allowed; user-select: none;
+            cursor: not-allowed; user-select: none; opacity: .55;
         }
-        .ca-time-dd-opt.available {
-            color: var(--ca-time-available-color);
+        .ca-time-dd-opt.bookable {
+            color: var(--ca-field-text);
             background: transparent;
             cursor: pointer;
+            opacity: 1;
         }
-        .ca-time-dd-opt.available:hover {
-            color: var(--ca-time-available-color);
-            background: transparent;
+        .ca-time-dd-opt.bookable:hover {
+            color: var(--ca-primary);
+            background: var(--ca-primary-soft);
         }
         .ca-time-dd-opt.selected,
         .ca-time-dd-opt.selected:hover {
-            color: var(--ca-time-available-color);
-            background: transparent;
+            color: var(--ca-primary);
+            background: var(--ca-primary-soft);
             font-weight: 700;
+            opacity: 1;
         }
 
         .ca-avail-hint {
-            display: flex; align-items: center; gap: 6px;
             font-size: 11px; color: #64748b; margin-top: .5rem;
         }
         .ca-avail-hint-dot {
@@ -813,10 +814,7 @@ ob_start(); ?>
                                     </ul>
                                     <input type="hidden" name="appointment_time" id="appointment_time" value="">
                                 </div>
-                                <div class="ca-avail-hint">
-                                    <div class="ca-avail-hint-dot"></div>
-                                    Green times are open for booking
-                                </div>
+                                <div class="ca-avail-hint">Unavailable times cannot be selected.</div>
                             </div>
                             <div class="ca-fld">
                                 <label>Notes
@@ -938,8 +936,12 @@ ob_start(); ?>
     }
 
     function selectTime(val, labelText) {
+        var target = document.querySelector('.ca-time-dd-opt[data-time="' + val + '"]');
+        if (!target || !target.classList.contains('bookable')) {
+            return;
+        }
         document.querySelectorAll('.ca-time-dd-opt').forEach(function(opt) {
-            opt.classList.toggle('selected', opt.getAttribute('data-time') === val && opt.classList.contains('available'));
+            opt.classList.toggle('selected', opt.getAttribute('data-time') === val && opt.classList.contains('bookable'));
         });
         selectedTime = val;
         document.getElementById('appointment_time').value = val;
@@ -1002,7 +1004,7 @@ ob_start(); ?>
                 return;
             }
             if (!published || isAvailable(t, availableSlots)) {
-                opt.className = 'ca-time-dd-opt available';
+                opt.className = 'ca-time-dd-opt bookable';
                 opt.setAttribute('aria-disabled', 'false');
                 anyAvail = true;
             } else {
@@ -1026,13 +1028,13 @@ ob_start(); ?>
         var allSlots = getSlotsForDate(lawyerId, dateVal);
         var published = hasSchedule(lawyerId);
         if (isPastTime(dateVal, timeVal) || isBlockedByUnavailable(timeVal, allSlots)) {
-            alert('Selected time is not available. Please choose a green time slot.');
+            alert('Selected time is not available. Please choose another slot.');
             return false;
         }
         if (published) {
             var slots = getAvailableSlots(lawyerId, dateVal);
             if (!slots.length || !isAvailable(timeVal, slots)) {
-                alert('Selected time is not available. Please choose a green time slot.');
+                alert('Selected time is not available. Please choose another slot.');
                 return false;
             }
         }

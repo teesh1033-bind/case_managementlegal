@@ -433,10 +433,6 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 	{AVAILABILITY_DATE_PICKER_HEAD}
 	<style>
-		#appointment_time option.lp-time-available {
-			color: #2dce89;
-			font-weight: 600;
-		}
 		#appointment_time option.lp-time-unavailable,
 		#appointment_time option:disabled {
 			color: #94a3b8;
@@ -544,7 +540,7 @@ $html = <<<'HTML'
 										</div>
 									</div>
 								</div>
-								<small class="text-muted d-block mb-3">Choose a <span class="text-success font-weight-bold">green</span> time from the list. Crossed-out options are unavailable.</small>
+								<small class="text-muted d-block mb-3">Unavailable times cannot be selected.</small>
 								<div id="availabilityMessage" class="mb-3" style="display: none;"></div>
 								<small class="text-muted d-block mb-3">Appointments can only be booked when the lawyer has published availability for the selected date. Unavailable blocks and existing appointments are excluded.</small>
 
@@ -911,7 +907,7 @@ $html = <<<'HTML'
                 if (!lawyerId || !dateValue) {
                     setAvailabilityMessage(
                         lawyerId
-                            ? '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a date to see available time slots in green.</div>'
+                            ? '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a date to see available time slots.</div>'
                             : '',
                         !!lawyerId
                     );
@@ -944,11 +940,9 @@ $html = <<<'HTML'
                     }
 
                     if (isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule, durationMinutes)) {
-                        option.classList.add('lp-time-available', 'text-success', 'font-weight-bold');
                         hasBookableSlot = true;
                     } else {
                         option.disabled = true;
-                        option.classList.add('lp-time-unavailable');
                     }
                 });
 
@@ -989,7 +983,8 @@ $html = <<<'HTML'
                     return false;
                 }
 
-                if (!lawyerHasPublishedSchedule(lawyerId) || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                var hasSchedule = lawyerHasPublishedSchedule(lawyerId);
+                if (hasSchedule && !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
                     timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
                     setAvailabilityMessage(
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
@@ -1001,7 +996,7 @@ $html = <<<'HTML'
 
                 if (!timeValue) {
                     setAvailabilityMessage(
-                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a <span class="text-success font-weight-bold">green</span> time within the lawyer\'s published availability.</div>',
+                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select an available time from the list.</div>',
                         true
                     );
                     setSubmitEnabled(false);
@@ -1012,7 +1007,7 @@ $html = <<<'HTML'
                 if (selectedOption && selectedOption.disabled) {
                     timeInput.setCustomValidity('The selected time is not available.');
                     setAvailabilityMessage(
-                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> The selected time is not available. Choose a green time slot.</div>',
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> The selected time is not available. Choose another slot.</div>',
                         true
                     );
                     setSubmitEnabled(false);
@@ -1020,8 +1015,6 @@ $html = <<<'HTML'
                 }
 
                 var slots = getSlotsForLawyerAndDate(lawyerId, dateValue);
-                var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
-
                 var durationMinutes = getDurationMinutes();
 
                 if (isBlockedByUnavailable(timeValue, slots, durationMinutes)) {
@@ -1034,30 +1027,30 @@ $html = <<<'HTML'
                     return false;
                 }
 
-                if (availableSlots.length === 0) {
-                    timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
-                    setAvailabilityMessage(
-                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
-                        true
-                    );
-                    setSubmitEnabled(false);
-                    return false;
+                if (hasSchedule) {
+                    var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
+                    if (availableSlots.length === 0) {
+                        timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
+                        setAvailabilityMessage(
+                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
+                            true
+                        );
+                        setSubmitEnabled(false);
+                        return false;
+                    }
+
+                    if (!isWithinAvailable(timeValue, slots, durationMinutes)) {
+                        timeInput.setCustomValidity('Selected time is outside the lawyer\'s available hours.');
+                        setAvailabilityMessage(
+                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
+                            true
+                        );
+                        setSubmitEnabled(false);
+                        return false;
+                    }
                 }
 
-                if (!isWithinAvailable(timeValue, slots, durationMinutes)) {
-                    timeInput.setCustomValidity('Selected time is outside the lawyer\'s available hours.');
-                    setAvailabilityMessage(
-                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
-                        true
-                    );
-                    setSubmitEnabled(false);
-                    return false;
-                }
-
-                setAvailabilityMessage(
-                    '<div class="alert alert-success py-2 mb-0"><i class="ni ni-check-bold"></i> Selected time is within the lawyer\'s availability.</div>',
-                    true
-                );
+                setAvailabilityMessage('', false);
                 setSubmitEnabled(true);
                 return true;
             }

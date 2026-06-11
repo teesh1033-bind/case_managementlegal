@@ -511,11 +511,8 @@ $html = <<<'HTML'
         .lawyer-appointment-case-cell .btn {
             min-width: 4.25rem;
         }
-        #reschedule_time option.lp-time-available {
-            color: #2dce89;
-            font-weight: 600;
-        }
-        #reschedule_time option:disabled {
+        #reschedule_time option:disabled,
+        #create_appointment_time option:disabled {
             color: #adb5bd;
         }
     </style>
@@ -651,7 +648,7 @@ $html = <<<'HTML'
                                 <option value="">Select time</option>
                             </select>
                             <input type="hidden" id="create_duration_minutes" name="duration_minutes" value="60">
-                            <small class="text-muted d-block mt-1">Green times are available. If you have not set availability, standard business hours are open.</small>
+                            <small class="text-muted d-block mt-1">Unavailable times cannot be selected. If you have not set availability, standard business hours are open.</small>
                         </div>
                         <div id="createAvailabilityMessage" class="mb-3" style="display: none;"></div>
                         <div class="mb-3">
@@ -704,7 +701,7 @@ $html = <<<'HTML'
                                 <option value="">Select time</option>
                             </select>
                             <input type="hidden" id="reschedule_duration_minutes" name="reschedule_duration_minutes" value="60">
-                            <small class="text-muted d-block mt-1">Green times are available. If you have not set availability, standard business hours are open.</small>
+                            <small class="text-muted d-block mt-1">Unavailable times cannot be selected. If you have not set availability, standard business hours are open.</small>
                         </div>
                         <div id="rescheduleAvailabilityMessage" class="mb-3" style="display: none;"></div>
                         <div class="mb-3">
@@ -964,7 +961,6 @@ $html = <<<'HTML'
                         return;
                     }
                     if (isTimeSlotBookable(option.value, dateValue, slots, durationMinutes, rescheduleOriginalDate, rescheduleOriginalTime)) {
-                        option.classList.add('lp-time-available');
                         option.disabled = false;
                         hasBookable = true;
                     } else {
@@ -988,7 +984,7 @@ $html = <<<'HTML'
 
                 if (!timeSelect.value) {
                     setRescheduleMessage(
-                        '<div class="alert alert-info py-2 mb-0">Choose a <span class="text-success font-weight-bold">green</span> available time.</div>',
+                        '<div class="alert alert-info py-2 mb-0">Select an available time from the list.</div>',
                         true
                     );
                     setSaveEnabled(false);
@@ -1062,7 +1058,6 @@ $html = <<<'HTML'
                         return;
                     }
                     if (isTimeSlotBookable(option.value, dateValue, slots, durationMinutes, originalDate, originalTime)) {
-                        option.classList.add('lp-time-available');
                         option.disabled = false;
                         hasBookable = true;
                     } else {
@@ -1089,7 +1084,7 @@ $html = <<<'HTML'
                 if (!timeSelect.value) {
                     if (messageEl) {
                         messageEl.style.display = 'block';
-                        messageEl.innerHTML = '<div class="alert alert-info py-2 mb-0">Choose a <span class="text-success font-weight-bold">green</span> available time.</div>';
+                        messageEl.innerHTML = '<div class="alert alert-info py-2 mb-0">Select an available time from the list.</div>';
                     }
                     if (setEnabled) {
                         setEnabled(false);
@@ -1158,7 +1153,7 @@ $html = <<<'HTML'
                         var messageEl = document.getElementById('createAvailabilityMessage');
                         if (messageEl) {
                             messageEl.style.display = 'block';
-                            messageEl.innerHTML = '<div class="alert alert-warning py-2 mb-0">Please select an available time (green option).</div>';
+                            messageEl.innerHTML = '<div class="alert alert-warning py-2 mb-0">Please select an available time.</div>';
                         }
                     }
                 });
@@ -1185,7 +1180,7 @@ $html = <<<'HTML'
                     if (!dateValue || !timeValue || !selected || selected.disabled) {
                         event.preventDefault();
                         setRescheduleMessage(
-                            '<div class="alert alert-warning py-2 mb-0">Please select an available time (green option).</div>',
+                            '<div class="alert alert-warning py-2 mb-0">Please select an available time.</div>',
                             true
                         );
                         setSaveEnabled(false);
