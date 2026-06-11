@@ -446,7 +446,10 @@ if (!empty($_SESSION['error_message'])) {
                                         </td>
                                         <td class="text-center"><?php echo $rowStatusBadge; ?></td>
                                         <td>
-                                            <button type="button" class="btn-cct-view" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
+                                            <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                                <a href="client-calendar-export.php?type=court&amp;id=<?php echo (int) $date['id']; ?>" class="btn-cct-view cdoc-touch-btn" download title="Add to calendar">.ics</a>
+                                                <button type="button" class="btn-cct-view cdoc-touch-btn" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

@@ -331,6 +331,7 @@ function buildCaseCategoryFieldHtml($currentCategory, $fallback = 'Civil') {
 
 require_once __DIR__ . '/../lib/branding.php';
 require_once __DIR__ . '/../lib/portal-theme.php';
+require_once __DIR__ . '/../lib/client-locale.php';
 
 /**
  * Allow admin/lawyer staff, or the owning client, to access invoice/receipt downloads.

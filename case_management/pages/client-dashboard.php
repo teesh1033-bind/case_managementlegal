@@ -70,6 +70,10 @@ $nextAppt = !empty($upcomingAppointments) ? $upcomingAppointments[0] : null;
 require_once __DIR__ . '/../inc/legalpro-icons.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
+require_once __DIR__ . '/../lib/client-portal-features.php';
+
+$activityItems = legalpro_client_get_activity_feed($pdo, $client_id, 25);
+$activityFeedHtml = legalpro_client_render_activity_feed_html($activityItems);
 
 $clientPageNavbar = legalpro_render_client_page_navbar(
     'Dashboard',
@@ -129,7 +133,8 @@ if (empty($upcomingAppointments)) {
         $lawyerTxt = htmlspecialchars($apt['lawyer_name'] ?: 'TBD');
         $notesRaw  = $apt['notes'] ? (string) $apt['notes'] : '';
         $notes     = $notesRaw !== '' ? htmlspecialchars(mb_substr($notesRaw, 0, 68)) . (strlen($notesRaw) > 68 ? '…' : '') : '';
-        $appointmentsHtml .= '<a href="client-appointments.php" class="cd-appt-row text-decoration-none text-reset">
+        $calUrl = 'client-calendar-export.php?type=appointment&id=' . (int) $apt['id'];
+        $appointmentsHtml .= '<div class="cd-appt-row text-reset">
             <div class="cd-appt-row__date">
                 <span class="cd-appt-row__day">' . $dayLabel . '</span>
                 <span class="cd-appt-row__time">' . $timeLabel . '</span>
@@ -142,8 +147,11 @@ if (empty($upcomingAppointments)) {
                 </div>
                 ' . ($notes !== '' ? '<div class="cd-appt-row__notes">' . $notes . '</div>' : '') . '
             </div>
-            <div class="cd-appt-row__badge"><span class="cd-appt-accepted">Confirmed</span></div>
-        </a>';
+            <div class="cd-appt-row__badge d-flex flex-column align-items-end gap-1">
+                <span class="cd-appt-accepted">Confirmed</span>
+                <a href="' . htmlspecialchars($calUrl) . '" class="cp-calendar-links__btn" download style="font-size:.65rem;padding:.3rem .6rem;min-height:auto" onclick="event.stopPropagation()">+.ics</a>
+            </div>
+        </div>';
     }
 }
 
@@ -406,6 +414,9 @@ $html = <<<'HTML'
         .cd-hero-title { font-size: 1.2rem; }
         .cd-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+
+    .cd-activity-panel { margin-bottom: 1.5rem; }
+    .cd-activity-panel .cd-panel-body { padding: .5rem 1rem 1rem; max-height: 28rem; overflow-y: auto; }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-dashboard-page{PORTAL_THEME_BODY_CLASS}">
@@ -429,6 +440,7 @@ $html = <<<'HTML'
             <div class="cd-hero-actions">
                 <a href="client-cases.php" class="btn btn-primary-solid">My Cases</a>
                 <a href="client-appointments.php" class="btn btn-ghost">Appointments</a>
+                <a href="client-documents.php" class="btn btn-ghost">Documents</a>
                 <a href="client-court-tracking.php" class="btn btn-ghost">Court Dates</a>
             </div>
         </div>
@@ -469,6 +481,19 @@ $html = <<<'HTML'
                 <div class="cd-kpi__icon" style="background:rgba(136,152,170,.12);color:#525f7f;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
+            </div>
+        </div>
+
+        <div class="cd-panel cd-activity-panel">
+            <div class="cd-panel-hdr">
+                <div>
+                    <p class="cd-panel-title">Recent Activity</p>
+                    <p class="cd-panel-sub">Invoices, hearings, documents, and appointments in one timeline</p>
+                </div>
+                <a href="client-documents.php" class="btn-cd-link">Documents</a>
+            </div>
+            <div class="cd-panel-body">
+                {ACTIVITY_FEED}
             </div>
         </div>
 
@@ -521,6 +546,7 @@ $html = str_replace('{PENDING_CASES}', (int) ($caseStats['pending_cases'] ?? 0),
 $html = str_replace('{CLOSED_CASES}', (int) ($caseStats['closed_cases'] ?? 0), $html);
 $html = str_replace('{RECENT_CASES}', $recentCasesHtml, $html);
 $html = str_replace('{UPCOMING_APPOINTMENTS}', $appointmentsHtml, $html);
+$html = str_replace('{ACTIVITY_FEED}', $activityFeedHtml, $html);
 
 require_once __DIR__ . '/../inc/client-sidebar.php';
 $html = inject_client_sidebar($html);

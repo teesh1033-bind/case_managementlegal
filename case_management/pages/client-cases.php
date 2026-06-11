@@ -218,6 +218,16 @@ ob_start(); ?>
             --cc-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
             --cc-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
             --cc-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            --cc-field-bg: #fff;
+            --cc-field-color: #1e293b;
+            --cc-field-border: #e2e8f0;
+            --cc-field-muted: #94a3b8;
+        }
+        body.legalpro-dark-mode.client-cases-page {
+            --cc-field-bg: var(--lp-dark-input-bg, #2f3547);
+            --cc-field-color: var(--lp-dark-text, #f8f9fc);
+            --cc-field-border: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
+            --cc-field-muted: var(--lp-dark-text-subtle, #9aa8bc);
         }
 
         /* ── Alert bar ──────────────────────────────────────────── */
@@ -317,31 +327,38 @@ ob_start(); ?>
             left: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8;
+            color: var(--cc-field-muted);
             pointer-events: none;
         }
         .cc-search-input {
             width: 100%;
             padding: .55rem .75rem .55rem 2.25rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--cc-field-border);
             border-radius: 10px;
             font-size: 13px;
-            background: #fff;
-            color: #1e293b;
+            background: var(--cc-field-bg);
+            color: var(--cc-field-color);
             outline: none;
             transition: border-color .15s, box-shadow .15s;
+        }
+        .cc-search-input::placeholder {
+            color: var(--cc-field-muted);
+            opacity: 1;
         }
         .cc-search-input:focus {
             border-color: var(--cc-primary);
             box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
         }
+        body.legalpro-dark-mode.client-cases-page .cc-search-input:focus {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
         .cc-filter-select {
             padding: .52rem .75rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--cc-field-border);
             border-radius: 10px;
             font-size: 13px;
-            background: #fff;
-            color: #1e293b;
+            background: var(--cc-field-bg);
+            color: var(--cc-field-color);
             outline: none;
             cursor: pointer;
         }

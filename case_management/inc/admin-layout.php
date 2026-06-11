@@ -68,6 +68,12 @@ function legalpro_client_notification_count(?PDO $pdo = null, ?int $clientId = n
         return 0;
     }
 
+    $features = __DIR__ . '/../lib/client-portal-features.php';
+    if (is_file($features)) {
+        require_once $features;
+        return legalpro_client_notification_count_unread($pdo, $clientId);
+    }
+
     try {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) FROM appointments
@@ -91,23 +97,27 @@ function legalpro_render_portal_header_utilities(
     int $notifCount,
     string $logoutUrl,
     string $profileUrl = '',
-    string $extraMenuHtml = ''
+    string $extraMenuHtml = '',
+    bool $notifPanelMode = false
 ): string {
     $initials = legalpro_portal_initials($displayName);
-    $notifBadge = $notifCount > 0
-        ? '<span class="legalpro-header-notif__badge">' . ($notifCount > 9 ? '9+' : (string) $notifCount) . '</span>'
-        : '';
+    $notifBadge = '<span class="legalpro-header-notif__badge" data-notif-count' . ($notifCount > 0 ? '' : ' style="display:none"') . '>'
+        . ($notifCount > 0 ? ($notifCount > 9 ? '9+' : (string) $notifCount) : '')
+        . '</span>';
 
     $profileItem = $profileUrl !== ''
         ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . 'Profile</a></li>'
         : '';
 
+    $notifControl = $notifPanelMode
+        ? '<button type="button" class="legalpro-header-notif" id="clientNotifBell" title="Notifications" aria-expanded="false" aria-controls="clientNotifPanel">'
+            . legalpro_icon('bell') . $notifBadge . '</button>'
+        : '<a href="' . htmlspecialchars($notifUrl) . '" class="legalpro-header-notif" title="Notifications">'
+            . legalpro_icon('bell') . $notifBadge . '</a>';
+
     return '
     <div class="legalpro-navbar-actions d-flex align-items-center gap-3 flex-shrink-0">
-        <a href="' . htmlspecialchars($notifUrl) . '" class="legalpro-header-notif" title="Notifications">
-            ' . legalpro_icon('bell') . '
-            ' . $notifBadge . '
-        </a>
+        ' . $notifControl . '
         <div class="legalpro-header-user dropdown">
             <button type="button" class="legalpro-header-user__toggle" aria-expanded="false" aria-haspopup="true" aria-controls="legalproHeaderUserMenuList">
                 <span class="legalpro-header-user__avatar">' . htmlspecialchars($initials) . '</span>
@@ -240,14 +250,50 @@ function legalpro_render_client_header_utilities(?PDO $pdo = null): string
     $clientId = isset($_SESSION['client_id']) ? (int) $_SESSION['client_id'] : 0;
     $displayName = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'] : 'Client';
 
+    $clientLabel = function_exists('client_t') ? client_t('header.client') : 'Client';
+    $settingsLabel = function_exists('client_t') ? client_t('nav.settings') : 'Settings';
+
     return legalpro_render_portal_header_utilities(
         $displayName,
-        'Client',
+        $clientLabel,
         'client-appointments.php',
         legalpro_client_notification_count($pdo, $clientId),
         'client-logout.php',
-        'client-profile.php'
+        'client-profile.php',
+        '<li><a class="dropdown-item" href="client-settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars($settingsLabel) . '</a></li>',
+        true
     );
+}
+
+function legalpro_render_client_notification_panel(): string
+{
+    $markAll = function_exists('client_t') ? client_t('notifications.mark_all_read') : 'Mark all read';
+    $title = function_exists('client_t') ? client_t('notifications.title') : 'Notifications';
+    $empty = function_exists('client_t') ? client_t('notifications.empty') : 'No notifications yet';
+    $digest = function_exists('client_t') ? client_t('notifications.digest_settings') : 'Email digest settings';
+
+    return '
+<div class="legalpro-client-notif-panel" id="clientNotifPanel" hidden aria-label="' . htmlspecialchars($title) . '">
+    <div class="legalpro-client-notif-panel__backdrop" data-notif-close="1"></div>
+    <div class="legalpro-client-notif-panel__sheet" role="dialog" aria-modal="true">
+        <div class="legalpro-client-notif-panel__hdr">
+            <h6 class="mb-0">' . htmlspecialchars($title) . '</h6>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-link btn-sm p-0 text-primary" id="clientNotifMarkAll">' . htmlspecialchars($markAll) . '</button>
+                <button type="button" class="btn btn-link p-0 text-secondary" data-notif-close="1" aria-label="Close">&times;</button>
+            </div>
+        </div>
+        <div class="legalpro-client-notif-panel__list" id="clientNotifList">
+            <div class="legalpro-client-notif-panel__loading text-muted text-sm p-3">Loading…</div>
+        </div>
+        <div class="legalpro-client-notif-panel__footer">
+            <a href="client-settings.php#email-digest" class="text-xs text-muted">' . htmlspecialchars($digest) . '</a>
+        </div>
+    </div>
+</div>
+<template id="clientNotifEmptyTpl">
+    <div class="legalpro-client-notif-panel__empty text-center p-4 text-muted text-sm">' . htmlspecialchars($empty) . '</div>
+</template>';
 }
 
 /**

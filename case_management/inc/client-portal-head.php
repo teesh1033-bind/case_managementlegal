@@ -21,9 +21,9 @@ require_once __DIR__ . '/legalpro-icons.php';
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
 
-<link href="../assets/css/legalpro-portal-shell.css?v=15" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=18" rel="stylesheet" />
 
-<link href="../assets/css/legalpro-client-portal.css?v=25" rel="stylesheet" />
+<link href="../assets/css/legalpro-client-portal.css?v=28" rel="stylesheet" />
 
 <?php if (!defined('LEGALPRO_SKIP_DASHBOARD_ENHANCEMENTS')): ?>
 

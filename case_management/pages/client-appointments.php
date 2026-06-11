@@ -269,6 +269,11 @@ if (empty($appointments)) {
         $notesDisp   = $notesRaw === '' ? '—' : (strlen($notesRaw) > 52 ? htmlspecialchars(substr($notesRaw, 0, 52)) . '…' : htmlspecialchars($notesRaw));
         $isRejected  = ($meta['key'] === 'rejected');
 
+        $calendarBtn = '';
+        if ($meta['key'] === 'accepted' || $meta['key'] === 'upcoming') {
+            $calendarBtn = '<a href="client-calendar-export.php?type=appointment&amp;id=' . $aid . '" class="btn-det cdoc-touch-btn" download title="Add to calendar">Calendar</a>';
+        }
+
         $deleteBtn = '';
         if ($isRejected) {
             $deleteBtn = '<form method="POST" style="display:inline" onsubmit="return confirm(\'Remove this rejected appointment?\')">
@@ -314,8 +319,9 @@ if (empty($appointments)) {
                 <p class="apt-notes" title="' . htmlspecialchars($notesRaw) . '">' . $notesDisp . '</p>
             </td>
             <td>
-                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-                    <button type="button" class="btn-det" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">
+                    ' . $calendarBtn . '
+                    <button type="button" class="btn-det cdoc-touch-btn" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
                     ' . $deleteBtn . '
                 </div>
             </td>
@@ -569,9 +575,6 @@ ob_start(); ?>
             outline: none; font-family: inherit;
             transition: border-color .15s, box-shadow .15s;
         }
-        body.legalpro-dark-mode.client-appointments-page .ca-fld input[type="date"] {
-            color-scheme: dark;
-        }
         .ca-fld select:focus,
         .ca-fld input[type="date"]:focus,
         .ca-fld textarea:focus {
@@ -779,9 +782,10 @@ ob_start(); ?>
                             </div>
                             <div class="ca-fld">
                                 <label>Date</label>
-                                <input type="date" name="appointment_date" id="appointment_date"
-                                       min="<?= date('Y-m-d') ?>" required onchange="onDateChange()">
-                                <div id="caDateAlert" class="ca-avail-alert info">Select a date to see available times.</div>
+                                <select name="appointment_date" id="appointment_date" required disabled onchange="onDateChange()">
+                                    <option value="">Select a lawyer first</option>
+                                </select>
+                                <div id="caDateAlert" class="ca-avail-alert info">Choose a lawyer to see dates they are available.</div>
                             </div>
                             <div class="ca-fld">
                                 <label>Time</label>
@@ -860,6 +864,61 @@ ob_start(); ?>
     var lawyerHasAvailability    = <?= json_encode($lawyerHasAvailability) ?>;
     var selectedTime             = null;
     var aptModalInstance         = null;
+    var bookableHours            = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+    var todayIso                 = <?= json_encode(date('Y-m-d')) ?>;
+
+    function formatBookableDate(iso) {
+        var parts = iso.split('-');
+        if (parts.length !== 3) return iso;
+        var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function dateHasBookableTimes(lawyerId, dateVal) {
+        var slots = getAvailableSlots(lawyerId, dateVal);
+        if (!slots.length) return false;
+        return bookableHours.some(function(t) { return isAvailable(t, slots); });
+    }
+
+    function getBookableDates(lawyerId) {
+        var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
+        return Object.keys(byDate)
+            .filter(function(dateVal) { return dateVal >= todayIso && dateHasBookableTimes(lawyerId, dateVal); })
+            .sort();
+    }
+
+    function rebuildDateSelect() {
+        var lawyerId = document.getElementById('lawyer_id').value;
+        var sel = document.getElementById('appointment_date');
+        sel.innerHTML = '<option value="">Select a date</option>';
+        sel.value = '';
+        sel.disabled = true;
+
+        if (!lawyerId) {
+            sel.options[0].textContent = 'Select a lawyer first';
+            showDateAlert('info', 'Choose a lawyer to see dates they are available.');
+            return;
+        }
+        if (!hasSchedule(lawyerId)) {
+            sel.options[0].textContent = 'No dates available';
+            showDateAlert('warning', 'This lawyer has no published availability yet.');
+            return;
+        }
+        var dates = getBookableDates(lawyerId);
+        if (!dates.length) {
+            sel.options[0].textContent = 'No dates available';
+            showDateAlert('warning', 'No upcoming available dates for this lawyer.');
+            return;
+        }
+        hideDateAlert();
+        dates.forEach(function(dateVal) {
+            var opt = document.createElement('option');
+            opt.value = dateVal;
+            opt.textContent = formatBookableDate(dateVal);
+            sel.appendChild(opt);
+        });
+        sel.disabled = false;
+    }
 
     function getAvailableSlots(lawyerId, dateVal) {
         var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
@@ -935,6 +994,7 @@ ob_start(); ?>
 
     function onLawyerChange() {
         resetTimeSelect();
+        rebuildDateSelect();
         onDateChange();
     }
 
@@ -945,9 +1005,14 @@ ob_start(); ?>
         var dateVal  = document.getElementById('appointment_date').value;
         var trigger = document.getElementById('caTimeTrigger');
         if (!lawyerId) return;
-        if (!dateVal) { showDateAlert('info', 'Select a date to see available times.'); return; }
-        if (!hasSchedule(lawyerId)) {
-            showDateAlert('warning', 'No available times on this date. Choose another date.');
+        if (!dateVal) {
+            if (document.getElementById('appointment_date').disabled) return;
+            showDateAlert('info', 'Select a date to see available times.');
+            return;
+        }
+        if (!dateHasBookableTimes(lawyerId, dateVal)) {
+            document.getElementById('appointment_date').value = '';
+            showDateAlert('warning', 'That date is not available. Please choose another.');
             return;
         }
         var slots = getAvailableSlots(lawyerId, dateVal);
@@ -982,7 +1047,10 @@ ob_start(); ?>
         if (!caseId)   { alert('Please select a case.');   return false; }
         if (!dateVal)  { alert('Please select a date.');   return false; }
         if (!timeVal)  { alert('Please select a time slot.'); return false; }
-        if (!hasSchedule(lawyerId)) { alert('No available times on this date.'); return false; }
+        if (!dateHasBookableTimes(lawyerId, dateVal)) {
+            alert('The selected date is not available for this lawyer.');
+            return false;
+        }
         var slots = getAvailableSlots(lawyerId, dateVal);
         if (!slots.length || !isAvailable(timeVal, slots)) {
             alert('Selected time is not available. Please choose another time.');

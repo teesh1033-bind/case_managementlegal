@@ -1,18 +1,23 @@
 <?php
 // inc/client-menunav.php — Client portal sidebar + header utilities (same shell as menunav.php)
 
+require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/admin-layout.php';
 require_once __DIR__ . '/legalpro-icons.php';
+require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/client-portal-features.php';
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 $clientMenuItems = [
-    ['title' => 'Dashboard', 'url' => 'client-dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'client-dashboard'],
-    ['title' => 'My Cases', 'url' => 'client-cases.php', 'icon' => 'briefcase', 'id' => 'client-cases'],
-    ['title' => 'Appointments', 'url' => 'client-appointments.php', 'icon' => 'calendar', 'id' => 'client-appointments'],
-    ['title' => 'Court Tracking', 'url' => 'client-court-tracking.php', 'icon' => 'landmark', 'id' => 'client-court-tracking'],
-    ['title' => 'Payments', 'url' => 'client-payments.php', 'icon' => 'credit-card', 'id' => 'client-payments'],
-    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
+    ['title_key' => 'nav.dashboard', 'url' => 'client-dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'client-dashboard'],
+    ['title_key' => 'nav.my_cases', 'url' => 'client-cases.php', 'icon' => 'briefcase', 'id' => 'client-cases'],
+    ['title_key' => 'nav.documents', 'url' => 'client-documents.php', 'icon' => 'file-text', 'id' => 'client-documents'],
+    ['title_key' => 'nav.appointments', 'url' => 'client-appointments.php', 'icon' => 'calendar', 'id' => 'client-appointments'],
+    ['title_key' => 'nav.court_tracking', 'url' => 'client-court-tracking.php', 'icon' => 'landmark', 'id' => 'client-court-tracking'],
+    ['title_key' => 'nav.payments', 'url' => 'client-payments.php', 'icon' => 'credit-card', 'id' => 'client-payments'],
+    ['title_key' => 'nav.ai_assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
+    ['title_key' => 'nav.settings', 'url' => 'client-settings.php', 'icon' => 'settings', 'id' => 'client-settings'],
 ];
 
 if (!function_exists('clientNavIsActive')) {
@@ -21,7 +26,13 @@ if (!function_exists('clientNavIsActive')) {
         if ($itemId === 'client-cases' && in_array($currentPage, ['client-cases', 'client-case-view'], true)) {
             return true;
         }
+        if ($itemId === 'client-documents' && $currentPage === 'client-documents') {
+            return true;
+        }
         if ($itemId === 'chatbot' && $currentPage === 'chatbot') {
+            return true;
+        }
+        if ($itemId === 'client-settings' && $currentPage === 'client-settings') {
             return true;
         }
 
@@ -69,7 +80,7 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
                 <li class="nav-item">
                     <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
                         <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
-                        <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
+                        <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars(client_t($item['title_key'])); ?></span>
                     </a>
                 </li>
             <?php endforeach; ?>
@@ -78,7 +89,10 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
 </aside>
 
 <?php echo $navbarUtilitiesMount; ?>
+<?php echo legalpro_render_client_notification_panel(); ?>
+<?php echo legalpro_client_render_bottom_nav($currentPage); ?>
 
+<script src="../assets/js/client-portal.js?v=1"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var collapseBtn = document.getElementById('legalproSidebarCollapse');

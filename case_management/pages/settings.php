@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../lib/chatbot_ai.php';
 
 $message = '';
 $messageType = '';
@@ -12,6 +13,7 @@ $currencyOptionsList = getCurrencyOptions();
 $currencyConfig = getCurrencyConfig();
 $companyBranding = getCompanyBranding();
 $portalThemeSettingsHtml = renderPortalThemeSettingsHtml();
+$aiSettingsHtml = ChatbotAI::renderAiSettingsHtml();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formType = isset($_POST['form_type']) ? $_POST['form_type'] : '';
@@ -36,6 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$result['ok']) {
             $message = $result['message'];
+            $messageType = 'danger';
+        } else {
+            header('Location: settings.php?msg=' . urlencode($result['message']) . '&type=success');
+            exit;
+        }
+    } elseif ($formType === 'openai') {
+        $result = ChatbotAI::saveAiSettings($_POST);
+        if (!$result['ok']) {
+            $message = $result['message'] ?? 'Could not save AI settings.';
             $messageType = 'danger';
         } else {
             header('Location: settings.php?msg=' . urlencode($result['message']) . '&type=success');
@@ -388,6 +399,7 @@ $html = <<<'HTML'
 						</div>
 					</div>
                     {PORTAL_THEME_SETTINGS}
+                    {AI_SETTINGS_HTML}
 					<div class="card">
 						<div class="card-header pb-0 d-flex justify-content-between align-items-center">
 							<h6>Services Offered</h6>
@@ -525,5 +537,6 @@ $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name'])
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
 $html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
+$html = str_replace('{AI_SETTINGS_HTML}', $aiSettingsHtml, $html);
 echo $html;
 ?>
