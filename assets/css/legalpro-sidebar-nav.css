@@ -2,13 +2,62 @@
  * Unified sidebar menunav — same sizing as inc/menunav.php (admin reference).
  * Used by admin, lawyer, and client (#sidenav-main.legalpro-admin-sidebar).
  */
+#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    max-height: 100vh !important;
+}
+
+/* Argon sets height: calc(100vh - 360px) — clips Settings / bottom nav items */
+#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-collapse,
 #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav-wrap,
 #sidenav-main.legalpro-admin-sidebar .navbar-collapse.legalpro-sidebar-nav-wrap {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     width: 100% !important;
     max-width: 100% !important;
     padding: 0.75rem 0.65rem !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer {
+    flex-shrink: 0;
+    padding: 0.35rem 0.65rem 0.85rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: auto;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.7rem 1rem !important;
+    margin: 0 !important;
+    width: 100% !important;
+    border-radius: 12px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.72) !important;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+}
+
+#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link.active {
+    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(94, 114, 228, 0.35) !important;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .legalpro-sidebar-nav__label {
+    display: none !important;
 }
 
 #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav,

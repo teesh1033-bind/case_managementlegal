@@ -70,8 +70,9 @@ $topNavbarHtml = '
 		</nav>';
 if ($role === 'client') {
     require_once __DIR__ . '/../inc/client-portal-navbar.php';
-    $topNavbarHtml = legalpro_render_client_page_navbar('AI Assistant', 'AI Assistant', 'Search cases…', [
+    $topNavbarHtml = legalpro_render_client_page_navbar('AI Assistant', 'AI Assistant', '', [
         'client_name' => $context['display_name'],
+        'include_search' => false,
     ]);
 }
 

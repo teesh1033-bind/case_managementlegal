@@ -12,9 +12,9 @@ require_once __DIR__ . '/legalpro-icons.php';
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
 
-<link href="../assets/css/legalpro-portal-shell.css?v=18" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=19" rel="stylesheet" />
 
-<link href="../assets/css/legalpro-client-portal.css?v=28" rel="stylesheet" />
+<link href="../assets/css/legalpro-client-portal.css?v=29" rel="stylesheet" />
 
 <?php if (!defined('LEGALPRO_SKIP_DASHBOARD_ENHANCEMENTS')): ?>
 <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
@@ -22,7 +22,7 @@ require_once __DIR__ . '/legalpro-icons.php';
 
 <link href="../assets/css/legalpro-admin-portal.css?v=14" rel="stylesheet" />
 
-<link href="../assets/css/legalpro-sidebar-nav.css?v=3" rel="stylesheet" />
+<link href="../assets/css/legalpro-sidebar-nav.css?v=4" rel="stylesheet" />
 
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>

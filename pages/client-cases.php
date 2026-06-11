@@ -146,10 +146,14 @@ if (empty($cases)) {
         $category   = category_pill((string) ($case['category'] ?? ''));
         $updated    = isset($case['updated_at']) ? date('M j, Y', strtotime($case['updated_at'])) : '';
 
+        $searchHay = strtolower($caseNumber . ' ' . ($case['title'] ?? '') . ' ' . ($case['category'] ?? '')
+            . ' ' . ($case['status'] ?? '') . ' ' . ($case['priority'] ?? '') . ' ' . ($case['lawyer_names'] ?? ''));
+
         $casesRows .= '<tr data-status="' . htmlspecialchars($case['status'] ?? '') . '"
                             data-priority="' . htmlspecialchars($case['priority'] ?? '') . '"
                             data-title="' . strtolower($title) . '"
-                            data-category="' . strtolower($case['category'] ?? '') . '">
+                            data-category="' . strtolower($case['category'] ?? '') . '"
+                            data-search="' . htmlspecialchars($searchHay, ENT_QUOTES, 'UTF-8') . '">
             <td>
                 <div style="display:flex;align-items:center;gap:10px">
                     <div class="case-icon">
@@ -181,7 +185,12 @@ $messageHtml = $message
 
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('My Cases', 'My Cases', 'Search cases…');
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'My Cases',
+    'My Cases',
+    'Search cases…',
+    legalpro_client_page_search_options('client-cases.php')
+);
 
 ob_start(); ?>
 <!DOCTYPE html>
@@ -571,7 +580,8 @@ ob_start(); ?>
                         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                     </svg>
                     <input id="ccSearch" class="cc-search-input" type="text"
-                           placeholder="Search cases…" oninput="ccFilter()">
+                           placeholder="Search cases…" oninput="ccFilter()"
+                           value="<?= htmlspecialchars(legalpro_client_page_search_query(), ENT_QUOTES, 'UTF-8') ?>">
                 </div>
                 <select id="ccStatus" class="cc-filter-select" onchange="ccFilter()">
                     <option value="">All statuses</option>
@@ -640,7 +650,8 @@ ob_start(); ?>
         var rows = document.querySelectorAll('#ccBody tr[data-title]');
         var visible = 0;
         rows.forEach(function(r) {
-            var titleMatch    = !q  || r.dataset.title.includes(q) || r.dataset.category.includes(q);
+            var hay = r.dataset.search || (r.dataset.title + ' ' + r.dataset.category);
+            var titleMatch    = !q  || hay.includes(q);
             var statusMatch   = !st || r.dataset.status.toLowerCase() === st;
             var priorityMatch = !pr || r.dataset.priority.toLowerCase() === pr;
             var show = titleMatch && statusMatch && priorityMatch;
@@ -650,6 +661,9 @@ ob_start(); ?>
         var el = document.getElementById('ccRowCount');
         if (el) el.textContent = visible + ' case' + (visible === 1 ? '' : 's');
     }
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('ccSearch').value) ccFilter();
+    });
     </script>
 </body>
 </html>

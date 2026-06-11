@@ -78,8 +78,8 @@ $activityFeedHtml = legalpro_client_render_activity_feed_html($activityItems);
 $clientPageNavbar = legalpro_render_client_page_navbar(
     'Dashboard',
     'Dashboard',
-    'Search cases…',
-    legalpro_client_page_search_options('client-cases.php')
+    'Search activity & cases…',
+    legalpro_client_page_search_options('client-dashboard.php')
 );
 
 $nextApptBanner = '';
@@ -105,7 +105,8 @@ if (empty($recentCases)) {
         $lawyer  = htmlspecialchars($case['lawyer_names'] ?: 'Unassigned');
         $updated = date('M j, Y', strtotime($case['updated_at']));
         $pill    = client_case_status_badge((string) ($case['status'] ?? ''));
-        $recentCasesHtml .= '<a href="client-case-view.php?id=' . (int) $case['id'] . '" class="cd-list-row">
+        $caseSearchHay = htmlspecialchars(strtolower($num . ' ' . ($case['title'] ?? '') . ' ' . ($case['lawyer_names'] ?? '') . ' ' . ($case['status'] ?? '')), ENT_QUOTES, 'UTF-8');
+        $recentCasesHtml .= '<a href="client-case-view.php?id=' . (int) $case['id'] . '" class="cd-list-row" data-search="' . $caseSearchHay . '">
             <div class="cd-list-row__icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
             </div>
@@ -134,7 +135,8 @@ if (empty($upcomingAppointments)) {
         $notesRaw  = $apt['notes'] ? (string) $apt['notes'] : '';
         $notes     = $notesRaw !== '' ? htmlspecialchars(mb_substr($notesRaw, 0, 68)) . (strlen($notesRaw) > 68 ? '…' : '') : '';
         $calUrl = 'client-calendar-export.php?type=appointment&id=' . (int) $apt['id'];
-        $appointmentsHtml .= '<div class="cd-appt-row text-reset">
+        $apptSearchHay = htmlspecialchars(strtolower($caseTitle . ' ' . $lawyerTxt . ' ' . $dayLabel . ' ' . $timeLabel . ' ' . $notesRaw), ENT_QUOTES, 'UTF-8');
+        $appointmentsHtml .= '<div class="cd-appt-row text-reset" data-search="' . $apptSearchHay . '">
             <div class="cd-appt-row__date">
                 <span class="cd-appt-row__day">' . $dayLabel . '</span>
                 <span class="cd-appt-row__time">' . $timeLabel . '</span>

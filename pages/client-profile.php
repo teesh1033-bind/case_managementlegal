@@ -172,7 +172,7 @@ $html = <<<'HTML'
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
-        <?php echo legalpro_render_client_page_navbar('My Profile', 'Profile', 'Search cases…', ['client_name' => $clientName]); ?>
+        <?php echo legalpro_render_client_page_navbar('My Profile', 'Profile', '', ['client_name' => $clientName, 'include_search' => false]); ?>
 
         <div class="container-fluid py-4">
             {MESSAGE}

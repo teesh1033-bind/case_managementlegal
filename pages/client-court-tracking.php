@@ -12,6 +12,7 @@ $clientId = $_SESSION['client_id'];
 $clientName = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'] : 'Client';
 
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../inc/client-portal-navbar.php';
 $iconCourtRow = legalpro_icon('landmark');
 $iconCourtEmpty = legalpro_icon('calendar');
 
@@ -104,7 +105,16 @@ if (empty($upcomingCourtDates)) {
         $hourLabel = date('g:i A', strtotime((string) $row['court_date']));
         $dayLabel = date('M j', strtotime((string) $row['court_date']));
         $upcomingCourtDatesHtml .= '
-        <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . '" data-court-date-id="' . (int) $row['id'] . '">
+        <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . ' cct-search-row" data-court-date-id="' . (int) $row['id'] . '"' . legalpro_client_search_data_attr([
+            $caseNumber,
+            $row['case_title'] ?? '',
+            $row['title'] ?? '',
+            $row['location'] ?? '',
+            $row['description'] ?? '',
+            $status,
+            $hourLabel,
+            $dayLabel,
+        ]) . '>
             <span class="dashboard-upcoming-item__time">' . htmlspecialchars($hourLabel) . '<br><small style="font-weight:500;opacity:.8">' . htmlspecialchars($dayLabel) . '</small></span>
             <span class="flex-grow-1">
                 <p class="dashboard-upcoming-item__title">' . $title . '</p>
@@ -300,7 +310,10 @@ if (!empty($_SESSION['error_message'])) {
     <main class="main-content position-relative border-radius-lg">
         <?php
         require_once __DIR__ . '/../inc/client-portal-navbar.php';
-        echo legalpro_render_client_page_navbar('Court tracking', 'Court tracking', 'Search hearings & cases…');
+        echo legalpro_render_client_page_navbar('Court tracking', 'Court tracking', 'Search hearings & cases…', array_merge(
+            legalpro_client_page_search_options('client-court-tracking.php'),
+            ['client_name' => $clientName]
+        ));
         ?>
 
         <div class="container-fluid py-4">
@@ -375,7 +388,7 @@ if (!empty($_SESSION['error_message'])) {
                         <p>Sorted by date, earliest first.</p>
                     </div>
                     <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                        <span class="cct-count"><?php echo (int) $ctTotal; ?> total</span>
+                        <span class="cct-count" id="cctRowCount"><?php echo (int) $ctTotal; ?> court dates total</span>
                         <a href="client-cases.php" class="btn-cct-view text-decoration-none">My cases</a>
                     </div>
                 </div>
@@ -402,7 +415,16 @@ if (!empty($_SESSION['error_message'])) {
                                     $cid = (int) ($date['case_id'] ?? 0);
                                     $rowStatusBadge = client_court_date_status_badge((string) ($date['status'] ?? ''));
                                     ?>
-                                    <tr>
+                                    <?php $rowCaseNumber = $cid > 0 ? 'C-' . str_pad((string) $cid, 4, '0', STR_PAD_LEFT) : ''; ?>
+                                    <tr class="cct-search-row"<?php echo legalpro_client_search_data_attr([
+                                        $rowCaseNumber,
+                                        $date['case_title'] ?? '',
+                                        $date['title'] ?? '',
+                                        $date['location'] ?? '',
+                                        $date['description'] ?? '',
+                                        $date['status'] ?? '',
+                                        $date['court_date'] ?? '',
+                                    ]); ?>>
                                         <td>
                                             <div class="d-flex align-items-center gap-3 py-1">
                                                 <div class="cct-row-icon"><?php echo $iconCourtRow; ?></div>
@@ -425,7 +447,10 @@ if (!empty($_SESSION['error_message'])) {
                                         </td>
                                         <td class="text-center"><?php echo $rowStatusBadge; ?></td>
                                         <td>
-                                            <button type="button" class="btn-cct-view" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
+                                            <div class="d-flex align-items-center justify-content-end gap-1 flex-wrap">
+                                                <a href="client-calendar-export.php?type=court&amp;id=<?php echo (int) $date['id']; ?>" class="btn-cct-view cdoc-touch-btn" download title="Add to calendar">.ics</a>
+                                                <button type="button" class="btn-cct-view cdoc-touch-btn" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

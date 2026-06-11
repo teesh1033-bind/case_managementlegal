@@ -33,6 +33,79 @@ body.legalpro-client-portal .btn {
     --client-portal-bg-fallback: #f4f6f9;
 }
 
+/* ── Client portal shell: sidebar offset + mobile drawer ───────────────── */
+body.legalpro-client-portal .legalpro-admin-sidebar,
+body.legalpro-client-portal #sidenav-main.legalpro-admin-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: var(--lp-portal-sidebar-width, 270px) !important;
+    max-width: var(--lp-portal-sidebar-width, 270px) !important;
+    height: 100vh !important;
+    z-index: 1040;
+}
+
+body.legalpro-client-portal.legalpro-sidebar-collapsed .legalpro-admin-sidebar,
+body.legalpro-client-portal.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar {
+    width: var(--lp-portal-sidebar-collapsed, 88px) !important;
+    max-width: var(--lp-portal-sidebar-collapsed, 88px) !important;
+}
+
+body.legalpro-client-portal .main-content {
+    margin-left: var(--lp-portal-sidebar-width, 270px) !important;
+    width: calc(100% - var(--lp-portal-sidebar-width, 270px)) !important;
+    max-width: none !important;
+    min-height: 100vh;
+    padding-top: var(--lp-portal-header-height, 4.5rem) !important;
+    overflow-x: clip;
+    box-sizing: border-box;
+}
+
+body.legalpro-client-portal.legalpro-sidebar-collapsed .main-content {
+    margin-left: var(--lp-portal-sidebar-collapsed, 88px) !important;
+    width: calc(100% - var(--lp-portal-sidebar-collapsed, 88px)) !important;
+}
+
+body.legalpro-client-portal .navbar-main,
+body.legalpro-client-portal #navbarBlur {
+    left: var(--lp-portal-sidebar-width, 270px) !important;
+    right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: auto !important;
+}
+
+body.legalpro-client-portal.legalpro-sidebar-collapsed .navbar-main,
+body.legalpro-client-portal.legalpro-sidebar-collapsed #navbarBlur {
+    left: var(--lp-portal-sidebar-collapsed, 88px) !important;
+}
+
+@media (max-width: 1199.98px) {
+    body.legalpro-client-portal .legalpro-admin-sidebar,
+    body.legalpro-client-portal #sidenav-main.legalpro-admin-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+    }
+
+    body.legalpro-client-portal.g-sidenav-pinned .legalpro-admin-sidebar,
+    body.legalpro-client-portal.g-sidenav-pinned #sidenav-main.legalpro-admin-sidebar,
+    body.legalpro-client-portal.nav-open .legalpro-admin-sidebar,
+    body.legalpro-client-portal.nav-open #sidenav-main.legalpro-admin-sidebar {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+    }
+
+    body.legalpro-client-portal .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    body.legalpro-client-portal .navbar-main,
+    body.legalpro-client-portal #navbarBlur {
+        left: 0 !important;
+    }
+}
+
 .bg-legalpro-client {
     background: var(--client-portal-content-bg) !important;
     background-color: var(--client-portal-content-bg) !important;

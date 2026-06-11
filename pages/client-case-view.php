@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
+require_once __DIR__ . '/../lib/client-portal-features.php';
 
 // Check if client is logged in
 if (!isset($_SESSION['client_id'])) {
@@ -39,6 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
             $message = 'Error adding comment: ' . htmlspecialchars($e->getMessage());
             $messageType = 'danger';
         }
+    }
+}
+
+// Handle document acknowledgment
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'acknowledge') {
+    $docId = (int) ($_POST['document_id'] ?? 0);
+    if (legalpro_client_acknowledge_document($pdo, $client_id, $docId)) {
+        $message = 'Receipt acknowledged.';
+        $messageType = 'success';
     }
 }
 
@@ -146,6 +156,15 @@ try {
     $stmt->execute([$case_id]);
     $appointments = $stmt->fetchAll();
 
+    $courtDateCount = 0;
+    try {
+        $cdStmt = $pdo->prepare('SELECT COUNT(*) FROM court_dates WHERE case_id = ?');
+        $cdStmt->execute([$case_id]);
+        $courtDateCount = (int) $cdStmt->fetchColumn();
+    } catch (PDOException $e) {
+        $courtDateCount = 0;
+    }
+
 } catch (PDOException $e) {
     $message = 'Error loading case details: ' . htmlspecialchars($e->getMessage());
     $messageType = 'danger';
@@ -155,6 +174,7 @@ try {
     $comments = [];
     $documents = [];
     $appointments = [];
+    $courtDateCount = 0;
 }
 
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
@@ -164,18 +184,50 @@ if (!$case) {
     exit;
 }
 
+require_once __DIR__ . '/../inc/admin-layout.php';
+
+$iconServiceRow = legalpro_icon('receipt');
+$iconServiceEmpty = legalpro_icon('receipt');
+$iconApptRow = legalpro_icon('calendar-clock');
+$iconApptEmpty = legalpro_icon('calendar');
+
 // Build services list
 $servicesHtml = '';
 $totalFees = 0;
 if (!empty($services)) {
     foreach ($services as $service) {
-        $servicesHtml .= '<li class="list-group-item d-flex justify-content-between align-items-center">' . htmlspecialchars($service['service_name']) . '<span class="badge bg-primary rounded-pill">$ ' . number_format($service['price'], 2) . '</span></li>';
+        $pricePill = '<span class="ca-status-pill ca-status-pill--muted">$ ' . number_format($service['price'], 2) . '</span>';
+        $servicesHtml .= '<li class="list-group-item border-0 px-0">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3 min-width-0">
+                    <div class="ccv-service-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconServiceRow . '</div>
+                    <span class="text-sm font-weight-bold">' . htmlspecialchars($service['service_name']) . '</span>
+                </div>
+                ' . $pricePill . '
+            </div>
+        </li>';
         $totalFees += $service['price'];
     }
-    $servicesHtml .= '<li class="list-group-item d-flex justify-content-between align-items-center fw-bold">Total Fees<span class="badge bg-success rounded-pill">$ ' . number_format($totalFees, 2) . '</span></li>';
+    $totalPill = '<span class="ca-status-pill ca-status-pill--done">$ ' . number_format($totalFees, 2) . '</span>';
+    $servicesHtml .= '<li class="list-group-item border-0 px-0 pt-3">
+        <div class="d-flex align-items-center justify-content-between gap-3">
+            <span class="text-sm font-weight-bold">Total Fees</span>
+            ' . $totalPill . '
+        </div>
+    </li>';
 } else {
-    $servicesHtml = '<li class="list-group-item text-muted">No services defined yet.</li>';
+    $servicesHtml = '<div class="text-center py-4">
+        <div class="ccv-service-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconServiceEmpty . '</div>
+        <p class="text-sm text-muted mb-0 mt-3">No services defined yet.</p>
+    </div>';
 }
+
+$progressPhases = legalpro_client_case_progress_phase(
+    (string) ($case['status'] ?? 'open'),
+    $stages,
+    $courtDateCount > 0
+);
+$progressStepperHtml = legalpro_client_render_case_progress_stepper($progressPhases);
 
 // Build stages list
 $stagesHtml = '';
@@ -283,42 +335,75 @@ $commentFormHtml = '
 </form>';
 
 // Build documents list
+$allClientDocs = legalpro_client_get_documents($pdo, $client_id, $case_id);
+$ackMap = [];
+foreach ($allClientDocs as $d) {
+    $ackMap[(int) $d['id']] = $d;
+}
+
 $documentsHtml = '';
 if (!empty($documents)) {
     foreach ($documents as $doc) {
-        $fileIcon = '<i class="ni ni-single-copy-04"></i>';
-        $documentsHtml .= '<div class="d-flex align-items-center mb-3">
+        $docMeta = $ackMap[(int) $doc['id']] ?? null;
+        $filepath = '../' . ltrim((string) $doc['filepath'], '/');
+        $ackHtml = '';
+        if ($docMeta && !empty($docMeta['needs_ack'])) {
+            $ackHtml = '<form method="post" class="d-inline ms-1">
+                <input type="hidden" name="action" value="acknowledge">
+                <input type="hidden" name="document_id" value="' . (int) $doc['id'] . '">
+                <button type="submit" class="btn btn-sm btn-outline-success cdoc-touch-btn">Acknowledge</button>
+            </form>';
+        } elseif ($docMeta && !empty($docMeta['is_acknowledged'])) {
+            $ackHtml = '<span class="text-xs text-success ms-1">✓ Acknowledged</span>';
+        }
+        $newBadge = ($docMeta && !empty($docMeta['is_new'])) ? ' <span class="cdoc-new-badge">New</span>' : '';
+        $documentsHtml .= '<div class="d-flex align-items-center mb-3 flex-wrap gap-2">
             <div class="w-100">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 text-sm">' . htmlspecialchars($doc['label'] ?: $doc['filename']) . '</h6>
-                    <a href="' . htmlspecialchars($doc['filepath']) . '" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h6 class="mb-0 text-sm">' . htmlspecialchars($doc['label'] ?: $doc['filename']) . $newBadge . '</h6>
+                    <div>
+                        <a href="' . htmlspecialchars($filepath) . '" target="_blank" class="btn btn-sm btn-outline-primary cdoc-touch-btn">View</a>
+                        <a href="' . htmlspecialchars($filepath) . '" download class="btn btn-sm btn-primary cdoc-touch-btn">Download</a>
+                        ' . $ackHtml . '
+                    </div>
                 </div>
                 <p class="text-xs text-secondary mb-0">Uploaded by ' . htmlspecialchars($doc['uploaded_by']) . ' on ' . date('M d, Y', strtotime($doc['uploaded_at'])) . '</p>
             </div>
         </div>';
     }
 } else {
-    $documentsHtml = '<p class="text-muted text-sm">No documents uploaded yet.</p>';
+    $documentsHtml = '<p class="text-muted text-sm">No documents uploaded yet. <a href="client-documents.php">View all documents</a></p>';
 }
 
 // Build appointments list
 $appointmentsHtml = '';
 if (!empty($appointments)) {
     foreach ($appointments as $apt) {
-        $status = strtotime($apt['starts_at']) > time() ? '<span class="badge badge-sm bg-gradient-info">Upcoming</span>' : '<span class="badge badge-sm bg-gradient-success">Completed</span>';
-        $appointmentsHtml .= '<div class="d-flex align-items-center mb-3">
-            <div class="w-100">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 text-sm">' . date('M d, Y g:i A', strtotime($apt['starts_at'])) . '</h6>
-                    ' . $status . '
+        $statusBadge = client_appointment_status_badge($apt);
+        $calLink = '';
+        if (strtolower((string) ($apt['status'] ?? '')) === 'accepted') {
+            $calLink = legalpro_client_render_calendar_links(
+                'client-calendar-export.php?type=appointment&id=' . (int) $apt['id']
+            );
+        }
+        $appointmentsHtml .= '<div class="d-flex align-items-start gap-3 mb-3 cp-appt-card">
+            <div class="ccv-appt-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconApptRow . '</div>
+            <div class="w-100 min-width-0">
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                    <h6 class="mb-0 text-sm font-weight-bold">' . date('M d, Y g:i A', strtotime($apt['starts_at'])) . '</h6>
+                    ' . $statusBadge . '
                 </div>
-                <p class="text-xs text-secondary mb-0">Lawyer: ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
+                <p class="text-xs text-secondary mb-0 mt-1">Lawyer: ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
                 <p class="text-xs text-secondary mb-0">Notes: ' . htmlspecialchars($apt['notes'] ?: 'No notes') . '</p>
+                ' . $calLink . '
             </div>
         </div>';
     }
 } else {
-    $appointmentsHtml = '<p class="text-muted text-sm">No appointments scheduled.</p>';
+    $appointmentsHtml = '<div class="text-center py-4">
+        <div class="ccv-appt-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconApptEmpty . '</div>
+        <p class="text-sm text-muted mb-0 mt-3">No appointments scheduled.</p>
+    </div>';
 }
 
 // Build events HTML using the new CaseEvents class
@@ -327,42 +412,19 @@ $eventsHtml = CaseEvents::renderEventsTimeline($case_id);
 $caseNumber = 'C-' . str_pad($case['id'], 4, '0', STR_PAD_LEFT);
 $lawyerNames = $case['lawyer_names'] ?: 'Unassigned';
 
-switch ($case['status']) {
-    case 'open':
-        $statusBadge = '<span class="badge badge-sm bg-gradient-success">Open</span>';
-        break;
-    case 'closed':
-        $statusBadge = '<span class="badge badge-sm bg-gradient-danger">Closed</span>';
-        break;
-    case 'pending':
-        $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
-        break;
-    default:
-        $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($case['status']) . '</span>';
-        break;
-}
-
-switch ($case['priority']) {
-    case 'High':
-        $priorityBadge = '<span class="badge badge-sm bg-gradient-danger">High</span>';
-        break;
-    case 'Normal':
-        $priorityBadge = '<span class="badge badge-sm bg-gradient-warning">Normal</span>';
-        break;
-    case 'Low':
-        $priorityBadge = '<span class="badge badge-sm bg-gradient-info">Low</span>';
-        break;
-    default:
-        $priorityBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($case['priority']) . '</span>';
-        break;
-}
+$statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+$priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+$categoryBadge = '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars((string) ($case['category'] ?? '')) . '</span>';
 
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('Case {CASE_NUMBER}', 'Case Details', 'Search cases…', [
-    'parent_label' => 'My Cases',
-    'parent_url' => 'client-cases.php',
-    'title_tag' => 'h6',
-]);
+$clientPageNavbar = legalpro_render_client_page_navbar('Case {CASE_NUMBER}', 'Case Details', 'Search cases…', array_merge(
+    legalpro_client_page_search_options('client-cases.php'),
+    [
+        'parent_label' => 'My Cases',
+        'parent_url' => 'client-cases.php',
+        'title_tag' => 'h6',
+    ]
+));
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -454,7 +516,7 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-portal-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-portal-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
     <main class="main-content position-relative border-radius-lg">
@@ -474,7 +536,7 @@ $html = <<<'HTML'
                                     <div class="d-flex gap-2 mb-3">
                                         {STATUS_BADGE}
                                         {PRIORITY_BADGE}
-                                        <span class="badge badge-sm bg-gradient-secondary">{CASE_CATEGORY}</span>
+                                        {CASE_CATEGORY}
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6">
@@ -501,11 +563,16 @@ $html = <<<'HTML'
                     <div class="card mb-4">
                         <div class="card-header pb-0">
                             <h6>Case Progress</h6>
+                            <p class="text-xs text-muted mb-0 mt-1">Intake → Active → Hearing → Settlement → Closed</p>
                         </div>
                         <div class="card-body">
-                            <div class="timeline timeline-one-side">
-                                {STAGES_HTML}
-                            </div>
+                            {PROGRESS_STEPPER}
+                            <details class="cp-stage-details mt-4">
+                                <summary class="text-sm font-weight-bold text-primary" style="cursor:pointer;">View detailed stage timeline</summary>
+                                <div class="timeline timeline-one-side mt-3">
+                                    {STAGES_HTML}
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -604,13 +671,14 @@ $html = str_replace('{CASE_TITLE}', htmlspecialchars($case['title']), $html);
 $html = str_replace('{CASE_DESCRIPTION}', htmlspecialchars($case['description'] ?: 'No description provided.'), $html);
 $html = str_replace('{STATUS_BADGE}', $statusBadge, $html);
 $html = str_replace('{PRIORITY_BADGE}', $priorityBadge, $html);
-$html = str_replace('{CASE_CATEGORY}', htmlspecialchars($case['category']), $html);
+$html = str_replace('{CASE_CATEGORY}', $categoryBadge, $html);
 $html = str_replace('{LAWYER_NAMES}', htmlspecialchars($lawyerNames), $html);
 $html = str_replace('{START_DATE}', $case['start_date'] ? date('M d, Y', strtotime($case['start_date'])) : 'Not set', $html);
 $html = str_replace('{EXPECTED_COMPLETION}', $case['expected_completion'] ? date('M d, Y', strtotime($case['expected_completion'])) : 'Not set', $html);
 $html = str_replace('{ESTIMATED_FEES}', number_format($case['estimated_fees'], 2), $html);
 $html = str_replace('{LAST_UPDATED}', date('M d, Y', strtotime($case['updated_at'])), $html);
 $html = str_replace('{SERVICES_HTML}', $servicesHtml, $html);
+$html = str_replace('{PROGRESS_STEPPER}', $progressStepperHtml, $html);
 $html = str_replace('{STAGES_HTML}', $stagesHtml, $html);
 $html = str_replace('{COMMENTS_HTML}', $commentsHtml, $html);
 $html = str_replace('{COMMENT_FORM_HTML}', $commentFormHtml, $html);
