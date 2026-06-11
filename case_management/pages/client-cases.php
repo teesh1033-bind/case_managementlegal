@@ -146,10 +146,14 @@ if (empty($cases)) {
         $category   = category_pill((string) ($case['category'] ?? ''));
         $updated    = isset($case['updated_at']) ? date('M j, Y', strtotime($case['updated_at'])) : '';
 
+        $searchHay = strtolower($caseNumber . ' ' . ($case['title'] ?? '') . ' ' . ($case['category'] ?? '')
+            . ' ' . ($case['status'] ?? '') . ' ' . ($case['priority'] ?? '') . ' ' . ($case['lawyer_names'] ?? ''));
+
         $casesRows .= '<tr data-status="' . htmlspecialchars($case['status'] ?? '') . '"
                             data-priority="' . htmlspecialchars($case['priority'] ?? '') . '"
                             data-title="' . strtolower($title) . '"
-                            data-category="' . strtolower($case['category'] ?? '') . '">
+                            data-category="' . strtolower($case['category'] ?? '') . '"
+                            data-search="' . htmlspecialchars($searchHay, ENT_QUOTES, 'UTF-8') . '">
             <td>
                 <div style="display:flex;align-items:center;gap:10px">
                     <div class="case-icon">
@@ -181,7 +185,12 @@ $messageHtml = $message
 
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('My Cases', 'My Cases', 'Search cases…');
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'My Cases',
+    'My Cases',
+    'Search cases…',
+    legalpro_client_page_search_options('client-cases.php')
+);
 
 ob_start(); ?>
 <!DOCTYPE html>
@@ -192,7 +201,6 @@ ob_start(); ?>
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>LegalPro – My Cases</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -204,13 +212,22 @@ ob_start(); ?>
         /* ── Reset / base ───────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; }
         body.client-cases-page {
-            font-family: 'Inter', system-ui, sans-serif;
             background: #f0f2f8;
             --cc-primary: var(--legalpro-theme-primary, #5e72e4);
             --cc-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
             --cc-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
             --cc-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
             --cc-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            --cc-field-bg: #fff;
+            --cc-field-color: #1e293b;
+            --cc-field-border: #e2e8f0;
+            --cc-field-muted: #94a3b8;
+        }
+        body.legalpro-dark-mode.client-cases-page {
+            --cc-field-bg: var(--lp-dark-input-bg, #2f3547);
+            --cc-field-color: var(--lp-dark-text, #f8f9fc);
+            --cc-field-border: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
+            --cc-field-muted: var(--lp-dark-text-subtle, #9aa8bc);
         }
 
         /* ── Alert bar ──────────────────────────────────────────── */
@@ -310,31 +327,38 @@ ob_start(); ?>
             left: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8;
+            color: var(--cc-field-muted);
             pointer-events: none;
         }
         .cc-search-input {
             width: 100%;
             padding: .55rem .75rem .55rem 2.25rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--cc-field-border);
             border-radius: 10px;
             font-size: 13px;
-            background: #fff;
-            color: #1e293b;
+            background: var(--cc-field-bg);
+            color: var(--cc-field-color);
             outline: none;
             transition: border-color .15s, box-shadow .15s;
+        }
+        .cc-search-input::placeholder {
+            color: var(--cc-field-muted);
+            opacity: 1;
         }
         .cc-search-input:focus {
             border-color: var(--cc-primary);
             box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
         }
+        body.legalpro-dark-mode.client-cases-page .cc-search-input:focus {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
         .cc-filter-select {
             padding: .52rem .75rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--cc-field-border);
             border-radius: 10px;
             font-size: 13px;
-            background: #fff;
-            color: #1e293b;
+            background: var(--cc-field-bg);
+            color: var(--cc-field-color);
             outline: none;
             cursor: pointer;
         }
@@ -587,7 +611,8 @@ ob_start(); ?>
                         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                     </svg>
                     <input id="ccSearch" class="cc-search-input" type="text"
-                           placeholder="Search cases…" oninput="ccFilter()">
+                           placeholder="Search cases…" oninput="ccFilter()"
+                           value="<?= htmlspecialchars(legalpro_client_page_search_query(), ENT_QUOTES, 'UTF-8') ?>">
                 </div>
                 <select id="ccStatus" class="cc-filter-select" onchange="ccFilter()">
                     <option value="">All statuses</option>
@@ -656,7 +681,8 @@ ob_start(); ?>
         var rows = document.querySelectorAll('#ccBody tr[data-title]');
         var visible = 0;
         rows.forEach(function(r) {
-            var titleMatch    = !q  || r.dataset.title.includes(q) || r.dataset.category.includes(q);
+            var hay = r.dataset.search || (r.dataset.title + ' ' + r.dataset.category);
+            var titleMatch    = !q  || hay.includes(q);
             var statusMatch   = !st || r.dataset.status.toLowerCase() === st;
             var priorityMatch = !pr || r.dataset.priority.toLowerCase() === pr;
             var show = titleMatch && statusMatch && priorityMatch;
@@ -666,6 +692,9 @@ ob_start(); ?>
         var el = document.getElementById('ccRowCount');
         if (el) el.textContent = visible + ' case' + (visible === 1 ? '' : 's');
     }
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('ccSearch').value) ccFilter();
+    });
     </script>
 </body>
 </html>

@@ -81,3 +81,27 @@
     font-size: 0.9rem !important;
     font-weight: 600 !important;
 }
+
+/* Collapsed sidebar — icon-only nav (lawyer, client, admin) */
+body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav-wrap,
+body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .navbar-collapse.legalpro-sidebar-nav-wrap {
+    padding: 0.5rem 0.35rem !important;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .legalpro-sidebar-nav .nav-link,
+body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-nav > .nav-item > .nav-link {
+    justify-content: center !important;
+    gap: 0 !important;
+    padding: 0.62rem 0.35rem !important;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-link.active {
+    box-shadow: none !important;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__icon {
+    width: 2rem !important;
+    height: 2rem !important;
+    min-width: 2rem !important;
+    margin: 0 auto;
+}

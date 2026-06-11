@@ -108,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['client_user_id'] = $user['id'];
                 $_SESSION['client_name'] = $user['first_name'] . ' ' . $user['last_name'];
                 $_SESSION['client_username'] = $user['username'];
+                $_SESSION['client_locale'] = getClientPortalLocale((int) $user['client_id']);
 
                 // Redirect to client dashboard
                 header('Location: client-dashboard.php');

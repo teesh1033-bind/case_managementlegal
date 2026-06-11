@@ -94,19 +94,58 @@ body.lawyer-tasks-page .main-content.border-radius-lg {
     border-radius: 0 !important;
 }
 
-body.legalpro-lawyer-portal .main-content .card,
-body.lawyer-dashboard-page .main-content .card,
-body.lawyer-cases-page .main-content .card,
-body.lawyer-clients-page .main-content .card,
-body.lawyer-appointments-page .main-content .card,
-body.lawyer-availability-page .main-content .card,
-body.lawyer-case-view-page .main-content .card,
-body.lawyer-client-view-page .main-content .card,
-body.lawyer-court-tracking-page .main-content .card,
-body.lawyer-tasks-page .main-content .card,
-body.lawyer-profile-page .main-content .card,
-.search-portal-page--lawyer .main-content .card {
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-dashboard-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-cases-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-clients-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-appointments-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-availability-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-case-view-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-client-view-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-court-tracking-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-tasks-page:not(.legalpro-dark-mode) .main-content .card,
+body.lawyer-profile-page:not(.legalpro-dark-mode) .main-content .card,
+.search-portal-page--lawyer:not(.legalpro-dark-mode) .main-content .card {
     background-color: #fff !important;
+}
+
+html.legalpro-theme-dark body.legalpro-lawyer-portal .main-content .card,
+html.legalpro-theme-dark body.lawyer-cases-page .main-content .card,
+html.legalpro-theme-dark body.lawyer-tasks-page .main-content .card,
+body.legalpro-dark-mode.legalpro-lawyer-portal .main-content .card,
+body.legalpro-dark-mode.lawyer-cases-page .main-content .card,
+body.legalpro-dark-mode.lawyer-tasks-page .main-content .card,
+body.legalpro-dark-mode.lawyer-clients-page .main-content .card,
+body.legalpro-dark-mode.lawyer-dashboard-page .main-content .card,
+body.legalpro-dark-mode.lawyer-appointments-page .main-content .card,
+body.legalpro-dark-mode.lawyer-availability-page .main-content .card,
+body.legalpro-dark-mode.lawyer-case-view-page .main-content .card,
+body.legalpro-dark-mode.lawyer-client-view-page .main-content .card,
+body.legalpro-dark-mode.lawyer-court-tracking-page .main-content .card,
+body.legalpro-dark-mode.lawyer-profile-page .main-content .card {
+    background-color: var(--lp-dark-surface, #343b4f) !important;
+    background: var(--lp-dark-surface, #343b4f) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+    box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;
+}
+
+body.legalpro-dark-mode.lawyer-tasks-page .lt-task-row,
+html.legalpro-theme-dark body.lawyer-tasks-page .lt-task-row {
+    background: var(--lp-dark-surface, #343b4f) !important;
+    background-image: none !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-tasks-page .lt-task-row__title,
+html.legalpro-theme-dark body.lawyer-tasks-page .lt-task-row__title {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.lawyer-tasks-page .lt-task-row__meta,
+body.legalpro-dark-mode.lawyer-tasks-page .lt-task-row__due,
+html.legalpro-theme-dark body.lawyer-tasks-page .lt-task-row__meta,
+html.legalpro-theme-dark body.lawyer-tasks-page .lt-task-row__due {
+    color: var(--lp-dark-text-muted, #c5cede) !important;
 }
 
 /* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */

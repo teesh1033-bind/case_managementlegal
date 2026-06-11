@@ -269,6 +269,11 @@ if (empty($appointments)) {
         $notesDisp   = $notesRaw === '' ? '—' : (strlen($notesRaw) > 52 ? htmlspecialchars(substr($notesRaw, 0, 52)) . '…' : htmlspecialchars($notesRaw));
         $isRejected  = ($meta['key'] === 'rejected');
 
+        $calendarBtn = '';
+        if ($meta['key'] === 'accepted' || $meta['key'] === 'upcoming') {
+            $calendarBtn = '<a href="client-calendar-export.php?type=appointment&amp;id=' . $aid . '" class="btn-det cdoc-touch-btn" download title="Add to calendar">Calendar</a>';
+        }
+
         $deleteBtn = '';
         if ($isRejected) {
             $deleteBtn = '<form method="POST" style="display:inline" onsubmit="return confirm(\'Remove this rejected appointment?\')">
@@ -282,7 +287,18 @@ if (empty($appointments)) {
             </form>';
         }
 
-        $appointmentsRows .= '<tr class="ca-row">
+        $searchHay = strtolower(implode(' ', [
+            $caseTitle,
+            $lawyerName,
+            $displayDate,
+            $displayTime,
+            $meta['label'],
+            $notesRaw,
+            'appointment',
+            (string) $aid,
+        ]));
+
+        $appointmentsRows .= '<tr class="ca-row" data-search="' . htmlspecialchars($searchHay, ENT_QUOTES, 'UTF-8') . '">
             <td>
                 <div style="display:flex;align-items:center;gap:10px">
                     <div class="ca-apt-icon">
@@ -303,8 +319,9 @@ if (empty($appointments)) {
                 <p class="apt-notes" title="' . htmlspecialchars($notesRaw) . '">' . $notesDisp . '</p>
             </td>
             <td>
-                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-                    <button type="button" class="btn-det" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">
+                    ' . $calendarBtn . '
+                    <button type="button" class="btn-det cdoc-touch-btn" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
                     ' . $deleteBtn . '
                 </div>
             </td>
@@ -325,7 +342,12 @@ if ($message) {
 }
 
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('Appointments', 'Appointments', 'Search appointments…');
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'Appointments',
+    'Appointments',
+    'Search appointments…',
+    legalpro_client_page_search_options('client-appointments.php')
+);
 
 ob_start(); ?>
 <!DOCTYPE html>
@@ -336,7 +358,6 @@ ob_start(); ?>
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>LegalPro – My Appointments</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -348,13 +369,26 @@ ob_start(); ?>
         *, *::before, *::after { box-sizing: border-box; }
 
         body.client-appointments-page {
-            font-family: 'Inter', system-ui, sans-serif;
             background: #f0f2f8;
             --ca-primary: var(--legalpro-theme-primary, #5e72e4);
             --ca-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
             --ca-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
             --ca-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
             --ca-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            --ca-field-bg: #fff;
+            --ca-field-color: #1e293b;
+            --ca-field-border: #e2e8f0;
+            --ca-field-disabled-bg: #f8fafc;
+            --ca-field-muted: #94a3b8;
+            --ca-time-available-color: #047857;
+        }
+        body.legalpro-dark-mode.client-appointments-page {
+            --ca-field-bg: var(--lp-dark-input-bg, #2f3547);
+            --ca-field-color: var(--lp-dark-text, #f8f9fc);
+            --ca-field-border: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
+            --ca-field-disabled-bg: #2a3040;
+            --ca-field-muted: var(--lp-dark-text-subtle, #9aa8bc);
+            --ca-time-available-color: #6ee7b7;
         }
 
         /* ── Hero ───────────────────────────────────────────────────── */
@@ -536,9 +570,9 @@ ob_start(); ?>
         .ca-fld input[type="date"],
         .ca-fld textarea {
             width: 100%; padding: .55rem .75rem;
-            border: 1px solid #e2e8f0; border-radius: 10px;
-            font-size: 13px; color: #1e293b; background: #fff;
-            outline: none; font-family: 'Inter', sans-serif;
+            border: 1px solid var(--ca-field-border); border-radius: 10px;
+            font-size: 13px; color: var(--ca-field-color); background: var(--ca-field-bg);
+            outline: none; font-family: inherit;
             transition: border-color .15s, box-shadow .15s;
         }
         .ca-fld select:focus,
@@ -549,22 +583,75 @@ ob_start(); ?>
         }
         .ca-fld textarea { resize: vertical; min-height: 72px; }
 
-        /* ── Time grid ──────────────────────────────────────────────── */
-        .ca-time-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px;
+        .ca-fld select:disabled {
+            background: var(--ca-field-disabled-bg);
+            color: var(--ca-field-muted);
+            cursor: not-allowed;
         }
-        .ca-time-btn {
-            padding: .42rem 0; border: 1.5px solid #e2e8f0; border-radius: 8px;
-            font-size: 12px; font-weight: 600; color: #94a3b8; background: #f8fafc;
-            cursor: not-allowed; text-align: center; transition: all .15s;
+
+        /* ── Time dropdown ──────────────────────────────────────────── */
+        .ca-time-dd { position: relative; }
+        .ca-time-dd-trigger {
+            width: 100%; padding: .55rem .75rem;
+            border: 1px solid var(--ca-field-border); border-radius: 10px;
+            font-size: 13px; color: var(--ca-field-color); background: var(--ca-field-bg);
+            outline: none; font-family: inherit; text-align: left;
+            display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+            transition: border-color .15s, box-shadow .15s, background .15s, color .15s;
+            cursor: pointer;
         }
-        .ca-time-btn.available {
-            border-color: #6ee7b7; color: #047857; background: #f0fdf4; cursor: pointer;
+        .ca-time-dd-trigger:disabled {
+            background: var(--ca-field-disabled-bg);
+            color: var(--ca-field-muted);
+            cursor: not-allowed;
         }
-        .ca-time-btn.available:hover { border-color: #10b981; background: #dcfce7; }
-        .ca-time-btn.selected  {
-            border-color: var(--ca-primary); background: var(--ca-primary); color: #fff; cursor: pointer;
+        .ca-time-dd-trigger.has-value {
+            color: var(--ca-time-available-color);
+            font-weight: 600;
         }
+        .ca-time-dd-trigger.open,
+        .ca-time-dd-trigger:focus:not(:disabled) {
+            border-color: var(--ca-primary);
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+        }
+        .ca-time-dd-chevron {
+            width: 14px; height: 14px; flex-shrink: 0;
+            color: var(--ca-field-muted); transition: transform .15s;
+        }
+        .ca-time-dd-trigger.open .ca-time-dd-chevron { transform: rotate(180deg); }
+        .ca-time-dd-menu {
+            position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+            background: var(--ca-field-bg);
+            border: 1px solid var(--ca-field-border); border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+            max-height: 220px; overflow-y: auto; padding: 4px; margin: 0; list-style: none;
+            display: none;
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-time-dd-menu {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        .ca-time-dd-menu.open { display: block; }
+        .ca-time-dd-opt {
+            padding: .5rem .65rem; border-radius: 8px;
+            font-size: 13px; font-weight: 600; color: var(--ca-field-muted);
+            cursor: not-allowed; user-select: none;
+        }
+        .ca-time-dd-opt.available {
+            color: var(--ca-time-available-color);
+            background: transparent;
+            cursor: pointer;
+        }
+        .ca-time-dd-opt.available:hover {
+            color: var(--ca-time-available-color);
+            background: transparent;
+        }
+        .ca-time-dd-opt.selected,
+        .ca-time-dd-opt.selected:hover {
+            color: var(--ca-time-available-color);
+            background: transparent;
+            font-weight: 700;
+        }
+
         .ca-avail-hint {
             display: flex; align-items: center; gap: 6px;
             font-size: 11px; color: #64748b; margin-top: .5rem;
@@ -695,32 +782,41 @@ ob_start(); ?>
                             </div>
                             <div class="ca-fld">
                                 <label>Date</label>
-                                <input type="date" name="appointment_date" id="appointment_date"
-                                       min="<?= date('Y-m-d') ?>" required onchange="onDateChange()">
-                                <div id="caDateAlert" class="ca-avail-alert info">Select a date to see available times.</div>
+                                <select name="appointment_date" id="appointment_date" required disabled onchange="onDateChange()">
+                                    <option value="">Select a lawyer first</option>
+                                </select>
+                                <div id="caDateAlert" class="ca-avail-alert info">Choose a lawyer to see dates they are available.</div>
                             </div>
                             <div class="ca-fld">
                                 <label>Time</label>
-                                <div class="ca-time-grid" id="caTimeGrid">
-                                    <?php
-                                    $times = [
-                                        '09:00' => '9:00', '10:00' => '10:00', '11:00' => '11:00',
-                                        '12:00' => '12:00', '13:00' => '1:00', '14:00' => '2:00',
-                                        '15:00' => '3:00', '16:00' => '4:00', '17:00' => '5:00',
-                                    ];
-                                    foreach ($times as $val => $lbl): ?>
-                                    <button type="button"
-                                            class="ca-time-btn"
-                                            data-time="<?= $val ?>"
-                                            onclick="selectTime('<?= $val ?>')">
-                                        <?= $lbl ?>
+                                <div class="ca-time-dd" id="caTimeDd">
+                                    <button type="button" class="ca-time-dd-trigger" id="caTimeTrigger" disabled
+                                            aria-haspopup="listbox" aria-expanded="false" aria-labelledby="caTimeLabel">
+                                        <span id="caTimeLabel">Select a time</span>
+                                        <svg class="ca-time-dd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
                                     </button>
-                                    <?php endforeach; ?>
+                                    <ul class="ca-time-dd-menu" id="caTimeMenu" role="listbox" aria-label="Available times">
+                                        <?php
+                                        $times = [
+                                            '09:00' => '9:00', '10:00' => '10:00', '11:00' => '11:00',
+                                            '12:00' => '12:00', '13:00' => '1:00', '14:00' => '2:00',
+                                            '15:00' => '3:00', '16:00' => '4:00', '17:00' => '5:00',
+                                        ];
+                                        foreach ($times as $val => $lbl): ?>
+                                        <li class="ca-time-dd-opt"
+                                            role="option"
+                                            data-time="<?= $val ?>"
+                                            data-label="<?= $lbl ?>"
+                                            aria-disabled="true"><?= $lbl ?></li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                    <input type="hidden" name="appointment_time" id="appointment_time" value="">
                                 </div>
-                                <input type="hidden" name="appointment_time" id="appointment_time">
                                 <div class="ca-avail-hint">
                                     <div class="ca-avail-hint-dot"></div>
-                                    Green slots are open for booking
+                                    Green times are open for booking
                                 </div>
                             </div>
                             <div class="ca-fld">
@@ -768,6 +864,61 @@ ob_start(); ?>
     var lawyerHasAvailability    = <?= json_encode($lawyerHasAvailability) ?>;
     var selectedTime             = null;
     var aptModalInstance         = null;
+    var bookableHours            = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+    var todayIso                 = <?= json_encode(date('Y-m-d')) ?>;
+
+    function formatBookableDate(iso) {
+        var parts = iso.split('-');
+        if (parts.length !== 3) return iso;
+        var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function dateHasBookableTimes(lawyerId, dateVal) {
+        var slots = getAvailableSlots(lawyerId, dateVal);
+        if (!slots.length) return false;
+        return bookableHours.some(function(t) { return isAvailable(t, slots); });
+    }
+
+    function getBookableDates(lawyerId) {
+        var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
+        return Object.keys(byDate)
+            .filter(function(dateVal) { return dateVal >= todayIso && dateHasBookableTimes(lawyerId, dateVal); })
+            .sort();
+    }
+
+    function rebuildDateSelect() {
+        var lawyerId = document.getElementById('lawyer_id').value;
+        var sel = document.getElementById('appointment_date');
+        sel.innerHTML = '<option value="">Select a date</option>';
+        sel.value = '';
+        sel.disabled = true;
+
+        if (!lawyerId) {
+            sel.options[0].textContent = 'Select a lawyer first';
+            showDateAlert('info', 'Choose a lawyer to see dates they are available.');
+            return;
+        }
+        if (!hasSchedule(lawyerId)) {
+            sel.options[0].textContent = 'No dates available';
+            showDateAlert('warning', 'This lawyer has no published availability yet.');
+            return;
+        }
+        var dates = getBookableDates(lawyerId);
+        if (!dates.length) {
+            sel.options[0].textContent = 'No dates available';
+            showDateAlert('warning', 'No upcoming available dates for this lawyer.');
+            return;
+        }
+        hideDateAlert();
+        dates.forEach(function(dateVal) {
+            var opt = document.createElement('option');
+            opt.value = dateVal;
+            opt.textContent = formatBookableDate(dateVal);
+            sel.appendChild(opt);
+        });
+        sel.disabled = false;
+    }
 
     function getAvailableSlots(lawyerId, dateVal) {
         var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
@@ -788,26 +939,46 @@ ob_start(); ?>
         document.getElementById('caBookBtn').disabled = !on;
     }
 
-    function resetGrid() {
+    function closeTimeMenu() {
+        var trigger = document.getElementById('caTimeTrigger');
+        var menu = document.getElementById('caTimeMenu');
+        trigger.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('open');
+    }
+
+    function openTimeMenu() {
+        var trigger = document.getElementById('caTimeTrigger');
+        var menu = document.getElementById('caTimeMenu');
+        trigger.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        menu.classList.add('open');
+    }
+
+    function resetTimeSelect() {
         selectedTime = null;
         document.getElementById('appointment_time').value = '';
-        document.querySelectorAll('.ca-time-btn').forEach(function(b) {
-            b.className = 'ca-time-btn';
+        var trigger = document.getElementById('caTimeTrigger');
+        var label = document.getElementById('caTimeLabel');
+        trigger.disabled = true;
+        trigger.classList.remove('has-value');
+        label.textContent = 'Select a time';
+        closeTimeMenu();
+        document.querySelectorAll('.ca-time-dd-opt').forEach(function(opt) {
+            opt.className = 'ca-time-dd-opt';
+            opt.setAttribute('aria-disabled', 'true');
         });
     }
 
-    function selectTime(val) {
-        var btn = document.querySelector('[data-time="' + val + '"]');
-        if (!btn || btn.classList.contains('ca-time-btn') && !btn.classList.contains('available') && !btn.classList.contains('selected')) return;
-        if (!btn.classList.contains('available') && !btn.classList.contains('selected')) return;
-        document.querySelectorAll('.ca-time-btn.selected').forEach(function(b) {
-            b.classList.remove('selected');
-            b.classList.add('available');
+    function selectTime(val, labelText) {
+        document.querySelectorAll('.ca-time-dd-opt').forEach(function(opt) {
+            opt.classList.toggle('selected', opt.getAttribute('data-time') === val && opt.classList.contains('available'));
         });
-        btn.classList.remove('available');
-        btn.classList.add('selected');
         selectedTime = val;
         document.getElementById('appointment_time').value = val;
+        document.getElementById('caTimeLabel').textContent = labelText;
+        document.getElementById('caTimeTrigger').classList.add('has-value');
+        closeTimeMenu();
         setBookBtn(true);
     }
 
@@ -822,39 +993,48 @@ ob_start(); ?>
     }
 
     function onLawyerChange() {
-        resetGrid();
+        resetTimeSelect();
+        rebuildDateSelect();
         onDateChange();
     }
 
     function onDateChange() {
-        resetGrid();
+        resetTimeSelect();
         setBookBtn(false);
         var lawyerId = document.getElementById('lawyer_id').value;
         var dateVal  = document.getElementById('appointment_date').value;
+        var trigger = document.getElementById('caTimeTrigger');
         if (!lawyerId) return;
-        if (!dateVal) { showDateAlert('info', 'Select a date to see available times.'); return; }
-        if (!hasSchedule(lawyerId)) {
-            document.querySelectorAll('.ca-time-btn').forEach(function(b) { b.className = 'ca-time-btn'; });
-            showDateAlert('warning', 'No available times on this date. Choose another date.');
+        if (!dateVal) {
+            if (document.getElementById('appointment_date').disabled) return;
+            showDateAlert('info', 'Select a date to see available times.');
+            return;
+        }
+        if (!dateHasBookableTimes(lawyerId, dateVal)) {
+            document.getElementById('appointment_date').value = '';
+            showDateAlert('warning', 'That date is not available. Please choose another.');
             return;
         }
         var slots = getAvailableSlots(lawyerId, dateVal);
         if (!slots.length) {
-            document.querySelectorAll('.ca-time-btn').forEach(function(b) { b.className = 'ca-time-btn'; });
             showDateAlert('warning', 'No available times on this date. Choose another date.');
             return;
         }
         hideDateAlert();
         var anyAvail = false;
-        document.querySelectorAll('.ca-time-btn').forEach(function(b) {
-            var t = b.getAttribute('data-time');
+        document.querySelectorAll('.ca-time-dd-opt').forEach(function(opt) {
+            var t = opt.getAttribute('data-time');
+            opt.classList.remove('selected');
             if (isAvailable(t, slots)) {
-                b.className = 'ca-time-btn available';
+                opt.className = 'ca-time-dd-opt available';
+                opt.setAttribute('aria-disabled', 'false');
                 anyAvail = true;
             } else {
-                b.className = 'ca-time-btn';
+                opt.className = 'ca-time-dd-opt';
+                opt.setAttribute('aria-disabled', 'true');
             }
         });
+        trigger.disabled = !anyAvail;
         if (!anyAvail) showDateAlert('warning', 'No matching times available. Choose another date.');
     }
 
@@ -867,10 +1047,13 @@ ob_start(); ?>
         if (!caseId)   { alert('Please select a case.');   return false; }
         if (!dateVal)  { alert('Please select a date.');   return false; }
         if (!timeVal)  { alert('Please select a time slot.'); return false; }
-        if (!hasSchedule(lawyerId)) { alert('No available times on this date.'); return false; }
+        if (!dateHasBookableTimes(lawyerId, dateVal)) {
+            alert('The selected date is not available for this lawyer.');
+            return false;
+        }
         var slots = getAvailableSlots(lawyerId, dateVal);
         if (!slots.length || !isAvailable(timeVal, slots)) {
-            alert('Selected time is not available. Please choose a green slot.');
+            alert('Selected time is not available. Please choose another time.');
             return false;
         }
         return true;
@@ -933,9 +1116,34 @@ ob_start(); ?>
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        var trigger = document.getElementById('caTimeTrigger');
+        var menu = document.getElementById('caTimeMenu');
+
+        trigger.addEventListener('click', function() {
+            if (trigger.disabled) return;
+            if (menu.classList.contains('open')) {
+                closeTimeMenu();
+            } else {
+                openTimeMenu();
+            }
+        });
+
+        menu.addEventListener('click', function(e) {
+            var opt = e.target.closest('.ca-time-dd-opt.available');
+            if (!opt) return;
+            selectTime(opt.getAttribute('data-time'), opt.getAttribute('data-label') || opt.textContent.trim());
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('caTimeDd').contains(e.target)) {
+                closeTimeMenu();
+            }
+        });
+
         onLawyerChange();
     });
     </script>
+    <?= legalpro_render_client_page_search_script('.ca-table tbody .ca-row[data-search]', '#caCount', 'appointment', 'appointments', ' total') ?>
 </body>
 </html>
 <?php

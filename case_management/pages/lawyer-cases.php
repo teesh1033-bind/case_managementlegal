@@ -128,7 +128,7 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-cases-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-cases-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
