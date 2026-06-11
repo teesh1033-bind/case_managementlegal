@@ -78,13 +78,8 @@ $activityFeedHtml = legalpro_client_render_activity_feed_html($activityItems);
 $clientPageNavbar = legalpro_render_client_page_navbar(
     'Dashboard',
     'Dashboard',
-<<<<<<< HEAD
-    'Search activity & cases…',
-    legalpro_client_page_search_options('client-dashboard.php')
-=======
     '',
     ['include_search' => false]
->>>>>>> fc9ada41e11b0500d7e86ef5aa013eec7cdec99e
 );
 
 $nextApptBanner = '';
