@@ -269,6 +269,11 @@ if (empty($appointments)) {
         $notesDisp   = $notesRaw === '' ? '—' : (strlen($notesRaw) > 52 ? htmlspecialchars(substr($notesRaw, 0, 52)) . '…' : htmlspecialchars($notesRaw));
         $isRejected  = ($meta['key'] === 'rejected');
 
+        $calendarBtn = '';
+        if ($meta['key'] === 'accepted' || $meta['key'] === 'upcoming') {
+            $calendarBtn = '<a href="client-calendar-export.php?type=appointment&amp;id=' . $aid . '" class="btn-det cdoc-touch-btn" download title="Add to calendar">Calendar</a>';
+        }
+
         $deleteBtn = '';
         if ($isRejected) {
             $deleteBtn = '<form method="POST" style="display:inline" onsubmit="return confirm(\'Remove this rejected appointment?\')">
@@ -282,7 +287,18 @@ if (empty($appointments)) {
             </form>';
         }
 
-        $appointmentsRows .= '<tr id="apt-' . (int) $appointment['id'] . '" class="ca-row">
+        $searchHay = strtolower(implode(' ', [
+            $caseTitle,
+            $lawyerName,
+            $displayDate,
+            $displayTime,
+            $meta['label'],
+            $notesRaw,
+            'appointment',
+            (string) $aid,
+        ]));
+
+        $appointmentsRows .= '<tr id="apt-' . $aid . '" class="ca-row" data-search="' . htmlspecialchars($searchHay, ENT_QUOTES, 'UTF-8') . '">
             <td>
                 <div style="display:flex;align-items:center;gap:10px">
                     <div class="ca-apt-icon">
@@ -303,8 +319,9 @@ if (empty($appointments)) {
                 <p class="apt-notes" title="' . htmlspecialchars($notesRaw) . '">' . $notesDisp . '</p>
             </td>
             <td>
-                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
-                    <button type="button" class="btn-det" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">
+                    ' . $calendarBtn . '
+                    <button type="button" class="btn-det cdoc-touch-btn" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
                     ' . $deleteBtn . '
                 </div>
             </td>
@@ -325,7 +342,12 @@ if ($message) {
 }
 
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('Appointments', 'Appointments', 'Search appointments…');
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'Appointments',
+    'Appointments',
+    'Search appointments…',
+    legalpro_client_page_search_options('client-appointments.php')
+);
 
 ob_start(); ?>
 <!DOCTYPE html>

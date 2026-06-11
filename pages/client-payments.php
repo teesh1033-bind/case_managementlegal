@@ -128,7 +128,16 @@ if (empty($invoices)) {
 
         $caseTitle = $invoice['case_title'] ?: '—';
 
-        $invoicesRows .= '<tr class="cp-invoice-row">
+        $invoiceHay = strtolower(implode(' ', [
+            $invoice['invoice_number'] ?? '',
+            $caseTitle,
+            $statusMeta['label'],
+            $invoice['issue_date'] ?? '',
+            $invoice['due_date'] ?? '',
+            (string) $invoice['amount'],
+        ]));
+
+        $invoicesRows .= '<tr class="cp-invoice-row cp-search-row" data-search="' . htmlspecialchars($invoiceHay, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
                     <div class="cp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconInvoiceRow . '</div>
@@ -173,7 +182,16 @@ if (empty($payments)) {
         $refDisp = strlen($ref) > 24 ? htmlspecialchars(substr($ref, 0, 24)) . '…' : htmlspecialchars($ref);
         $caseTitle = $payment['case_title'] ?: '—';
 
-        $paymentsRows .= '<tr class="cp-payment-row">
+        $paymentHay = strtolower(implode(' ', [
+            $caseTitle,
+            $payment['invoice_number'] ?? '',
+            $ref,
+            $payment['method'] ?? '',
+            $payment['payment_date'] ?? '',
+            (string) $payment['amount'],
+        ]));
+
+        $paymentsRows .= '<tr class="cp-payment-row cp-search-row" data-search="' . htmlspecialchars($paymentHay, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
                     <div class="cp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success flex-shrink-0">' . $iconPaymentRow . '</div>
@@ -200,7 +218,12 @@ if (empty($payments)) {
 }
 
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('Payments & invoices', 'Payments', 'Search invoices & payments…');
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'Payments & invoices',
+    'Payments',
+    'Search invoices & payments…',
+    legalpro_client_page_search_options('client-payments.php')
+);
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -281,6 +304,19 @@ $html = <<<'HTML'
         .client-payments-page .cp-payment-row td {
             border-bottom: 1px solid rgba(0, 0, 0, 0.04);
             vertical-align: middle;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        @media (max-width: 767.98px) {
+            .client-payments-page .cp-invoice-row td,
+            .client-payments-page .cp-payment-row td {
+                padding-top: 1.15rem;
+                padding-bottom: 1.15rem;
+            }
+            .client-payments-page .ca-status-pill {
+                font-size: 0.78rem;
+                padding: 0.45em 1em;
+            }
         }
         .client-payments-page .cp-invoice-row:hover td,
         .client-payments-page .cp-payment-row:hover td {
@@ -386,7 +422,10 @@ $html = <<<'HTML'
                                 <h5 class="text-dark">Invoices</h5>
                                 <p class="text-sm text-muted mb-0">Issued for your matters, newest first.</p>
                             </div>
-                            <a href="client-cases.php" class="btn btn-sm btn-outline-primary mb-0">My cases</a>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="text-xs text-muted" id="cpInvoiceCount">{INVOICE_COUNT} invoices total</span>
+                                <a href="client-cases.php" class="btn btn-sm btn-outline-primary mb-0 cdoc-touch-btn">My cases</a>
+                            </div>
                         </div>
                         <div class="card-body px-0 pt-0 pb-0">
                             <div class="table-responsive">
@@ -417,7 +456,10 @@ $html = <<<'HTML'
                                 <h5 class="text-dark">Payment history</h5>
                                 <p class="text-sm text-muted mb-0">Recorded receipts and transfers.</p>
                             </div>
-                            <a href="client-dashboard.php" class="btn btn-sm btn-outline-primary mb-0">Dashboard</a>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="text-xs text-muted" id="cpPaymentCount">{PAYMENT_COUNT} payments total</span>
+                                <a href="client-dashboard.php" class="btn btn-sm btn-outline-primary mb-0 cdoc-touch-btn">Dashboard</a>
+                            </div>
                         </div>
                         <div class="card-body px-0 pt-0 pb-0">
                             <div class="table-responsive">

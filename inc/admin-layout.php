@@ -69,6 +69,12 @@ function legalpro_client_notification_count(?PDO $pdo = null, ?int $clientId = n
         return 0;
     }
 
+    $features = __DIR__ . '/../lib/client-portal-features.php';
+    if (is_file($features)) {
+        require_once $features;
+        return legalpro_client_notification_count_unread($pdo, $clientId);
+    }
+
     try {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) FROM appointments
@@ -92,27 +98,34 @@ function legalpro_render_portal_header_utilities(
     string $viewAllUrl,
     string $logoutUrl,
     string $profileUrl = '',
-    string $extraMenuHtml = ''
+    string $extraMenuHtml = '',
+    bool $notifPanelMode = false,
+    ?int $notifBadgeCount = null
 ): string {
     $initials = legalpro_portal_initials($displayName);
-    $notifCount = count($notifications);
-    $notifBadge = $notifCount > 0
-        ? '<span class="legalpro-header-notif__badge">' . ($notifCount > 9 ? '9+' : (string) $notifCount) . '</span>'
-        : '';
+    $notifCount = $notifBadgeCount ?? count($notifications);
+    $notifBadge = '<span class="legalpro-header-notif__badge" data-notif-count' . ($notifCount > 0 ? '' : ' style="display:none"') . '>'
+        . ($notifCount > 0 ? ($notifCount > 9 ? '9+' : (string) $notifCount) : '')
+        . '</span>';
 
     $profileItem = $profileUrl !== ''
         ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . 'Profile</a></li>'
         : '';
 
+    if ($notifPanelMode) {
+        $notifControl = '<button type="button" class="legalpro-header-notif" id="clientNotifBell" title="Notifications" aria-expanded="false" aria-controls="clientNotifPanel">'
+            . legalpro_icon('bell') . $notifBadge . '</button>';
+    } else {
+        $notifControl = '<div class="legalpro-header-notif-wrap">'
+            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="Notifications">'
+            . legalpro_icon('bell') . $notifBadge . '</button>'
+            . legalpro_render_notification_panel($notifications, $viewAllUrl)
+            . '</div>';
+    }
+
     return '
     <div class="legalpro-navbar-actions d-flex align-items-center gap-3 flex-shrink-0">
-        <div class="legalpro-header-notif-wrap">
-            <button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="Notifications">
-                ' . legalpro_icon('bell') . '
-                ' . $notifBadge . '
-            </button>
-            ' . legalpro_render_notification_panel($notifications, $viewAllUrl) . '
-        </div>
+        ' . $notifControl . '
         <div class="legalpro-header-user dropdown">
             <button type="button" class="legalpro-header-user__toggle" aria-expanded="false" aria-haspopup="true" aria-controls="legalproHeaderUserMenuList">
                 <span class="legalpro-header-user__avatar">' . htmlspecialchars($initials) . '</span>
@@ -304,14 +317,51 @@ function legalpro_render_client_header_utilities(?PDO $pdo = null): string
         ? legalpro_fetch_client_notifications($pdo, $clientId)
         : [];
 
+    $clientLabel = function_exists('client_t') ? client_t('header.client') : 'Client';
+    $settingsLabel = function_exists('client_t') ? client_t('nav.settings') : 'Settings';
+
     return legalpro_render_portal_header_utilities(
         $displayName,
-        'Client',
+        $clientLabel,
         $notifications,
         'client-appointments.php',
         'client-logout.php',
-        'client-profile.php'
+        'client-profile.php',
+        '<li><a class="dropdown-item" href="client-settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars($settingsLabel) . '</a></li>',
+        true,
+        legalpro_client_notification_count($pdo, $clientId)
     );
+}
+
+function legalpro_render_client_notification_panel(): string
+{
+    $markAll = function_exists('client_t') ? client_t('notifications.mark_all_read') : 'Mark all read';
+    $title = function_exists('client_t') ? client_t('notifications.title') : 'Notifications';
+    $empty = function_exists('client_t') ? client_t('notifications.empty') : 'No notifications yet';
+    $digest = function_exists('client_t') ? client_t('notifications.digest_settings') : 'Email digest settings';
+
+    return '
+<div class="legalpro-client-notif-panel" id="clientNotifPanel" hidden aria-label="' . htmlspecialchars($title) . '">
+    <div class="legalpro-client-notif-panel__backdrop" data-notif-close="1"></div>
+    <div class="legalpro-client-notif-panel__sheet" role="dialog" aria-modal="true">
+        <div class="legalpro-client-notif-panel__hdr">
+            <h6 class="mb-0">' . htmlspecialchars($title) . '</h6>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-link btn-sm p-0 text-primary" id="clientNotifMarkAll">' . htmlspecialchars($markAll) . '</button>
+                <button type="button" class="btn btn-link p-0 text-secondary" data-notif-close="1" aria-label="Close">&times;</button>
+            </div>
+        </div>
+        <div class="legalpro-client-notif-panel__list" id="clientNotifList">
+            <div class="legalpro-client-notif-panel__loading text-muted text-sm p-3">Loading…</div>
+        </div>
+        <div class="legalpro-client-notif-panel__footer">
+            <a href="client-settings.php#email-digest" class="text-xs text-muted">' . htmlspecialchars($digest) . '</a>
+        </div>
+    </div>
+</div>
+<template id="clientNotifEmptyTpl">
+    <div class="legalpro-client-notif-panel__empty text-center p-4 text-muted text-sm">' . htmlspecialchars($empty) . '</div>
+</template>';
 }
 
 /**
@@ -636,6 +686,37 @@ function lawyer_appointment_status_badge(array $appointment): string
         }
 
         return '<span class="ca-status-pill ca-status-pill--scheduled">Scheduled</span>';
+    }
+
+    $label = ucwords(str_replace('_', ' ', $status));
+
+    return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+}
+
+function client_appointment_status_badge(array $appointment): string
+{
+    $status = strtolower((string) ($appointment['status'] ?? ''));
+    if ($status === 'approved') {
+        $status = 'accepted';
+    }
+    $startsAt = !empty($appointment['starts_at']) ? strtotime($appointment['starts_at']) : 0;
+    $now = time();
+
+    if ($status === 'pending') {
+        return '<span class="ca-status-pill ca-status-pill--pending">Awaiting confirmation</span>';
+    }
+    if ($status === 'rejected') {
+        return '<span class="ca-status-pill ca-status-pill--declined">Declined</span>';
+    }
+    if ($status === 'accepted') {
+        if ($startsAt > 0 && $startsAt < $now) {
+            return '<span class="ca-status-pill ca-status-pill--done">Completed</span>';
+        }
+        if ($startsAt > 0 && date('Y-m-d', $startsAt) === date('Y-m-d')) {
+            return '<span class="ca-status-pill ca-status-pill--scheduled">Today</span>';
+        }
+
+        return '<span class="ca-status-pill ca-status-pill--scheduled">Confirmed</span>';
     }
 
     $label = ucwords(str_replace('_', ' ', $status));

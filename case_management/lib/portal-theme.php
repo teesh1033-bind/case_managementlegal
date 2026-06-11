@@ -290,9 +290,14 @@ function renderLawyerPortalThemeSettingsHtml(int $lawyerId): string
 
 function renderClientPortalPreferencesHtml(int $clientId): string
 {
-    $featuresPath = __DIR__ . '/client-portal-features.php';
-    if (is_file($featuresPath)) {
-        require_once $featuresPath;
+    if (!function_exists('getClientEmailDigest')) {
+        $featuresPath = dirname(__DIR__, 2) . '/lib/client-portal-features.php';
+        if (!is_file($featuresPath)) {
+            $featuresPath = __DIR__ . '/client-portal-features.php';
+        }
+        if (is_file($featuresPath)) {
+            require_once $featuresPath;
+        }
     }
 
     $currentMode = getClientPortalThemeMode($clientId);

@@ -76,12 +76,10 @@ $topNavbarHtml = '
 		</nav>';
 if ($role === 'client') {
     require_once __DIR__ . '/../inc/client-portal-navbar.php';
-    $topNavbarHtml = legalpro_render_client_page_navbar(
-        'AI Assistant',
-        'AI Assistant',
-        'Search cases…',
-        legalpro_client_page_search_options('client-cases.php')
-    );
+    $topNavbarHtml = legalpro_render_client_page_navbar('AI Assistant', 'AI Assistant', '', [
+        'client_name' => $context['display_name'],
+        'include_search' => false,
+    ]);
 }
 
 $welcomeHint = '<br><span class="cb-hint">' . htmlspecialchars($welcomeText) . '</span>';
