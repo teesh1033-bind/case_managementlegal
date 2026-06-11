@@ -38,10 +38,11 @@ try {
         'reply' => $result['reply'] ?? '',
         'links' => $result['links'] ?? [],
         'actions' => $result['actions'] ?? [],
+        'redirect' => $result['redirect'] ?? null,
+        'redirect_delay' => $result['redirect_delay'] ?? 900,
         'mode' => $result['mode'] ?? 'smart',
         'tokens_used' => $result['tokens_used'] ?? null,
         'role' => $context['role'],
-        'ai_enabled' => ChatbotAI::openAiConfigured(),
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     error_log('chatbot-api: ' . $e->getMessage());

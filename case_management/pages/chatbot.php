@@ -4,7 +4,7 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/chatbot_assistant.php';
 require_once __DIR__ . '/../lib/chatbot_ai.php';
 
-$aiModeLabel = ChatbotAI::openAiConfigured() ? 'GPT-powered' : 'Smart mode';
+$aiModeLabel = 'Smart assistant';
 
 $context = ChatbotAssistant::resolveContextFromSession();
 if ($context['role'] === 'guest') {
@@ -20,7 +20,7 @@ $displayName = htmlspecialchars($context['display_name'], ENT_QUOTES, 'UTF-8');
 $welcomeExamples = [
     'admin' => 'Try: "How many active cases?" · "Upcoming appointments" · "Case C-0001" · "Pending invoices"',
     'lawyer' => 'Try: "Show my active cases" · "My appointments" · "My tasks" · "Case C-0001"',
-    'client' => 'Ask anything — cases, billing, court prep. I can update your phone or request a callback.',
+    'client' => 'Try: "Update the dispute case" · "Take me to payments" · "How many cases are closed?"',
 ];
 $welcomeText = $welcomeExamples[$role] ?? $welcomeExamples['admin'];
 
@@ -45,8 +45,9 @@ if ($role === 'admin') {
         <button type="button" class="cb-shortcut chat-shortcut" data-prompt="What invoices do I owe and how can I pay?">Pay invoices</button>
         <button type="button" class="cb-shortcut chat-shortcut" data-prompt="How should I prepare for my next court date?">Court prep</button>
         <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Please request a callback from my lawyer">Request callback</button>
-        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="How does billing work?">Billing help</button>
-        <a href="client-help.php" class="cb-shortcut cb-shortcut--outline">Help center</a>';
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Take me to my payments">Go to payments</button>
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Open my appointments">Appointments</button>
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Open case C-0001">Open a case</button>';
 }
 
 $portalBodyClass = 'g-sidenav-show bg-gray-100';
@@ -91,7 +92,7 @@ if ($role === 'client') {
 			<div class="cb-hero-card">
 				<p class="cb-hero-kicker">AI Assistant</p>
 				<h4 class="cb-hero-title">Chat with ' . htmlspecialchars($assistantName) . '</h4>
-				<p class="cb-hero-sub">ChatGPT-style assistant with live access to your cases, invoices, appointments, and documents. I can advise you and update your profile or submit requests.</p>
+				<p class="cb-hero-sub">Smart assistant powered by your live account data — no external API. I analyze your cases, billing, and court dates, redirect you anywhere in the portal, and update your profile or book appointments when you ask.</p>
 				<p class="cb-hero-meta">Logged in as ' . $displayName . ' · <span class="cb-mode-badge">' . htmlspecialchars($aiModeLabel) . '</span></p>
 			</div>
 			<div class="cb-layout">
@@ -109,7 +110,7 @@ if ($role === 'client') {
 								<div class="cb-bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
 								<div class="chat-bubble">
 									<span class="chat-bubble-label">' . htmlspecialchars($assistantName) . ':</span>
-									<div class="chat-bubble-body">Hello ' . $displayName . '! I\'m your AI legal assistant. I analyze **live data** from your account and can help with cases, billing, court dates, and documents. I can also **update your phone**, **request a callback**, or **submit billing questions** when you ask.' . $welcomeHint . '</div>
+									<div class="chat-bubble-body">Hello ' . $displayName . '! I\'m your **smart legal assistant**. I read your live cases, invoices, appointments, and court dates — then advise you, **open pages** for you, **update your profile**, **book appointments**, and **submit requests**. No API key needed.' . $welcomeHint . '</div>
 								</div>
 							</div>
 						</div>
@@ -131,10 +132,10 @@ if ($role === 'client') {
 					<div class="cb-panel">
 						<div class="cb-panel-hdr"><h5>Tips</h5></div>
 						<div class="cb-panel-body cb-tips chat-tips">
-							<p>• Try: &ldquo;What should I do before my hearing?&rdquo;</p>
-							<p>• Try: &ldquo;Update my phone to +230 5xxx xxxx&rdquo;</p>
-							<p>• Try: &ldquo;Summarize my open invoices&rdquo;</p>
-							<p class="mb-0">• I remember this conversation until you clear it.</p>
+							<p>• &ldquo;Update the dispute case&rdquo; — opens case &amp; notifies lawyer</p>
+							<p>• &ldquo;Take me to payments&rdquo; — redirects instantly</p>
+							<p>• &ldquo;How many cases are closed?&rdquo;</p>
+							<p class="mb-0">• &ldquo;Weekly summary&rdquo; — full account briefing</p>
 						</div>
 					</div>
 				</div>
@@ -439,8 +440,7 @@ $html = <<<'HTML'
 			let metaHtml = '';
 			if (meta && (meta.mode || meta.tokens_used)) {
 				const parts = [];
-				if (meta.mode === 'ai') parts.push('GPT');
-				else if (meta.mode === 'smart') parts.push('Smart');
+				if (meta.mode === 'smart') parts.push('Smart');
 				if (meta.tokens_used) parts.push('~' + meta.tokens_used + ' tokens');
 				metaHtml = '<span class="cb-hint">' + parts.join(' · ') + '</span>';
 			}
@@ -497,6 +497,12 @@ $html = <<<'HTML'
 					mode: data.mode,
 					tokens_used: data.tokens_used
 				});
+				if (data.redirect) {
+					var delay = data.redirect_delay || 900;
+					setTimeout(function() {
+						window.location.href = data.redirect;
+					}, delay);
+				}
 			} catch (err) {
 				removeTyping();
 				appendMessage(assistantName, 'Network error. Please try again.');
