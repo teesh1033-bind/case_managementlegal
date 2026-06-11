@@ -33,6 +33,8 @@ return [
     'settings.digest_weekly' => 'Hebdomadaire',
     'notifications.title' => 'Notifications',
     'notifications.mark_all_read' => 'Tout marquer comme lu',
+    'notifications.show_more' => 'Voir plus',
+    'notifications.show_less' => 'Voir moins',
     'notifications.empty' => 'Vous êtes à jour — aucune notification.',
     'notifications.digest_settings' => 'Paramètres du résumé e-mail',
     'documents.title' => 'Centre de documents',

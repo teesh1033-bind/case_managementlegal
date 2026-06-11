@@ -33,6 +33,8 @@ return [
     'settings.digest_weekly' => 'Weekly',
     'notifications.title' => 'Notifications',
     'notifications.mark_all_read' => 'Mark all read',
+    'notifications.show_more' => 'Show more',
+    'notifications.show_less' => 'Show less',
     'notifications.empty' => 'You\'re all caught up — no notifications yet.',
     'notifications.digest_settings' => 'Email digest settings',
     'documents.title' => 'Document Center',

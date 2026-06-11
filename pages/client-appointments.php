@@ -791,15 +791,39 @@ ob_start(); ?>
     var selectedTime             = null;
     var aptModalInstance         = null;
 
-    function getAvailableSlots(lawyerId, dateVal) {
+    function getSlotsForDate(lawyerId, dateVal) {
         var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
-        return (byDate[dateVal] || []).filter(function(s) { return s.type === 'available'; });
+        return byDate[dateVal] || [];
+    }
+
+    function getAvailableSlots(lawyerId, dateVal) {
+        return getSlotsForDate(lawyerId, dateVal).filter(function(s) { return s.type === 'available'; });
     }
 
     function isAvailable(timeVal, slots) {
         if (!timeVal || !slots.length) return false;
         var t = timeVal.length === 5 ? timeVal + ':00' : timeVal;
         return slots.some(function(s) { return t >= s.start && t < s.end; });
+    }
+
+    function isPastTime(dateVal, timeVal) {
+        var now = new Date();
+        var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        if (dateVal !== today) return false;
+        var current = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        return timeVal < current;
+    }
+
+    function isBlockedByUnavailable(timeVal, slots) {
+        if (!timeVal || !slots.length) return false;
+        var start = timeVal.length === 5 ? timeVal + ':00' : timeVal;
+        var endParts = start.split(':');
+        var endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1] || '0', 10) + 60;
+        var end = String(Math.floor(endMinutes / 60)).padStart(2, '0') + ':' + String(endMinutes % 60).padStart(2, '0') + ':00';
+        return slots.some(function(slot) {
+            if (slot.type !== 'unavailable') return false;
+            return start < slot.end && end > slot.start;
+        });
     }
 
     function hasSchedule(lawyerId) {
@@ -855,22 +879,31 @@ ob_start(); ?>
         var dateVal  = document.getElementById('appointment_date').value;
         if (!lawyerId) return;
         if (!dateVal) { showDateAlert('info', 'Select a date to see available times.'); return; }
-        if (!hasSchedule(lawyerId)) {
+
+        var allSlots = getSlotsForDate(lawyerId, dateVal);
+        var published = hasSchedule(lawyerId);
+        var availableSlots = getAvailableSlots(lawyerId, dateVal);
+
+        if (published && !availableSlots.length) {
             document.querySelectorAll('.ca-time-btn').forEach(function(b) { b.className = 'ca-time-btn'; });
             showDateAlert('warning', 'No available times on this date. Choose another date.');
             return;
         }
-        var slots = getAvailableSlots(lawyerId, dateVal);
-        if (!slots.length) {
-            document.querySelectorAll('.ca-time-btn').forEach(function(b) { b.className = 'ca-time-btn'; });
-            showDateAlert('warning', 'No available times on this date. Choose another date.');
-            return;
+
+        if (!published) {
+            showDateAlert('info', 'Standard business hours are open for booking.');
+        } else {
+            hideDateAlert();
         }
-        hideDateAlert();
+
         var anyAvail = false;
         document.querySelectorAll('.ca-time-btn').forEach(function(b) {
             var t = b.getAttribute('data-time');
-            if (isAvailable(t, slots)) {
+            if (isPastTime(dateVal, t) || isBlockedByUnavailable(t, allSlots)) {
+                b.className = 'ca-time-btn';
+                return;
+            }
+            if (!published || isAvailable(t, availableSlots)) {
                 b.className = 'ca-time-btn available';
                 anyAvail = true;
             } else {
@@ -889,11 +922,18 @@ ob_start(); ?>
         if (!caseId)   { alert('Please select a case.');   return false; }
         if (!dateVal)  { alert('Please select a date.');   return false; }
         if (!timeVal)  { alert('Please select a time slot.'); return false; }
-        if (!hasSchedule(lawyerId)) { alert('No available times on this date.'); return false; }
-        var slots = getAvailableSlots(lawyerId, dateVal);
-        if (!slots.length || !isAvailable(timeVal, slots)) {
+        var allSlots = getSlotsForDate(lawyerId, dateVal);
+        var published = hasSchedule(lawyerId);
+        if (isPastTime(dateVal, timeVal) || isBlockedByUnavailable(timeVal, allSlots)) {
             alert('Selected time is not available. Please choose a green slot.');
             return false;
+        }
+        if (published) {
+            var slots = getAvailableSlots(lawyerId, dateVal);
+            if (!slots.length || !isAvailable(timeVal, slots)) {
+                alert('Selected time is not available. Please choose a green slot.');
+                return false;
+            }
         }
         return true;
     }

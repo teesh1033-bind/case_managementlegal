@@ -69,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
             }
         }
     }
+    header('Location: lawyer-case-view.php?id=' . $caseId . '#case-documents');
+    exit;
 }
 
 // Check if this case is assigned to the logged-in lawyer or linked via an appointment
@@ -251,14 +253,14 @@ if (empty($services)) {
         $servicesHtml .= '
         <tr>
             <td>' . htmlspecialchars($service['service_name']) . '</td>
-            <td class="text-end">$' . number_format($service['price'], 2) . '</td>
+            <td class="text-end">Rs' . number_format($service['price'], 2) . '</td>
         </tr>';
         $totalFees += $service['price'];
     }
     $servicesHtml .= '
     <tr class="table-active">
         <td><strong>Total Estimated Fees</strong></td>
-        <td class="text-end"><strong>$' . number_format($totalFees, 2) . '</strong></td>
+        <td class="text-end"><strong>Rs' . number_format($totalFees, 2) . '</strong></td>
     </tr>';
 }
 
@@ -613,6 +615,39 @@ $html = <<<'HTML'
 
                                 <!-- Documents Tab -->
                                 <div class="tab-pane fade" id="case-documents" role="tabpanel">
+                                    <div class="d-flex justify-content-end mb-3">
+                                        <button type="button"
+                                                class="btn btn-sm bg-gradient-success mb-0"
+                                                id="lawyerUploadDocToggle"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#lawyerUploadDocPanel"
+                                                aria-expanded="false"
+                                                aria-controls="lawyerUploadDocPanel">
+                                            Upload Document
+                                        </button>
+                                    </div>
+                                    <div id="lawyerUploadDocPanel" class="collapse mb-4">
+                                        <div class="card border shadow-none">
+                                            <div class="card-body">
+                                                <form method="POST" action="" enctype="multipart/form-data">
+                                                    <div class="row g-3 align-items-end">
+                                                        <div class="col-md-8">
+                                                            <label for="lawyer-doc-file-label" class="form-label text-sm mb-1">Description</label>
+                                                            <input type="text" class="form-control" id="lawyer-doc-file-label" name="file_label" placeholder="Document description (optional)">
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label for="lawyer-doc-file-input" class="form-label text-sm mb-1">File</label>
+                                                            <input type="file" class="form-control" id="lawyer-doc-file-input" name="file" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-end gap-2 mt-3">
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-toggle="collapse" data-bs-target="#lawyerUploadDocPanel">Cancel</button>
+                                                        <button type="submit" class="btn btn-sm bg-gradient-success mb-0">Upload File</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="table-responsive">
                                         <table class="table table-striped">
                                             <thead>
@@ -657,28 +692,6 @@ $html = <<<'HTML'
                                     <button type="submit" class="btn bg-gradient-success mb-0">Post comment</button>
                                 </div>
                             </form>
-
-                            <!-- Upload File Form -->
-                            <div class="mt-4">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Upload Document</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <form method="POST" action="" enctype="multipart/form-data">
-                                            <div class="row">
-                                                <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="file_label" placeholder="Document description (optional)">
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <input type="file" class="form-control" name="file" required>
-                                                </div>
-                                            </div>
-                                            <button type="submit" class="btn btn-success btn-sm mt-2">Upload File</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -711,6 +724,17 @@ $html = <<<'HTML'
             if (tabBtn && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
                 bootstrap.Tab.getOrCreateInstance(tabBtn).show();
             }
+        }
+
+        var uploadToggle = document.getElementById('lawyerUploadDocToggle');
+        var uploadPanel = document.getElementById('lawyerUploadDocPanel');
+        if (uploadToggle && uploadPanel && typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+            uploadPanel.addEventListener('show.bs.collapse', function () {
+                uploadToggle.textContent = 'Hide upload';
+            });
+            uploadPanel.addEventListener('hide.bs.collapse', function () {
+                uploadToggle.textContent = 'Upload Document';
+            });
         }
     });
     </script>
