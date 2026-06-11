@@ -1,6 +1,10 @@
 (function () {
     'use strict';
 
+    var PREVIEW_LIMIT = 1;
+    var cachedNotifications = [];
+    var notifExpanded = false;
+
     function qs(sel, root) {
         return (root || document).querySelector(sel);
     }
@@ -22,30 +26,6 @@
         }
     }
 
-    function renderNotifications(items) {
-        var list = qs('#clientNotifList');
-        if (!list) return;
-
-        if (!items || !items.length) {
-            var tpl = qs('#clientNotifEmptyTpl');
-            list.innerHTML = tpl ? tpl.innerHTML : '<div class="p-4 text-center text-muted text-sm">No notifications</div>';
-            return;
-        }
-
-        list.innerHTML = items.map(function (n) {
-            var unread = n.is_read ? '' : ' is-unread';
-            var href = n.link_url || '#';
-            return '<a href="' + href + '" class="legalpro-client-notif-item' + unread + '" data-notif-id="' + n.id + '">'
-                + '<span class="legalpro-client-notif-item__body">'
-                + '<strong class="legalpro-client-notif-item__title">' + escapeHtml(n.title) + '</strong>'
-                + '<span class="legalpro-client-notif-item__text">' + escapeHtml(n.body || '') + '</span>'
-                + '</span>'
-                + '<time class="legalpro-client-notif-item__time" datetime="' + escapeHtml(n.time_iso || '') + '" title="' + escapeHtml(n.time_label || n.time_ago || '') + '">'
-                + escapeHtml(n.time_label || n.time_ago || '') + '</time>'
-                + '</a>';
-        }).join('');
-    }
-
     function escapeHtml(str) {
         return String(str)
             .replace(/&/g, '&amp;')
@@ -54,12 +34,61 @@
             .replace(/"/g, '&quot;');
     }
 
+    function buildNotifItem(n) {
+        var unread = n.is_read ? '' : ' is-unread';
+        var href = n.link_url || '#';
+        return '<a href="' + href + '" class="legalpro-notif-item' + unread + '" data-notif-id="' + n.id + '">'
+            + '<span class="legalpro-notif-item__body">'
+            + '<span class="legalpro-notif-item__title">' + escapeHtml(n.title) + '</span>'
+            + '<span class="legalpro-notif-item__message">' + escapeHtml(n.body || '') + '</span>'
+            + '<span class="legalpro-notif-item__time">' + escapeHtml(n.time_label || n.time_ago || '') + '</span>'
+            + '</span>'
+            + '</a>';
+    }
+
+    function updateShowMoreButton(allItems, expanded) {
+        var foot = qs('#clientNotifFoot');
+        var btn = qs('#clientNotifShowMore');
+        if (!foot || !btn) return;
+
+        if (!allItems || allItems.length <= PREVIEW_LIMIT) {
+            foot.hidden = true;
+            return;
+        }
+
+        foot.hidden = false;
+        btn.textContent = expanded
+            ? (btn.getAttribute('data-show-less') || 'Show less')
+            : (btn.getAttribute('data-show-more') || 'Show more');
+        btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+
+    function renderNotifications(items, expanded) {
+        var list = qs('#clientNotifList');
+        if (!list) return;
+
+        var allItems = items || [];
+        var showAll = expanded || allItems.length <= PREVIEW_LIMIT;
+        var visible = showAll ? allItems : allItems.slice(0, PREVIEW_LIMIT);
+
+        if (!visible.length) {
+            var tpl = qs('#clientNotifEmptyTpl');
+            list.innerHTML = tpl ? tpl.innerHTML : '<div class="legalpro-notif-panel__empty"><p>No notifications</p></div>';
+            updateShowMoreButton(allItems, expanded);
+            return;
+        }
+
+        list.innerHTML = visible.map(buildNotifItem).join('');
+        updateShowMoreButton(allItems, expanded);
+    }
+
     function loadNotifications() {
         return fetch('client-notifications-api.php?action=list', { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data.ok) return;
-                renderNotifications(data.notifications || []);
+                cachedNotifications = data.notifications || [];
+                renderNotifications(cachedNotifications, notifExpanded);
                 updateNotifBadge(data.unread || 0);
             })
             .catch(function () {});
@@ -77,49 +106,58 @@
         }).then(function (r) { return r.json(); });
     }
 
-    function initNotificationPanel() {
+    function initNotificationDropdown() {
         var bell = qs('#clientNotifBell');
         var panel = qs('#clientNotifPanel');
+        var wrap = bell ? bell.closest('.legalpro-header-notif-wrap') : null;
         if (!bell || !panel) return;
 
         function openPanel() {
-            panel.hidden = false;
+            panel.classList.add('show');
+            bell.classList.add('show');
             bell.setAttribute('aria-expanded', 'true');
-            document.body.classList.add('client-notif-open');
             loadNotifications();
         }
 
         function closePanel() {
-            panel.hidden = true;
+            panel.classList.remove('show');
+            panel.classList.remove('is-expanded');
+            bell.classList.remove('show');
             bell.setAttribute('aria-expanded', 'false');
-            document.body.classList.remove('client-notif-open');
+            notifExpanded = false;
+            renderNotifications(cachedNotifications, false);
         }
 
         bell.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            if (panel.hidden) openPanel();
-            else closePanel();
-        });
-
-        qsa('[data-notif-close]', panel).forEach(function (el) {
-            el.addEventListener('click', closePanel);
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && !panel.hidden) closePanel();
+            if (panel.classList.contains('show')) closePanel();
+            else openPanel();
         });
 
         panel.addEventListener('click', function (e) {
-            var item = e.target.closest('.legalpro-client-notif-item');
+            e.stopPropagation();
+
+            var item = e.target.closest('.legalpro-notif-item');
             if (!item) return;
             var id = item.getAttribute('data-notif-id');
             if (id) {
                 markRead(id).then(function (data) {
                     if (data && typeof data.unread === 'number') updateNotifBadge(data.unread);
+                    item.classList.remove('is-unread');
                 });
             }
         });
+
+        var showMore = qs('#clientNotifShowMore');
+        if (showMore) {
+            showMore.addEventListener('click', function (e) {
+                e.preventDefault();
+                notifExpanded = !notifExpanded;
+                panel.classList.toggle('is-expanded', notifExpanded);
+                renderNotifications(cachedNotifications, notifExpanded);
+            });
+        }
 
         var markAll = qs('#clientNotifMarkAll');
         if (markAll) {
@@ -134,7 +172,7 @@
                     body: body.toString()
                 }).then(function (r) { return r.json(); }).then(function (data) {
                     if (data && data.ok) {
-                        qsa('.legalpro-client-notif-item', panel).forEach(function (el) {
+                        qsa('.legalpro-notif-item', panel).forEach(function (el) {
                             el.classList.remove('is-unread');
                         });
                         updateNotifBadge(0);
@@ -142,6 +180,20 @@
                 });
             });
         }
+
+        document.addEventListener('click', function () {
+            if (panel.classList.contains('show')) closePanel();
+        });
+
+        if (wrap) {
+            wrap.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && panel.classList.contains('show')) closePanel();
+        });
     }
 
     function initMoreSheet() {
@@ -188,7 +240,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        initNotificationPanel();
+        initNotificationDropdown();
         initMoreSheet();
         initActivityIcons();
     });
