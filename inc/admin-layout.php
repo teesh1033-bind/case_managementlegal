@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/legalpro-icons.php';
+require_once __DIR__ . '/../lib/portal_notifications.php';
 
 function legalpro_admin_notification_count(?PDO $pdo = null): int
 {
@@ -87,13 +88,14 @@ function legalpro_client_notification_count(?PDO $pdo = null, ?int $clientId = n
 function legalpro_render_portal_header_utilities(
     string $displayName,
     string $roleLabel,
-    string $notifUrl,
-    int $notifCount,
+    array $notifications,
+    string $viewAllUrl,
     string $logoutUrl,
     string $profileUrl = '',
     string $extraMenuHtml = ''
 ): string {
     $initials = legalpro_portal_initials($displayName);
+    $notifCount = count($notifications);
     $notifBadge = $notifCount > 0
         ? '<span class="legalpro-header-notif__badge">' . ($notifCount > 9 ? '9+' : (string) $notifCount) . '</span>'
         : '';
@@ -104,10 +106,13 @@ function legalpro_render_portal_header_utilities(
 
     return '
     <div class="legalpro-navbar-actions d-flex align-items-center gap-3 flex-shrink-0">
-        <a href="' . htmlspecialchars($notifUrl) . '" class="legalpro-header-notif" title="Notifications">
-            ' . legalpro_icon('bell') . '
-            ' . $notifBadge . '
-        </a>
+        <div class="legalpro-header-notif-wrap">
+            <button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="Notifications">
+                ' . legalpro_icon('bell') . '
+                ' . $notifBadge . '
+            </button>
+            ' . legalpro_render_notification_panel($notifications, $viewAllUrl) . '
+        </div>
         <div class="legalpro-header-user dropdown">
             <button type="button" class="legalpro-header-user__toggle" aria-expanded="false" aria-haspopup="true" aria-controls="legalproHeaderUserMenuList">
                 <span class="legalpro-header-user__avatar">' . htmlspecialchars($initials) . '</span>
@@ -156,63 +161,116 @@ document.addEventListener("DOMContentLoaded", function () {
     mount.remove();
 
     var userRoot = nav.querySelector(".legalpro-header-user");
-    if (!userRoot || userRoot.dataset.menuBound === "1") {
-        return;
-    }
-    userRoot.dataset.menuBound = "1";
-
-    var userToggle = userRoot.querySelector(".legalpro-header-user__toggle");
-    var userMenu = userRoot.querySelector(".legalpro-header-user__menu");
-    if (!userToggle || !userMenu) {
-        return;
-    }
+    var notifRoot = nav.querySelector(".legalpro-header-notif-wrap");
+    var notifToggle = notifRoot ? notifRoot.querySelector("#legalproNotifToggle") : null;
+    var notifPanel = notifRoot ? notifRoot.querySelector("#legalproNotifPanel") : null;
 
     function closeUserMenu() {
+        if (!userRoot) return;
+        var userToggle = userRoot.querySelector(".legalpro-header-user__toggle");
+        var userMenu = userRoot.querySelector(".legalpro-header-user__menu");
+        if (!userToggle || !userMenu) return;
         userMenu.classList.remove("show");
         userToggle.classList.remove("show");
         userToggle.setAttribute("aria-expanded", "false");
     }
 
     function openUserMenu() {
+        if (!userRoot) return;
+        var userToggle = userRoot.querySelector(".legalpro-header-user__toggle");
+        var userMenu = userRoot.querySelector(".legalpro-header-user__menu");
+        if (!userToggle || !userMenu) return;
+        closeNotifPanel();
         userMenu.classList.add("show");
         userToggle.classList.add("show");
         userToggle.setAttribute("aria-expanded", "true");
     }
 
-    userToggle.addEventListener("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (userMenu.classList.contains("show")) {
-            closeUserMenu();
-        } else {
-            openUserMenu();
-        }
-    });
+    function closeNotifPanel() {
+        if (!notifPanel || !notifToggle) return;
+        notifPanel.classList.remove("show");
+        notifToggle.classList.remove("show");
+        notifToggle.setAttribute("aria-expanded", "false");
+    }
 
-    userMenu.addEventListener("click", function (e) {
-        e.stopPropagation();
-    });
+    function openNotifPanel() {
+        if (!notifPanel || !notifToggle) return;
+        closeUserMenu();
+        notifPanel.classList.add("show");
+        notifToggle.classList.add("show");
+        notifToggle.setAttribute("aria-expanded", "true");
+    }
+
+    if (userRoot && userRoot.dataset.menuBound !== "1") {
+        userRoot.dataset.menuBound = "1";
+        var userToggle = userRoot.querySelector(".legalpro-header-user__toggle");
+        var userMenu = userRoot.querySelector(".legalpro-header-user__menu");
+        if (userToggle && userMenu) {
+            userToggle.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (userMenu.classList.contains("show")) {
+                    closeUserMenu();
+                } else {
+                    openUserMenu();
+                }
+            });
+            userMenu.addEventListener("click", function (e) {
+                e.stopPropagation();
+            });
+        }
+    }
+
+    if (notifToggle && notifPanel && notifRoot.dataset.menuBound !== "1") {
+        notifRoot.dataset.menuBound = "1";
+        notifToggle.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (notifPanel.classList.contains("show")) {
+                closeNotifPanel();
+            } else {
+                openNotifPanel();
+            }
+        });
+        notifPanel.addEventListener("click", function (e) {
+            e.stopPropagation();
+        });
+    }
 
     document.addEventListener("click", function () {
         closeUserMenu();
+        closeNotifPanel();
     });
 
     document.addEventListener("keydown", function (e) {
         if (e.key === "Escape") {
             closeUserMenu();
+            closeNotifPanel();
         }
     });
+
+    if (window.location.hash) {
+        var target = document.querySelector(window.location.hash);
+        if (target) {
+            setTimeout(function () {
+                target.scrollIntoView({ behavior: "smooth", block: "center" });
+                target.classList.add("legalpro-notif-target-highlight");
+            }, 250);
+        }
+    }
 });
 </script>';
 }
 
 function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
 {
+    $notifications = $pdo instanceof PDO ? legalpro_fetch_admin_notifications($pdo) : [];
+
     return legalpro_render_portal_header_utilities(
         legalpro_admin_display_name(),
         'Administrator',
+        $notifications,
         'appointments.php',
-        legalpro_admin_notification_count($pdo),
         'admin-logout.php',
         'profile.php',
         '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>'
@@ -223,12 +281,15 @@ function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
 {
     $lawyerId = isset($_SESSION['lawyer_id']) ? (int) $_SESSION['lawyer_id'] : 0;
     $displayName = isset($_SESSION['lawyer_name']) ? (string) $_SESSION['lawyer_name'] : 'Lawyer';
+    $notifications = ($pdo instanceof PDO && $lawyerId > 0)
+        ? legalpro_fetch_lawyer_notifications($pdo, $lawyerId)
+        : [];
 
     return legalpro_render_portal_header_utilities(
         $displayName,
         'Lawyer',
+        $notifications,
         'lawyer-appointments.php',
-        legalpro_lawyer_notification_count($pdo, $lawyerId),
         'lawyer-logout.php',
         'lawyer-profile.php',
         '<li><a class="dropdown-item" href="lawyer-settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>'
@@ -239,12 +300,15 @@ function legalpro_render_client_header_utilities(?PDO $pdo = null): string
 {
     $clientId = isset($_SESSION['client_id']) ? (int) $_SESSION['client_id'] : 0;
     $displayName = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'] : 'Client';
+    $notifications = ($pdo instanceof PDO && $clientId > 0)
+        ? legalpro_fetch_client_notifications($pdo, $clientId)
+        : [];
 
     return legalpro_render_portal_header_utilities(
         $displayName,
         'Client',
+        $notifications,
         'client-appointments.php',
-        legalpro_client_notification_count($pdo, $clientId),
         'client-logout.php',
         'client-profile.php'
     );
@@ -577,4 +641,52 @@ function lawyer_appointment_status_badge(array $appointment): string
     $label = ucwords(str_replace('_', ' ', $status));
 
     return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+}
+
+/**
+ * Cases-style search field for admin list tables.
+ */
+function legalpro_render_admin_list_search(string $inputId, string $placeholder = 'Search...'): string
+{
+    return '<div class="legalpro-admin-list-filters">'
+        . '<div class="legalpro-admin-list-search">'
+        . legalpro_icon('search')
+        . '<input type="search" class="form-control" id="' . htmlspecialchars($inputId, ENT_QUOTES, 'UTF-8') . '"'
+        . ' placeholder="' . htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8') . '"'
+        . ' autocomplete="off" aria-label="' . htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8') . '">'
+        . '</div>'
+        . '</div>';
+}
+
+/**
+ * Client-side filter for rows with class + data-search (matches cases table behavior).
+ */
+function legalpro_admin_list_search_script(
+    string $inputId,
+    string $tbodyId,
+    string $emptyRowId = '',
+    string $rowClass = 'legalpro-admin-list-row'
+): string {
+    $inputIdJs = json_encode($inputId);
+    $tbodyIdJs = json_encode($tbodyId);
+    $emptyRowIdJs = json_encode($emptyRowId);
+    $rowSelectorJs = json_encode('.' . $rowClass . '[data-search]');
+
+    return '<script>(function(){var searchInput=document.getElementById(' . $inputIdJs . ');'
+        . 'var tbody=document.getElementById(' . $tbodyIdJs . ');'
+        . 'var emptyNote=' . ($emptyRowId !== '' ? 'document.getElementById(' . $emptyRowIdJs . ')' : 'null') . ';'
+        . 'if(!tbody){return;}'
+        . 'function applyAdminListSearch(){'
+        . 'var q=(searchInput&&searchInput.value?searchInput.value:"").trim().toLowerCase();'
+        . 'var rows=tbody.querySelectorAll(' . $rowSelectorJs . ');'
+        . 'var visible=0;'
+        . 'rows.forEach(function(row){'
+        . 'var match=!q||row.getAttribute("data-search").indexOf(q)!==-1;'
+        . 'row.style.display=match?"":"none";'
+        . 'if(match){visible++;}'
+        . '});'
+        . 'if(emptyNote){emptyNote.classList.toggle("d-none",visible>0||rows.length===0);}'
+        . '}'
+        . 'if(searchInput){searchInput.addEventListener("input",applyAdminListSearch);}'
+        . '})();</script>';
 }

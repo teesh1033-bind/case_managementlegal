@@ -1,0 +1,149 @@
+<?php
+/**
+ * Flatpickr-based date picker with strikethrough styling for unavailable dates.
+ */
+
+function legalpro_render_availability_date_picker_assets(): void
+{
+    static $rendered = false;
+    if ($rendered) {
+        return;
+    }
+    $rendered = true;
+
+    echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">' . "\n";
+    echo '<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>' . "\n";
+}
+
+function legalpro_render_availability_date_picker_styles(): void
+{
+    static $rendered = false;
+    if ($rendered) {
+        return;
+    }
+    $rendered = true;
+
+    echo '<style>'
+        . '.legalpro-date-picker-wrap{position:relative;}'
+        . '.legalpro-date-picker-wrap .flatpickr-input.form-control{background-color:#fff;color:#344767;}'
+        . '.flatpickr-day.legalpro-day-unavailable,.flatpickr-day.flatpickr-disabled.legalpro-day-unavailable{text-decoration:line-through;color:#94a3b8!important;opacity:.72;}'
+        . '.flatpickr-day.legalpro-day-unavailable:hover,.flatpickr-day.flatpickr-disabled.legalpro-day-unavailable:hover{background:transparent;}'
+        . 'body.legalpro-dark-mode .legalpro-date-picker-wrap .flatpickr-input.form-control,'
+        . '.legalpro-flatpickr-dark .legalpro-date-picker-wrap .flatpickr-input.form-control{background-color:#1e293b;color:#e2e8f0;border-color:rgba(255,255,255,.12);}'
+        . 'body.legalpro-dark-mode .flatpickr-calendar,.legalpro-flatpickr-dark.flatpickr-calendar{background:#1e293b;border-color:rgba(255,255,255,.12);box-shadow:0 12px 32px rgba(0,0,0,.45);}'
+        . 'body.legalpro-dark-mode .flatpickr-months,.legalpro-flatpickr-dark .flatpickr-months{background:#1e293b;}'
+        . 'body.legalpro-dark-mode .flatpickr-current-month,.legalpro-flatpickr-dark .flatpickr-current-month{color:#f1f5f9;}'
+        . 'body.legalpro-dark-mode .flatpickr-current-month .flatpickr-monthDropdown-months,'
+        . 'body.legalpro-dark-mode .flatpickr-current-month input.cur-year,'
+        . '.legalpro-flatpickr-dark .flatpickr-current-month .flatpickr-monthDropdown-months,'
+        . '.legalpro-flatpickr-dark .flatpickr-current-month input.cur-year{color:#f1f5f9;background:transparent;}'
+        . 'body.legalpro-dark-mode .flatpickr-current-month .flatpickr-monthDropdown-months option,'
+        . '.legalpro-flatpickr-dark .flatpickr-current-month .flatpickr-monthDropdown-months option{background:#1e293b;color:#f1f5f9;}'
+        . 'body.legalpro-dark-mode .flatpickr-months .flatpickr-prev-month,'
+        . 'body.legalpro-dark-mode .flatpickr-months .flatpickr-next-month,'
+        . '.legalpro-flatpickr-dark .flatpickr-months .flatpickr-prev-month,'
+        . '.legalpro-flatpickr-dark .flatpickr-months .flatpickr-next-month{color:#e2e8f0;fill:#e2e8f0;}'
+        . 'body.legalpro-dark-mode .flatpickr-months .flatpickr-prev-month svg path,'
+        . 'body.legalpro-dark-mode .flatpickr-months .flatpickr-next-month svg path,'
+        . '.legalpro-flatpickr-dark .flatpickr-months .flatpickr-prev-month svg path,'
+        . '.legalpro-flatpickr-dark .flatpickr-months .flatpickr-next-month svg path{fill:#e2e8f0;}'
+        . 'body.legalpro-dark-mode span.flatpickr-weekday,.legalpro-flatpickr-dark span.flatpickr-weekday{color:#94a3b8;}'
+        . 'body.legalpro-dark-mode .flatpickr-day,.legalpro-flatpickr-dark .flatpickr-day{color:#e2e8f0;}'
+        . 'body.legalpro-dark-mode .flatpickr-day.prevMonthDay,'
+        . 'body.legalpro-dark-mode .flatpickr-day.nextMonthDay,'
+        . '.legalpro-flatpickr-dark .flatpickr-day.prevMonthDay,'
+        . '.legalpro-flatpickr-dark .flatpickr-day.nextMonthDay{color:#64748b;}'
+        . 'body.legalpro-dark-mode .flatpickr-day:hover,'
+        . 'body.legalpro-dark-mode .flatpickr-day:focus,'
+        . '.legalpro-flatpickr-dark .flatpickr-day:hover,'
+        . '.legalpro-flatpickr-dark .flatpickr-day:focus{background:rgba(94,114,228,.22);border-color:rgba(94,114,228,.35);}'
+        . 'body.legalpro-dark-mode .flatpickr-day.today,.legalpro-flatpickr-dark .flatpickr-day.today{border-color:#5e72e4;}'
+        . 'body.legalpro-dark-mode .flatpickr-day.selected,.legalpro-flatpickr-dark .flatpickr-day.selected{background:#5e72e4;border-color:#5e72e4;color:#fff;}'
+        . 'body.legalpro-dark-mode .flatpickr-day.flatpickr-disabled,.legalpro-flatpickr-dark .flatpickr-day.flatpickr-disabled{color:#64748b;}'
+        . 'body.legalpro-dark-mode .flatpickr-day.legalpro-day-unavailable,'
+        . 'body.legalpro-dark-mode .flatpickr-day.flatpickr-disabled.legalpro-day-unavailable,'
+        . '.legalpro-flatpickr-dark .flatpickr-day.legalpro-day-unavailable,'
+        . '.legalpro-flatpickr-dark .flatpickr-day.flatpickr-disabled.legalpro-day-unavailable{color:#64748b!important;}'
+        . '</style>';
+}
+
+function legalpro_render_availability_date_picker_script(): void
+{
+    static $rendered = false;
+    if ($rendered) {
+        return;
+    }
+    $rendered = true;
+
+    echo '<script>'
+        . '(function(){'
+        . 'function formatFlatpickrDate(date){'
+        . 'if(!(date instanceof Date)||isNaN(date.getTime())){return "";}'
+        . 'var y=date.getFullYear();'
+        . 'var m=String(date.getMonth()+1).padStart(2,"0");'
+        . 'var d=String(date.getDate()).padStart(2,"0");'
+        . 'return y+"-"+m+"-"+d;'
+        . '}'
+        . 'window.LegalproAvailabilityDatePicker={'
+        . 'instances:{},'
+        . 'create:function(input,options){'
+        . 'options=options||{};'
+        . 'var el=typeof input==="string"?document.getElementById(input):input;'
+        . 'if(!el||typeof flatpickr==="undefined"){return null;}'
+        . 'var key=el.id||el.name||String(Math.random());'
+        . 'if(this.instances[key]){this.instances[key].destroy();delete this.instances[key];}'
+        . 'var self=this;'
+        . 'var fp=flatpickr(el,{'
+        . 'minDate:options.minDate||"today",'
+        . 'dateFormat:"Y-m-d",'
+        . 'allowInput:false,'
+        . 'disable:[function(date){return typeof options.isUnavailable==="function"?!!options.isUnavailable(date):false;}],'
+        . 'onDayCreate:function(fpInstance,dateObj,dateStr,dayElem){'
+        . 'if(typeof options.isUnavailable==="function"){'
+        . 'var checkDate=(dateObj instanceof Date&&!isNaN(dateObj.getTime()))?dateObj:(dateStr?new Date(dateStr+"T12:00:00"):null);'
+        . 'if(checkDate&&options.isUnavailable(checkDate)){dayElem.classList.add("legalpro-day-unavailable");}'
+        . 'else{dayElem.classList.remove("legalpro-day-unavailable");}'
+        . '}'
+        . 'if(typeof options.onDayCreate==="function"){options.onDayCreate(fpInstance,dateObj,dateStr,dayElem);}'
+        . '},'
+        . 'onChange:function(selectedDates,dateStr){if(typeof options.onChange==="function"){options.onChange(selectedDates,dateStr);}},'
+        . 'onOpen:function(selectedDates,dateStr,instance){'
+        . 'if(instance&&instance.calendarContainer){'
+        . 'instance.calendarContainer.classList.toggle("legalpro-flatpickr-dark",document.body.classList.contains("legalpro-dark-mode"));'
+        . '}'
+        . 'if(typeof options.onOpen==="function"){options.onOpen(selectedDates,dateStr,instance);}'
+        . '},'
+        . 'appendTo:options.appendTo||undefined,'
+        . 'defaultDate:options.defaultDate||el.value||null'
+        . '});'
+        . 'this.instances[key]=fp;'
+        . 'return fp;'
+        . '},'
+        . 'refresh:function(input){'
+        . 'var el=typeof input==="string"?document.getElementById(input):input;'
+        . 'if(!el){return;}'
+        . 'var fp=this.instances[el.id||el.name];'
+        . 'if(fp){fp.redraw();}'
+        . '},'
+        . 'clearIfUnavailable:function(input,isUnavailableFn){'
+        . 'var el=typeof input==="string"?document.getElementById(input):input;'
+        . 'if(!el||typeof isUnavailableFn!=="function"||!el.value){return;}'
+        . 'var parts=el.value.split("-");'
+        . 'if(parts.length<3){return;}'
+        . 'var dateObj=new Date(parseInt(parts[0],10),parseInt(parts[1],10)-1,parseInt(parts[2],10));'
+        . 'if(isUnavailableFn(dateObj)){'
+        . 'var fp=this.instances[el.id||el.name];'
+        . 'if(fp){fp.clear();}else{el.value="";}'
+        . '}'
+        . '},'
+        . 'destroy:function(input){'
+        . 'var el=typeof input==="string"?document.getElementById(input):input;'
+        . 'if(!el){return;}'
+        . 'var key=el.id||el.name;'
+        . 'if(this.instances[key]){this.instances[key].destroy();delete this.instances[key];}'
+        . '},'
+        . 'formatDate:formatFlatpickrDate'
+        . '};'
+        . '})();'
+        . '</script>';
+}

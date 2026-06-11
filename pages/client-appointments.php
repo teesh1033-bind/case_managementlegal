@@ -282,7 +282,7 @@ if (empty($appointments)) {
             </form>';
         }
 
-        $appointmentsRows .= '<tr class="ca-row">
+        $appointmentsRows .= '<tr id="apt-' . (int) $appointment['id'] . '" class="ca-row">
             <td>
                 <div style="display:flex;align-items:center;gap:10px">
                     <div class="ca-apt-icon">

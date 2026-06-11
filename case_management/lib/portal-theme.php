@@ -525,6 +525,23 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'background: var(--lp-dark-input-bg) !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .legalpro-admin-list-search .form-control {'
+        . 'background: var(--lp-dark-input-bg) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-admin-list-search .form-control:hover {'
+        . 'border-color: ' . $soft20 . ' !important;'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-admin-list-search .form-control:focus {'
+        . 'border-color: ' . $primary . ' !important;'
+        . 'box-shadow: 0 0 0 0.2rem rgba(' . $rgb . ', 0.18) !important;'
+        . 'background: var(--lp-dark-input-bg) !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode .table thead th,'
         . 'body.legalpro-dark-mode .table thead td {'
         . 'background: var(--lp-dark-surface-raised) !important;'
@@ -1345,6 +1362,69 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'body.legalpro-dark-mode .legalpro-header-user__menu .dropdown-item:focus {'
         . 'background-color: var(--lp-dark-surface-hover) !important;'
         . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-header-notif {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border: 1px solid var(--lp-dark-border) !important;'
+        . 'box-shadow: none !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-header-notif:hover,'
+        . 'body.legalpro-dark-mode .legalpro-header-notif:focus,'
+        . 'body.legalpro-dark-mode .legalpro-header-notif.show {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__head,'
+        . 'body.legalpro-dark-mode .legalpro-notif-panel__foot {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__title {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__count {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item {'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item:hover,'
+        . 'body.legalpro-dark-mode .legalpro-notif-item:focus {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item__title {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item__message,'
+        . 'body.legalpro-dark-mode .legalpro-notif-item__time,'
+        . 'body.legalpro-dark-mode .legalpro-notif-panel__empty,'
+        . 'body.legalpro-dark-mode .legalpro-notif-panel__empty span {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__empty p {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__view-all {'
+        . 'color: ' . $primaryOnDark . ' !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .cc-pill {'

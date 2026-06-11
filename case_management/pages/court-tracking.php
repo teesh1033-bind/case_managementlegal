@@ -4,6 +4,7 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/court-time-picker.php';
 require_once __DIR__ . '/../lib/court_time_booking.php';
+require_once __DIR__ . '/../inc/availability-date-picker.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -238,8 +239,8 @@ if (empty($upcomingCourtDates)) {
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
-    <link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=9" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=21" rel="stylesheet" />
     <?php legalpro_icons_asset_links(); ?>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
@@ -260,6 +261,8 @@ if (empty($upcomingCourtDates)) {
         }
     </style>
     <?php legalpro_render_time_slot_picker_styles(); ?>
+    <?php legalpro_render_availability_date_picker_assets(); ?>
+    <?php legalpro_render_availability_date_picker_styles(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -286,7 +289,7 @@ if (empty($upcomingCourtDates)) {
                         <li class="nav-item d-flex align-items-center">
                             <a href="admin-logout.php" class="nav-link text-white font-weight-bold px-0">
                                 <i class="fa fa-user me-sm-1"></i>
-                                <span class="d-sm-inline d-none">Logout</span>
+                                <!-- <span class="d-sm-inline d-none">Logout</span> -->
                             </a>
                         </li>
                     </ul>
@@ -411,7 +414,7 @@ if (empty($upcomingCourtDates)) {
                     <h5 class="modal-title">Add Court Date</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST">
+                <form method="POST" id="addCourtDateForm">
                     <div class="modal-body">
                         <div class="row">
                             <div class="col-md-12 mb-3">
@@ -427,11 +430,15 @@ if (empty($upcomingCourtDates)) {
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Court Date *</label>
-                                <input type="date" name="court_date" id="add_court_date" class="form-control" required>
+                                <div class="legalpro-date-picker-wrap">
+                                    <input type="text" name="court_date" id="add_court_date" class="form-control" placeholder="Select date" required readonly>
+                                </div>
+                                <small class="text-muted">Crossed-out dates have no open court time slots.</small>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Court Time *</label>
-                                <?php echo legalpro_render_time_slot_picker('court_time', 'add_court_time_grid', 'add_court_time'); ?>
+                                <?php echo legalpro_render_time_slot_dropdown('court_time', 'add_court_time'); ?>
+                                <div id="add_court_slot_notice" class="legalpro-court-slot-notice" role="status" aria-live="polite" hidden></div>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Title *</label>
@@ -449,7 +456,7 @@ if (empty($upcomingCourtDates)) {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="add_court_date" class="btn btn-primary">Add Court Date</button>
+                        <button type="submit" name="add_court_date" id="add_court_date_submit" class="btn btn-primary" disabled>Add Court Date</button>
                     </div>
                 </form>
             </div>
@@ -464,7 +471,7 @@ if (empty($upcomingCourtDates)) {
                     <h5 class="modal-title">Edit Court Date</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST">
+                <form method="POST" id="editCourtDateForm">
                     <input type="hidden" name="id" id="edit_id">
                     <div class="modal-body">
                         <div class="row">
@@ -481,11 +488,15 @@ if (empty($upcomingCourtDates)) {
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Court Date *</label>
-                                <input type="date" name="court_date" id="edit_court_date" class="form-control" required>
+                                <div class="legalpro-date-picker-wrap">
+                                    <input type="text" name="court_date" id="edit_court_date" class="form-control" placeholder="Select date" required readonly>
+                                </div>
+                                <small class="text-muted">Crossed-out dates have no open court time slots.</small>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Court Time *</label>
-                                <?php echo legalpro_render_time_slot_picker('court_time', 'edit_court_time_grid', 'edit_court_time'); ?>
+                                <?php echo legalpro_render_time_slot_dropdown('court_time', 'edit_court_time'); ?>
+                                <div id="edit_court_slot_notice" class="legalpro-court-slot-notice" role="status" aria-live="polite" hidden></div>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Title *</label>
@@ -512,7 +523,7 @@ if (empty($upcomingCourtDates)) {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" name="update_court_date" class="btn btn-primary">Update Court Date</button>
+                        <button type="submit" name="update_court_date" id="edit_court_date_submit" class="btn btn-primary" disabled>Update Court Date</button>
                     </div>
                 </form>
             </div>
@@ -672,6 +683,264 @@ if (empty($upcomingCourtDates)) {
         }
 
         var courtBookingEntries = <?php echo json_encode($courtBookingEntries, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
+        var courtAllowedTimes = <?php echo json_encode(legalpro_court_allowed_time_values(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
+        var editOriginalCourtDate = '';
+
+        function normalizeCourtTime(timeValue) {
+            if (!timeValue) {
+                return '';
+            }
+            var parts = String(timeValue).split(':');
+            if (parts.length < 2) {
+                return '';
+            }
+            return String(parts[0]).padStart(2, '0') + ':' + String(parts[1]).padStart(2, '0');
+        }
+
+        function isCourtTimeAllowed(timeValue) {
+            return courtAllowedTimes.indexOf(normalizeCourtTime(timeValue)) !== -1;
+        }
+
+        function isCourtDateFullyBooked(dateValue, excludeId) {
+            if (!dateValue || !courtAllowedTimes.length) {
+                return false;
+            }
+            var booked = getCourtBookedTimesForDate(dateValue, excludeId);
+            return courtAllowedTimes.every(function(timeValue) {
+                return booked.indexOf(normalizeCourtTime(timeValue)) !== -1;
+            });
+        }
+
+        function isPastCourtDate(dateObj) {
+            if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+                return false;
+            }
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var check = new Date(dateObj.getTime());
+            check.setHours(0, 0, 0, 0);
+            return check < today;
+        }
+
+        function isAddCourtDateUnavailable(dateObj) {
+            if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+                return false;
+            }
+            if (isPastCourtDate(dateObj)) {
+                return true;
+            }
+            var dateValue = LegalproAvailabilityDatePicker.formatDate(dateObj);
+            if (!dateValue) {
+                return false;
+            }
+            return isCourtDateFullyBooked(dateValue, null);
+        }
+
+        function isEditCourtDateUnavailable(dateObj) {
+            if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+                return false;
+            }
+            var dateValue = LegalproAvailabilityDatePicker.formatDate(dateObj);
+            if (!dateValue) {
+                return false;
+            }
+            if (isPastCourtDate(dateObj) && dateValue !== editOriginalCourtDate) {
+                return true;
+            }
+            var excludeId = document.getElementById('edit_id') ? document.getElementById('edit_id').value : null;
+            return isCourtDateFullyBooked(dateValue, excludeId);
+        }
+
+        function initAddCourtDatePicker() {
+            var input = document.getElementById('add_court_date');
+            var modal = document.getElementById('addCourtDateModal');
+            if (!input || typeof LegalproAvailabilityDatePicker === 'undefined') {
+                return;
+            }
+            LegalproAvailabilityDatePicker.destroy(input);
+            LegalproAvailabilityDatePicker.create(input, {
+                minDate: 'today',
+                isUnavailable: isAddCourtDateUnavailable,
+                appendTo: modal ? modal.querySelector('.modal-body') : undefined,
+                onChange: function() {
+                    refreshAddCourtTimeAvailability();
+                }
+            });
+        }
+
+        function initEditCourtDatePicker() {
+            var input = document.getElementById('edit_court_date');
+            var modal = document.getElementById('editCourtDateModal');
+            if (!input || typeof LegalproAvailabilityDatePicker === 'undefined') {
+                return;
+            }
+            LegalproAvailabilityDatePicker.destroy(input);
+            LegalproAvailabilityDatePicker.create(input, {
+                isUnavailable: isEditCourtDateUnavailable,
+                appendTo: modal ? modal.querySelector('.modal-body') : undefined,
+                onChange: function() {
+                    refreshEditCourtTimeAvailability();
+                }
+            });
+        }
+
+        function isCourtTimeBooked(dateValue, timeValue, excludeId) {
+            var normalized = normalizeCourtTime(timeValue);
+            if (!normalized) {
+                return false;
+            }
+            return getCourtBookedTimesForDate(dateValue, excludeId).indexOf(normalized) !== -1;
+        }
+
+        function courtSlotIsInPast(dateValue, timeValue) {
+            if (!dateValue || !timeValue) {
+                return false;
+            }
+            var slot = new Date(dateValue + 'T' + normalizeCourtTime(timeValue) + ':00');
+            return !isNaN(slot.getTime()) && slot.getTime() < Date.now();
+        }
+
+        function setCourtSlotNotice(noticeId, state) {
+            var noticeEl = noticeId ? document.getElementById(noticeId) : null;
+            if (!noticeEl) {
+                return;
+            }
+
+            if (!state || !state.message) {
+                noticeEl.className = 'legalpro-court-slot-notice';
+                noticeEl.hidden = true;
+                noticeEl.textContent = '';
+                return;
+            }
+
+            var type = state.type || 'info';
+            noticeEl.className = 'legalpro-court-slot-notice legalpro-court-slot-notice--' + type + ' is-visible';
+            noticeEl.hidden = false;
+            noticeEl.textContent = state.message;
+        }
+
+        function resolveCourtBookingState(form, options) {
+            options = options || {};
+            var dateInput = form.querySelector('[name="court_date"]');
+            var timeInput = form.querySelector('[name="court_time"]');
+            var statusInput = form.querySelector('[name="status"]');
+            var excludeId = options.excludeId || null;
+
+            if (!dateInput || !timeInput) {
+                return {
+                    valid: false,
+                    type: 'warning',
+                    message: 'Court date and time are required.'
+                };
+            }
+
+            var dateValue = dateInput.value;
+            var timeValue = timeInput.value;
+            var status = statusInput ? statusInput.value : 'scheduled';
+
+            if (!dateValue) {
+                return {
+                    valid: false,
+                    type: 'info',
+                    message: 'Select a court date to view available time slots.'
+                };
+            }
+
+            if (!timeValue) {
+                if (status === 'scheduled' && isCourtDateFullyBooked(dateValue, excludeId)) {
+                    return {
+                        valid: false,
+                        type: 'warning',
+                        message: 'No time slots available on this date. Please choose another date.'
+                    };
+                }
+                return {
+                    valid: false,
+                    type: 'info',
+                    message: 'Select an available time slot to continue.'
+                };
+            }
+
+            if (!isCourtTimeAllowed(timeValue)) {
+                return {
+                    valid: false,
+                    type: 'warning',
+                    message: 'This time slot is not available. Please choose another.'
+                };
+            }
+
+            if (courtSlotIsInPast(dateValue, timeValue)) {
+                return {
+                    valid: false,
+                    type: 'warning',
+                    message: 'Court date and time cannot be in the past.'
+                };
+            }
+
+            if (status === 'scheduled' && isCourtTimeBooked(dateValue, timeValue, excludeId)) {
+                return {
+                    valid: false,
+                    type: 'warning',
+                    message: 'This time slot is not available. Please choose another.'
+                };
+            }
+
+            return {
+                valid: true,
+                type: 'success',
+                message: 'This time slot is available.'
+            };
+        }
+
+        function validateCourtDateForm(form, options) {
+            options = options || {};
+            var state = resolveCourtBookingState(form, options);
+            if (options.noticeId) {
+                setCourtSlotNotice(options.noticeId, state);
+            }
+            return state.valid;
+        }
+
+        function updateCourtSubmitState(formId, submitId, options) {
+            options = options || {};
+            var form = document.getElementById(formId);
+            var submitBtn = document.getElementById(submitId);
+            if (!form || !submitBtn) {
+                return;
+            }
+
+            var state = resolveCourtBookingState(form, options);
+            submitBtn.disabled = !state.valid;
+            submitBtn.title = state.valid ? '' : state.message;
+
+            if (options.noticeId) {
+                setCourtSlotNotice(options.noticeId, state);
+            }
+        }
+
+        function bindCourtSubmitNotice(formId, submitId, options) {
+            options = options || {};
+            var submitBtn = document.getElementById(submitId);
+            var form = document.getElementById(formId);
+            if (!submitBtn || !form || submitBtn.dataset.noticeBound === '1') {
+                return;
+            }
+
+            submitBtn.dataset.noticeBound = '1';
+            submitBtn.addEventListener('click', function(event) {
+                if (submitBtn.disabled) {
+                    event.preventDefault();
+                    var clickOptions = Object.assign({}, options);
+                    if (typeof options.resolveExcludeId === 'function') {
+                        clickOptions.excludeId = options.resolveExcludeId();
+                    }
+                    var state = resolveCourtBookingState(form, clickOptions);
+                    if (options.noticeId) {
+                        setCourtSlotNotice(options.noticeId, state);
+                    }
+                }
+            });
+        }
 
         function getCourtBookedTimesForDate(dateValue, excludeId) {
             return courtBookingEntries
@@ -684,22 +953,26 @@ if (empty($upcomingCourtDates)) {
                     }
                     return entry.status === 'scheduled';
                 })
-                .map(function(entry) { return entry.time; });
+                .map(function(entry) { return normalizeCourtTime(entry.time); });
         }
 
         function refreshAddCourtTimeAvailability() {
             var dateValue = document.getElementById('add_court_date') ? document.getElementById('add_court_date').value : '';
-            if (typeof updateLegalproTimeSlotAvailability === 'function') {
-                updateLegalproTimeSlotAvailability('add_court_time_grid', 'add_court_time', getCourtBookedTimesForDate(dateValue, null));
+            if (typeof updateLegalproTimeSlotDropdown === 'function') {
+                var blockedTimes = dateValue ? getCourtBookedTimesForDate(dateValue, null) : courtAllowedTimes.slice();
+                updateLegalproTimeSlotDropdown('add_court_time', blockedTimes);
             }
+            updateCourtSubmitState('addCourtDateForm', 'add_court_date_submit', { noticeId: 'add_court_slot_notice' });
         }
 
         function refreshEditCourtTimeAvailability() {
             var dateValue = document.getElementById('edit_court_date') ? document.getElementById('edit_court_date').value : '';
             var excludeId = document.getElementById('edit_id') ? document.getElementById('edit_id').value : '';
-            if (typeof updateLegalproTimeSlotAvailability === 'function') {
-                updateLegalproTimeSlotAvailability('edit_court_time_grid', 'edit_court_time', getCourtBookedTimesForDate(dateValue, excludeId), { preserveSelection: true });
+            if (typeof updateLegalproTimeSlotDropdown === 'function') {
+                var blockedTimes = dateValue ? getCourtBookedTimesForDate(dateValue, excludeId) : courtAllowedTimes.slice();
+                updateLegalproTimeSlotDropdown('edit_court_time', blockedTimes, { preserveSelection: true });
             }
+            updateCourtSubmitState('editCourtDateForm', 'edit_court_date_submit', { excludeId: excludeId, noticeId: 'edit_court_slot_notice' });
         }
 
         function editCourtDate(id) {
@@ -711,11 +984,12 @@ if (empty($upcomingCourtDates)) {
                 document.getElementById('edit_case_id').value = eventData.case_id;
                 var dateTime = new Date(eventData.court_date);
                 var dateValue = dateTime.toISOString().split('T')[0];
+                editOriginalCourtDate = dateValue;
                 document.getElementById('edit_court_date').value = dateValue;
                 var editTime = dateTime.toTimeString().split(' ')[0].substring(0, 5);
                 var bookedTimes = getCourtBookedTimesForDate(dateValue, eventData.id);
-                if (typeof setLegalproTimeSlotSelection === 'function') {
-                    setLegalproTimeSlotSelection('edit_court_time_grid', 'edit_court_time', editTime, bookedTimes);
+                if (typeof setLegalproTimeSlotDropdownSelection === 'function') {
+                    setLegalproTimeSlotDropdownSelection('edit_court_time', editTime, bookedTimes);
                 } else {
                     document.getElementById('edit_court_time').value = editTime;
                 }
@@ -723,6 +997,7 @@ if (empty($upcomingCourtDates)) {
                 document.getElementById('edit_description').value = eventData.description || '';
                 document.getElementById('edit_location').value = eventData.location || '';
                 document.getElementById('edit_status').value = eventData.status;
+                refreshEditCourtTimeAvailability();
 
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('editCourtDateModal')).show();
             }
@@ -740,12 +1015,33 @@ if (empty($upcomingCourtDates)) {
         var addCourtDateModal = document.getElementById('addCourtDateModal');
         if (addCourtDateModal) {
             addCourtDateModal.addEventListener('shown.bs.modal', function () {
-                if (typeof setLegalproTimeSlotSelection === 'function') {
-                    setLegalproTimeSlotSelection('add_court_time_grid', 'add_court_time', '', []);
+                setCourtSlotNotice('add_court_slot_notice', null);
+                initAddCourtDatePicker();
+                if (typeof setLegalproTimeSlotDropdownSelection === 'function') {
+                    setLegalproTimeSlotDropdownSelection('add_court_time', '', []);
+                } else if (document.getElementById('add_court_time')) {
+                    document.getElementById('add_court_time').value = '';
                 }
                 refreshAddCourtTimeAvailability();
             });
         }
+
+        var editCourtDateModal = document.getElementById('editCourtDateModal');
+        if (editCourtDateModal) {
+            editCourtDateModal.addEventListener('shown.bs.modal', function () {
+                initEditCourtDatePicker();
+                refreshEditCourtTimeAvailability();
+            });
+        }
+
+        bindCourtSubmitNotice('addCourtDateForm', 'add_court_date_submit', { noticeId: 'add_court_slot_notice' });
+        bindCourtSubmitNotice('editCourtDateForm', 'edit_court_date_submit', {
+            noticeId: 'edit_court_slot_notice',
+            resolveExcludeId: function() {
+                var editId = document.getElementById('edit_id');
+                return editId ? editId.value : null;
+            }
+        });
 
         var addCourtDateInput = document.getElementById('add_court_date');
         if (addCourtDateInput) {
@@ -761,6 +1057,41 @@ if (empty($upcomingCourtDates)) {
         if (editCourtStatus) {
             editCourtStatus.addEventListener('change', refreshEditCourtTimeAvailability);
         }
+
+        var addCourtDateForm = document.getElementById('addCourtDateForm');
+        if (addCourtDateForm) {
+            addCourtDateForm.addEventListener('submit', function(event) {
+                if (!validateCourtDateForm(addCourtDateForm, { noticeId: 'add_court_slot_notice' })) {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        var editCourtDateForm = document.getElementById('editCourtDateForm');
+        if (editCourtDateForm) {
+            editCourtDateForm.addEventListener('submit', function(event) {
+                var excludeId = document.getElementById('edit_id') ? document.getElementById('edit_id').value : null;
+                if (!validateCourtDateForm(editCourtDateForm, { excludeId: excludeId, noticeId: 'edit_court_slot_notice' })) {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        var addCourtTimeInput = document.getElementById('add_court_time');
+        if (addCourtTimeInput) {
+            addCourtTimeInput.addEventListener('change', function() {
+                updateCourtSubmitState('addCourtDateForm', 'add_court_date_submit', { noticeId: 'add_court_slot_notice' });
+            });
+        }
+
+        var editCourtTimeInput = document.getElementById('edit_court_time');
+        if (editCourtTimeInput) {
+            editCourtTimeInput.addEventListener('change', function() {
+                var excludeId = document.getElementById('edit_id') ? document.getElementById('edit_id').value : null;
+                updateCourtSubmitState('editCourtDateForm', 'edit_court_date_submit', { excludeId: excludeId, noticeId: 'edit_court_slot_notice' });
+            });
+        }
     </script>
     <?php legalpro_render_time_slot_picker_script(); ?>
+    <?php legalpro_render_availability_date_picker_script(); ?>
 <?php include __DIR__ . '/../inc/footer.php'; ?>

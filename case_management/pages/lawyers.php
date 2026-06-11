@@ -276,15 +276,22 @@ if (empty($lawyers)) {
         $statusBadge = legalpro_lawyer_active_status_badge((bool) $lawyer['is_active']);
         $activeCases = (int)$lawyer['active_cases'];
 
+        $lawyerName = trim($lawyer['first_name'] . ' ' . $lawyer['last_name']);
+        $searchBlob = strtolower(
+            $lawyerName . ' ' . ($lawyer['email'] ?? '') . ' '
+            . ($lawyer['specialization'] ?? '') . ' ' . ($lawyer['license_number'] ?? '') . ' '
+            . ($lawyer['is_active'] ? 'active' : 'inactive')
+        );
+
         $lawyersTable .= '
-        <tr>
+        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td>
                 <div class="d-flex align-items-center">
                     <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
                         <i class="ni ni-single-02 text-white text-xs opacity-10"></i>
                     </div>
                     <div>
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '</h6>
+                        <h6 class="mb-0 text-sm">' . htmlspecialchars($lawyerName) . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($lawyer['email']) . '</p>
                     </div>
                 </div>
@@ -378,7 +385,8 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-admin-portal.css?v=17" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+    <?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -436,6 +444,7 @@ $html = <<<'HTML'
                             </div>
                         </div>
                         <div class="card-body px-0 pt-2 pb-2">
+                            {LAWYERS_SEARCH}
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -447,8 +456,11 @@ $html = <<<'HTML'
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="lawyersTableBody">
                                         {LAWYERS_TABLE}
+                                        <tr id="lawyersFilterEmpty" class="d-none">
+                                            <td colspan="5" class="text-center text-muted text-sm py-4">No lawyers match your search.</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -708,9 +720,13 @@ $html = <<<'HTML'
             }
         }
     </script>
+    {LAWYERS_SEARCH_SCRIPT}
 </body>
 </html>
 HTML;
+
+$lawyersSearchHtml = legalpro_render_admin_list_search('lawyersSearchInput', 'Search lawyers...');
+$lawyersSearchScript = legalpro_admin_list_search_script('lawyersSearchInput', 'lawyersTableBody', 'lawyersFilterEmpty');
 
 // Handle form display for errors
 $showCreateUserForm = false;
@@ -726,6 +742,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
 
 $replacements = [
     '{MESSAGE}' => $messageHtml,
+    '{LAWYERS_SEARCH}' => $lawyersSearchHtml,
+    '{LAWYERS_SEARCH_SCRIPT}' => $lawyersSearchScript,
     '{LAWYERS_TABLE}' => $lawyersTable,
     '{USER_OPTIONS}' => $userOptions,
     '{FORM_TITLE}' => htmlspecialchars($formTitle),

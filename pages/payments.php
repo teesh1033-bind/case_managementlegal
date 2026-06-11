@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/case_events.php';
 
 $message = '';
@@ -73,15 +74,40 @@ try {
     }
 }
 
+$prefillAmount = isset($_GET['amount']) ? (float) $_GET['amount'] : 0;
+
 $formData = [
     'case_id' => $selectedCaseId ?: '',
-    'amount' => '',
+    'amount' => $prefillAmount > 0 ? $prefillAmount : '',
     'method' => 'cash',
     'reference' => '',
     'notes' => '',
     'payment_date' => date('Y-m-d'),
     'recorded_by' => 'admin'
 ];
+
+if ($selectedCaseId > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST' && $prefillAmount <= 0) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(c.estimated_fees, 0) AS estimated_fees,
+                   COALESCE(SUM(p.amount), 0) AS paid_total
+            FROM cases c
+            LEFT JOIN payments p ON p.case_id = c.id
+            WHERE c.id = ?
+            GROUP BY c.id, c.estimated_fees
+        ");
+        $stmt->execute([$selectedCaseId]);
+        $casePrefill = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($casePrefill) {
+            $remaining = max((float) $casePrefill['estimated_fees'] - (float) $casePrefill['paid_total'], 0);
+            if ($remaining > 0) {
+                $formData['amount'] = $remaining;
+            }
+        }
+    } catch (PDOException $e) {
+        // Continue without amount prefill
+    }
+}
 
 $allowedMethods = [
     'cash' => 'Cash',
@@ -265,8 +291,14 @@ foreach ($cases as $case) {
         $outstandingCount++;
         $totalOutstanding += $balance;
 
+        $searchBlob = strtolower(
+            $caseNumber . ' ' . ($case['title'] ?? '') . ' ' . $clientName . ' '
+            . formatCurrency($estimated) . ' ' . formatCurrency($paid) . ' '
+            . formatCurrency($balance) . ' ' . $lastPayment
+        );
+
         $outstandingRows .= '
-        <tr>
+        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-4">
                 <div class="d-flex flex-column">
                     <span class="text-sm font-weight-bold mb-0">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</span>
@@ -334,8 +366,14 @@ if (empty($recentPayments)) {
             ? '<span class="text-xs text-secondary d-inline-block text-truncate payments-notes-cell" title="' . htmlspecialchars($notesRaw) . '">' . htmlspecialchars($notesRaw) . '</span>'
             : '<span class="text-muted">—</span>';
 
+        $searchBlob = strtolower(
+            $clientName . ' ' . $caseNumber . ' ' . ($payment['case_title'] ?? '') . ' '
+            . $methodLabel . ' ' . ($payment['payment_date'] ?? '') . ' '
+            . formatCurrency($payment['amount']) . ' ' . $notesRaw
+        );
+
         $recentPaymentsRows .= '
-        <tr>
+        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-4">
                 <div class="d-flex flex-column">
                     <span class="text-sm font-weight-bold mb-0">' . htmlspecialchars($clientName) . '</span>
@@ -385,7 +423,9 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
     <link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
+    <?php legalpro_icons_asset_links(); ?>
     <style>
         .payments-summary-card .card-header {
             padding: 1.25rem 1.5rem 0.75rem;
@@ -616,6 +656,7 @@ $html = <<<'HTML'
                             <p class="text-sm text-muted mb-0">Latest payment activity across all cases.</p>
                         </div>
                         <div class="card-body px-0 pt-2 pb-2">
+                            {PAYMENTS_SEARCH}
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -627,8 +668,11 @@ $html = <<<'HTML'
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end opacity-7 pe-4">Notes</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="paymentsTableBody">
                                         {RECENT_PAYMENTS}
+                                        <tr id="paymentsFilterEmpty" class="d-none">
+                                            <td colspan="5" class="text-center text-muted text-sm py-4">No payments match your search.</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -642,6 +686,7 @@ $html = <<<'HTML'
                             <p class="text-sm text-muted mb-0">Track cases still on a payment plan.</p>
                         </div>
                         <div class="card-body px-0 pt-2 pb-2">
+                            {OUTSTANDING_SEARCH}
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -653,8 +698,11 @@ $html = <<<'HTML'
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end opacity-7 pe-4">Last Payment</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="outstandingTableBody">
                                         {OUTSTANDING_ROWS}
+                                        <tr id="outstandingFilterEmpty" class="d-none">
+                                            <td colspan="5" class="text-center text-muted text-sm py-4">No outstanding balances match your search.</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -741,9 +789,16 @@ $html = <<<'HTML'
             }
         })();
     </script>
+    {PAYMENTS_SEARCH_SCRIPT}
+    {OUTSTANDING_SEARCH_SCRIPT}
 </body>
 </html>
 HTML;
+
+$paymentsSearchHtml = legalpro_render_admin_list_search('paymentsSearchInput', 'Search payments...');
+$paymentsSearchScript = legalpro_admin_list_search_script('paymentsSearchInput', 'paymentsTableBody', 'paymentsFilterEmpty');
+$outstandingSearchHtml = legalpro_render_admin_list_search('outstandingSearchInput', 'Search outstanding balances...');
+$outstandingSearchScript = legalpro_admin_list_search_script('outstandingSearchInput', 'outstandingTableBody', 'outstandingFilterEmpty');
 
 $casesPaidOff = 0;
 foreach ($cases as $case) {
@@ -763,7 +818,11 @@ $html = str_replace('{FORM_REFERENCE}', htmlspecialchars($formData['reference'])
 $html = str_replace('{FORM_NOTES}', htmlspecialchars($formData['notes']), $html);
 $html = str_replace('{FORM_RECORDED_BY}', htmlspecialchars($formData['recorded_by']), $html);
 $html = str_replace('{METHOD_OPTIONS}', $methodsOptions, $html);
+$html = str_replace('{PAYMENTS_SEARCH}', $paymentsSearchHtml, $html);
+$html = str_replace('{PAYMENTS_SEARCH_SCRIPT}', $paymentsSearchScript, $html);
 $html = str_replace('{RECENT_PAYMENTS}', $recentPaymentsRows, $html);
+$html = str_replace('{OUTSTANDING_SEARCH}', $outstandingSearchHtml, $html);
+$html = str_replace('{OUTSTANDING_SEARCH_SCRIPT}', $outstandingSearchScript, $html);
 $html = str_replace('{OUTSTANDING_ROWS}', $outstandingRows, $html);
 $html = str_replace('{TOTAL_COLLECTED}', formatCurrency($totalCollected), $html);
 $html = str_replace('{TOTAL_OUTSTANDING}', formatCurrency($totalOutstanding), $html);

@@ -9,6 +9,21 @@
     padding: 1rem 1.25rem 0.75rem !important;
 }
 
+.case-detail-tab-actions {
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.case-detail-tab-action[hidden] {
+    display: none !important;
+}
+
+.case-detail-tab-action:not([hidden]) {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .case-detail-tabs-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;

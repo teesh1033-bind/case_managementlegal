@@ -10,7 +10,7 @@ require_once __DIR__ . '/legalpro-icons.php';
 ?>
 <link href="../assets/css/legalpro-portal-shell.css?v=13" rel="stylesheet" />
 <link href="../assets/css/legalpro-lawyer-portal.css?v=12" rel="stylesheet" />
-<link href="../assets/css/legalpro-admin-portal.css?v=19" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=21" rel="stylesheet" />
 <link href="../assets/css/dashboard-enhancements.css?v=6" rel="stylesheet" />
 <link href="../assets/css/legalpro-sidebar-nav.css?v=2" rel="stylesheet" />
 <?php legalpro_icons_asset_links(); ?>

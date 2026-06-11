@@ -166,9 +166,10 @@ if (empty($appointments)) {
             $editActionHtml = '<a href="new_appointment.php?id=' . (int) $appointment['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>';
         }
         $statusBadge = lawyer_appointment_status_badge($appointment);
+        $searchBlob = strtolower($caseDisplay . ' ' . $clientName . ' ' . $lawyerName . ' ' . $startsAt . ' ' . $status);
 
         $appointmentsRows .= '
-        <tr>
+        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-3">
                 <div class="d-flex align-items-center">
                     <div class="icon icon-shape icon-sm bg-gradient-info shadow text-center border-radius-md me-2">
@@ -239,6 +240,8 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+	<?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -268,6 +271,7 @@ $html = <<<'HTML'
 							</div>
 						</div>
 						<div class="card-body px-0 pt-0 pb-2">
+							{APPOINTMENTS_SEARCH}
 							<div class="table-responsive">
 								<table class="table align-items-center mb-0">
 									<thead>
@@ -279,8 +283,11 @@ $html = <<<'HTML'
 											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-3">Actions</th>
 										</tr>
 									</thead>
-									<tbody>
+									<tbody id="appointmentsTableBody">
 										{APPOINTMENT_ROWS}
+										<tr id="appointmentsFilterEmpty" class="d-none">
+											<td colspan="5" class="text-center text-muted text-sm py-4">No appointments match your search.</td>
+										</tr>
 									</tbody>
 								</table>
 							</div>
@@ -318,14 +325,20 @@ $html = <<<'HTML'
 			}
 		}
 	</script>
+	{APPOINTMENTS_SEARCH_SCRIPT}
 </body>
 </html>
 HTML;
+
+$appointmentsSearchHtml = legalpro_render_admin_list_search('appointmentsSearchInput', 'Search appointments...');
+$appointmentsSearchScript = legalpro_admin_list_search_script('appointmentsSearchInput', 'appointmentsTableBody', 'appointmentsFilterEmpty');
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{PAGE_TOOLBAR}', $pageToolbar, $html);
 $html = str_replace('{APPOINTMENTS_SUBTITLE}', htmlspecialchars($appointmentsSubtitle), $html);
 $html = str_replace('{APPOINTMENT_ROWS}', $appointmentsRows, $html);
+$html = str_replace('{APPOINTMENTS_SEARCH}', $appointmentsSearchHtml, $html);
+$html = str_replace('{APPOINTMENTS_SEARCH_SCRIPT}', $appointmentsSearchScript, $html);
 
 // rewrite internal links from .html to .php (fallback if any remain)
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
