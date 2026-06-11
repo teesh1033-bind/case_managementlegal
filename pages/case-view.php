@@ -6,6 +6,7 @@ require_once __DIR__ . '/../lib/case_events.php';
 
 $message = '';
 $messageType = '';
+$activeTab = '';
 
 // Ensure appointments table has case_id column
 try {
@@ -298,6 +299,12 @@ function caseDetailFeedWrap($inner)
     return '<div class="case-feed-list">' . $inner . '</div>';
 }
 
+function caseDetailActionButton(string $url, string $label, string $gradient = 'dark'): string
+{
+    return '<a href="' . htmlspecialchars($url) . '" class="btn btn-sm bg-gradient-' . htmlspecialchars($gradient) . ' mb-0">'
+        . htmlspecialchars($label) . '</a>';
+}
+
 // Build stages HTML
 $stagesHtml = '';
 if (empty($stages)) {
@@ -515,19 +522,24 @@ if (empty($appointments)) {
     $appointmentsHtml = caseDetailFeedWrap($items);
 }
 
+$caseClientId = (int) ($case['client_id'] ?? 0);
+$invoiceCreateUrl = 'invoices.php?case_id=' . (int) $caseId . ($caseClientId > 0 ? '&client_id=' . $caseClientId : '');
+$paymentCreateUrl = 'payments.php?case_id=' . (int) $caseId;
+$createInvoiceBtn = caseDetailActionButton($invoiceCreateUrl, 'Create Invoice');
+$recordPaymentBtn = caseDetailActionButton($paymentCreateUrl, 'Record Payment', 'success');
+
 // Invoices section
-$invoicesHtml = '';
 if (empty($invoices)) {
     $invoicesHtml = caseDetailFeedEmpty('file-text', 'No invoices have been created for this case.');
 } else {
-    $items = '';
+    $invoiceItems = '';
     foreach ($invoices as $invoice) {
         $invoiceNumber = !empty($invoice['invoice_number']) ? $invoice['invoice_number'] : 'INV-' . str_pad($invoice['id'], 4, '0', STR_PAD_LEFT);
         $amount = formatCurrency($invoice['amount']);
         $paid = (float)(isset($invoice['total_paid']) ? $invoice['total_paid'] : 0);
         $status = $paid >= (float)$invoice['amount'] ? 'Paid' : 'Pending';
         $pillClass = $status === 'Paid' ? 'case-status-pill--paid' : 'case-status-pill--pending';
-        $items .= caseDetailFeedItem(
+        $invoiceItems .= caseDetailFeedItem(
             'primary',
             'file-text',
             htmlspecialchars($invoiceNumber),
@@ -538,20 +550,19 @@ if (empty($invoices)) {
                 </a>'
         );
     }
-    $invoicesHtml = caseDetailFeedWrap($items);
+    $invoicesHtml = caseDetailFeedWrap($invoiceItems);
 }
 
 // Payments/Receipts section
-$paymentsHtml = '';
 if (empty($payments)) {
     $paymentsHtml = caseDetailFeedEmpty('banknote', 'No payments recorded for this case.');
 } else {
-    $items = '';
+    $paymentItems = '';
     foreach ($payments as $payment) {
         $amount = formatCurrency($payment['amount']);
         $date = $payment['payment_date'] ? date('M j, Y', strtotime($payment['payment_date'])) : 'N/A';
         $method = ucfirst(isset($payment['method']) ? $payment['method'] : 'cash');
-        $items .= caseDetailFeedItem(
+        $paymentItems .= caseDetailFeedItem(
             'success',
             'banknote',
             htmlspecialchars($amount),
@@ -561,8 +572,13 @@ if (empty($payments)) {
             </a>'
         );
     }
-    $paymentsHtml = caseDetailFeedWrap($items);
+    $paymentsHtml = caseDetailFeedWrap($paymentItems);
 }
+
+$caseDetailTabActionsHtml = '<div class="case-detail-tab-actions">'
+    . '<div id="case-detail-action-invoices" class="case-detail-tab-action" hidden>' . $createInvoiceBtn . '</div>'
+    . '<div id="case-detail-action-payments" class="case-detail-tab-action" hidden>' . $recordPaymentBtn . '</div>'
+    . '</div>';
 
 // Documents section
 $documentsHtml = '';
@@ -624,7 +640,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/case-detail-tabs.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/case-detail-tabs.css?v=3" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -752,6 +768,7 @@ $html = <<<'HTML'
                             <div class="case-detail-tabs-wrap">
                                 {CASE_DETAIL_TABS_NAV}
                             </div>
+                            {CASE_DETAIL_TAB_ACTIONS}
                         </div>
                         <div class="card-body case-detail-hub__body">
                             <div class="tab-content case-detail-panels">
@@ -838,6 +855,7 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    {CASE_DETAIL_TAB_SCRIPT}
 </body>
 </html>
 HTML;
@@ -933,9 +951,16 @@ $totalFees = formatCurrency(isset($case['estimated_fees']) ? $case['estimated_fe
 $totalInvoiced = formatCurrency(array_sum(array_column($invoices, 'amount')));
 $totalPaid = formatCurrency(array_sum(array_column($payments, 'amount')));
 
+if ($activeTab === '' && isset($_GET['tab'])) {
+    $activeTab = preg_replace('/[^a-z]/', '', strtolower((string) $_GET['tab']));
+}
+
+$caseDetailTabScript = '<script>document.addEventListener("DOMContentLoaded",function(){function updateCaseDetailTabActions(tabId){var inv=document.getElementById("case-detail-action-invoices");var pay=document.getElementById("case-detail-action-payments");if(inv){inv.hidden=tabId!=="invoices";}if(pay){pay.hidden=tabId!=="payments";}}function getActiveCaseDetailTabId(){var active=document.querySelector(".case-detail-tabs .nav-link.active");return active&&active.getAttribute("href")?active.getAttribute("href").slice(1):"appointments";}document.querySelectorAll(".case-detail-tabs a[data-bs-toggle=\'tab\']").forEach(function(link){link.addEventListener("shown.bs.tab",function(e){var tabId=e.target.getAttribute("href").slice(1);updateCaseDetailTabActions(tabId);});});var tab=' . json_encode($activeTab) . ';if(!tab&&window.location.hash){tab=window.location.hash.slice(1);}if(tab){var link=document.querySelector(\'.case-detail-tabs a[href="#\'+tab+\'"]\');if(link&&window.bootstrap&&bootstrap.Tab){bootstrap.Tab.getOrCreateInstance(link).show();}}updateCaseDetailTabActions(tab||getActiveCaseDetailTabId());});</script>';
+
 // Replace placeholders
 $replacements = [
     '{MESSAGE}' => $messageHtml,
+    '{CASE_DETAIL_TAB_SCRIPT}' => $caseDetailTabScript,
     '{CASE_ID}' => $caseId,
     '{CASE_NUMBER}' => $caseNumber,
     '{CASE_TITLE}' => htmlspecialchars($case['title']),
@@ -952,6 +977,7 @@ $replacements = [
     '{TOTAL_INVOICED}' => $totalInvoiced,
     '{TOTAL_PAID}' => $totalPaid,
     '{CASE_DETAIL_TABS_NAV}' => $caseDetailTabsNav,
+    '{CASE_DETAIL_TAB_ACTIONS}' => $caseDetailTabActionsHtml,
     '{APPOINTMENTS_COUNT}' => count($appointments),
     '{INVOICES_COUNT}' => count($invoices),
     '{PAYMENTS_COUNT}' => count($payments),

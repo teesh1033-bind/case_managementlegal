@@ -145,7 +145,7 @@ function getPortalTheme(): array
 
 function legalpro_portal_theme_body_class(): string
 {
-    return (getPortalTheme()['mode'] ?? 'light') === 'dark' ? ' legalpro-dark-mode' : '';
+    return getEffectivePortalThemeMode() === 'dark' ? ' legalpro-dark-mode' : '';
 }
 
 function savePortalTheme(string $mode, string $color, ?string $customPrimary = null): array
@@ -210,8 +210,47 @@ function saveLawyerPortalThemeMode(int $lawyerId, string $mode): array
     return ['ok' => true, 'message' => 'Appearance updated successfully.'];
 }
 
+function clientPortalThemeModeSettingKey(int $clientId): string
+{
+    return 'client_portal_theme_mode_' . max(0, $clientId);
+}
+
+function getClientPortalThemeMode(int $clientId): string
+{
+    if ($clientId <= 0) {
+        return (string) (getPortalTheme()['mode'] ?? 'light');
+    }
+
+    $stored = strtolower(trim((string) getSetting(clientPortalThemeModeSettingKey($clientId), '')));
+    if (in_array($stored, ['light', 'dark'], true)) {
+        return $stored;
+    }
+
+    return (string) (getPortalTheme()['mode'] ?? 'light');
+}
+
+function saveClientPortalThemeMode(int $clientId, string $mode): array
+{
+    if ($clientId <= 0) {
+        return ['ok' => false, 'message' => 'Invalid client account.'];
+    }
+
+    $mode = strtolower(trim($mode));
+    if (!in_array($mode, ['light', 'dark'], true)) {
+        return ['ok' => false, 'message' => 'Invalid theme mode selected.'];
+    }
+
+    setSetting(clientPortalThemeModeSettingKey($clientId), $mode);
+
+    return ['ok' => true, 'message' => 'Appearance updated successfully.'];
+}
+
 function getEffectivePortalThemeMode(): string
 {
+    if (!empty($_SESSION['client_id'])) {
+        return getClientPortalThemeMode((int) $_SESSION['client_id']);
+    }
+
     if (!empty($_SESSION['lawyer_id'])) {
         return getLawyerPortalThemeMode((int) $_SESSION['lawyer_id']);
     }
@@ -244,6 +283,81 @@ function renderLawyerPortalThemeSettingsHtml(int $lawyerId): string
         . '</div>'
         . '</div>'
         . '<button type="submit" class="btn btn-primary mb-0">Save appearance</button>'
+        . '</form>'
+        . '</div>'
+        . '</div>';
+}
+
+function renderClientPortalPreferencesHtml(int $clientId): string
+{
+    $featuresPath = __DIR__ . '/client-portal-features.php';
+    if (is_file($featuresPath)) {
+        require_once $featuresPath;
+    }
+
+    $currentMode = getClientPortalThemeMode($clientId);
+    $lightChecked = $currentMode === 'light' ? ' checked' : '';
+    $darkChecked = $currentMode === 'dark' ? ' checked' : '';
+    $currentLocale = function_exists('getClientPortalLocale')
+        ? getClientPortalLocale($clientId)
+        : 'en';
+    $locales = function_exists('getClientPortalLocales')
+        ? getClientPortalLocales()
+        : ['en' => 'English'];
+
+    $localeOptions = '';
+    foreach ($locales as $code => $label) {
+        $selected = $code === $currentLocale ? ' selected' : '';
+        $localeOptions .= '<option value="' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '"' . $selected . '>'
+            . htmlspecialchars($label) . '</option>';
+    }
+
+    $appearanceTitle = function_exists('client_t') ? client_t('settings.appearance') : 'Appearance';
+    $appearanceHelp = function_exists('client_t') ? client_t('settings.appearance_help') : 'Choose light or dark mode for your client portal. This applies only to your account.';
+    $themeModeLabel = function_exists('client_t') ? client_t('settings.theme_mode') : 'Theme mode';
+    $lightLabel = function_exists('client_t') ? client_t('settings.light') : 'Light';
+    $darkLabel = function_exists('client_t') ? client_t('settings.dark') : 'Dark';
+    $languageTitle = function_exists('client_t') ? client_t('settings.language') : 'Language';
+    $languageHelp = function_exists('client_t') ? client_t('settings.language_help') : 'Choose the language used in your client portal navigation and settings.';
+    $languageLabel = function_exists('client_t') ? client_t('settings.language_label') : 'Display language';
+    $saveLabel = function_exists('client_t') ? client_t('settings.save_preferences') : 'Save preferences';
+    $digestTitle = function_exists('client_t') ? client_t('settings.email_digest') : 'Email digest';
+    $digestHelp = function_exists('client_t') ? client_t('settings.email_digest_help') : 'Receive a summary of case activity by email.';
+    $digestNone = function_exists('client_t') ? client_t('settings.digest_none') : 'Off';
+    $digestDaily = function_exists('client_t') ? client_t('settings.digest_daily') : 'Daily';
+    $digestWeekly = function_exists('client_t') ? client_t('settings.digest_weekly') : 'Weekly';
+    $currentDigest = function_exists('getClientEmailDigest') ? getClientEmailDigest($clientId) : 'none';
+
+    return '<div class="card mb-4">'
+        . '<div class="card-header pb-0"><h6>' . htmlspecialchars($appearanceTitle) . '</h6></div>'
+        . '<div class="card-body">'
+        . '<p class="text-sm text-muted mb-4">' . htmlspecialchars($appearanceHelp) . '</p>'
+        . '<form method="post" class="client-settings-form">'
+        . '<input type="hidden" name="action" value="save_preferences">'
+        . '<div class="mb-4">'
+        . '<label class="form-control-label d-block mb-2">' . htmlspecialchars($themeModeLabel) . '</label>'
+        . '<div class="settings-theme-mode">'
+        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars($lightLabel) . '</label>'
+        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars($darkLabel) . '</label>'
+        . '</div>'
+        . '</div>'
+        . '<div class="mb-4">'
+        . '<label class="form-control-label d-block mb-2" for="client_locale">' . htmlspecialchars($languageLabel) . '</label>'
+        . '<select class="form-select" name="locale" id="client_locale" required>'
+        . $localeOptions
+        . '</select>'
+        . '<p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($languageHelp) . '</p>'
+        . '</div>'
+        . '<div class="mb-4" id="email-digest">'
+        . '<label class="form-control-label d-block mb-2" for="client_email_digest">' . htmlspecialchars($digestTitle) . '</label>'
+        . '<select class="form-select" name="email_digest" id="client_email_digest">'
+        . '<option value="none"' . ($currentDigest === 'none' ? ' selected' : '') . '>' . htmlspecialchars($digestNone) . '</option>'
+        . '<option value="daily"' . ($currentDigest === 'daily' ? ' selected' : '') . '>' . htmlspecialchars($digestDaily) . '</option>'
+        . '<option value="weekly"' . ($currentDigest === 'weekly' ? ' selected' : '') . '>' . htmlspecialchars($digestWeekly) . '</option>'
+        . '</select>'
+        . '<p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($digestHelp) . '</p>'
+        . '</div>'
+        . '<button type="submit" class="btn btn-primary mb-0">' . htmlspecialchars($saveLabel) . '</button>'
         . '</form>'
         . '</div>'
         . '</div>';
@@ -520,6 +634,23 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode.admin-cases-page .legalpro-cases-search .form-control:focus {'
+        . 'border-color: ' . $primary . ' !important;'
+        . 'box-shadow: 0 0 0 0.2rem rgba(' . $rgb . ', 0.18) !important;'
+        . 'background: var(--lp-dark-input-bg) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-admin-list-search .form-control {'
+        . 'background: var(--lp-dark-input-bg) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-admin-list-search .form-control:hover {'
+        . 'border-color: ' . $soft20 . ' !important;'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-admin-list-search .form-control:focus {'
         . 'border-color: ' . $primary . ' !important;'
         . 'box-shadow: 0 0 0 0.2rem rgba(' . $rgb . ', 0.18) !important;'
         . 'background: var(--lp-dark-input-bg) !important;'
@@ -1345,6 +1476,69 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'body.legalpro-dark-mode .legalpro-header-user__menu .dropdown-item:focus {'
         . 'background-color: var(--lp-dark-surface-hover) !important;'
         . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-header-notif {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border: 1px solid var(--lp-dark-border) !important;'
+        . 'box-shadow: none !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-header-notif:hover,'
+        . 'body.legalpro-dark-mode .legalpro-header-notif:focus,'
+        . 'body.legalpro-dark-mode .legalpro-header-notif.show {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . 'box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__head,'
+        . 'body.legalpro-dark-mode .legalpro-notif-panel__foot {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__title {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__count {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item {'
+        . 'border-color: var(--lp-dark-border) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item:hover,'
+        . 'body.legalpro-dark-mode .legalpro-notif-item:focus {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item__title {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item__message,'
+        . 'body.legalpro-dark-mode .legalpro-notif-item__time,'
+        . 'body.legalpro-dark-mode .legalpro-notif-panel__empty,'
+        . 'body.legalpro-dark-mode .legalpro-notif-panel__empty span {'
+        . 'color: var(--lp-dark-text-muted) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__empty p {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__view-all {'
+        . 'color: ' . $primaryOnDark . ' !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .cc-pill {'

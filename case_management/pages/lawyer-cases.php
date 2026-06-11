@@ -75,7 +75,7 @@ if (empty($cases)) {
 
         $casesTable .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="lawyer-cases-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconCaseRow . '</div>
                     <div>
@@ -84,17 +84,23 @@ if (empty($cases)) {
                     </div>
                 </div>
             </td>
-            <td class="align-middle">' . $categoryPill . '</td>
-            <td>
+            <td class="align-middle">
+                <div class="lc-category-cell">' . $categoryPill . '</div>
+            </td>
+            <td class="align-middle">
                 <h6 class="mb-0 text-sm">' . htmlspecialchars($case['first_name'] . ' ' . $case['last_name']) . '</h6>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($case['email']) . '</p>
             </td>
-            <td class="align-middle text-center">' . $statusBadge . '</td>
-            <td class="align-middle text-center">' . $priorityBadge . '</td>
-            <td class="text-center">
+            <td class="align-middle text-center">
+                <div class="lc-table-pill-cell">' . $statusBadge . '</div>
+            </td>
+            <td class="align-middle text-center">
+                <div class="lc-table-pill-cell">' . $priorityBadge . '</div>
+            </td>
+            <td class="align-middle text-center">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
-            <td class="text-end">
+            <td class="align-middle text-end">
                 <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary">View Details</a>
             </td>
         </tr>';
@@ -122,7 +128,7 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-cases-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-cases-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}

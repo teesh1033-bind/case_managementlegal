@@ -111,7 +111,7 @@ $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($message
 // Build invoices table rows
 $invoicesRows = '';
 if (empty($invoices)) {
-    $invoicesRows = '<tr><td colspan="6" class="border-0">
+    $invoicesRows = '<tr><td colspan="7" class="border-0">
         <div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . $iconInvoiceEmpty . '</div>
             <h5>No invoices yet</h5>
@@ -128,7 +128,16 @@ if (empty($invoices)) {
 
         $caseTitle = $invoice['case_title'] ?: '—';
 
-        $invoicesRows .= '<tr class="cp-invoice-row">
+        $invoiceHay = strtolower(implode(' ', [
+            $invoice['invoice_number'] ?? '',
+            $caseTitle,
+            $statusMeta['label'],
+            $invoice['issue_date'] ?? '',
+            $invoice['due_date'] ?? '',
+            (string) $invoice['amount'],
+        ]));
+
+        $invoicesRows .= '<tr class="cp-invoice-row cp-search-row" data-search="' . htmlspecialchars($invoiceHay, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
                     <div class="cp-row-icon flex-shrink-0">' . $iconInvoiceRow . '</div>
@@ -150,8 +159,11 @@ if (empty($invoices)) {
             <td class="text-end">
                 <span class="text-xs font-weight-bold">' . formatCurrency($invoice['paid_amount']) . '</span>
             </td>
-            <td class="align-middle text-center pe-4">
+            <td class="align-middle text-center">
                 ' . $statusBadge . '
+            </td>
+            <td class="align-middle text-center pe-4">
+                <a href="invoice-download.php?id=' . (int) $invoice['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Download</a>
             </td>
         </tr>';
     }
@@ -160,7 +172,7 @@ if (empty($invoices)) {
 // Build payments table rows
 $paymentsRows = '';
 if (empty($payments)) {
-    $paymentsRows = '<tr><td colspan="5" class="border-0">
+    $paymentsRows = '<tr><td colspan="6" class="border-0">
         <div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--success">' . $iconPaymentEmpty . '</div>
             <h5>No payments recorded</h5>
@@ -173,7 +185,16 @@ if (empty($payments)) {
         $refDisp = strlen($ref) > 24 ? htmlspecialchars(substr($ref, 0, 24)) . '…' : htmlspecialchars($ref);
         $caseTitle = $payment['case_title'] ?: '—';
 
-        $paymentsRows .= '<tr class="cp-payment-row">
+        $paymentHay = strtolower(implode(' ', [
+            $caseTitle,
+            $payment['invoice_number'] ?? '',
+            $ref,
+            $payment['method'] ?? '',
+            $payment['payment_date'] ?? '',
+            (string) $payment['amount'],
+        ]));
+
+        $paymentsRows .= '<tr class="cp-payment-row cp-search-row" data-search="' . htmlspecialchars($paymentHay, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
                     <div class="cp-row-icon cp-row-icon--success flex-shrink-0">' . $iconPaymentRow . '</div>
@@ -192,15 +213,23 @@ if (empty($payments)) {
             <td>
                 <span class="text-xs font-weight-bold">' . htmlspecialchars(ucfirst($payment['method'])) . '</span>
             </td>
-            <td class="pe-4">
+            <td>
                 <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 7rem;" title="' . htmlspecialchars($ref) . '">' . $refDisp . '</p>
+            </td>
+            <td class="align-middle text-center pe-4">
+                <a href="payment-receipt.php?id=' . (int) $payment['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Receipt</a>
             </td>
         </tr>';
     }
 }
 
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('Payments & invoices', 'Payments', 'Search invoices & payments…');
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'Payments & invoices',
+    'Payments',
+    'Search invoices & payments…',
+    legalpro_client_page_search_options('client-payments.php')
+);
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -211,7 +240,6 @@ $html = <<<'HTML'
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>LegalPro - My Payments</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -221,7 +249,6 @@ $html = <<<'HTML'
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body.client-payments-page {
-            font-family: 'Inter', system-ui, sans-serif;
             background: #f0f2f8;
             --cp-pay-primary: var(--legalpro-theme-primary, #5e72e4);
             --cp-pay-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
@@ -347,6 +374,11 @@ $html = <<<'HTML'
             transition: background .15s, color .15s;
         }
         .btn-cp-link:hover { background: var(--cp-pay-primary); color: #fff; }
+        .btn-cp-download {
+            padding: .3rem .65rem;
+            font-size: 11px;
+            white-space: nowrap;
+        }
 
         .client-payments-page .ca-status-pill {
             font-size: .68rem;
@@ -404,7 +436,7 @@ $html = <<<'HTML'
                             <p>Issued for your matters, newest first.</p>
                         </div>
                         <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span class="cp-count">{INVOICE_COUNT} total</span>
+                            <span class="cp-count" id="cpInvoiceCount">{INVOICE_COUNT} total</span>
                             <a href="client-cases.php" class="btn-cp-link">My cases</a>
                         </div>
                     </div>
@@ -417,7 +449,8 @@ $html = <<<'HTML'
                                     <th>Due</th>
                                     <th style="text-align:right">Amount</th>
                                     <th style="text-align:right">Paid</th>
-                                    <th style="text-align:center;padding-right:1.5rem">Status</th>
+                                    <th style="text-align:center">Status</th>
+                                    <th style="text-align:center;padding-right:1.5rem">Download</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -434,7 +467,7 @@ $html = <<<'HTML'
                             <p>Recorded receipts and transfers.</p>
                         </div>
                         <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span class="cp-count">{PAYMENT_COUNT} total</span>
+                            <span class="cp-count" id="cpPaymentCount">{PAYMENT_COUNT} total</span>
                             <a href="client-dashboard.php" class="btn-cp-link">Dashboard</a>
                         </div>
                     </div>
@@ -446,7 +479,8 @@ $html = <<<'HTML'
                                     <th>Date</th>
                                     <th>Amount</th>
                                     <th>Method</th>
-                                    <th style="padding-right:1.5rem">Reference</th>
+                                    <th>Reference</th>
+                                    <th style="text-align:center;padding-right:1.5rem">Receipt</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -464,6 +498,36 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script>
+    (function () {
+        function applyPaymentsPageSearch() {
+            var params = new URLSearchParams(window.location.search);
+            var q = (params.get('q') || '').trim().toLowerCase();
+            function filterRows(selector, countId, singular, plural) {
+                var rows = document.querySelectorAll(selector);
+                var visible = 0;
+                rows.forEach(function (row) {
+                    if (!q) {
+                        row.style.display = '';
+                        visible++;
+                        return;
+                    }
+                    var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
+                    var show = hay.indexOf(q) !== -1;
+                    row.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+                var countEl = document.getElementById(countId);
+                if (countEl) {
+                    countEl.textContent = visible + ' ' + (visible === 1 ? singular : plural) + ' total';
+                }
+            }
+            filterRows('.cp-invoice-row.cp-search-row', 'cpInvoiceCount', 'invoice', 'invoices');
+            filterRows('.cp-payment-row.cp-search-row', 'cpPaymentCount', 'payment', 'payments');
+        }
+        document.addEventListener('DOMContentLoaded', applyPaymentsPageSearch);
+    })();
+    </script>
 </body>
 </html>
 HTML;

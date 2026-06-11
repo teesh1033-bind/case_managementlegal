@@ -13,7 +13,7 @@ require_once __DIR__ . '/legalpro-icons.php';
 <?php if (!defined('LEGALPRO_SKIP_DASHBOARD_ENHANCEMENTS')): ?>
 <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
 <?php endif; ?>
-<link href="../assets/css/legalpro-admin-portal.css?v=14" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=21" rel="stylesheet" />
 <link href="../assets/css/legalpro-sidebar-nav.css?v=2" rel="stylesheet" />
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>

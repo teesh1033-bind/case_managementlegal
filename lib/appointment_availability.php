@@ -162,6 +162,54 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
 }
 
 /**
+ * True when another non-rejected appointment overlaps the requested window.
+ */
+function lawyerHasOverlappingAppointment(
+    PDO $pdo,
+    int $lawyerId,
+    string $appointmentDate,
+    string $appointmentTime,
+    int $durationMinutes = 60,
+    ?int $excludeAppointmentId = null
+): bool {
+    if ($lawyerId <= 0) {
+        return false;
+    }
+
+    $durationMinutes = in_array($durationMinutes, [30, 60], true) ? $durationMinutes : 60;
+    $requestedTime = normalizeAppointmentTime($appointmentTime);
+    $startTs = strtotime($appointmentDate . ' ' . $requestedTime);
+    if ($startTs === false) {
+        return false;
+    }
+
+    $startsAt = date('Y-m-d H:i:s', $startTs);
+    $endsAt = date('Y-m-d H:i:s', strtotime('+' . $durationMinutes . ' minutes', $startTs));
+
+    $sql = "
+        SELECT id FROM appointments
+        WHERE lawyer_id = ?
+          AND LOWER(COALESCE(status, 'pending')) NOT IN ('rejected', 'cancelled')
+          AND starts_at IS NOT NULL
+          AND starts_at < ?
+          AND COALESCE(ends_at, DATE_ADD(starts_at, INTERVAL 1 HOUR)) > ?
+    ";
+    $params = [$lawyerId, $endsAt, $startsAt];
+
+    if ($excludeAppointmentId !== null && $excludeAppointmentId > 0) {
+        $sql .= ' AND id <> ?';
+        $params[] = $excludeAppointmentId;
+    }
+
+    $sql .= ' LIMIT 1';
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    return (bool) $stmt->fetchColumn();
+}
+
+/**
  * Block booking outside published availability or during unavailable slots.
  *
  * @return array{ok: bool, message?: string}
@@ -241,6 +289,13 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
         return [
             'ok' => false,
             'message' => 'This lawyer is not available at the selected time. Please choose a time within their published availability.',
+        ];
+    }
+
+    if (lawyerHasOverlappingAppointment($pdo, $lawyerId, $appointmentDate, $appointmentTime, $durationMinutes, $excludeAppointmentId)) {
+        return [
+            'ok' => false,
+            'message' => 'This lawyer already has an appointment at the selected time. Please choose another slot.',
         ];
     }
 
