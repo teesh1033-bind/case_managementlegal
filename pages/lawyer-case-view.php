@@ -258,7 +258,7 @@ if (empty($services)) {
     $servicesHtml .= '
     <tr class="table-active">
         <td><strong>Total Estimated Fees</strong></td>
-        <td class="text-end"><strong>$' . number_format($totalFees, 2) . '</strong></td>
+        <td class="text-end"><strong>RS' . number_format($totalFees, 2) . '</strong></td>
     </tr>';
 }
 
