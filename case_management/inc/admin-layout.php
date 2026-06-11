@@ -693,6 +693,37 @@ function lawyer_appointment_status_badge(array $appointment): string
     return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
 }
 
+function client_appointment_status_badge(array $appointment): string
+{
+    $status = strtolower((string) ($appointment['status'] ?? ''));
+    if ($status === 'approved') {
+        $status = 'accepted';
+    }
+    $startsAt = !empty($appointment['starts_at']) ? strtotime($appointment['starts_at']) : 0;
+    $now = time();
+
+    if ($status === 'pending') {
+        return '<span class="ca-status-pill ca-status-pill--pending">Awaiting confirmation</span>';
+    }
+    if ($status === 'rejected') {
+        return '<span class="ca-status-pill ca-status-pill--declined">Declined</span>';
+    }
+    if ($status === 'accepted') {
+        if ($startsAt > 0 && $startsAt < $now) {
+            return '<span class="ca-status-pill ca-status-pill--done">Completed</span>';
+        }
+        if ($startsAt > 0 && date('Y-m-d', $startsAt) === date('Y-m-d')) {
+            return '<span class="ca-status-pill ca-status-pill--scheduled">Today</span>';
+        }
+
+        return '<span class="ca-status-pill ca-status-pill--scheduled">Confirmed</span>';
+    }
+
+    $label = ucwords(str_replace('_', ' ', $status));
+
+    return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+}
+
 /**
  * Cases-style search field for admin list tables.
  */
