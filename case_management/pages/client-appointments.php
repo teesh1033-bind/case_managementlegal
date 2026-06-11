@@ -782,10 +782,9 @@ ob_start(); ?>
                             </div>
                             <div class="ca-fld">
                                 <label>Date</label>
-                                <select name="appointment_date" id="appointment_date" required disabled onchange="onDateChange()">
-                                    <option value="">Select a lawyer first</option>
-                                </select>
-                                <div id="caDateAlert" class="ca-avail-alert info">Choose a lawyer to see dates they are available.</div>
+                                <input type="date" name="appointment_date" id="appointment_date"
+                                       min="<?= date('Y-m-d') ?>" required onchange="onDateChange()">
+                                <div id="caDateAlert" class="ca-avail-alert info">Select a date to see available times.</div>
                             </div>
                             <div class="ca-fld">
                                 <label>Time</label>
@@ -864,62 +863,6 @@ ob_start(); ?>
     var lawyerHasAvailability    = <?= json_encode($lawyerHasAvailability) ?>;
     var selectedTime             = null;
     var aptModalInstance         = null;
-    var bookableHours            = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-    var todayIso                 = <?= json_encode(date('Y-m-d')) ?>;
-
-    function formatBookableDate(iso) {
-        var parts = iso.split('-');
-        if (parts.length !== 3) return iso;
-        var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-        return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
-    function dateHasBookableTimes(lawyerId, dateVal) {
-        var slots = getAvailableSlots(lawyerId, dateVal);
-        if (!slots.length) return false;
-        return bookableHours.some(function(t) { return isAvailable(t, slots); });
-    }
-
-    function getBookableDates(lawyerId) {
-        var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
-        return Object.keys(byDate)
-            .filter(function(dateVal) { return dateVal >= todayIso && dateHasBookableTimes(lawyerId, dateVal); })
-            .sort();
-    }
-
-    function rebuildDateSelect() {
-        var lawyerId = document.getElementById('lawyer_id').value;
-        var sel = document.getElementById('appointment_date');
-        sel.innerHTML = '<option value="">Select a date</option>';
-        sel.value = '';
-        sel.disabled = true;
-
-        if (!lawyerId) {
-            sel.options[0].textContent = 'Select a lawyer first';
-            showDateAlert('info', 'Choose a lawyer to see dates they are available.');
-            return;
-        }
-        if (!hasSchedule(lawyerId)) {
-            sel.options[0].textContent = 'No dates available';
-            showDateAlert('warning', 'This lawyer has no published availability yet.');
-            return;
-        }
-        var dates = getBookableDates(lawyerId);
-        if (!dates.length) {
-            sel.options[0].textContent = 'No dates available';
-            showDateAlert('warning', 'No upcoming available dates for this lawyer.');
-            return;
-        }
-        hideDateAlert();
-        dates.forEach(function(dateVal) {
-            var opt = document.createElement('option');
-            opt.value = dateVal;
-            opt.textContent = formatBookableDate(dateVal);
-            sel.appendChild(opt);
-        });
-        sel.disabled = false;
-    }
-
     function getAvailableSlots(lawyerId, dateVal) {
         var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
         return (byDate[dateVal] || []).filter(function(s) { return s.type === 'available'; });
@@ -994,7 +937,6 @@ ob_start(); ?>
 
     function onLawyerChange() {
         resetTimeSelect();
-        rebuildDateSelect();
         onDateChange();
     }
 
@@ -1006,17 +948,18 @@ ob_start(); ?>
         var trigger = document.getElementById('caTimeTrigger');
         if (!lawyerId) return;
         if (!dateVal) {
-            if (document.getElementById('appointment_date').disabled) return;
             showDateAlert('info', 'Select a date to see available times.');
+            trigger.disabled = true;
             return;
         }
-        if (!dateHasBookableTimes(lawyerId, dateVal)) {
-            document.getElementById('appointment_date').value = '';
-            showDateAlert('warning', 'That date is not available. Please choose another.');
+        if (!hasSchedule(lawyerId)) {
+            trigger.disabled = true;
+            showDateAlert('warning', 'This lawyer has no published availability yet.');
             return;
         }
         var slots = getAvailableSlots(lawyerId, dateVal);
         if (!slots.length) {
+            trigger.disabled = true;
             showDateAlert('warning', 'No available times on this date. Choose another date.');
             return;
         }
@@ -1047,13 +990,13 @@ ob_start(); ?>
         if (!caseId)   { alert('Please select a case.');   return false; }
         if (!dateVal)  { alert('Please select a date.');   return false; }
         if (!timeVal)  { alert('Please select a time slot.'); return false; }
-        if (!dateHasBookableTimes(lawyerId, dateVal)) {
-            alert('The selected date is not available for this lawyer.');
+        if (!hasSchedule(lawyerId)) {
+            alert('This lawyer has no published availability yet.');
             return false;
         }
         var slots = getAvailableSlots(lawyerId, dateVal);
         if (!slots.length || !isAvailable(timeVal, slots)) {
-            alert('Selected time is not available. Please choose another time.');
+            alert('Selected time is not available. Please choose a green time slot.');
             return false;
         }
         return true;
@@ -1140,7 +1083,9 @@ ob_start(); ?>
             }
         });
 
-        onLawyerChange();
+        if (document.getElementById('lawyer_id').value) {
+            onLawyerChange();
+        }
     });
     </script>
     <?= legalpro_render_client_page_search_script('.ca-table tbody .ca-row[data-search]', '#caCount', 'appointment', 'appointments', ' total') ?>

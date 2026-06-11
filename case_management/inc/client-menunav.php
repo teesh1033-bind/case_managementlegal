@@ -92,7 +92,7 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
 <?php echo legalpro_render_client_notification_panel(); ?>
 <?php echo legalpro_client_render_bottom_nav($currentPage); ?>
 
-<script src="../assets/js/client-portal.js?v=1"></script>
+<script src="../assets/js/client-portal.js?v=2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var collapseBtn = document.getElementById('legalproSidebarCollapse');

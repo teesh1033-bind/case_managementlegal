@@ -38,6 +38,7 @@ switch ($action) {
         $notifications = legalpro_client_get_notifications($pdo, $clientId, 50);
         $payload = [];
         foreach ($notifications as $n) {
+            $time = legalpro_client_notification_time_parts((string) ($n['created_at'] ?? ''));
             $payload[] = [
                 'id' => (int) $n['id'],
                 'type' => $n['type'],
@@ -47,7 +48,9 @@ switch ($action) {
                 'icon' => $n['icon'],
                 'is_read' => (bool) $n['is_read'],
                 'created_at' => $n['created_at'],
-                'time_ago' => legalpro_client_notification_time_ago((string) $n['created_at']),
+                'time_ago' => $time['ago'],
+                'time_label' => $time['label'],
+                'time_iso' => $time['iso'],
             ];
         }
         echo json_encode([
@@ -58,24 +61,3 @@ switch ($action) {
         break;
 }
 
-function legalpro_client_notification_time_ago(string $datetime): string
-{
-    $ts = strtotime($datetime);
-    if ($ts === false) {
-        return '';
-    }
-    $diff = time() - $ts;
-    if ($diff < 60) {
-        return 'Just now';
-    }
-    if ($diff < 3600) {
-        return (int) floor($diff / 60) . 'm ago';
-    }
-    if ($diff < 86400) {
-        return (int) floor($diff / 3600) . 'h ago';
-    }
-    if ($diff < 604800) {
-        return (int) floor($diff / 86400) . 'd ago';
-    }
-    return date('M j', $ts);
-}
