@@ -30,6 +30,16 @@ try {
     error_log('client-requests: ' . $e->getMessage());
 }
 
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'My requests',
+    'My requests',
+    '',
+    [
+        'client_name' => $clientName,
+        'include_search' => false,
+    ]
+);
+
 $rowsHtml = '';
 if (!$requests) {
     $rowsHtml = '<tr><td colspan="5" class="text-center text-muted py-4">No requests yet. Use the <a href="chatbot.php">AI assistant</a> to request a callback or ask a billing question.</td></tr>';
@@ -57,7 +67,7 @@ $html = <<<'HTML'
 	<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 	{CLIENT_PORTAL_HEAD}
 </head>
-<body class="g-sidenav-show bg-gray-100 client-requests-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-requests-page">
 	<div class="min-height-300 bg-primary position-absolute w-100"></div>
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg">

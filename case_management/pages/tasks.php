@@ -307,8 +307,8 @@ if (empty($tasks)) {
     </div>';
 } else {
     foreach ($tasks as $task) {
-        $statusBadge = lawyer_task_status_badge((string) ($task['status'] ?? ''));
-        $priorityBadge = lawyer_task_priority_badge((string) ($task['priority'] ?? 'medium'));
+        $statusBadge = legalpro_task_status_badge((string) ($task['status'] ?? ''));
+        $priorityBadge = legalpro_task_priority_badge((string) ($task['priority'] ?? 'medium'));
         $dueLabel = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
         $isOverdue = $task['due_date'] && strtotime($task['due_date']) < time() && $task['status'] !== 'completed';
         $dueClass = $isOverdue ? 'lt-task-row__due lt-task-row__due--overdue' : 'lt-task-row__due';
