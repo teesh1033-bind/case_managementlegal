@@ -474,7 +474,7 @@ $html = <<<'HTML'
                                     </select>
                                 </div>
                                 <div id="case-amount-summary" class="mb-3" style="display: none;">
-                                    <div class="border border-radius-lg bg-light p-3">
+                                    <div class="legalpro-form-panel border border-radius-lg p-3">
                                         <p class="text-xs text-uppercase text-muted font-weight-bold mb-2 mb-md-0" id="case-amount-summary-label">Case payment summary</p>
                                         <div class="row g-3 mt-0">
                                             <div class="col-sm-6">

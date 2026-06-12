@@ -244,6 +244,14 @@ function loadLawyerWorkingHoursForBooking(PDO $pdo, array $lawyerIds): array
     }
 
     return ['workingHours' => $workingHours, 'hasWorkingHours' => $hasWorkingHours];
+function formatSlotTimeForBooking(string $time): string
+{
+    $parts = explode(':', trim($time));
+    $hours = (int) ($parts[0] ?? 0);
+    $minutes = (int) ($parts[1] ?? 0);
+    $seconds = (int) ($parts[2] ?? 0);
+
+    return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
 }
 
 /**
@@ -292,14 +300,21 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $slot) {
         $lawyerId = (int) $slot['lawyer_id'];
         $slotType = $slot['slot_type'] === 'available' ? 'available' : 'unavailable';
-        $slotDate = isset($slot['slot_date']) ? trim((string) $slot['slot_date']) : '';
+        $slotDateRaw = isset($slot['slot_date']) ? trim((string) $slot['slot_date']) : '';
+        $slotDate = $slotDateRaw;
+        if ($slotDateRaw !== '') {
+            $slotTimestamp = strtotime($slotDateRaw);
+            if ($slotTimestamp !== false) {
+                $slotDate = date('Y-m-d', $slotTimestamp);
+            }
+        }
         if ($slotType === 'available' && $slotDate !== '') {
             $hasSchedule[$lawyerId] = true;
         }
 
         $entry = [
-            'start' => $slot['start_time'],
-            'end' => $slot['end_time'],
+            'start' => formatSlotTimeForBooking((string) $slot['start_time']),
+            'end' => formatSlotTimeForBooking((string) $slot['end_time']),
             'type' => $slotType,
         ];
 
@@ -539,4 +554,5 @@ function backfillLawyerAppointmentAvailability(PDO $pdo, int $lawyerId): void
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $appointment) {
         syncAppointmentAvailabilitySlot($pdo, $appointment);
     }
+}
 }

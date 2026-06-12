@@ -131,6 +131,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Handle case summary (stage) save / delete
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type'])) {
+    $formType = (string) $_POST['form_type'];
+
+    if ($formType === 'save_stage') {
+        $stageId = isset($_POST['stage_id']) ? (int) $_POST['stage_id'] : 0;
+        $stageNumber = isset($_POST['stage_number']) ? (int) $_POST['stage_number'] : 0;
+        $title = trim((string) ($_POST['stage_title'] ?? ''));
+        $description = trim((string) ($_POST['stage_description'] ?? ''));
+        $result = trim((string) ($_POST['stage_result'] ?? ''));
+        $startDate = trim((string) ($_POST['stage_start_date'] ?? ''));
+        $expectedEndDate = trim((string) ($_POST['stage_expected_end_date'] ?? ''));
+        $actualEndDate = trim((string) ($_POST['stage_actual_end_date'] ?? ''));
+        $activeTab = 'stages';
+
+        $hasInvalidStageExpectedDate = $startDate !== '' && $expectedEndDate !== ''
+            && strtotime($expectedEndDate) <= strtotime($startDate);
+        $hasInvalidStageActualDate = $startDate !== '' && $actualEndDate !== ''
+            && strtotime($actualEndDate) < strtotime($startDate);
+
+        if ($hasInvalidStageExpectedDate) {
+            $message = 'Expected end date must be later than the start date.';
+            $messageType = 'danger';
+        } elseif ($hasInvalidStageActualDate) {
+            $message = 'Actual end date cannot be earlier than the start date.';
+            $messageType = 'danger';
+        } elseif ($title === '' || $stageNumber <= 0) {
+            $message = 'Summary title and entry number are required.';
+            $messageType = 'danger';
+        } else {
+            $filePath = null;
+            if (isset($_FILES['stage_file']) && $_FILES['stage_file']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/../uploads/case_stages/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $fileName = time() . '_' . preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $_FILES['stage_file']['name']);
+                if (move_uploaded_file($_FILES['stage_file']['tmp_name'], $uploadDir . $fileName)) {
+                    $filePath = 'uploads/case_stages/' . $fileName;
+                }
+            }
+
+            try {
+                $dupStmt = $pdo->prepare('SELECT id FROM case_stages WHERE case_id = ? AND stage_number = ? AND id != ? LIMIT 1');
+                $dupStmt->execute([$caseId, $stageNumber, $stageId]);
+                if ($dupStmt->fetch()) {
+                    $message = 'Summary entry #' . $stageNumber . ' already exists. Choose a different number.';
+                    $messageType = 'danger';
+                } elseif ($stageId > 0) {
+                    if ($filePath) {
+                        $stmt = $pdo->prepare('
+                            UPDATE case_stages SET
+                                stage_number = ?, title = ?, description = ?, result = ?, file_path = ?,
+                                start_date = ?, expected_end_date = ?, actual_end_date = ?
+                            WHERE id = ? AND case_id = ?
+                        ');
+                        $stmt->execute([
+                            $stageNumber, $title, $description, $result, $filePath,
+                            $startDate !== '' ? $startDate : null,
+                            $expectedEndDate !== '' ? $expectedEndDate : null,
+                            $actualEndDate !== '' ? $actualEndDate : null,
+                            $stageId, $caseId,
+                        ]);
+                    } else {
+                        $stmt = $pdo->prepare('
+                            UPDATE case_stages SET
+                                stage_number = ?, title = ?, description = ?, result = ?,
+                                start_date = ?, expected_end_date = ?, actual_end_date = ?
+                            WHERE id = ? AND case_id = ?
+                        ');
+                        $stmt->execute([
+                            $stageNumber, $title, $description, $result,
+                            $startDate !== '' ? $startDate : null,
+                            $expectedEndDate !== '' ? $expectedEndDate : null,
+                            $actualEndDate !== '' ? $actualEndDate : null,
+                            $stageId, $caseId,
+                        ]);
+                    }
+                    $message = 'Summary entry updated successfully.';
+                    $messageType = 'success';
+                } else {
+                    $stmt = $pdo->prepare('
+                        INSERT INTO case_stages (case_id, stage_number, title, description, result, file_path, start_date, expected_end_date, actual_end_date)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ');
+                    $stmt->execute([
+                        $caseId, $stageNumber, $title, $description, $result, $filePath,
+                        $startDate !== '' ? $startDate : null,
+                        $expectedEndDate !== '' ? $expectedEndDate : null,
+                        $actualEndDate !== '' ? $actualEndDate : null,
+                    ]);
+                    $message = 'Summary entry added successfully.';
+                    $messageType = 'success';
+                }
+            } catch (PDOException $e) {
+                $message = 'Error saving summary entry: ' . htmlspecialchars($e->getMessage());
+                $messageType = 'danger';
+            }
+        }
+    } elseif ($formType === 'delete_stage') {
+        $stageId = isset($_POST['stage_id']) ? (int) $_POST['stage_id'] : 0;
+        $activeTab = 'stages';
+
+        if ($stageId > 0) {
+            try {
+                $stmt = $pdo->prepare('DELETE FROM case_stages WHERE id = ? AND case_id = ?');
+                $stmt->execute([$stageId, $caseId]);
+                $message = 'Summary entry deleted successfully.';
+                $messageType = 'success';
+            } catch (PDOException $e) {
+                $message = 'Error deleting summary entry: ' . htmlspecialchars($e->getMessage());
+                $messageType = 'danger';
+            }
+        } else {
+            $message = 'Invalid summary entry.';
+            $messageType = 'danger';
+        }
+    }
+}
+
 // Handle file upload
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     $file = $_FILES['file'];
@@ -229,6 +349,11 @@ try {
     // Continue without stages if there's an error
 }
 
+$nextStageNumber = 1;
+foreach ($stages as $stageRow) {
+    $nextStageNumber = max($nextStageNumber, (int) $stageRow['stage_number'] + 1);
+}
+
 // Build services HTML
 $servicesHtml = '';
 if (empty($services)) {
@@ -311,47 +436,125 @@ function caseDetailActionButton(string $url, string $label, string $gradient = '
 // Build stages HTML
 $stagesHtml = '';
 if (empty($stages)) {
-    $stagesHtml = caseDetailFeedEmpty('layers', 'No case stages recorded yet.');
+    $stagesHtml = '<div class="case-summary-empty text-center py-4 mb-3" id="case-summary-empty" role="button" tabindex="0" aria-label="Add a summary entry">'
+        . '<div class="case-feed-empty__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary d-inline-flex align-items-center justify-content-center mb-2">'
+        . legalpro_icon('layers')
+        . '</div>'
+        . '<p class="mb-1">No summary entries yet.</p>'
+        . '<p class="text-sm text-muted mb-0">Click here or use <strong>Add Summary</strong> to record notes, outcomes, and milestones for this case.</p>'
+        . '</div>';
 } else {
     foreach ($stages as $stage) {
+        $stagePayload = htmlspecialchars(json_encode([
+            'id' => (int) $stage['id'],
+            'stage_number' => (int) $stage['stage_number'],
+            'title' => $stage['title'],
+            'description' => $stage['description'] ?? '',
+            'result' => $stage['result'] ?? '',
+            'start_date' => $stage['start_date'] ?? '',
+            'expected_end_date' => $stage['expected_end_date'] ?? '',
+            'actual_end_date' => $stage['actual_end_date'] ?? '',
+        ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+
         $stagesHtml .= '
-        <div class="card mb-3 border">
+        <div class="card mb-3 border case-summary-entry">
             <div class="card-header bg-gradient-light">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">Stage ' . (int)$stage['stage_number'] . ': ' . htmlspecialchars($stage['title']) . '</h6>
-                    <span class="badge bg-gradient-primary">Stage ' . (int)$stage['stage_number'] . '</span>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h6 class="mb-0">#' . (int) $stage['stage_number'] . ' · ' . htmlspecialchars($stage['title']) . '</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-dark mb-0 case-stage-edit-btn" data-stage="' . $stagePayload . '">Edit</button>
+                        <form method="POST" action="" class="d-inline" onsubmit="return confirm(\'Delete this summary entry?\');">
+                            <input type="hidden" name="form_type" value="delete_stage">
+                            <input type="hidden" name="stage_id" value="' . (int) $stage['id'] . '">
+                            <button type="submit" class="btn btn-sm btn-danger mb-0">Delete</button>
+                        </form>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <h6 class="text-sm font-weight-bold mb-2">Description</h6>
-                        <p class="text-sm text-muted">' . nl2br(htmlspecialchars($stage['description'] ?: 'No description provided')) . '</p>
+                        <h6 class="text-sm font-weight-bold mb-2">Notes</h6>
+                        <p class="text-sm text-muted mb-0">' . nl2br(htmlspecialchars($stage['description'] ?: 'No notes added')) . '</p>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <h6 class="text-sm font-weight-bold mb-2">Result</h6>
-                        <p class="text-sm text-muted">' . nl2br(htmlspecialchars($stage['result'] ?: 'No result recorded')) . '</p>
+                        <h6 class="text-sm font-weight-bold mb-2">Outcome</h6>
+                        <p class="text-sm text-muted mb-0">' . nl2br(htmlspecialchars($stage['result'] ?: 'No outcome recorded')) . '</p>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-4 mb-2">
                         <h6 class="text-xs font-weight-bold mb-1">Start Date</h6>
-                        <p class="text-sm">' . ($stage['start_date'] ? date('M j, Y', strtotime($stage['start_date'])) : 'Not set') . '</p>
+                        <p class="text-sm mb-0">' . ($stage['start_date'] ? date('M j, Y', strtotime($stage['start_date'])) : 'Not set') . '</p>
                     </div>
                     <div class="col-md-4 mb-2">
                         <h6 class="text-xs font-weight-bold mb-1">Expected End</h6>
-                        <p class="text-sm">' . ($stage['expected_end_date'] ? date('M j, Y', strtotime($stage['expected_end_date'])) : 'Not set') . '</p>
+                        <p class="text-sm mb-0">' . ($stage['expected_end_date'] ? date('M j, Y', strtotime($stage['expected_end_date'])) : 'Not set') . '</p>
                     </div>
                     <div class="col-md-4 mb-2">
                         <h6 class="text-xs font-weight-bold mb-1">Actual End</h6>
-                        <p class="text-sm">' . ($stage['actual_end_date'] ? date('M j, Y', strtotime($stage['actual_end_date'])) : 'Not set') . '</p>
+                        <p class="text-sm mb-0">' . ($stage['actual_end_date'] ? date('M j, Y', strtotime($stage['actual_end_date'])) : 'Not set') . '</p>
                     </div>
-                </div>
-                ' . ($stage['file_path'] ? '<div class="mt-3 pt-3 border-top"><a href="' . htmlspecialchars('../' . $stage['file_path']) . '" target="_blank" class="btn btn-sm btn-outline-primary"><i class="ni ni-single-copy-04 me-1"></i>View Attached Document</a></div>' : '') . '
-            </div>
+                </div>'
+                . ($stage['file_path']
+                    ? '<div class="mt-3 pt-3 border-top"><a href="' . htmlspecialchars('../' . $stage['file_path']) . '" target="_blank" class="btn btn-sm btn-outline-primary mb-0"><i class="ni ni-single-copy-04 me-1"></i>View attachment</a></div>'
+                    : '')
+                . '</div>
         </div>';
     }
 }
+
+$stagesFormHtml = '
+<div class="card case-detail-form-card border-0 mt-4" id="case-summary-form-card" hidden>
+    <div class="card-header border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h6 class="mb-0" id="case-summary-form-title">Add Summary Entry</h6>
+            <p class="text-sm text-muted mb-0">Record notes, outcomes, and key milestones for this case.</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mb-0" id="case-summary-cancel-edit">Cancel</button>
+    </div>
+    <div class="card-body pt-0">
+        <form method="POST" action="" enctype="multipart/form-data" id="case-summary-form">
+            <input type="hidden" name="form_type" value="save_stage">
+            <input type="hidden" name="stage_id" id="case_summary_stage_id" value="">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label text-sm">Entry #</label>
+                    <input type="number" class="form-control" name="stage_number" id="case_summary_stage_number" min="1" value="' . (int) $nextStageNumber . '" required>
+                </div>
+                <div class="col-md-9">
+                    <label class="form-label text-sm">Title</label>
+                    <input type="text" class="form-control" name="stage_title" id="case_summary_stage_title" placeholder="e.g. Initial hearing, Client meeting, Filing completed" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-sm">Notes</label>
+                    <textarea class="form-control" name="stage_description" id="case_summary_stage_description" rows="4" placeholder="What happened, key details, follow-ups..."></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-sm">Outcome / Result</label>
+                    <textarea class="form-control" name="stage_result" id="case_summary_stage_result" rows="4" placeholder="Decision, result, or next steps..."></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-sm">Start date</label>
+                    <input type="date" class="form-control" name="stage_start_date" id="case_summary_stage_start_date">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-sm">Expected end</label>
+                    <input type="date" class="form-control" name="stage_expected_end_date" id="case_summary_stage_expected_end_date">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-sm">Actual end</label>
+                    <input type="date" class="form-control" name="stage_actual_end_date" id="case_summary_stage_actual_end_date">
+                </div>
+                <div class="col-12">
+                    <label class="form-label text-sm">Attachment (optional)</label>
+                    <input type="file" class="form-control" name="stage_file" id="case_summary_stage_file">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-dark btn-sm mt-3 mb-0" id="case-summary-submit-btn">Save Summary Entry</button>
+        </form>
+    </div>
+</div>';
 
 // Fetch appointments for this case
 $appointments = [];
@@ -581,6 +784,9 @@ if (empty($payments)) {
 $caseDetailTabActionsHtml = '<div class="case-detail-tab-actions">'
     . '<div id="case-detail-action-invoices" class="case-detail-tab-action" hidden>' . $createInvoiceBtn . '</div>'
     . '<div id="case-detail-action-payments" class="case-detail-tab-action" hidden>' . $recordPaymentBtn . '</div>'
+    . '<div id="case-detail-action-stages" class="case-detail-tab-action" hidden>'
+    . '<button type="button" class="btn btn-sm bg-gradient-dark mb-0" id="case-summary-add-btn">Add Summary</button>'
+    . '</div>'
     . '</div>';
 
 // Documents section
@@ -753,6 +959,10 @@ $html = <<<'HTML'
                                                     <p class="text-sm mb-1">Paid</p>
                                                     <h6 class="mb-0 text-success">{TOTAL_PAID}</h6>
                                                 </div>
+                                                <div class="col-12 pt-2 border-top">
+                                                    <p class="text-sm mb-1">Remaining to Pay</p>
+                                                    <h5 class="mb-0 {REMAINING_FEES_CLASS}">{REMAINING_FEES}</h5>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -789,6 +999,7 @@ $html = <<<'HTML'
                                 </div>
                                 <div class="tab-pane" id="stages" role="tabpanel">
                                     {STAGES_HTML}
+                                    {STAGES_FORM_HTML}
                                 </div>
                                 <div class="tab-pane" id="comments" role="tabpanel">
                                     {COMMENTS_HTML}
@@ -956,15 +1167,26 @@ if (!empty($tasks)) {
     $eventsHtml = CaseEvents::renderEventsTimeline($caseId);
 
 // Calculate financial summary
-$totalFees = formatCurrency(isset($case['estimated_fees']) ? $case['estimated_fees'] : 0);
-$totalInvoiced = formatCurrency(array_sum(array_column($invoices, 'amount')));
-$totalPaid = formatCurrency(array_sum(array_column($payments, 'amount')));
+$estimatedFeesRaw = (float) ($case['estimated_fees'] ?? 0);
+$invoicedRaw = (float) array_sum(array_column($invoices, 'amount'));
+$paidRaw = (float) array_sum(array_column($payments, 'amount'));
+if ($estimatedFeesRaw > 0) {
+    $remainingFeesRaw = max($estimatedFeesRaw - $paidRaw, 0);
+} else {
+    $remainingFeesRaw = max($invoicedRaw - $paidRaw, 0);
+}
+
+$totalFees = formatCurrency($estimatedFeesRaw);
+$totalInvoiced = formatCurrency($invoicedRaw);
+$totalPaid = formatCurrency($paidRaw);
+$remainingFees = formatCurrency($remainingFeesRaw);
+$remainingFeesClass = $remainingFeesRaw > 0.01 ? 'text-warning' : 'text-success';
 
 if ($activeTab === '' && isset($_GET['tab'])) {
     $activeTab = preg_replace('/[^a-z]/', '', strtolower((string) $_GET['tab']));
 }
 
-$caseDetailTabScript = '<script>document.addEventListener("DOMContentLoaded",function(){function updateCaseDetailTabActions(tabId){var inv=document.getElementById("case-detail-action-invoices");var pay=document.getElementById("case-detail-action-payments");if(inv){inv.hidden=tabId!=="invoices";}if(pay){pay.hidden=tabId!=="payments";}}function getActiveCaseDetailTabId(){var active=document.querySelector(".case-detail-tabs .nav-link.active");return active&&active.getAttribute("href")?active.getAttribute("href").slice(1):"appointments";}document.querySelectorAll(".case-detail-tabs a[data-bs-toggle=\'tab\']").forEach(function(link){link.addEventListener("shown.bs.tab",function(e){var tabId=e.target.getAttribute("href").slice(1);updateCaseDetailTabActions(tabId);});});var tab=' . json_encode($activeTab) . ';if(!tab&&window.location.hash){tab=window.location.hash.slice(1);}if(tab){var link=document.querySelector(\'.case-detail-tabs a[href="#\'+tab+\'"]\');if(link&&window.bootstrap&&bootstrap.Tab){bootstrap.Tab.getOrCreateInstance(link).show();}}updateCaseDetailTabActions(tab||getActiveCaseDetailTabId());});</script>';
+$caseDetailTabScript = '<script>document.addEventListener("DOMContentLoaded",function(){var nextStageNumber=' . (int) $nextStageNumber . ';function showCaseSummaryForm(){var card=document.getElementById("case-summary-form-card");if(card){card.hidden=false;}}function hideCaseSummaryForm(){var card=document.getElementById("case-summary-form-card");if(card){card.hidden=true;}resetCaseSummaryForm();}function focusCaseSummaryForm(){showCaseSummaryForm();var card=document.getElementById("case-summary-form-card");var titleInput=document.getElementById("case_summary_stage_title");if(card){card.scrollIntoView({behavior:"smooth",block:"start"});}if(titleInput){titleInput.focus();}}function resetCaseSummaryForm(){var form=document.getElementById("case-summary-form");if(!form){return;}form.reset();document.getElementById("case_summary_stage_id").value="";document.getElementById("case_summary_stage_number").value=String(nextStageNumber);document.getElementById("case-summary-form-title").textContent="Add Summary Entry";document.getElementById("case-summary-submit-btn").textContent="Save Summary Entry";}function fillCaseSummaryForm(stage){if(!stage){return;}document.getElementById("case_summary_stage_id").value=stage.id||"";document.getElementById("case_summary_stage_number").value=stage.stage_number||nextStageNumber;document.getElementById("case_summary_stage_title").value=stage.title||"";document.getElementById("case_summary_stage_description").value=stage.description||"";document.getElementById("case_summary_stage_result").value=stage.result||"";document.getElementById("case_summary_stage_start_date").value=stage.start_date||"";document.getElementById("case_summary_stage_expected_end_date").value=stage.expected_end_date||"";document.getElementById("case_summary_stage_actual_end_date").value=stage.actual_end_date||"";document.getElementById("case-summary-form-title").textContent="Edit Summary Entry";document.getElementById("case-summary-submit-btn").textContent="Update Summary Entry";focusCaseSummaryForm();}function updateCaseDetailTabActions(tabId){var inv=document.getElementById("case-detail-action-invoices");var pay=document.getElementById("case-detail-action-payments");var stages=document.getElementById("case-detail-action-stages");if(inv){inv.hidden=tabId!=="invoices";}if(pay){pay.hidden=tabId!=="payments";}if(stages){stages.hidden=tabId!=="stages";}if(tabId!=="stages"){hideCaseSummaryForm();}}function getActiveCaseDetailTabId(){var active=document.querySelector(".case-detail-tabs .nav-link.active");return active&&active.getAttribute("href")?active.getAttribute("href").slice(1):"appointments";}document.querySelectorAll(".case-detail-tabs a[data-bs-toggle=\'tab\']").forEach(function(link){link.addEventListener("shown.bs.tab",function(e){var tabId=e.target.getAttribute("href").slice(1);updateCaseDetailTabActions(tabId);});});document.querySelectorAll(".case-stage-edit-btn").forEach(function(btn){btn.addEventListener("click",function(){try{fillCaseSummaryForm(JSON.parse(btn.getAttribute("data-stage")||"{}"));}catch(err){}});});var addSummaryBtn=document.getElementById("case-summary-add-btn");if(addSummaryBtn){addSummaryBtn.addEventListener("click",function(){resetCaseSummaryForm();focusCaseSummaryForm();});}var summaryEmpty=document.getElementById("case-summary-empty");if(summaryEmpty){summaryEmpty.addEventListener("click",function(){resetCaseSummaryForm();focusCaseSummaryForm();});summaryEmpty.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();resetCaseSummaryForm();focusCaseSummaryForm();}});}var cancelEditBtn=document.getElementById("case-summary-cancel-edit");if(cancelEditBtn){cancelEditBtn.addEventListener("click",hideCaseSummaryForm);}var tab=' . json_encode($activeTab) . ';if(!tab&&window.location.hash){tab=window.location.hash.slice(1);}if(tab){var link=document.querySelector(\'.case-detail-tabs a[href="#\'+tab+\'"]\');if(link&&window.bootstrap&&bootstrap.Tab){bootstrap.Tab.getOrCreateInstance(link).show();}}updateCaseDetailTabActions(tab||getActiveCaseDetailTabId());});</script>';
 
 // Replace placeholders
 $replacements = [
@@ -985,6 +1207,9 @@ $replacements = [
     '{TOTAL_FEES}' => $totalFees,
     '{TOTAL_INVOICED}' => $totalInvoiced,
     '{TOTAL_PAID}' => $totalPaid,
+    '{REMAINING_FEES}' => $remainingFees,
+    '{REMAINING_FEES_CLASS}' => $remainingFeesClass,
+    '{STAGES_FORM_HTML}' => $stagesFormHtml,
     '{CASE_DETAIL_TABS_NAV}' => $caseDetailTabsNav,
     '{CASE_DETAIL_TAB_ACTIONS}' => $caseDetailTabActionsHtml,
     '{APPOINTMENTS_COUNT}' => count($appointments),

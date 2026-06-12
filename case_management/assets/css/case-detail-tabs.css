@@ -338,6 +338,24 @@
     white-space: pre-wrap;
 }
 
+.case-summary-empty {
+    cursor: pointer;
+    border: 1px dashed rgba(94, 114, 228, 0.35);
+    border-radius: 0.75rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.case-summary-empty:hover,
+.case-summary-empty:focus {
+    background-color: rgba(94, 114, 228, 0.06);
+    border-color: rgba(94, 114, 228, 0.55);
+    outline: none;
+}
+
+.case-summary-entry .card-body {
+    position: relative;
+}
+
 @media (max-width: 767px) {
     .case-feed-item {
         flex-wrap: wrap;
