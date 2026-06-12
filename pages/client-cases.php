@@ -74,7 +74,7 @@ function modern_priority_badge(string $priority): string {
 // ── Lawyer avatar stack ───────────────────────────────────────────────────────
 function lawyer_stack(string $names): string {
     if (!$names || $names === 'Unassigned') {
-        return '<span style="font-size:12px;color:#94a3b8">Unassigned</span>';
+        return '<span class="lawyer-stack__unassigned">Unassigned</span>';
     }
     $people  = array_map('trim', explode(',', $names));
     $colors  = [
@@ -94,10 +94,10 @@ function lawyer_stack(string $names): string {
         $html    .= '<div class="avatar" style="background:' . $c['bg'] . ';color:' . $c['fg'] . '"' . $offset . ' title="' . htmlspecialchars($name) . '">' . htmlspecialchars($initials) . '</div>';
     }
     if ($extra > 0) {
-        $html .= '<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:6px">+' . $extra . '</span>';
+        $html .= '<span class="lawyer-stack__more">+' . $extra . '</span>';
     } else {
         // Show first name only when single lawyer
-        $html .= '<span style="font-size:12px;font-weight:500;color:#475569;margin-left:8px">' . htmlspecialchars($people[0]) . '</span>';
+        $html .= '<span class="lawyer-stack__name">' . htmlspecialchars($people[0]) . '</span>';
     }
     $html .= '</div>';
     return $html;
@@ -201,7 +201,6 @@ ob_start(); ?>
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>LegalPro – My Cases</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -213,13 +212,22 @@ ob_start(); ?>
         /* ── Reset / base ───────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; }
         body.client-cases-page {
-            font-family: 'Inter', system-ui, sans-serif;
             background: #f0f2f8;
             --cc-primary: var(--legalpro-theme-primary, #5e72e4);
             --cc-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
             --cc-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
             --cc-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
             --cc-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            --cc-field-bg: #fff;
+            --cc-field-color: #1e293b;
+            --cc-field-border: #e2e8f0;
+            --cc-field-muted: #94a3b8;
+        }
+        body.legalpro-dark-mode.client-cases-page {
+            --cc-field-bg: var(--lp-dark-input-bg, #2f3547);
+            --cc-field-color: var(--lp-dark-text, #f8f9fc);
+            --cc-field-border: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
+            --cc-field-muted: var(--lp-dark-text-subtle, #9aa8bc);
         }
 
         /* ── Alert bar ──────────────────────────────────────────── */
@@ -319,31 +327,38 @@ ob_start(); ?>
             left: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8;
+            color: var(--cc-field-muted);
             pointer-events: none;
         }
         .cc-search-input {
             width: 100%;
             padding: .55rem .75rem .55rem 2.25rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--cc-field-border);
             border-radius: 10px;
             font-size: 13px;
-            background: #fff;
-            color: #1e293b;
+            background: var(--cc-field-bg);
+            color: var(--cc-field-color);
             outline: none;
             transition: border-color .15s, box-shadow .15s;
+        }
+        .cc-search-input::placeholder {
+            color: var(--cc-field-muted);
+            opacity: 1;
         }
         .cc-search-input:focus {
             border-color: var(--cc-primary);
             box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
         }
+        body.legalpro-dark-mode.client-cases-page .cc-search-input:focus {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
         .cc-filter-select {
             padding: .52rem .75rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--cc-field-border);
             border-radius: 10px;
             font-size: 13px;
-            background: #fff;
-            color: #1e293b;
+            background: var(--cc-field-bg);
+            color: var(--cc-field-color);
             outline: none;
             cursor: pointer;
         }
@@ -474,6 +489,22 @@ ob_start(); ?>
             display: flex;
             align-items: center;
         }
+        .lawyer-stack__unassigned {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .lawyer-stack__name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #334155;
+            margin-left: 8px;
+        }
+        .lawyer-stack__more {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            margin-left: 6px;
+        }
         .avatar {
             width: 26px; height: 26px;
             border-radius: 50%;
@@ -536,7 +567,7 @@ ob_start(); ?>
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-cases-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-cases-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
 
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>

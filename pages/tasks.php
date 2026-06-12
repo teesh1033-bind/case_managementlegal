@@ -2,6 +2,9 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../lib/task_helpers.php';
+
+ensure_task_support_schema($pdo);
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -63,14 +66,6 @@ try {
     error_log("Failed to create tasks table: " . $e->getMessage());
 }
 
-try {
-    $pdo->query('ALTER TABLE tasks ADD COLUMN task_comment TEXT NULL');
-} catch (PDOException $e) {
-    if (stripos($e->getMessage(), 'duplicate column') === false && stripos($e->getMessage(), 'duplicate column name') === false) {
-        // Column may already exist from manual migration.
-    }
-}
-
 // Handle task status updates
 $message = '';
 $messageType = '';
@@ -82,20 +77,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if ($taskId > 0 && in_array($newStatus, ['pending', 'in_progress', 'completed', 'cancelled'])) {
         try {
             // Get current task status for tracking
-            $stmt = $pdo->prepare("SELECT status, title FROM tasks WHERE id = ? AND assigned_lawyer_id = ?");
-            $stmt->execute([$taskId, $lawyerId]);
+            $stmt = $pdo->prepare("SELECT status, title FROM tasks WHERE id = ?");
+            $stmt->execute([$taskId]);
             $currentTask = $stmt->fetch();
 
-            if ($currentTask) {
+            if ($currentTask && lawyer_has_task_access($pdo, $taskId, $lawyerId)) {
                 $oldStatus = $currentTask['status'];
 
                 // Update task status
                 if ($newStatus === 'completed') {
-                    $stmt = $pdo->prepare("UPDATE tasks SET status = ?, completed_at = NOW() WHERE id = ? AND assigned_lawyer_id = ?");
-                    $stmt->execute([$newStatus, $taskId, $lawyerId]);
+                    $stmt = $pdo->prepare("UPDATE tasks SET status = ?, completed_at = NOW() WHERE id = ?");
+                    $stmt->execute([$newStatus, $taskId]);
                 } else {
-                    $stmt = $pdo->prepare("UPDATE tasks SET status = ?, completed_at = NULL WHERE id = ? AND assigned_lawyer_id = ?");
-                    $stmt->execute([$newStatus, $taskId, $lawyerId]);
+                    $stmt = $pdo->prepare("UPDATE tasks SET status = ?, completed_at = NULL WHERE id = ?");
+                    $stmt->execute([$newStatus, $taskId]);
                 }
 
                 $message = 'Task status updated successfully!';
@@ -165,18 +160,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 require_once __DIR__ . '/../lib/case_events.php';
 
                 if ($taskId > 0) {
-                    $existingStmt = $pdo->prepare("SELECT id, case_id, status, title FROM tasks WHERE id = ? AND assigned_lawyer_id = ?");
-                    $existingStmt->execute([$taskId, $lawyerId]);
+                    $existingStmt = $pdo->prepare("SELECT id, case_id, status, title FROM tasks WHERE id = ?");
+                    $existingStmt->execute([$taskId]);
                     $existingTask = $existingStmt->fetch();
 
-                    if (!$existingTask) {
+                    if (!$existingTask || !lawyer_has_task_access($pdo, $taskId, $lawyerId)) {
                         $message = 'Task not found or access denied.';
                         $messageType = 'danger';
                     } else {
                         $updateStmt = $pdo->prepare("
                             UPDATE tasks
                             SET case_id = ?, title = ?, description = ?, priority = ?, due_date = ?, task_comment = ?
-                            WHERE id = ? AND assigned_lawyer_id = ?
+                            WHERE id = ?
                         ");
                         $updateStmt->execute([
                             $caseId,
@@ -186,7 +181,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             $dueDate ?: null,
                             $taskComment !== '' ? $taskComment : null,
                             $taskId,
-                            $lawyerId,
                         ]);
 
                         $message = 'Task updated successfully!';
@@ -249,10 +243,10 @@ $query = "
     FROM tasks t
     INNER JOIN cases c ON c.id = t.case_id
     INNER JOIN clients cl ON cl.id = c.client_id
-    WHERE t.assigned_lawyer_id = ?
+    WHERE " . lawyer_task_access_sql() . "
 ";
 
-$params = [$lawyerId];
+$params = [$lawyerId, $lawyerId];
 
 if ($statusFilter !== 'all') {
     $query .= " AND t.status = ?";
@@ -597,7 +591,7 @@ $html = <<<'HTML'
                         <div class="mb-0" id="task_comment_wrap" style="display: none;">
                             <label class="form-label">Your comment</label>
                             <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Add a note for the admin about this task (optional)">{TASK_FORM_COMMENT}</textarea>
-                            <small class="text-muted">Visible to administrators when they review this task.</small>
+                            
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -662,7 +656,7 @@ $replacements = [
     '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
     '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
-    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
+    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ if (parseInt(document.getElementById("task_id").value, 10) > 0) { document.getElementById("task_comment_wrap").style.display = ""; } new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
     '{LAWYER_NAME}' => htmlspecialchars($lawyerName),
     '{SEARCH_VALUE}' => htmlspecialchars($search),
     '{TOTAL_TASKS}' => count($tasks),

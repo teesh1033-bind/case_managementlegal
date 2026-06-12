@@ -158,7 +158,6 @@ if (!empty($_SESSION['error_message'])) {
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>Court Tracking - LegalPro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -172,7 +171,6 @@ if (!empty($_SESSION['error_message'])) {
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body.client-court-tracking-page {
-            font-family: 'Inter', system-ui, sans-serif;
             background: #f0f2f8;
             --cct-primary: var(--legalpro-theme-primary, #5e72e4);
             --cct-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
@@ -303,13 +301,12 @@ if (!empty($_SESSION['error_message'])) {
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-court-tracking-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
         <?php
-        require_once __DIR__ . '/../inc/client-portal-navbar.php';
         echo legalpro_render_client_page_navbar('Court tracking', 'Court tracking', 'Search hearings & cases…', array_merge(
             legalpro_client_page_search_options('client-court-tracking.php'),
             ['client_name' => $clientName]
@@ -388,7 +385,7 @@ if (!empty($_SESSION['error_message'])) {
                         <p>Sorted by date, earliest first.</p>
                     </div>
                     <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                        <span class="cct-count" id="cctRowCount"><?php echo (int) $ctTotal; ?> court dates total</span>
+                        <span class="cct-count" id="cctRowCount"><?php echo (int) $ctTotal; ?> total</span>
                         <a href="client-cases.php" class="btn-cct-view text-decoration-none">My cases</a>
                     </div>
                 </div>
@@ -415,7 +412,9 @@ if (!empty($_SESSION['error_message'])) {
                                     $cid = (int) ($date['case_id'] ?? 0);
                                     $rowStatusBadge = client_court_date_status_badge((string) ($date['status'] ?? ''));
                                     ?>
-                                    <?php $rowCaseNumber = $cid > 0 ? 'C-' . str_pad((string) $cid, 4, '0', STR_PAD_LEFT) : ''; ?>
+                                    <?php
+                                    $rowCaseNumber = $cid > 0 ? 'C-' . str_pad((string) $cid, 4, '0', STR_PAD_LEFT) : '';
+                                    ?>
                                     <tr class="cct-search-row"<?php echo legalpro_client_search_data_attr([
                                         $rowCaseNumber,
                                         $date['case_title'] ?? '',
@@ -447,7 +446,7 @@ if (!empty($_SESSION['error_message'])) {
                                         </td>
                                         <td class="text-center"><?php echo $rowStatusBadge; ?></td>
                                         <td>
-                                            <div class="d-flex align-items-center justify-content-end gap-1 flex-wrap">
+                                            <div class="d-flex gap-1 justify-content-end flex-wrap">
                                                 <a href="client-calendar-export.php?type=court&amp;id=<?php echo (int) $date['id']; ?>" class="btn-cct-view cdoc-touch-btn" download title="Add to calendar">.ics</a>
                                                 <button type="button" class="btn-cct-view cdoc-touch-btn" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
                                             </div>
@@ -610,6 +609,20 @@ if (!empty($_SESSION['error_message'])) {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('viewCourtDateModal')).show();
             }
         }
+    </script>
+    <?php echo legalpro_render_client_page_search_script('.cct-search-row', '#cctRowCount', 'court date', 'court dates', ' total'); ?>
+    <script>
+    (function () {
+        document.addEventListener('DOMContentLoaded', function () {
+            var params = new URLSearchParams(window.location.search);
+            var q = (params.get('q') || '').trim().toLowerCase();
+            if (!q) return;
+            document.querySelectorAll('#upcomingCourtDatesList .cct-search-row').forEach(function (row) {
+                var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
+                row.style.display = hay.indexOf(q) !== -1 ? '' : 'none';
+            });
+        });
+    })();
     </script>
 </body>
 </html>

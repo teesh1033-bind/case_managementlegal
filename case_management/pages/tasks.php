@@ -17,7 +17,8 @@ $taskForm = [
     'task_title' => '',
     'task_description' => '',
     'task_priority' => 'medium',
-    'due_date' => ''
+    'due_date' => '',
+    'task_comment' => '',
 ];
 $showTaskModalOnLoad = false;
 
@@ -60,6 +61,14 @@ try {
 } catch (PDOException $e) {
     // If table creation fails, continue anyway - the INSERT might still work if table exists
     error_log("Failed to create tasks table: " . $e->getMessage());
+}
+
+try {
+    $pdo->query('ALTER TABLE tasks ADD COLUMN task_comment TEXT NULL');
+} catch (PDOException $e) {
+    if (stripos($e->getMessage(), 'duplicate column') === false && stripos($e->getMessage(), 'duplicate column name') === false) {
+        // Column may already exist from manual migration.
+    }
 }
 
 // Handle task status updates
@@ -126,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $taskDescription = trim(isset($_POST['task_description']) ? $_POST['task_description'] : '');
     $taskPriority = isset($_POST['task_priority']) ? $_POST['task_priority'] : 'medium';
     $dueDate = trim(isset($_POST['due_date']) ? $_POST['due_date'] : '');
+    $taskComment = trim(isset($_POST['task_comment']) ? $_POST['task_comment'] : '');
 
     $taskForm = [
         'task_id' => $taskId,
@@ -133,7 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         'task_title' => $taskTitle,
         'task_description' => $taskDescription,
         'task_priority' => $taskPriority,
-        'due_date' => $dueDate
+        'due_date' => $dueDate,
+        'task_comment' => $taskComment,
     ];
     $showTaskModalOnLoad = true;
 
@@ -164,10 +175,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     } else {
                         $updateStmt = $pdo->prepare("
                             UPDATE tasks
-                            SET case_id = ?, title = ?, description = ?, priority = ?, due_date = ?
+                            SET case_id = ?, title = ?, description = ?, priority = ?, due_date = ?, task_comment = ?
                             WHERE id = ? AND assigned_lawyer_id = ?
                         ");
-                        $updateStmt->execute([$caseId, $taskTitle, $taskDescription, $taskPriority, $dueDate ?: null, $taskId, $lawyerId]);
+                        $updateStmt->execute([
+                            $caseId,
+                            $taskTitle,
+                            $taskDescription,
+                            $taskPriority,
+                            $dueDate ?: null,
+                            $taskComment !== '' ? $taskComment : null,
+                            $taskId,
+                            $lawyerId,
+                        ]);
 
                         $message = 'Task updated successfully!';
                         $messageType = 'success';
@@ -178,7 +198,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             'task_title' => '',
                             'task_description' => '',
                             'task_priority' => 'medium',
-                            'due_date' => ''
+                            'due_date' => '',
+                            'task_comment' => '',
                         ];
 
                         CaseEvents::trackTaskUpdated($caseId, $taskId, $existingTask['status'], $existingTask['status'], $taskTitle);
@@ -199,7 +220,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         'task_title' => '',
                         'task_description' => '',
                         'task_priority' => 'medium',
-                        'due_date' => ''
+                        'due_date' => '',
+                        'task_comment' => '',
                     ];
 
                     CaseEvents::trackTaskCreated($caseId, [
@@ -316,6 +338,7 @@ if (empty($tasks)) {
         $taskDescriptionJs = htmlspecialchars(json_encode((string) $task['description']), ENT_QUOTES, 'UTF-8');
         $taskPriorityJs = htmlspecialchars(json_encode($task['priority']), ENT_QUOTES, 'UTF-8');
         $taskDueDateJs = htmlspecialchars(json_encode((string) $task['due_date']), ENT_QUOTES, 'UTF-8');
+        $taskCommentJs = htmlspecialchars(json_encode((string) ($task['task_comment'] ?? '')), ENT_QUOTES, 'UTF-8');
         $clientName = htmlspecialchars(trim($task['client_first_name'] . ' ' . $task['client_last_name']));
         $caseNumber = 'C-' . str_pad((string) $task['case_id'], 4, '0', STR_PAD_LEFT);
 
@@ -325,7 +348,11 @@ if (empty($tasks)) {
                 <div class="col-lg-6">
                     <h6 class="lt-task-row__title mb-1">' . htmlspecialchars($task['title']) . '</h6>
                     <p class="lt-task-row__meta mb-1">' . htmlspecialchars($task['case_title']) . ' (' . $caseNumber . ')</p>
-                    <p class="lt-task-row__meta mb-0">Client: ' . $clientName . '</p>
+                    <p class="lt-task-row__meta mb-0">Client: ' . $clientName . '</p>';
+        if (!empty($task['task_comment'])) {
+            $tasksListHtml .= '<p class="lt-task-row__meta mb-0 mt-1"><span class="text-muted">Your comment:</span> ' . htmlspecialchars($task['task_comment']) . '</p>';
+        }
+        $tasksListHtml .= '
                 </div>
                 <div class="col-lg-3">
                     <div class="lt-task-row__badges d-flex flex-column gap-2 align-items-lg-end">
@@ -339,7 +366,7 @@ if (empty($tasks)) {
                         <button
                             type="button"
                             class="btn btn-sm lt-task-edit-btn mb-0"
-                            onclick="showEditTaskModal(' . (int) $task['id'] . ', ' . (int) $task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ')"
+                            onclick="showEditTaskModal(' . (int) $task['id'] . ', ' . (int) $task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ', ' . $taskCommentJs . ')"
                         >Edit</button>
                         <form method="POST" action="" class="d-flex align-items-center mb-0">
                             <input type="hidden" name="action" value="update_status">
@@ -599,9 +626,14 @@ $html = <<<'HTML'
                                 <input type="date" class="form-control" name="due_date" id="task_due_date" value="{TASK_FORM_DUE_DATE}">
                             </div>
                         </div>
-                        <div class="mb-0">
+                        <div class="mb-3">
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="task_description" id="task_description" rows="3" placeholder="Task description (optional)">{TASK_FORM_DESCRIPTION}</textarea>
+                        </div>
+                        <div class="mb-0" id="task_comment_wrap" style="display: none;">
+                            <label class="form-label">Your comment</label>
+                            <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Add a note for the admin about this task (optional)">{TASK_FORM_COMMENT}</textarea>
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -624,21 +656,25 @@ $html = <<<'HTML'
             document.getElementById('task_id').value = '';
             document.getElementById('task_title').value = '';
             document.getElementById('task_description').value = '';
+            document.getElementById('task_comment').value = '';
             document.getElementById('task_priority').value = 'medium';
             document.getElementById('task_due_date').value = '';
             document.getElementById('task_case_id').value = '';
+            document.getElementById('task_comment_wrap').style.display = 'none';
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 
-        function showEditTaskModal(taskId, caseId, title, description, priority, dueDate) {
+        function showEditTaskModal(taskId, caseId, title, description, priority, dueDate, taskComment) {
             document.getElementById('taskModalTitle').textContent = 'Edit Task';
             document.getElementById('taskSaveButton').textContent = 'Update Task';
             document.getElementById('task_id').value = taskId;
             document.getElementById('task_case_id').value = String(caseId || '');
             document.getElementById('task_title').value = title || '';
             document.getElementById('task_description').value = description || '';
+            document.getElementById('task_comment').value = taskComment || '';
             document.getElementById('task_priority').value = priority || 'medium';
             document.getElementById('task_due_date').value = dueDate || '';
+            document.getElementById('task_comment_wrap').style.display = '';
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 
@@ -660,11 +696,12 @@ $replacements = [
     '{TASK_FORM_ID}' => (int) $taskForm['task_id'],
     '{TASK_FORM_TITLE}' => htmlspecialchars($taskForm['task_title']),
     '{TASK_FORM_DESCRIPTION}' => htmlspecialchars($taskForm['task_description']),
+    '{TASK_FORM_COMMENT}' => htmlspecialchars($taskForm['task_comment']),
     '{TASK_FORM_DUE_DATE}' => htmlspecialchars($taskForm['due_date']),
     '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
     '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
-    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
+    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ if (parseInt(document.getElementById("task_id").value, 10) > 0) { document.getElementById("task_comment_wrap").style.display = ""; } new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
     '{STATUS_IN_PROGRESS}' => $statusFilter === 'in_progress' ? ' selected' : '',

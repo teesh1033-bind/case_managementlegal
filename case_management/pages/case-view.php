@@ -902,6 +902,7 @@ if (!empty($tasks)) {
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Due Date</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Lawyer Comment</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                 </tr>
             </thead>
@@ -913,6 +914,13 @@ if (!empty($tasks)) {
 
         $dueDate = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
         $lawyerName = htmlspecialchars($task['lawyer_first_name'] . ' ' . $task['lawyer_last_name']);
+        $taskCommentRaw = trim((string)($task['task_comment'] ?? ''));
+        if ($taskCommentRaw === '') {
+            $taskCommentCell = '<span class="text-muted">—</span>';
+        } else {
+            $taskCommentShort = strlen($taskCommentRaw) > 80 ? substr($taskCommentRaw, 0, 80) . '…' : $taskCommentRaw;
+            $taskCommentCell = '<span class="text-sm" title="' . htmlspecialchars($taskCommentRaw) . '">' . htmlspecialchars($taskCommentShort) . '</span>';
+        }
 
         $tasksHtml .= '<tr>
             <td>
@@ -927,6 +935,7 @@ if (!empty($tasks)) {
             <td>' . $statusBadgeHtml . '</td>
             <td>' . $priorityBadgeHtml . '</td>
             <td class="text-sm">' . $dueDate . '</td>
+            <td>' . $taskCommentCell . '</td>
             <td>
                 <form method="POST" action="" style="display: inline;" onsubmit="return confirm(\'Are you sure you want to delete this task? This will remove it from the assigned lawyer\'s task list.\')">
                     <input type="hidden" name="action" value="delete_task">

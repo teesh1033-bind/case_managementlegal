@@ -708,6 +708,7 @@ if (!empty($tasks)) {
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Due Date</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Lawyer Comment</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                 </tr>
             </thead>
@@ -760,6 +761,15 @@ if (!empty($tasks)) {
         $taskPriorityJs = htmlspecialchars(json_encode($task['priority']), ENT_QUOTES, 'UTF-8');
         $taskStatusJs = htmlspecialchars(json_encode($task['status']), ENT_QUOTES, 'UTF-8');
         $taskDueDateJs = htmlspecialchars(json_encode((string)$task['due_date']), ENT_QUOTES, 'UTF-8');
+        $taskCommentJs = htmlspecialchars(json_encode((string)($task['task_comment'] ?? '')), ENT_QUOTES, 'UTF-8');
+        $taskCommentDisplay = trim((string)($task['task_comment'] ?? ''));
+        if ($taskCommentDisplay === '') {
+            $taskCommentDisplay = '—';
+        } elseif (strlen($taskCommentDisplay) > 80) {
+            $taskCommentDisplay = htmlspecialchars(substr($taskCommentDisplay, 0, 80)) . '…';
+        } else {
+            $taskCommentDisplay = htmlspecialchars($taskCommentDisplay);
+        }
 
         $tasksHtml .= '<tr>
             <td>
@@ -774,12 +784,13 @@ if (!empty($tasks)) {
             <td><span class="badge badge-sm ' . $statusClass . '">' . $statusBadge . '</span></td>
             <td><span class="badge badge-sm ' . $priorityClass . '">' . $priorityBadge . '</span></td>
             <td class="text-sm">' . $dueDate . '</td>
+            <td class="text-sm" title="' . htmlspecialchars((string)($task['task_comment'] ?? '')) . '">' . $taskCommentDisplay . '</td>
             <td>
                 <div class="d-flex align-items-center gap-2">
                     <button
                         type="button"
                         class="btn btn-sm btn-primary mb-0"
-                        onclick="showEditTaskModal(' . (int)$task['id'] . ', ' . $taskLawyerIdsJs . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskStatusJs . ', ' . $taskDueDateJs . ')"
+                        onclick="showEditTaskModal(' . (int)$task['id'] . ', ' . $taskLawyerIdsJs . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskStatusJs . ', ' . $taskDueDateJs . ', ' . $taskCommentJs . ')"
                     >Edit</button>
                     <form method="post" class="mb-0" onsubmit="return confirm(\'Are you sure you want to delete this task? This will remove it from the assigned lawyer\\\'s task list.\')">
                         <input type="hidden" name="form_type" value="delete_task">
@@ -1126,6 +1137,11 @@ $html = <<<'HTML'
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="task_description" id="task_description" rows="3" placeholder="Task description (optional)"></textarea>
                         </div>
+                        <div class="mb-0" id="task_comment_admin_wrap" style="display: none;">
+                            <label class="form-label">Lawyer comment</label>
+                            <div class="form-control bg-light text-sm" id="task_comment_admin" style="min-height: 4.5rem; white-space: pre-wrap;">—</div>
+                            <small class="text-muted">Added by the assigned lawyer when updating the task.</small>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1224,6 +1240,7 @@ $html = <<<'HTML'
             document.getElementById('taskSubmitBtn').textContent = 'Add Task';
             document.getElementById('task_id').value = '';
             document.getElementById('task_status_wrap').style.display = 'none';
+            document.getElementById('task_comment_admin_wrap').style.display = 'none';
             document.getElementById('taskForm').reset();
             document.getElementById('task_id').value = '';
             document.getElementById('task_priority').value = 'medium';
@@ -1231,7 +1248,7 @@ $html = <<<'HTML'
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 
-        function showEditTaskModal(taskId, lawyerIds, title, description, priority, status, dueDate) {
+        function showEditTaskModal(taskId, lawyerIds, title, description, priority, status, dueDate, taskComment) {
             document.getElementById('taskModalTitle').textContent = 'Edit Task';
             document.getElementById('taskSubmitBtn').textContent = 'Update Task';
             document.getElementById('task_id').value = taskId;
@@ -1242,6 +1259,8 @@ $html = <<<'HTML'
             document.getElementById('task_status').value = status || 'pending';
             document.getElementById('task_due_date').value = dueDate || '';
             document.getElementById('task_status_wrap').style.display = '';
+            document.getElementById('task_comment_admin_wrap').style.display = '';
+            document.getElementById('task_comment_admin').textContent = taskComment && String(taskComment).trim() !== '' ? taskComment : '—';
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 
