@@ -1,5 +1,7 @@
 <?php
 
+const LAWYER_WEEK_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
 function ensureAppointmentSlotColumn(PDO $pdo): void
 {
     static $ready = false;
@@ -94,10 +96,160 @@ function normalizeAppointmentTime(string $appointmentTime): string
     return $appointmentTime;
 }
 
+function normalizeAvailabilityTime(string $time): string
+{
+    $time = trim($time);
+    if (preg_match('/^\d{2}:\d{2}$/', $time)) {
+        return $time . ':00';
+    }
+
+    return $time;
+}
+
+function ensureLawyerWorkingHoursTable(PDO $pdo): void
+{
+    static $ready = false;
+    if ($ready) {
+        return;
+    }
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `lawyer_availability` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `lawyer_id` INT NOT NULL,
+            `day_of_week` ENUM('monday','tuesday','wednesday','thursday','friday','saturday','sunday') NOT NULL,
+            `start_time` TIME NOT NULL,
+            `end_time` TIME NOT NULL,
+            `is_available` TINYINT(1) DEFAULT 1,
+            UNIQUE KEY `unique_lawyer_day` (`lawyer_id`, `day_of_week`),
+            FOREIGN KEY (`lawyer_id`) REFERENCES `lawyers`(`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ");
+
+    $ready = true;
+}
+
+function getDefaultWorkingHoursSchedule(): array
+{
+    $schedule = [];
+    foreach (LAWYER_WEEK_DAYS as $day) {
+        $schedule[$day] = [
+            'enabled' => in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], true),
+            'start' => '09:00:00',
+            'end' => '17:00:00',
+        ];
+    }
+
+    return $schedule;
+}
+
+function getLawyerWorkingHours(PDO $pdo, int $lawyerId): array
+{
+    ensureLawyerWorkingHoursTable($pdo);
+    $schedule = getDefaultWorkingHoursSchedule();
+
+    if ($lawyerId <= 0) {
+        return $schedule;
+    }
+
+    $stmt = $pdo->prepare('SELECT day_of_week, start_time, end_time, is_available FROM lawyer_availability WHERE lawyer_id = ?');
+    $stmt->execute([$lawyerId]);
+
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $day = strtolower((string) $row['day_of_week']);
+        if (!isset($schedule[$day])) {
+            continue;
+        }
+        $schedule[$day] = [
+            'enabled' => (bool) $row['is_available'],
+            'start' => normalizeAvailabilityTime((string) $row['start_time']),
+            'end' => normalizeAvailabilityTime((string) $row['end_time']),
+        ];
+    }
+
+    return $schedule;
+}
+
+function lawyerHasSavedWorkingHours(PDO $pdo, int $lawyerId): bool
+{
+    if ($lawyerId <= 0) {
+        return false;
+    }
+
+    ensureLawyerWorkingHoursTable($pdo);
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM lawyer_availability WHERE lawyer_id = ?');
+    $stmt->execute([$lawyerId]);
+
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+function saveLawyerWorkingHours(PDO $pdo, int $lawyerId, array $postedDays): void
+{
+    if ($lawyerId <= 0) {
+        throw new InvalidArgumentException('Invalid lawyer id.');
+    }
+
+    ensureLawyerWorkingHoursTable($pdo);
+    $pdo->prepare('DELETE FROM lawyer_availability WHERE lawyer_id = ?')->execute([$lawyerId]);
+
+    $insert = $pdo->prepare('
+        INSERT INTO lawyer_availability (lawyer_id, day_of_week, start_time, end_time, is_available)
+        VALUES (?, ?, ?, ?, ?)
+    ');
+
+    foreach (LAWYER_WEEK_DAYS as $day) {
+        $dayData = $postedDays[$day] ?? [];
+        $enabled = !empty($dayData['enabled']);
+        $start = normalizeAvailabilityTime((string) ($dayData['start'] ?? '09:00'));
+        $end = normalizeAvailabilityTime((string) ($dayData['end'] ?? '17:00'));
+
+        if (strtotime($start) >= strtotime($end)) {
+            throw new InvalidArgumentException('End time must be after start time for ' . ucfirst($day) . '.');
+        }
+
+        $insert->execute([$lawyerId, $day, $start, $end, $enabled ? 1 : 0]);
+    }
+}
+
+function isAppointmentWithinWorkingHours(array $workingHours, string $dayOfWeek, string $requestedTime, string $endTime): bool
+{
+    $day = strtolower($dayOfWeek);
+    if (!isset($workingHours[$day]) || empty($workingHours[$day]['enabled'])) {
+        return false;
+    }
+
+    $requestedTime = normalizeAvailabilityTime($requestedTime);
+    $endTime = normalizeAvailabilityTime($endTime);
+
+    return $requestedTime >= $workingHours[$day]['start'] && $endTime <= $workingHours[$day]['end'];
+}
+
+function isSlotWithinWorkingHours(array $workingHours, string $dayOfWeek, string $startTime, string $endTime): bool
+{
+    return isAppointmentWithinWorkingHours($workingHours, $dayOfWeek, $startTime, $endTime);
+}
+
+function loadLawyerWorkingHoursForBooking(PDO $pdo, array $lawyerIds): array
+{
+    $workingHours = [];
+    $hasWorkingHours = [];
+
+    foreach ($lawyerIds as $lawyerId) {
+        $lawyerId = (int) $lawyerId;
+        if ($lawyerId <= 0) {
+            continue;
+        }
+        $workingHours[$lawyerId] = getLawyerWorkingHours($pdo, $lawyerId);
+        $hasWorkingHours[$lawyerId] = lawyerHasSavedWorkingHours($pdo, $lawyerId);
+    }
+
+    return ['workingHours' => $workingHours, 'hasWorkingHours' => $hasWorkingHours];
+}
+
 /**
  * Build availability maps for booking UIs (keyed by lawyer id).
  *
- * @return array{byDate: array<int, array<string, list<array{start: string, end: string, type: string}>>>, byDay: array<int, array<string, list<array{start: string, end: string, type: string}>>>, hasSchedule: array<int, bool>}
+ * @return array{byDate: array<int, array<string, list<array{start: string, end: string, type: string}>>>, byDay: array<int, array<string, list<array{start: string, end: string, type: string}>>>, hasSchedule: array<int, bool>, workingHours: array<int, array<string, array{enabled: bool, start: string, end: string}>>, hasWorkingHours: array<int, bool>}
  */
 function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
 {
@@ -116,8 +268,16 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
     }
 
     $lawyerIds = array_values(array_filter(array_map('intval', $lawyerIds)));
+    $workingHourMaps = loadLawyerWorkingHoursForBooking($pdo, $lawyerIds);
+
     if (empty($lawyerIds)) {
-        return ['byDate' => $byDate, 'byDay' => $byDay, 'hasSchedule' => $hasSchedule];
+        return [
+            'byDate' => $byDate,
+            'byDay' => $byDay,
+            'hasSchedule' => $hasSchedule,
+            'workingHours' => $workingHourMaps['workingHours'],
+            'hasWorkingHours' => $workingHourMaps['hasWorkingHours'],
+        ];
     }
 
     $placeholders = implode(',', array_fill(0, count($lawyerIds), '?'));
@@ -158,7 +318,13 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
         $byDay[$lawyerId][$dayKey][] = $entry;
     }
 
-    return ['byDate' => $byDate, 'byDay' => $byDay, 'hasSchedule' => $hasSchedule];
+    return [
+        'byDate' => $byDate,
+        'byDay' => $byDay,
+        'hasSchedule' => $hasSchedule,
+        'workingHours' => $workingHourMaps['workingHours'],
+        'hasWorkingHours' => $workingHourMaps['hasWorkingHours'],
+    ];
 }
 
 /**
@@ -252,6 +418,23 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
     }
 
     $endTime = date('H:i:s', strtotime('+' . $durationMinutes . ' minutes', $startTs));
+    $hasWorkingHours = lawyerHasSavedWorkingHours($pdo, $lawyerId);
+    $workingHours = $hasWorkingHours ? getLawyerWorkingHours($pdo, $lawyerId) : getDefaultWorkingHoursSchedule();
+
+    if ($hasWorkingHours && !isAppointmentWithinWorkingHours($workingHours, $dayOfWeek, $requestedTime, $endTime)) {
+        $daySchedule = $workingHours[$dayOfWeek] ?? null;
+        if (!$daySchedule || empty($daySchedule['enabled'])) {
+            return [
+                'ok' => false,
+                'message' => 'This lawyer does not work on the selected day. Please choose another date.',
+            ];
+        }
+
+        return [
+            'ok' => false,
+            'message' => 'Selected time is outside the lawyer\'s working hours. Please choose a time within their schedule.',
+        ];
+    }
 
     $unavailableSql = "
         SELECT id FROM lawyer_time_slots
@@ -280,18 +463,6 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
         ];
     }
 
-    if (!lawyerHasPublishedAvailabilitySchedule($pdo, $lawyerId)) {
-        if (lawyerHasOverlappingAppointment($pdo, $lawyerId, $appointmentDate, $appointmentTime, $durationMinutes, $excludeAppointmentId)) {
-            return [
-                'ok' => false,
-                'message' => 'This lawyer already has an appointment at the selected time. Please choose another slot.',
-            ];
-        }
-
-        return ['ok' => true];
-    }
-
-    // Booking requires availability published for the exact calendar date (lawyer availability UI).
     $stmt = $pdo->prepare("
         SELECT COUNT(*) FROM lawyer_time_slots
         WHERE lawyer_id = ?
@@ -300,29 +471,40 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
           AND slot_date = ?
     ");
     $stmt->execute([$lawyerId, $appointmentDate]);
-    if ((int) $stmt->fetchColumn() === 0) {
+    $hasExplicitAvailableOnDate = (int) $stmt->fetchColumn() > 0;
+
+    if ($hasExplicitAvailableOnDate) {
+        $stmt = $pdo->prepare("
+            SELECT id FROM lawyer_time_slots
+            WHERE lawyer_id = ?
+              AND slot_type = 'available'
+              AND slot_date IS NOT NULL
+              AND slot_date = ?
+              AND start_time <= ?
+              AND end_time >= ?
+            LIMIT 1
+        ");
+        $stmt->execute([$lawyerId, $appointmentDate, $requestedTime, $endTime]);
+        if (!$stmt->fetch()) {
+            return [
+                'ok' => false,
+                'message' => 'This lawyer is not available at the selected time. Please choose a time within their published availability.',
+            ];
+        }
+    } elseif (!$hasWorkingHours && lawyerHasPublishedAvailabilitySchedule($pdo, $lawyerId)) {
         return [
             'ok' => false,
             'message' => 'No available times on this date. Choose another date.',
         ];
-    }
+    } elseif (!$hasWorkingHours && !lawyerHasPublishedAvailabilitySchedule($pdo, $lawyerId)) {
+        if (lawyerHasOverlappingAppointment($pdo, $lawyerId, $appointmentDate, $appointmentTime, $durationMinutes, $excludeAppointmentId)) {
+            return [
+                'ok' => false,
+                'message' => 'This lawyer already has an appointment at the selected time. Please choose another slot.',
+            ];
+        }
 
-    $stmt = $pdo->prepare("
-        SELECT id FROM lawyer_time_slots
-        WHERE lawyer_id = ?
-          AND slot_type = 'available'
-          AND slot_date IS NOT NULL
-          AND slot_date = ?
-          AND start_time <= ?
-          AND end_time >= ?
-        LIMIT 1
-    ");
-    $stmt->execute([$lawyerId, $appointmentDate, $requestedTime, $endTime]);
-    if (!$stmt->fetch()) {
-        return [
-            'ok' => false,
-            'message' => 'This lawyer is not available at the selected time. Please choose a time within their published availability.',
-        ];
+        return ['ok' => true];
     }
 
     if (lawyerHasOverlappingAppointment($pdo, $lawyerId, $appointmentDate, $appointmentTime, $durationMinutes, $excludeAppointmentId)) {

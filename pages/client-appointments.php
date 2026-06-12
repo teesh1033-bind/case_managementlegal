@@ -219,11 +219,15 @@ try {
 // ── Availability maps ─────────────────────────────────────────────────────────
 $lawyerAvailabilityByDate = [];
 $lawyerHasAvailability    = [];
+$lawyerWorkingHours       = [];
+$lawyerHasWorkingHours    = [];
 try {
     $lawyerIds = array_map(fn($l) => (int) $l['id'], $availableLawyers);
     $maps = loadLawyerAvailabilityForBooking($pdo, $lawyerIds);
     $lawyerAvailabilityByDate = $maps['byDate'];
     $lawyerHasAvailability    = $maps['hasSchedule'];
+    $lawyerWorkingHours       = $maps['workingHours'] ?? [];
+    $lawyerHasWorkingHours    = $maps['hasWorkingHours'] ?? [];
 } catch (PDOException $e) {}
 
 // ── Build selects ─────────────────────────────────────────────────────────────
@@ -859,6 +863,8 @@ ob_start(); ?>
     <script>
     var lawyerAvailabilityByDate = <?= json_encode($lawyerAvailabilityByDate) ?>;
     var lawyerHasAvailability    = <?= json_encode($lawyerHasAvailability) ?>;
+    var lawyerWorkingHours       = <?= json_encode($lawyerWorkingHours) ?>;
+    var lawyerHasWorkingHours    = <?= json_encode($lawyerHasWorkingHours) ?>;
     var selectedTime             = null;
     var aptModalInstance         = null;
     function getSlotsForDate(lawyerId, dateVal) {
@@ -898,6 +904,51 @@ ob_start(); ?>
 
     function hasSchedule(lawyerId) {
         return !!(lawyerHasAvailability[lawyerId] || lawyerHasAvailability[String(lawyerId)]);
+    }
+
+    function hasWorkingHoursConfig(lawyerId) {
+        return !!(lawyerHasWorkingHours[lawyerId] || lawyerHasWorkingHours[String(lawyerId)]);
+    }
+
+    function getDayOfWeekFromDate(dateVal) {
+        var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        return days[new Date(dateVal + 'T00:00:00').getDay()];
+    }
+
+    function getWorkingHoursForDate(lawyerId, dateVal) {
+        var schedule = lawyerWorkingHours[lawyerId] || lawyerWorkingHours[String(lawyerId)] || {};
+        return schedule[getDayOfWeekFromDate(dateVal)] || null;
+    }
+
+    function isWithinWorkingHours(lawyerId, dateVal, timeVal) {
+        if (!hasWorkingHoursConfig(lawyerId)) {
+            return true;
+        }
+        var day = getWorkingHoursForDate(lawyerId, dateVal);
+        if (!day || !day.enabled) {
+            return false;
+        }
+        var start = timeVal.length === 5 ? timeVal + ':00' : timeVal;
+        var endParts = start.split(':');
+        var endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1] || '0', 10) + 60;
+        var end = String(Math.floor(endMinutes / 60)).padStart(2, '0') + ':' + String(endMinutes % 60).padStart(2, '0') + ':00';
+        return start >= day.start && end <= day.end;
+    }
+
+    function isTimeBookable(lawyerId, dateVal, timeVal, allSlots, availableSlots, published) {
+        if (!isWithinWorkingHours(lawyerId, dateVal, timeVal)) {
+            return false;
+        }
+        if (isPastTime(dateVal, timeVal) || isBlockedByUnavailable(timeVal, allSlots)) {
+            return false;
+        }
+        if (availableSlots.length > 0) {
+            return isAvailable(timeVal, availableSlots);
+        }
+        if (published && !hasWorkingHoursConfig(lawyerId)) {
+            return false;
+        }
+        return true;
     }
 
     function setBookBtn(on) {
@@ -981,14 +1032,23 @@ ob_start(); ?>
         var allSlots = getSlotsForDate(lawyerId, dateVal);
         var published = hasSchedule(lawyerId);
         var availableSlots = getAvailableSlots(lawyerId, dateVal);
+        var dayHours = getWorkingHoursForDate(lawyerId, dateVal);
 
-        if (published && !availableSlots.length) {
+        if (hasWorkingHoursConfig(lawyerId) && (!dayHours || !dayHours.enabled)) {
+            trigger.disabled = true;
+            showDateAlert('warning', 'This lawyer does not work on the selected day.');
+            return;
+        }
+
+        if (published && !availableSlots.length && !hasWorkingHoursConfig(lawyerId)) {
             trigger.disabled = true;
             showDateAlert('warning', 'No available times on this date. Choose another date.');
             return;
         }
 
-        if (!published) {
+        if (hasWorkingHoursConfig(lawyerId)) {
+            showDateAlert('info', 'Times are limited to the lawyer\'s working hours.');
+        } else if (!published) {
             showDateAlert('info', 'Standard business hours are open for booking.');
         } else {
             hideDateAlert();
@@ -998,12 +1058,7 @@ ob_start(); ?>
         document.querySelectorAll('.ca-time-dd-opt').forEach(function(opt) {
             var t = opt.getAttribute('data-time');
             opt.classList.remove('selected');
-            if (isPastTime(dateVal, t) || isBlockedByUnavailable(t, allSlots)) {
-                opt.className = 'ca-time-dd-opt';
-                opt.setAttribute('aria-disabled', 'true');
-                return;
-            }
-            if (!published || isAvailable(t, availableSlots)) {
+            if (isTimeBookable(lawyerId, dateVal, t, allSlots, availableSlots, published)) {
                 opt.className = 'ca-time-dd-opt bookable';
                 opt.setAttribute('aria-disabled', 'false');
                 anyAvail = true;
@@ -1027,16 +1082,10 @@ ob_start(); ?>
         if (!timeVal)  { alert('Please select a time slot.'); return false; }
         var allSlots = getSlotsForDate(lawyerId, dateVal);
         var published = hasSchedule(lawyerId);
-        if (isPastTime(dateVal, timeVal) || isBlockedByUnavailable(timeVal, allSlots)) {
+        var availableSlots = getAvailableSlots(lawyerId, dateVal);
+        if (!isTimeBookable(lawyerId, dateVal, timeVal, allSlots, availableSlots, published)) {
             alert('Selected time is not available. Please choose another slot.');
             return false;
-        }
-        if (published) {
-            var slots = getAvailableSlots(lawyerId, dateVal);
-            if (!slots.length || !isAvailable(timeVal, slots)) {
-                alert('Selected time is not available. Please choose another slot.');
-                return false;
-            }
         }
         return true;
     }

@@ -338,6 +338,8 @@ try {
 $lawyerAvailabilityByDate = [];
 $lawyerAvailabilityByDay = [];
 $lawyerHasSchedule = [];
+$lawyerWorkingHours = [];
+$lawyerHasWorkingHours = [];
 try {
     $lawyerIdsForAvailability = array_map(static function ($lawyer) {
         return (int) $lawyer['id'];
@@ -346,10 +348,14 @@ try {
     $lawyerAvailabilityByDate = $availabilityMaps['byDate'];
     $lawyerAvailabilityByDay = $availabilityMaps['byDay'];
     $lawyerHasSchedule = $availabilityMaps['hasSchedule'];
+    $lawyerWorkingHours = $availabilityMaps['workingHours'] ?? [];
+    $lawyerHasWorkingHours = $availabilityMaps['hasWorkingHours'] ?? [];
 } catch (PDOException $e) {
     $lawyerAvailabilityByDate = [];
     $lawyerAvailabilityByDay = [];
     $lawyerHasSchedule = [];
+    $lawyerWorkingHours = [];
+    $lawyerHasWorkingHours = [];
 }
 
 $lawyerOptionsCatalog = [];
@@ -571,6 +577,8 @@ $html = <<<'HTML'
 		const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
 		const lawyerAvailabilityByDay = {LAWYER_AVAILABILITY_BY_DAY_JSON};
 		const lawyerHasSchedule = {LAWYER_HAS_SCHEDULE_JSON};
+		const lawyerWorkingHours = {LAWYER_WORKING_HOURS_JSON};
+		const lawyerHasWorkingHours = {LAWYER_HAS_WORKING_HOURS_JSON};
 		const initialAppointmentTime = '{TIME_VALUE}';
 		const initialDurationMinutes = parseInt('{DURATION_MINUTES}', 10) || 60;
 		const NO_AVAILABILITY_ON_DATE_MSG = 'No available times on this date. Choose another date.';
@@ -705,6 +713,28 @@ $html = <<<'HTML'
                 return !!(lawyerHasSchedule[lawyerId] || lawyerHasSchedule[String(lawyerId)]);
             }
 
+            function lawyerHasWorkingHoursConfig(lawyerId) {
+                return !!(lawyerHasWorkingHours[lawyerId] || lawyerHasWorkingHours[String(lawyerId)]);
+            }
+
+            function getWorkingHoursForDate(lawyerId, dateValue) {
+                var schedule = lawyerWorkingHours[lawyerId] || lawyerWorkingHours[String(lawyerId)] || {};
+                return schedule[getDayOfWeekFromDate(dateValue)] || null;
+            }
+
+            function isWithinWorkingHours(timeValue, lawyerId, dateValue, durationMinutes) {
+                if (!lawyerHasWorkingHoursConfig(lawyerId)) {
+                    return true;
+                }
+                var day = getWorkingHoursForDate(lawyerId, dateValue);
+                if (!day || !day.enabled) {
+                    return false;
+                }
+                var startTime = normalizeTimeValue(timeValue);
+                var endTime = addDurationToTime(startTime, durationMinutes);
+                return startTime >= day.start && endTime <= day.end;
+            }
+
             function getDayOfWeekFromDate(dateValue) {
                 var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
                 var date = new Date(dateValue + 'T00:00:00');
@@ -738,15 +768,21 @@ $html = <<<'HTML'
                     return true;
                 }
 
-                if (!lawyerHasPublishedSchedule(lawyerId) || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                if (lawyerHasWorkingHoursConfig(lawyerId)) {
+                    var dayHours = getWorkingHoursForDate(lawyerId, dateValue);
+                    if (!dayHours || !dayHours.enabled) {
+                        return true;
+                    }
+                } else if (!lawyerHasPublishedSchedule(lawyerId) || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
                     return true;
                 }
 
                 var slots = getSlotsForLawyerAndDate(lawyerId, dateValue);
                 var durationMinutes = getDurationMinutes();
+                var published = lawyerHasPublishedSchedule(lawyerId);
 
                 return !getStandardSlotTimes(durationMinutes).some(function(slotValue) {
-                    return isTimeSlotBookable(slotValue, lawyerId, dateValue, slots, true, durationMinutes);
+                    return isTimeSlotBookable(slotValue, lawyerId, dateValue, slots, published, durationMinutes);
                 });
             }
 
@@ -858,17 +894,20 @@ $html = <<<'HTML'
                 if (dateValue === now.date && timeValue < now.time) {
                     return false;
                 }
+                if (!isWithinWorkingHours(timeValue, lawyerId, dateValue, durationMinutes)) {
+                    return false;
+                }
                 if (isBlockedByUnavailable(timeValue, slots, durationMinutes)) {
                     return false;
                 }
-                if (!hasSchedule) {
-                    return true;
-                }
                 var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
-                if (!availableSlots.length) {
+                if (availableSlots.length > 0) {
+                    return isWithinAvailable(timeValue, slots, durationMinutes);
+                }
+                if (hasSchedule && !lawyerHasWorkingHoursConfig(lawyerId)) {
                     return false;
                 }
-                return isWithinAvailable(timeValue, slots, durationMinutes);
+                return true;
             }
 
             function rebuildTimeSelectOptions(durationMinutes, preservedTime) {
@@ -918,7 +957,24 @@ $html = <<<'HTML'
                 var hasSchedule = lawyerHasPublishedSchedule(lawyerId);
                 var hasBookableSlot = false;
 
-                if (hasSchedule && !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                if (lawyerHasWorkingHoursConfig(lawyerId)) {
+                    var dayHours = getWorkingHoursForDate(lawyerId, dateValue);
+                    if (!dayHours || !dayHours.enabled) {
+                        timeInput.querySelectorAll('.time-option').forEach(function(option) {
+                            if (option.value) {
+                                option.disabled = true;
+                                option.classList.add('lp-time-unavailable');
+                            }
+                        });
+                        timeInput.value = '';
+                        setAvailabilityMessage(
+                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer does not work on the selected day.</div>',
+                            true
+                        );
+                        setSubmitEnabled(false);
+                        return;
+                    }
+                } else if (hasSchedule && !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
                     timeInput.querySelectorAll('.time-option').forEach(function(option) {
                         if (option.value) {
                             option.disabled = true;
@@ -984,7 +1040,18 @@ $html = <<<'HTML'
                 }
 
                 var hasSchedule = lawyerHasPublishedSchedule(lawyerId);
-                if (hasSchedule && !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                if (lawyerHasWorkingHoursConfig(lawyerId)) {
+                    var dayHours = getWorkingHoursForDate(lawyerId, dateValue);
+                    if (!dayHours || !dayHours.enabled) {
+                        timeInput.setCustomValidity('This lawyer does not work on the selected day.');
+                        setAvailabilityMessage(
+                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> This lawyer does not work on the selected day.</div>',
+                            true
+                        );
+                        setSubmitEnabled(false);
+                        return false;
+                    }
+                } else if (hasSchedule && !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
                     timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
                     setAvailabilityMessage(
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
@@ -1027,22 +1094,32 @@ $html = <<<'HTML'
                     return false;
                 }
 
+                if (!isWithinWorkingHours(timeValue, lawyerId, dateValue, durationMinutes)) {
+                    timeInput.setCustomValidity('Selected time is outside the lawyer\'s working hours.');
+                    setAvailabilityMessage(
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s working hours.</div>',
+                        true
+                    );
+                    setSubmitEnabled(false);
+                    return false;
+                }
+
                 if (hasSchedule) {
                     var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
-                    if (availableSlots.length === 0) {
-                        timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
+                    if (availableSlots.length > 0 && !isWithinAvailable(timeValue, slots, durationMinutes)) {
+                        timeInput.setCustomValidity('Selected time is outside the lawyer\'s available hours.');
                         setAvailabilityMessage(
-                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
+                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
                             true
                         );
                         setSubmitEnabled(false);
                         return false;
                     }
 
-                    if (!isWithinAvailable(timeValue, slots, durationMinutes)) {
-                        timeInput.setCustomValidity('Selected time is outside the lawyer\'s available hours.');
+                    if (availableSlots.length === 0 && !lawyerHasWorkingHoursConfig(lawyerId)) {
+                        timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
                         setAvailabilityMessage(
-                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
+                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
                             true
                         );
                         setSubmitEnabled(false);
@@ -1176,6 +1253,8 @@ $html = str_replace('{DURATION_30_SELECTED}', $durationMinutesForm === 30 ? ' se
 $html = str_replace('{LAWYER_AVAILABILITY_BY_DATE_JSON}', json_encode($lawyerAvailabilityByDate), $html);
 $html = str_replace('{LAWYER_AVAILABILITY_BY_DAY_JSON}', json_encode($lawyerAvailabilityByDay), $html);
 $html = str_replace('{LAWYER_HAS_SCHEDULE_JSON}', json_encode($lawyerHasSchedule), $html);
+$html = str_replace('{LAWYER_WORKING_HOURS_JSON}', json_encode($lawyerWorkingHours), $html);
+$html = str_replace('{LAWYER_HAS_WORKING_HOURS_JSON}', json_encode($lawyerHasWorkingHours), $html);
 $html = str_replace('{NOTES_VALUE}', htmlspecialchars($formData['notes']), $html);
 $html = str_replace('{SUBMIT_LABEL}', htmlspecialchars($submitLabel), $html);
 $html = str_replace('{CANCEL_EDIT_LINK}', $cancelLink, $html);
