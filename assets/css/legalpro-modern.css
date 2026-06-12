@@ -1,0 +1,913 @@
+/**
+ * LegalPro Modern — drop-in upgrade stylesheet
+ * Replace (or @import after) legalpro-admin-portal.css + dashboard-enhancements.css
+ * Tested against Argon Dashboard 2.1 base
+ */
+
+/* ============================================================
+   1. DESIGN TOKENS
+   ============================================================ */
+:root {
+    --lp-primary:        #5e72e4;
+    --lp-primary-dark:   #4a5fd4;
+    --lp-primary-light:  #eef0fc;
+    --lp-accent:         #11cdef;
+    --lp-success:        #2dce89;
+    --lp-warning:        #fb6340;
+    --lp-danger:         #f5365c;
+    --lp-info:           #11cdef;
+
+    /* Sidebar */
+    --lp-sidebar-bg:     #0f172a;
+    --lp-sidebar-width:  260px;
+    --lp-sidebar-collapsed: 72px;
+
+    /* Surfaces */
+    --lp-bg:             #f1f5f9;
+    --lp-surface:        #ffffff;
+    --lp-surface-2:      #f8fafc;
+    --lp-border:         rgba(0,0,0,0.07);
+    --lp-border-strong:  rgba(0,0,0,0.14);
+
+    /* Text */
+    --lp-text-primary:   #1e293b;
+    --lp-text-secondary: #64748b;
+    --lp-text-muted:     #94a3b8;
+
+    /* Radius */
+    --lp-r-sm:   8px;
+    --lp-r-md:   12px;
+    --lp-r-lg:   16px;
+    --lp-r-xl:   20px;
+
+    /* Shadow */
+    --lp-shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --lp-shadow-md:  0 4px 16px rgba(0,0,0,0.08);
+    --lp-shadow-lg:  0 8px 32px rgba(0,0,0,0.1);
+
+    /* Transitions */
+    --lp-ease:       0.18s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ============================================================
+   2. GLOBAL RESETS & BODY
+   ============================================================ */
+body.legalpro-admin-portal,
+body.legalpro-admin-portal.bg-gray-100 {
+    background: var(--lp-bg) !important;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--lp-text-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Hide the decorative stripe Argon injects */
+body.legalpro-admin-portal > .min-height-300 {
+    display: none !important;
+}
+
+/* ============================================================
+   3. SIDEBAR — full redesign
+   ============================================================ */
+body.legalpro-admin-portal .legalpro-admin-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: var(--lp-sidebar-width) !important;
+    max-width: var(--lp-sidebar-width) !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: var(--lp-sidebar-bg) !important;
+    border-right: 1px solid rgba(255,255,255,0.04) !important;
+    box-shadow: 2px 0 20px rgba(0,0,0,0.25) !important;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0 !important;
+    transition: width var(--lp-ease) !important;
+}
+
+/* Collapsed state */
+body.legalpro-admin-portal.legalpro-sidebar-collapsed .legalpro-admin-sidebar {
+    width: var(--lp-sidebar-collapsed) !important;
+    max-width: var(--lp-sidebar-collapsed) !important;
+}
+body.legalpro-admin-portal.legalpro-sidebar-collapsed .legalpro-sidebar-brand__text,
+body.legalpro-admin-portal.legalpro-sidebar-collapsed .legalpro-sidebar-nav__label {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    display: inline-block !important;
+    transition: opacity var(--lp-ease), width var(--lp-ease);
+}
+
+/* Brand */
+body.legalpro-admin-portal .legalpro-sidebar-brand {
+    padding: 1.5rem 1.1rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+body.legalpro-admin-portal .legalpro-sidebar-brand__link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    flex: 1;
+    min-width: 0;
+}
+body.legalpro-admin-portal .legalpro-sidebar-brand__logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.9);
+    padding: 4px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+body.legalpro-admin-portal .legalpro-sidebar-brand__name {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+}
+body.legalpro-admin-portal .legalpro-sidebar-brand__role {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: rgba(255,255,255,0.38);
+    margin-top: 2px;
+}
+body.legalpro-admin-portal .legalpro-sidebar-collapse {
+    color: rgba(255,255,255,0.35) !important;
+    transition: color var(--lp-ease);
+}
+body.legalpro-admin-portal .legalpro-sidebar-collapse:hover {
+    color: rgba(255,255,255,0.7) !important;
+}
+
+/* Nav */
+body.legalpro-admin-portal .legalpro-sidebar-nav-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0.65rem;
+    scrollbar-width: none;
+}
+body.legalpro-admin-portal .legalpro-sidebar-nav-wrap::-webkit-scrollbar { display: none; }
+
+body.legalpro-admin-portal .legalpro-sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.62rem 0.9rem;
+    margin: 0.1rem 0;
+    border-radius: var(--lp-r-md);
+    font-size: 0.855rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.58) !important;
+    transition: background var(--lp-ease), color var(--lp-ease);
+    white-space: nowrap;
+}
+body.legalpro-admin-portal .legalpro-sidebar-nav .nav-link:hover {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.9) !important;
+}
+body.legalpro-admin-portal .legalpro-sidebar-nav .nav-link.active {
+    background: rgba(94,114,228,0.22) !important;
+    color: #a5b4fc !important;
+    box-shadow: inset 3px 0 0 #5e72e4;
+}
+body.legalpro-admin-portal .legalpro-sidebar-nav__icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+body.legalpro-admin-portal .legalpro-sidebar-nav__icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ============================================================
+   4. MAIN CONTENT AREA
+   ============================================================ */
+body.legalpro-admin-portal .main-content {
+    margin-left: var(--lp-sidebar-width) !important;
+    background: var(--lp-bg);
+    min-height: 100vh;
+    transition: margin-left var(--lp-ease);
+}
+body.legalpro-admin-portal.legalpro-sidebar-collapsed .main-content {
+    margin-left: var(--lp-sidebar-collapsed) !important;
+}
+
+/* ============================================================
+   5. TOP NAVBAR
+   ============================================================ */
+body.legalpro-admin-portal .navbar.navbar-main {
+    background: var(--lp-surface) !important;
+    border-bottom: 1px solid var(--lp-border) !important;
+    border-radius: 0 !important;
+    padding: 0.9rem 1.5rem !important;
+    box-shadow: var(--lp-shadow-sm) !important;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    backdrop-filter: blur(12px);
+}
+body.legalpro-admin-portal .navbar.navbar-main .navbar-brand h6,
+body.legalpro-admin-portal .navbar.navbar-main h6.font-weight-bolder {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--lp-text-primary);
+    margin-bottom: 0;
+}
+body.legalpro-admin-portal .dashboard-welcome-sub {
+    font-size: 0.78rem;
+    color: var(--lp-text-secondary);
+    font-weight: 500;
+}
+
+/* Notification bell */
+body.legalpro-admin-portal .navbar-main .nav-link.p-0 {
+    color: var(--lp-text-secondary) !important;
+    transition: color var(--lp-ease);
+}
+body.legalpro-admin-portal .navbar-main .nav-link.p-0:hover {
+    color: var(--lp-primary) !important;
+}
+
+/* ============================================================
+   6. CARDS — global upgrade
+   ============================================================ */
+body.legalpro-admin-portal .card {
+    border: 1px solid var(--lp-border) !important;
+    border-radius: var(--lp-r-lg) !important;
+    box-shadow: var(--lp-shadow-sm) !important;
+    background: var(--lp-surface) !important;
+    transition: transform var(--lp-ease), box-shadow var(--lp-ease);
+    overflow: hidden;
+}
+body.legalpro-admin-portal .card:hover {
+    box-shadow: var(--lp-shadow-md) !important;
+}
+body.legalpro-admin-portal .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--lp-border) !important;
+    padding: 1.1rem 1.4rem 1rem !important;
+}
+body.legalpro-admin-portal .card-body {
+    padding: 1.25rem 1.4rem !important;
+}
+
+/* ============================================================
+   7. AT-A-GLANCE STRIP
+   ============================================================ */
+.dashboard-glance {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+}
+.dashboard-glance__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    background: var(--lp-surface);
+    border-radius: var(--lp-r-lg);
+    border: 1px solid var(--lp-border);
+    box-shadow: var(--lp-shadow-sm);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--lp-ease), box-shadow var(--lp-ease), border-color var(--lp-ease);
+}
+.dashboard-glance__item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--lp-shadow-md);
+    border-color: var(--lp-border-strong);
+    color: inherit;
+}
+.dashboard-glance-icon-wrap {
+    width: 2.6rem;
+    height: 2.6rem;
+    min-width: 2.6rem;
+    border-radius: var(--lp-r-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.dashboard-glance-icon-wrap--primary { background: rgba(94,114,228,0.12); }
+.dashboard-glance-icon-wrap--info    { background: rgba(17,205,239,0.12); }
+.dashboard-glance-icon-wrap--warning { background: rgba(251,99,64,0.12); }
+.dashboard-glance-icon-wrap--success { background: rgba(45,206,137,0.12); }
+
+.dashboard-glance__value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--lp-text-primary);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+.dashboard-glance__label {
+    font-size: 0.7rem;
+    color: var(--lp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    margin-top: 1px;
+}
+
+/* ============================================================
+   8. STAT CARDS
+   ============================================================ */
+.dashboard-stat-card {
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+.dashboard-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--lp-primary);
+    opacity: 0;
+    transition: opacity var(--lp-ease);
+}
+.dashboard-stat-card:hover::before { opacity: 1; }
+.dashboard-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--lp-shadow-lg) !important;
+}
+.dashboard-stat-card .numbers p.text-sm {
+    font-size: 0.68rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--lp-text-muted) !important;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+}
+.dashboard-stat-card .numbers h5 {
+    font-size: 1.65rem !important;
+    font-weight: 800 !important;
+    color: var(--lp-text-primary) !important;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+}
+.dashboard-stat-card .numbers p.mb-0 {
+    font-size: 0.75rem;
+    color: var(--lp-text-secondary);
+}
+.dashboard-stat-icon-wrap {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--lp-r-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    float: right;
+}
+.dashboard-stat-icon-wrap--primary { background: rgba(94,114,228,0.12); }
+.dashboard-stat-icon-wrap--danger  { background: rgba(245,54,92,0.12); }
+.dashboard-stat-icon-wrap--success { background: rgba(45,206,137,0.12); }
+.dashboard-stat-icon-wrap--warning { background: rgba(251,99,64,0.12); }
+
+/* ============================================================
+   9. QUICK ACTIONS
+   ============================================================ */
+.dashboard-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.dashboard-quick-actions .btn {
+    border-radius: 999px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    padding: 0.4rem 1.1rem !important;
+    transition: all var(--lp-ease) !important;
+}
+.dashboard-quick-actions .btn-white {
+    background: #fff;
+    color: var(--lp-primary) !important;
+    border: 1px solid rgba(94,114,228,0.3);
+    box-shadow: var(--lp-shadow-sm);
+}
+.dashboard-quick-actions .btn-white:hover {
+    background: var(--lp-primary);
+    color: #fff !important;
+    border-color: var(--lp-primary);
+}
+.dashboard-quick-actions .btn-outline-white {
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.25);
+}
+
+/* ============================================================
+   10. RECENT CASES LIST
+   ============================================================ */
+.dashboard-recent-item {
+    padding: 0.8rem 0.9rem;
+    border-radius: var(--lp-r-md);
+    transition: background var(--lp-ease);
+    border: 1px solid transparent;
+}
+.dashboard-recent-item:hover {
+    background: var(--lp-primary-light);
+    border-color: rgba(94,114,228,0.15);
+}
+.dashboard-recent-item h6 {
+    font-size: 0.83rem !important;
+    color: var(--lp-text-primary);
+}
+.dashboard-recent-item .text-xs {
+    font-size: 0.73rem !important;
+    color: var(--lp-text-muted);
+}
+
+/* ============================================================
+   11. CALENDAR HUB
+   ============================================================ */
+.dashboard-calendar-hub {
+    border-radius: var(--lp-r-xl);
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    box-shadow: var(--lp-shadow-sm);
+    overflow: hidden;
+}
+.dashboard-calendar-hub__head {
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--lp-border);
+}
+.dashboard-calendar-hub__body {
+    padding: 1.25rem;
+}
+.dashboard-calendar-layout {
+    display: grid;
+    grid-template-columns: 1fr 272px;
+    gap: 1.25rem;
+    align-items: start;
+}
+@media (max-width: 991px) {
+    .dashboard-calendar-layout { grid-template-columns: 1fr; }
+}
+
+/* Legend pills */
+.dashboard-legend-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+.dashboard-legend-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.71rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+}
+.dashboard-legend-pill i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+}
+.dashboard-legend-pill--pending  { background: rgba(251,99,64,0.1);  color: #fb6340; }
+.dashboard-legend-pill--accepted { background: rgba(45,206,137,0.1); color: #2dce89; }
+.dashboard-legend-pill--rejected { background: rgba(245,54,92,0.1);  color: #f5365c; }
+
+/* FullCalendar overrides */
+#dashboardCalendar .fc-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+#dashboardCalendar .fc-toolbar-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--lp-text-primary);
+}
+#dashboardCalendar .fc-button {
+    background: transparent !important;
+    border: 1px solid var(--lp-border) !important;
+    color: var(--lp-text-secondary) !important;
+    border-radius: var(--lp-r-sm) !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    padding: 0.35rem 0.8rem !important;
+    box-shadow: none !important;
+    transition: all var(--lp-ease) !important;
+}
+#dashboardCalendar .fc-button:hover,
+#dashboardCalendar .fc-button-active {
+    background: var(--lp-primary) !important;
+    border-color: var(--lp-primary) !important;
+    color: #fff !important;
+}
+#dashboardCalendar .fc-day-today { background: rgba(94,114,228,0.06) !important; }
+#dashboardCalendar .fc-col-header-cell-cushion {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--lp-text-muted);
+}
+#dashboardCalendar .fc-daygrid-day-number {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--lp-text-secondary);
+}
+
+/* Calendar event pill */
+.dashboard-cal-event {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: rgba(94,114,228,0.08);
+    border: 1px solid rgba(94,114,228,0.15);
+    cursor: pointer;
+}
+.dashboard-cal-event__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.dashboard-cal-event__dot--pending  { background: #fb6340; }
+.dashboard-cal-event__dot--accepted { background: #2dce89; }
+.dashboard-cal-event__dot--rejected { background: #f5365c; }
+.dashboard-cal-event__text {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--lp-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Upcoming panel */
+.dashboard-upcoming-panel {
+    background: var(--lp-surface-2);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-r-lg);
+    overflow: hidden;
+    max-height: 480px;
+    display: flex;
+    flex-direction: column;
+}
+.dashboard-upcoming-panel__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--lp-border);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--lp-text-primary);
+}
+.dashboard-upcoming-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0.4rem 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,0,0,0.1) transparent;
+}
+.dashboard-upcoming-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.7rem 0.75rem;
+    border-radius: var(--lp-r-md);
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all var(--lp-ease);
+    margin-bottom: 0.25rem;
+}
+.dashboard-upcoming-item:hover {
+    background: var(--lp-surface);
+    border-color: var(--lp-border);
+    box-shadow: var(--lp-shadow-sm);
+}
+.dashboard-upcoming-item__time {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--lp-primary);
+    min-width: 46px;
+    line-height: 1.3;
+}
+.dashboard-upcoming-item__title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--lp-text-primary);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+.dashboard-upcoming-item__sub {
+    font-size: 0.7rem;
+    color: var(--lp-text-muted);
+    margin: 0;
+}
+.dashboard-upcoming-item--pending  .dashboard-upcoming-item__time { color: #fb6340; }
+.dashboard-upcoming-item--approved .dashboard-upcoming-item__time { color: #2dce89; }
+.dashboard-upcoming-item--rejected .dashboard-upcoming-item__time { color: #f5365c; }
+
+.dashboard-upcoming-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem 1rem;
+    color: var(--lp-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* ============================================================
+   12. MODAL (appointment detail)
+   ============================================================ */
+body.legalpro-admin-portal .modal-content {
+    border-radius: var(--lp-r-xl) !important;
+    border: 1px solid var(--lp-border) !important;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.14) !important;
+    overflow: hidden;
+}
+body.legalpro-admin-portal .modal-header {
+    padding: 1.15rem 1.4rem !important;
+    border-bottom: 1px solid var(--lp-border) !important;
+}
+body.legalpro-admin-portal .modal-body {
+    padding: 1.25rem 1.4rem !important;
+}
+body.legalpro-admin-portal .modal-body label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--lp-text-muted);
+    margin-bottom: 3px;
+    display: block;
+}
+body.legalpro-admin-portal .modal-body p.text-sm {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--lp-text-primary);
+}
+
+/* ============================================================
+   13. TABLES
+   ============================================================ */
+body.legalpro-admin-portal .table th {
+    font-size: 0.68rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.09em !important;
+    font-weight: 700 !important;
+    color: var(--lp-text-muted) !important;
+    border-bottom: 1px solid var(--lp-border) !important;
+    padding: 0.85rem 1rem !important;
+    background: var(--lp-surface-2) !important;
+}
+body.legalpro-admin-portal .table td {
+    font-size: 0.83rem !important;
+    color: var(--lp-text-primary) !important;
+    border-bottom: 1px solid var(--lp-border) !important;
+    padding: 0.85rem 1rem !important;
+    vertical-align: middle !important;
+}
+body.legalpro-admin-portal .table tbody tr {
+    transition: background var(--lp-ease);
+}
+body.legalpro-admin-portal .table tbody tr:hover td {
+    background: var(--lp-primary-light) !important;
+}
+
+/* ============================================================
+   14. BADGES
+   ============================================================ */
+body.legalpro-admin-portal .badge {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    border-radius: 6px !important;
+    padding: 0.3em 0.65em !important;
+}
+
+/* ============================================================
+   15. FORM CONTROLS
+   ============================================================ */
+body.legalpro-admin-portal .form-control,
+body.legalpro-admin-portal .form-select {
+    border-radius: var(--lp-r-md) !important;
+    border: 1px solid var(--lp-border-strong) !important;
+    font-size: 0.85rem !important;
+    padding: 0.6rem 0.9rem !important;
+    transition: border-color var(--lp-ease), box-shadow var(--lp-ease) !important;
+    background: var(--lp-surface) !important;
+    color: var(--lp-text-primary) !important;
+}
+body.legalpro-admin-portal .form-control:focus,
+body.legalpro-admin-portal .form-select:focus {
+    border-color: var(--lp-primary) !important;
+    box-shadow: 0 0 0 3px rgba(94,114,228,0.15) !important;
+    outline: none !important;
+}
+
+/* ============================================================
+   16. BUTTONS — global polish
+   ============================================================ */
+body.legalpro-admin-portal .btn {
+    border-radius: var(--lp-r-md) !important;
+    font-weight: 600 !important;
+    font-size: 0.82rem !important;
+    letter-spacing: 0.01em !important;
+    transition: all var(--lp-ease) !important;
+}
+body.legalpro-admin-portal .btn-sm {
+    padding: 0.42rem 0.9rem !important;
+    font-size: 0.78rem !important;
+}
+body.legalpro-admin-portal .bg-gradient-primary,
+body.legalpro-admin-portal .btn-primary {
+    background: linear-gradient(135deg, var(--lp-primary) 0%, #825ee4 100%) !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 14px rgba(94,114,228,0.35) !important;
+}
+body.legalpro-admin-portal .bg-gradient-primary:hover {
+    box-shadow: 0 6px 20px rgba(94,114,228,0.45) !important;
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   17. SEARCH BAR (if present in navbar)
+   ============================================================ */
+.lp-search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.lp-search-bar input {
+    background: var(--lp-surface-2) !important;
+    border: 1px solid var(--lp-border) !important;
+    border-radius: 999px !important;
+    padding: 0.42rem 1rem 0.42rem 2.4rem !important;
+    font-size: 0.82rem !important;
+    width: 220px;
+    transition: all var(--lp-ease) !important;
+}
+.lp-search-bar input:focus {
+    width: 280px;
+    border-color: var(--lp-primary) !important;
+    box-shadow: 0 0 0 3px rgba(94,114,228,0.12) !important;
+}
+.lp-search-bar svg {
+    position: absolute;
+    left: 0.75rem;
+    width: 15px;
+    height: 15px;
+    color: var(--lp-text-muted);
+    pointer-events: none;
+}
+
+/* ============================================================
+   18. FOOTER
+   ============================================================ */
+body.legalpro-admin-portal .footer {
+    background: transparent !important;
+    border-top: 1px solid var(--lp-border);
+    padding: 1.2rem 1.5rem !important;
+}
+body.legalpro-admin-portal .footer .copyright {
+    font-size: 0.77rem !important;
+    color: var(--lp-text-muted) !important;
+}
+
+/* ============================================================
+   19. SCROLLBAR (global)
+   ============================================================ */
+body.legalpro-admin-portal ::-webkit-scrollbar { width: 6px; height: 6px; }
+body.legalpro-admin-portal ::-webkit-scrollbar-track { background: transparent; }
+body.legalpro-admin-portal ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.12);
+    border-radius: 99px;
+}
+body.legalpro-admin-portal ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.22);
+}
+
+/* ============================================================
+   20. TOAST / ALERT NOTIFICATIONS
+   ============================================================ */
+.lp-toast-container {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    pointer-events: none;
+}
+.lp-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.85rem 1.1rem;
+    background: var(--lp-surface);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-r-lg);
+    box-shadow: var(--lp-shadow-lg);
+    min-width: 280px;
+    max-width: 360px;
+    pointer-events: all;
+    animation: lp-toast-in 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+.lp-toast__icon {
+    width: 32px; height: 32px; border-radius: var(--lp-r-sm);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 0.85rem;
+}
+.lp-toast--success .lp-toast__icon { background: rgba(45,206,137,0.12); color: #2dce89; }
+.lp-toast--warning .lp-toast__icon { background: rgba(251,99,64,0.12);  color: #fb6340; }
+.lp-toast--danger  .lp-toast__icon { background: rgba(245,54,92,0.12);  color: #f5365c; }
+.lp-toast--info    .lp-toast__icon { background: rgba(17,205,239,0.12); color: #11cdef; }
+.lp-toast__body { flex: 1; }
+.lp-toast__title {
+    font-size: 0.82rem; font-weight: 700;
+    color: var(--lp-text-primary); margin-bottom: 2px;
+}
+.lp-toast__msg {
+    font-size: 0.76rem; color: var(--lp-text-secondary);
+}
+@keyframes lp-toast-in {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ============================================================
+   21. KEYBOARD SHORTCUTS BAR (new feature hint)
+   ============================================================ */
+.lp-shortcut-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--lp-text-muted);
+}
+.lp-shortcut-hint kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px 6px;
+    border: 1px solid var(--lp-border-strong);
+    border-radius: 4px;
+    background: var(--lp-surface-2);
+    font-family: inherit;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--lp-text-secondary);
+    line-height: 1.6;
+    box-shadow: 0 1px 0 var(--lp-border-strong);
+}
+
+/* ============================================================
+   22. RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+    body.legalpro-admin-portal .main-content {
+        margin-left: 0 !important;
+    }
+    .dashboard-glance {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    body.legalpro-admin-portal .navbar.navbar-main {
+        padding: 0.75rem 1rem !important;
+    }
+    .dashboard-quick-actions { display: none; }
+}

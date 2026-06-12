@@ -35,6 +35,10 @@ if (!$invoice) {
     exit;
 }
 
+legalpro_require_financial_document_access(
+    isset($invoice['client_id']) ? (int) $invoice['client_id'] : null
+);
+
 $invoiceNumber = $invoice['invoice_number'] ?: ('INV-' . str_pad($invoiceId, 4, '0', STR_PAD_LEFT));
 $clientName = $invoice['client_name'] ?: 'Client';
 $clientEmail = $invoice['client_email'] ?: 'N/A';

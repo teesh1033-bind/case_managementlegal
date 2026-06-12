@@ -150,6 +150,10 @@ $messageHtml = $message !== ''
     . '</div>'
     : '';
 
+$clientPageNavbar = legalpro_render_client_page_navbar('My Profile', 'Profile', '', [
+    'include_search' => false,
+]);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -159,20 +163,18 @@ $html = <<<'HTML'
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>LegalPro - My Profile</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-    <link href="../assets/css/app-font-montserrat.css?v=5" rel="stylesheet" />
-    <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-profile-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-profile-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
-        <?php echo legalpro_render_client_page_navbar('My Profile', 'Profile', 'Search cases…', ['client_name' => $clientName]); ?>
+        {CLIENT_NAVBAR}
 
         <div class="container-fluid py-4">
             {MESSAGE}
@@ -265,6 +267,7 @@ $html = <<<'HTML'
 </html>
 HTML;
 
+$html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{FIRST_NAME}', htmlspecialchars($profile['first_name']), $html);
 $html = str_replace('{LAST_NAME}', htmlspecialchars($profile['last_name']), $html);

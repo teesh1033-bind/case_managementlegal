@@ -222,7 +222,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=19" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=22" rel="stylesheet" />
 	<?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-cases-page">
@@ -287,10 +287,12 @@ $html = <<<'HTML'
 									</thead>
 									<tbody id="casesTableBody">
 										{CASES_ROWS}
+										<tr id="casesFilterEmpty" class="d-none">
+											<td colspan="9" class="text-center text-muted text-sm py-4 border-0">No cases match your filters.</td>
+										</tr>
 									</tbody>
 								</table>
 							</div>
-							<p class="text-xs text-muted px-4 pb-3 mb-0 d-none" id="casesFilterEmpty">No cases match your filters.</p>
 						</div>
 					</div>
 				</div>

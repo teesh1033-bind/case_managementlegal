@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 $message = '';
 $messageType = '';
@@ -60,15 +61,19 @@ $statusOptions = [
     'overdue' => 'Overdue'
 ];
 
+$selectedCaseId = isset($_GET['case_id']) ? (int) $_GET['case_id'] : 0;
+$selectedClientId = isset($_GET['client_id']) ? (int) $_GET['client_id'] : 0;
+$prefillAmount = isset($_GET['amount']) ? (float) $_GET['amount'] : 0;
+
 $formData = [
     'invoice_id' => '',
     'invoice_number' => getNextInvoiceNumber($pdo),
-    'client_id' => '',
-    'case_id' => '',
-    'amount' => '',
+    'client_id' => $selectedClientId ?: '',
+    'case_id' => $selectedCaseId ?: '',
+    'amount' => $prefillAmount > 0 ? $prefillAmount : '',
     'issue_date' => date('Y-m-d'),
     'due_date' => date('Y-m-d', strtotime('+14 days')),
-    'status' => 'draft',
+    'status' => 'sent',
     'notes' => ''
 ];
 
@@ -237,6 +242,33 @@ if (isset($_GET['id']) && ctype_digit($_GET['id'])) {
         $message = 'Unable to load invoice: ' . htmlspecialchars($e->getMessage());
         $messageType = 'danger';
     }
+} elseif ($selectedCaseId > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT c.client_id, COALESCE(c.estimated_fees, 0) AS estimated_fees,
+                   COALESCE(SUM(p.amount), 0) AS paid_total
+            FROM cases c
+            LEFT JOIN payments p ON p.case_id = c.id
+            WHERE c.id = ?
+            GROUP BY c.id, c.client_id, c.estimated_fees
+        ");
+        $stmt->execute([$selectedCaseId]);
+        $casePrefill = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($casePrefill) {
+            $formData['case_id'] = $selectedCaseId;
+            if ($selectedClientId <= 0 && !empty($casePrefill['client_id'])) {
+                $formData['client_id'] = (int) $casePrefill['client_id'];
+            }
+            if ($prefillAmount <= 0) {
+                $remaining = max((float) $casePrefill['estimated_fees'] - (float) $casePrefill['paid_total'], 0);
+                if ($remaining > 0) {
+                    $formData['amount'] = $remaining;
+                }
+            }
+        }
+    } catch (PDOException $e) {
+        // Continue with basic case/client prefill from query string
+    }
 }
 
 try {
@@ -320,23 +352,16 @@ if (empty($invoices)) {
     $invoiceRows = '<tr><td colspan="7" class="text-center text-muted py-4">No invoices recorded yet.</td></tr>';
 } else {
     foreach ($invoices as $invoice) {
-        $statusLabel = isset($statusOptions[strtolower($invoice['status'])]) ? $statusOptions[strtolower($invoice['status'])] : ucfirst($invoice['status']);
-        $badgeClass = 'bg-gradient-secondary';
-        switch (strtolower($invoice['status'])) {
-            case 'paid':
-                $badgeClass = 'bg-gradient-success';
-                break;
-            case 'overdue':
-                $badgeClass = 'bg-gradient-danger';
-                break;
-            case 'sent':
-                $badgeClass = 'bg-gradient-info';
-                break;
-            default:
-                $badgeClass = 'bg-gradient-secondary';
-        }
+        $statusBadge = legalpro_invoice_status_badge((string) ($invoice['status'] ?? 'draft'));
+        $searchBlob = strtolower(
+            ($invoice['invoice_number'] ?? '') . ' '
+            . ($invoice['client_name'] ?? '') . ' '
+            . ($invoice['case_title'] ?? '') . ' '
+            . ($invoice['status'] ?? '') . ' '
+            . formatCurrency($invoice['amount'])
+        );
         $invoiceRows .= '
-        <tr>
+        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td>
                 <div class="d-flex flex-column">
                     <strong>' . htmlspecialchars($invoice['invoice_number']) . '</strong>
@@ -348,9 +373,7 @@ if (empty($invoices)) {
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($invoice['case_title'] ?: 'No case linked') . '</p>
             </td>
             <td class="text-center">' . htmlspecialchars(formatCurrency($invoice['amount'])) . '</td>
-            <td class="text-center">
-                <span class="badge ' . $badgeClass . '">' . htmlspecialchars($statusLabel) . '</span>
-            </td>
+            <td class="text-center">' . $statusBadge . '</td>
             <td class="text-center">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
             <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
@@ -403,6 +426,8 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+    <?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -505,6 +530,7 @@ $html = <<<'HTML'
                             <h6 class="mb-0">Invoice List</h6>
                         </div>
                         <div class="card-body px-0 pt-0 pb-2">
+                            {INVOICES_SEARCH}
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -517,8 +543,11 @@ $html = <<<'HTML'
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end opacity-7">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="invoicesTableBody">
                                         {INVOICE_ROWS}
+                                        <tr id="invoicesFilterEmpty" class="d-none">
+                                            <td colspan="6" class="text-center text-muted text-sm py-4">No invoices match your search.</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -587,24 +616,30 @@ $html = <<<'HTML'
                 }
             }
 
-            if (caseSelect) {
-                caseSelect.addEventListener('change', function() {
-                    var caseId = this.value;
-                    var selectedOption = this.options[this.selectedIndex];
-                    if (clientSelect && selectedOption && selectedOption.getAttribute('data-client-id')) {
-                        clientSelect.value = selectedOption.getAttribute('data-client-id');
-                    }
-                    updateCaseAmountSummary(caseId);
-                });
-                if (caseSelect.value) {
-                    updateCaseAmountSummary(caseSelect.value);
+            function syncInvoiceCasePrefill() {
+                if (!caseSelect || !caseSelect.value) {
+                    return;
                 }
+                var selectedOption = caseSelect.options[caseSelect.selectedIndex];
+                if (clientSelect && selectedOption && selectedOption.getAttribute('data-client-id')) {
+                    clientSelect.value = selectedOption.getAttribute('data-client-id');
+                }
+                updateCaseAmountSummary(caseSelect.value);
+            }
+
+            if (caseSelect) {
+                caseSelect.addEventListener('change', syncInvoiceCasePrefill);
+                syncInvoiceCasePrefill();
             }
         })();
     </script>
+    {INVOICES_SEARCH_SCRIPT}
 </body>
 </html>
 HTML;
+
+$invoicesSearchHtml = legalpro_render_admin_list_search('invoicesSearchInput', 'Search invoices...');
+$invoicesSearchScript = legalpro_admin_list_search_script('invoicesSearchInput', 'invoicesTableBody', 'invoicesFilterEmpty');
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{FORM_TITLE}', htmlspecialchars($formTitle), $html);
@@ -618,6 +653,8 @@ $html = str_replace('{FORM_ISSUE_DATE}', htmlspecialchars($formData['issue_date'
 $html = str_replace('{FORM_DUE_DATE}', htmlspecialchars($formData['due_date']), $html);
 $html = str_replace('{FORM_NOTES}', htmlspecialchars($formData['notes']), $html);
 $html = str_replace('{STATUS_OPTIONS}', $statusOptionsHtml, $html);
+$html = str_replace('{INVOICES_SEARCH}', $invoicesSearchHtml, $html);
+$html = str_replace('{INVOICES_SEARCH_SCRIPT}', $invoicesSearchScript, $html);
 $html = str_replace('{INVOICE_ROWS}', $invoiceRows, $html);
 $html = str_replace('{CASE_FINANCIAL_JSON}', json_encode($caseFinancialData), $html);
 $html = str_replace('{CURRENCY_ZERO}', formatCurrency(0), $html);

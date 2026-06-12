@@ -283,6 +283,7 @@ body.lawyer-client-view-page .main-content,
 body.lawyer-court-tracking-page .main-content,
 body.lawyer-tasks-page .main-content,
 body.lawyer-profile-page .main-content,
+body.legalpro-client-portal .main-content,
 body.client-dashboard-page .main-content,
 body.client-cases-page .main-content,
 body.client-appointments-page .main-content,
@@ -290,6 +291,9 @@ body.client-court-tracking-page .main-content,
 body.client-payments-page .main-content,
 body.client-portal-page .main-content,
 body.client-profile-page .main-content,
+body.client-documents-page .main-content,
+body.client-settings-page .main-content,
+body.client-chatbot-page .main-content,
 .search-portal-page--lawyer .main-content,
 .search-portal-page--client .main-content {
     margin-left: var(--lp-portal-sidebar-width) !important;
@@ -301,14 +305,17 @@ body.client-profile-page .main-content,
     padding-top: var(--lp-portal-header-height) !important;
 }
 
+body.legalpro-lawyer-portal.legalpro-sidebar-collapsed .main-content,
 body.legalpro-sidebar-collapsed.legalpro-lawyer-portal .main-content,
-body.legalpro-sidebar-collapsed.lawyer-dashboard-page .main-content,
+body.legalpro-client-portal.legalpro-sidebar-collapsed .main-content,
+body.legalpro-sidebar-collapsed.legalpro-client-portal .main-content,
 body.legalpro-sidebar-collapsed.client-dashboard-page .main-content,
 body.legalpro-sidebar-collapsed.client-cases-page .main-content,
 body.legalpro-sidebar-collapsed.client-appointments-page .main-content,
 body.legalpro-sidebar-collapsed.client-profile-page .main-content,
 body.legalpro-sidebar-collapsed.client-payments-page .main-content,
-body.legalpro-sidebar-collapsed.client-court-tracking-page .main-content {
+body.legalpro-sidebar-collapsed.client-court-tracking-page .main-content,
+body.legalpro-sidebar-collapsed.client-portal-page .main-content {
     margin-left: var(--lp-portal-sidebar-collapsed) !important;
     width: calc(100% - var(--lp-portal-sidebar-collapsed)) !important;
 }
@@ -459,9 +466,14 @@ body.client-profile-page .navbar-main .container-fluid {
     overflow: visible !important;
 }
 
+body.legalpro-lawyer-portal.legalpro-sidebar-collapsed .navbar-main,
+body.legalpro-lawyer-portal.legalpro-sidebar-collapsed #navbarBlur,
 body.legalpro-sidebar-collapsed.legalpro-lawyer-portal .navbar-main,
-body.legalpro-sidebar-collapsed.lawyer-dashboard-page .navbar-main,
+body.legalpro-sidebar-collapsed.legalpro-lawyer-portal #navbarBlur,
+body.legalpro-client-portal.legalpro-sidebar-collapsed .navbar-main,
+body.legalpro-client-portal.legalpro-sidebar-collapsed #navbarBlur,
 body.legalpro-sidebar-collapsed.legalpro-client-portal .navbar-main,
+body.legalpro-sidebar-collapsed.legalpro-client-portal #navbarBlur,
 body.legalpro-sidebar-collapsed.client-dashboard-page .navbar-main,
 body.legalpro-sidebar-collapsed.client-cases-page .navbar-main,
 body.legalpro-sidebar-collapsed.client-appointments-page .navbar-main,
@@ -624,36 +636,62 @@ body.client-appointments-page .footer .copyright {
 
 @media (max-width: 1199.98px) {
     body.legalpro-lawyer-portal .legalpro-portal-sidebar,
+    body.legalpro-client-portal .legalpro-admin-sidebar,
+    body.legalpro-client-portal #sidenav-main.legalpro-admin-sidebar,
     body.client-dashboard-page .legalpro-portal-sidebar,
+    body.client-dashboard-page .legalpro-admin-sidebar,
     body.client-profile-page .legalpro-portal-sidebar,
+    body.client-profile-page .legalpro-admin-sidebar,
     body.client-cases-page .legalpro-portal-sidebar,
+    body.client-cases-page .legalpro-admin-sidebar,
     body.client-appointments-page .legalpro-portal-sidebar,
+    body.client-appointments-page .legalpro-admin-sidebar,
     body.client-payments-page .legalpro-portal-sidebar,
-    body.client-court-tracking-page .legalpro-portal-sidebar {
+    body.client-payments-page .legalpro-admin-sidebar,
+    body.client-court-tracking-page .legalpro-portal-sidebar,
+    body.client-court-tracking-page .legalpro-admin-sidebar,
+    body.client-documents-page .legalpro-admin-sidebar,
+    body.client-settings-page .legalpro-admin-sidebar,
+    body.client-portal-page .legalpro-admin-sidebar {
         transform: translateX(-100%);
         transition: transform 0.25s ease;
     }
 
     body.legalpro-lawyer-portal.g-sidenav-pinned .legalpro-portal-sidebar,
+    body.legalpro-client-portal.g-sidenav-pinned .legalpro-admin-sidebar,
+    body.legalpro-client-portal.g-sidenav-pinned #sidenav-main.legalpro-admin-sidebar,
     body.client-dashboard-page.g-sidenav-pinned .legalpro-portal-sidebar,
+    body.client-dashboard-page.g-sidenav-pinned .legalpro-admin-sidebar,
     body.client-profile-page.g-sidenav-pinned .legalpro-portal-sidebar,
+    body.client-profile-page.g-sidenav-pinned .legalpro-admin-sidebar,
     body.client-cases-page.g-sidenav-pinned .legalpro-portal-sidebar,
+    body.client-cases-page.g-sidenav-pinned .legalpro-admin-sidebar,
     body.client-appointments-page.g-sidenav-pinned .legalpro-portal-sidebar,
+    body.client-appointments-page.g-sidenav-pinned .legalpro-admin-sidebar,
     body.legalpro-lawyer-portal.nav-open .legalpro-portal-sidebar,
+    body.legalpro-client-portal.nav-open .legalpro-admin-sidebar,
     body.client-dashboard-page.nav-open .legalpro-portal-sidebar,
+    body.client-dashboard-page.nav-open .legalpro-admin-sidebar,
     body.client-profile-page.nav-open .legalpro-portal-sidebar,
+    body.client-profile-page.nav-open .legalpro-admin-sidebar,
     body.client-cases-page.nav-open .legalpro-portal-sidebar,
-    body.client-appointments-page.nav-open .legalpro-portal-sidebar {
+    body.client-cases-page.nav-open .legalpro-admin-sidebar,
+    body.client-appointments-page.nav-open .legalpro-portal-sidebar,
+    body.client-appointments-page.nav-open .legalpro-admin-sidebar {
         transform: translateX(0);
     }
 
     body.legalpro-lawyer-portal .main-content,
+    body.legalpro-client-portal .main-content,
     body.client-dashboard-page .main-content,
     body.client-profile-page .main-content,
     body.client-cases-page .main-content,
     body.client-appointments-page .main-content,
     body.client-payments-page .main-content,
-    body.client-court-tracking-page .main-content {
+    body.client-court-tracking-page .main-content,
+    body.client-documents-page .main-content,
+    body.client-settings-page .main-content,
+    body.client-portal-page .main-content {
         margin-left: 0 !important;
         width: 100% !important;
         padding-top: var(--lp-portal-header-height) !important;

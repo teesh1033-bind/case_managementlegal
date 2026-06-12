@@ -4,6 +4,7 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
+require_once __DIR__ . '/../inc/availability-date-picker.php';
 
 if (!isset($_SESSION['admin_id'])) {
     header('Location: admin-login.php');
@@ -430,13 +431,12 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	{AVAILABILITY_DATE_PICKER_HEAD}
 	<style>
-		#appointment_time option.lp-time-available {
-			color: #2dce89;
-			font-weight: 600;
-		}
+		#appointment_time option.lp-time-unavailable,
 		#appointment_time option:disabled {
-			color: #adb5bd;
+			color: #94a3b8;
+			text-decoration: line-through;
 		}
 		#lawyer_select option,
 		#case_select option,
@@ -515,7 +515,10 @@ $html = <<<'HTML'
 									<div class="col-md-4">
 										<div class="form-group mb-3">
 											<label class="form-control-label text-sm font-weight-bold">Date <span class="text-danger">*</span></label>
-											<input class="form-control" type="date" name="date" id="appointment_date" value="{DATE_VALUE}" required>
+											<div class="legalpro-date-picker-wrap">
+												<input class="form-control" type="text" name="date" id="appointment_date" value="{DATE_VALUE}" placeholder="Select date" required readonly>
+											</div>
+											<small class="text-muted">Crossed-out dates have no available times for the selected lawyer.</small>
 										</div>
 									</div>
 									<div class="col-md-4">
@@ -537,7 +540,7 @@ $html = <<<'HTML'
 										</div>
 									</div>
 								</div>
-								<small class="text-muted d-block mb-3">Choose a <span class="text-success font-weight-bold">green</span> time from the list. Gray options are outside the lawyer&apos;s schedule.</small>
+								<small class="text-muted d-block mb-3">Unavailable times cannot be selected.</small>
 								<div id="availabilityMessage" class="mb-3" style="display: none;"></div>
 								<small class="text-muted d-block mb-3">Appointments can only be booked when the lawyer has published availability for the selected date. Unavailable blocks and existing appointments are excluded.</small>
 
@@ -719,6 +722,58 @@ $html = <<<'HTML'
                 });
             }
 
+            function isLawyerDateUnavailable(dateObj) {
+                var lawyerId = lawyerSelect ? lawyerSelect.value : '';
+                if (!lawyerId || typeof LegalproAvailabilityDatePicker === 'undefined') {
+                    return true;
+                }
+
+                var dateValue = LegalproAvailabilityDatePicker.formatDate(dateObj);
+                if (!dateValue) {
+                    return true;
+                }
+
+                var now = nowParts();
+                if (dateValue < now.date) {
+                    return true;
+                }
+
+                if (!lawyerHasPublishedSchedule(lawyerId) || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                    return true;
+                }
+
+                var slots = getSlotsForLawyerAndDate(lawyerId, dateValue);
+                var durationMinutes = getDurationMinutes();
+
+                return !getStandardSlotTimes(durationMinutes).some(function(slotValue) {
+                    return isTimeSlotBookable(slotValue, lawyerId, dateValue, slots, true, durationMinutes);
+                });
+            }
+
+            function initAppointmentDatePicker() {
+                if (!dateInput || typeof LegalproAvailabilityDatePicker === 'undefined') {
+                    return;
+                }
+
+                LegalproAvailabilityDatePicker.create(dateInput, {
+                    minDate: 'today',
+                    isUnavailable: isLawyerDateUnavailable,
+                    onChange: function() {
+                        renderTimeOptions();
+                    }
+                });
+            }
+
+            function refreshAppointmentDatePicker() {
+                if (!dateInput || typeof LegalproAvailabilityDatePicker === 'undefined') {
+                    return;
+                }
+
+                LegalproAvailabilityDatePicker.clearIfUnavailable(dateInput, isLawyerDateUnavailable);
+                LegalproAvailabilityDatePicker.refresh(dateInput);
+                renderTimeOptions();
+            }
+
             function setSubmitEnabled(enabled) {
                 var submitBtn = document.getElementById('submitAppointmentBtn');
                 if (!submitBtn) {
@@ -803,14 +858,17 @@ $html = <<<'HTML'
                 if (dateValue === now.date && timeValue < now.time) {
                     return false;
                 }
-                if (!hasSchedule) {
+                if (isBlockedByUnavailable(timeValue, slots, durationMinutes)) {
                     return false;
+                }
+                if (!hasSchedule) {
+                    return true;
                 }
                 var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
                 if (!availableSlots.length) {
                     return false;
                 }
-                return isWithinAvailable(timeValue, slots, durationMinutes) && !isBlockedByUnavailable(timeValue, slots, durationMinutes);
+                return isWithinAvailable(timeValue, slots, durationMinutes);
             }
 
             function rebuildTimeSelectOptions(durationMinutes, preservedTime) {
@@ -849,7 +907,7 @@ $html = <<<'HTML'
                 if (!lawyerId || !dateValue) {
                     setAvailabilityMessage(
                         lawyerId
-                            ? '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a date to see available time slots in green.</div>'
+                            ? '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a date to see available time slots.</div>'
                             : '',
                         !!lawyerId
                     );
@@ -860,10 +918,11 @@ $html = <<<'HTML'
                 var hasSchedule = lawyerHasPublishedSchedule(lawyerId);
                 var hasBookableSlot = false;
 
-                if (!hasSchedule || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                if (hasSchedule && !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
                     timeInput.querySelectorAll('.time-option').forEach(function(option) {
                         if (option.value) {
                             option.disabled = true;
+                            option.classList.add('lp-time-unavailable');
                         }
                     });
                     timeInput.value = '';
@@ -881,11 +940,8 @@ $html = <<<'HTML'
                     }
 
                     if (isTimeSlotBookable(option.value, lawyerId, dateValue, slots, hasSchedule, durationMinutes)) {
-                        if (hasSchedule) {
-                            option.classList.add('lp-time-available', 'text-success', 'font-weight-bold');
-                        }
                         hasBookableSlot = true;
-                    } else if (hasSchedule) {
+                    } else {
                         option.disabled = true;
                     }
                 });
@@ -927,7 +983,8 @@ $html = <<<'HTML'
                     return false;
                 }
 
-                if (!lawyerHasPublishedSchedule(lawyerId) || !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
+                var hasSchedule = lawyerHasPublishedSchedule(lawyerId);
+                if (hasSchedule && !lawyerHasAvailabilityOnDate(lawyerId, dateValue)) {
                     timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
                     setAvailabilityMessage(
                         '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
@@ -939,7 +996,7 @@ $html = <<<'HTML'
 
                 if (!timeValue) {
                     setAvailabilityMessage(
-                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select a <span class="text-success font-weight-bold">green</span> time within the lawyer\'s published availability.</div>',
+                        '<div class="alert alert-info py-2 mb-0"><i class="ni ni-info-16"></i> Select an available time from the list.</div>',
                         true
                     );
                     setSubmitEnabled(false);
@@ -950,7 +1007,7 @@ $html = <<<'HTML'
                 if (selectedOption && selectedOption.disabled) {
                     timeInput.setCustomValidity('The selected time is not available.');
                     setAvailabilityMessage(
-                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> The selected time is not available. Choose a green time slot.</div>',
+                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> The selected time is not available. Choose another slot.</div>',
                         true
                     );
                     setSubmitEnabled(false);
@@ -958,8 +1015,6 @@ $html = <<<'HTML'
                 }
 
                 var slots = getSlotsForLawyerAndDate(lawyerId, dateValue);
-                var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
-
                 var durationMinutes = getDurationMinutes();
 
                 if (isBlockedByUnavailable(timeValue, slots, durationMinutes)) {
@@ -972,30 +1027,30 @@ $html = <<<'HTML'
                     return false;
                 }
 
-                if (availableSlots.length === 0) {
-                    timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
-                    setAvailabilityMessage(
-                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
-                        true
-                    );
-                    setSubmitEnabled(false);
-                    return false;
+                if (hasSchedule) {
+                    var availableSlots = slots.filter(function(slot) { return slot.type === 'available'; });
+                    if (availableSlots.length === 0) {
+                        timeInput.setCustomValidity(NO_AVAILABILITY_ON_DATE_MSG);
+                        setAvailabilityMessage(
+                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> ' + NO_AVAILABILITY_ON_DATE_MSG + '</div>',
+                            true
+                        );
+                        setSubmitEnabled(false);
+                        return false;
+                    }
+
+                    if (!isWithinAvailable(timeValue, slots, durationMinutes)) {
+                        timeInput.setCustomValidity('Selected time is outside the lawyer\'s available hours.');
+                        setAvailabilityMessage(
+                            '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
+                            true
+                        );
+                        setSubmitEnabled(false);
+                        return false;
+                    }
                 }
 
-                if (!isWithinAvailable(timeValue, slots, durationMinutes)) {
-                    timeInput.setCustomValidity('Selected time is outside the lawyer\'s available hours.');
-                    setAvailabilityMessage(
-                        '<div class="alert alert-warning py-2 mb-0"><i class="ni ni-info-16"></i> Selected time is outside the lawyer\'s published availability.</div>',
-                        true
-                    );
-                    setSubmitEnabled(false);
-                    return false;
-                }
-
-                setAvailabilityMessage(
-                    '<div class="alert alert-success py-2 mb-0"><i class="ni ni-check-bold"></i> Selected time is within the lawyer\'s availability.</div>',
-                    true
-                );
+                setAvailabilityMessage('', false);
                 setSubmitEnabled(true);
                 return true;
             }
@@ -1033,7 +1088,7 @@ $html = <<<'HTML'
                     if (timeInput) {
                         timeInput.value = '';
                     }
-                    renderTimeOptions();
+                    refreshAppointmentDatePicker();
                 });
             }
 
@@ -1042,7 +1097,7 @@ $html = <<<'HTML'
                     if (timeInput) {
                         timeInput.value = '';
                     }
-                    renderTimeOptions();
+                    refreshAppointmentDatePicker();
                 });
             }
 
@@ -1058,8 +1113,8 @@ $html = <<<'HTML'
                 if (durationSelect && initialDurationMinutes) {
                     durationSelect.value = String(initialDurationMinutes);
                 }
-                syncAppointmentMinDateTime();
-                renderTimeOptions();
+                initAppointmentDatePicker();
+                refreshAppointmentDatePicker();
             }
 
             if (appointmentForm && dateInput && timeInput) {
@@ -1084,10 +1139,22 @@ $html = <<<'HTML'
             }
 		});
 	</script>
+	{AVAILABILITY_DATE_PICKER_FOOT}
 </body>
 </html>
 HTML;
 
+ob_start();
+legalpro_render_availability_date_picker_assets();
+legalpro_render_availability_date_picker_styles();
+$availabilityDatePickerHead = ob_get_clean();
+
+ob_start();
+legalpro_render_availability_date_picker_script();
+$availabilityDatePickerFoot = ob_get_clean();
+
+$html = str_replace('{AVAILABILITY_DATE_PICKER_HEAD}', $availabilityDatePickerHead, $html);
+$html = str_replace('{AVAILABILITY_DATE_PICKER_FOOT}', $availabilityDatePickerFoot, $html);
 $html = str_replace('{PAGE_TITLE}', htmlspecialchars($pageTitle), $html);
 $html = str_replace('{FORM_TITLE}', htmlspecialchars($formTitle), $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);

@@ -2,20 +2,18 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 
-// Check if client is logged in
 if (!isset($_SESSION['client_id'])) {
     header('Location: login.php');
     exit;
 }
 
-$client_id = $_SESSION['client_id'];
+$client_id   = $_SESSION['client_id'];
 $client_name = $_SESSION['client_name'];
 
-$message = '';
+$message     = '';
 $messageType = '';
 
 try {
-    // Get client cases summary
     $stmt = $pdo->prepare("
         SELECT
             COUNT(*) as total_cases,
@@ -28,7 +26,6 @@ try {
     $stmt->execute([$client_id]);
     $caseStats = $stmt->fetch();
 
-    // Get recent cases (last 5)
     $stmt = $pdo->prepare("
         SELECT
             c.*,
@@ -39,12 +36,11 @@ try {
         WHERE c.client_id = ?
         GROUP BY c.id
         ORDER BY c.updated_at DESC
-        LIMIT 5
+        LIMIT 8
     ");
     $stmt->execute([$client_id]);
     $recentCases = $stmt->fetchAll();
 
-    // Get upcoming appointments (next 5 - only accepted ones)
     $stmt = $pdo->prepare("
         SELECT DISTINCT
             a.*,
@@ -57,30 +53,113 @@ try {
         WHERE a.client_id = ? AND a.starts_at > NOW() AND a.status = 'accepted'
         GROUP BY a.id
         ORDER BY a.starts_at ASC
-        LIMIT 5
+        LIMIT 6
     ");
     $stmt->execute([$client_id]);
     $upcomingAppointments = $stmt->fetchAll();
-
-
 } catch (PDOException $e) {
-    $message = 'Error loading dashboard data: ' . htmlspecialchars($e->getMessage());
+    $message     = 'Error loading dashboard data.';
     $messageType = 'danger';
-    $caseStats = ['total_cases' => 0, 'open_cases' => 0, 'closed_cases' => 0, 'pending_cases' => 0];
+    $caseStats   = ['total_cases' => 0, 'open_cases' => 0, 'closed_cases' => 0, 'pending_cases' => 0];
     $recentCases = [];
     $upcomingAppointments = [];
 }
 
-$messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
+$nextAppt = !empty($upcomingAppointments) ? $upcomingAppointments[0] : null;
 
 require_once __DIR__ . '/../inc/legalpro-icons.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
-$clientPageNavbar = legalpro_render_client_page_navbar('Dashboard', 'Dashboard', 'Search cases…');
-$iconStatTotal = legalpro_icon('briefcase');
-$iconStatOpen = legalpro_icon('circle-check');
-$iconStatPending = legalpro_icon('clock');
-$iconStatClosed = legalpro_icon('archive');
-$iconChevron = legalpro_icon('chevron-right');
+require_once __DIR__ . '/../lib/client-portal-features.php';
+
+$activityItems = legalpro_client_get_activity_feed($pdo, $client_id, 25);
+$activityFeedHtml = legalpro_client_render_activity_feed_html($activityItems);
+
+$clientPageNavbar = legalpro_render_client_page_navbar(
+    'Dashboard',
+    'Dashboard',
+    '',
+    ['include_search' => false]
+);
+
+$nextApptBanner = '';
+if ($nextAppt) {
+    $dt = date('l, j F · g:i A', strtotime($nextAppt['starts_at']));
+    $nextApptBanner = '<div class="cd-next-appt">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Next appointment: <strong>' . htmlspecialchars($dt) . '</strong> · ' . htmlspecialchars($nextAppt['case_title'] ?: 'General') . '</span>
+    </div>';
+}
+
+$recentCasesHtml = '';
+if (empty($recentCases)) {
+    $recentCasesHtml = '<div class="cd-empty-state">
+        <div class="cd-empty-icon">📁</div>
+        <p class="cd-empty-title">No cases yet</p>
+        <p class="cd-empty-sub">When your firm opens a matter for you it will appear here.</p>
+    </div>';
+} else {
+    foreach ($recentCases as $case) {
+        $num     = 'C-' . str_pad((string) $case['id'], 4, '0', STR_PAD_LEFT);
+        $title   = htmlspecialchars($case['title']);
+        $lawyer  = htmlspecialchars($case['lawyer_names'] ?: 'Unassigned');
+        $updated = date('M j, Y', strtotime($case['updated_at']));
+        $pill    = client_case_status_badge((string) ($case['status'] ?? ''));
+        $caseSearchHay = htmlspecialchars(strtolower($num . ' ' . ($case['title'] ?? '') . ' ' . ($case['lawyer_names'] ?? '') . ' ' . ($case['status'] ?? '')), ENT_QUOTES, 'UTF-8');
+        $recentCasesHtml .= '<a href="client-case-view.php?id=' . (int) $case['id'] . '" class="cd-list-row" data-search="' . $caseSearchHay . '">
+            <div class="cd-list-row__icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            <div class="cd-list-row__body">
+                <div class="cd-list-row__title">' . $num . ' · ' . $title . '</div>
+                <div class="cd-list-row__meta">' . $lawyer . ' · Updated ' . $updated . '</div>
+            </div>
+            <div class="cd-list-row__aside">' . $pill . '</div>
+        </a>';
+    }
+}
+
+$appointmentsHtml = '';
+if (empty($upcomingAppointments)) {
+    $appointmentsHtml = '<div class="cd-empty-state">
+        <div class="cd-empty-icon">📅</div>
+        <p class="cd-empty-title">No upcoming meetings</p>
+        <p class="cd-empty-sub">Accepted appointments will appear here once scheduled.</p>
+    </div>';
+} else {
+    foreach ($upcomingAppointments as $apt) {
+        $dayLabel  = date('M j', strtotime($apt['starts_at']));
+        $timeLabel = date('g:i A', strtotime($apt['starts_at']));
+        $caseTitle = htmlspecialchars($apt['case_title'] ?: 'General appointment');
+        $lawyerTxt = htmlspecialchars($apt['lawyer_name'] ?: 'TBD');
+        $notesRaw  = $apt['notes'] ? (string) $apt['notes'] : '';
+        $notes     = $notesRaw !== '' ? htmlspecialchars(mb_substr($notesRaw, 0, 68)) . (strlen($notesRaw) > 68 ? '…' : '') : '';
+        $calUrl = 'client-calendar-export.php?type=appointment&id=' . (int) $apt['id'];
+        $apptSearchHay = htmlspecialchars(strtolower($caseTitle . ' ' . $lawyerTxt . ' ' . $dayLabel . ' ' . $timeLabel . ' ' . $notesRaw), ENT_QUOTES, 'UTF-8');
+        $appointmentsHtml .= '<div class="cd-appt-row text-reset" data-search="' . $apptSearchHay . '">
+            <div class="cd-appt-row__date">
+                <span class="cd-appt-row__day">' . $dayLabel . '</span>
+                <span class="cd-appt-row__time">' . $timeLabel . '</span>
+            </div>
+            <div class="cd-appt-row__body">
+                <div class="cd-appt-row__title">' . $caseTitle . '</div>
+                <div class="cd-appt-row__meta">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    ' . $lawyerTxt . '
+                </div>
+                ' . ($notes !== '' ? '<div class="cd-appt-row__notes">' . $notes . '</div>' : '') . '
+            </div>
+            <div class="cd-appt-row__badge d-flex flex-column align-items-end gap-1">
+                <span class="cd-appt-accepted">Confirmed</span>
+                <a href="' . htmlspecialchars($calUrl) . '" class="cp-calendar-links__btn" download style="font-size:.65rem;padding:.3rem .6rem;min-height:auto" onclick="event.stopPropagation()">+.ics</a>
+            </div>
+        </div>';
+    }
+}
+
+$messageHtml = $message
+    ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show mb-3" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>'
+    : '';
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -90,324 +169,388 @@ $html = <<<'HTML'
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - Client Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>My Dashboard — LegalPro</title>
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/app-font-montserrat.css?v=6" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
 
     <style>
-        .client-dashboard-page { --cd-radius: 1rem; --cd-radius-lg: 1.25rem; }
-        .client-dashboard-page .cd-hero {
-            border-radius: var(--cd-radius-lg);
-            background: #fff;
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            box-shadow: 0 0.25rem 1rem rgba(52, 71, 103, 0.08);
-        }
-        .client-dashboard-page .cd-hero .cd-hero-kicker {
-            letter-spacing: 0.12em;
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #5e72e4;
-            opacity: 1;
-        }
-        .client-dashboard-page .cd-hero .cd-hero-title {
-            color: #344767;
-        }
-        .client-dashboard-page .cd-hero .cd-hero-text {
-            color: #67748e;
-        }
-        .client-dashboard-page .cd-stat-card {
-            border-radius: var(--cd-radius-lg);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .client-dashboard-page .cd-stat-card::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            border-radius: 4px 0 0 4px;
-        }
-        .client-dashboard-page .cd-stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0.75rem 1.75rem rgba(52, 71, 103, 0.12) !important;
-        }
-        .client-dashboard-page .cd-stat-card--primary::before { background: linear-gradient(180deg, #5e72e4, #324cdd); }
-        .client-dashboard-page .cd-stat-card--success::before { background: linear-gradient(180deg, #2dce89, #24a46d); }
-        .client-dashboard-page .cd-stat-card--warning::before { background: linear-gradient(180deg, #fb6340, #f56036); }
-        .client-dashboard-page .cd-stat-card--dark::before { background: linear-gradient(180deg, #8898aa, #525f7f); }
-        .client-dashboard-page .cd-stat-card .cd-stat-icon.dashboard-stat-icon-wrap {
-            width: 3rem;
-            height: 3rem;
-            min-width: 3rem;
-            border-radius: 50%;
-            box-shadow: none;
-        }
-        .client-dashboard-page .cd-stat-card .cd-stat-value {
-            font-size: 1.75rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
-        }
-        .client-dashboard-page .cd-stat-card .cd-stat-label {
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--bs-secondary-color);
-        }
-        .client-dashboard-page .cd-panel {
-            border-radius: var(--cd-radius-lg);
-            border: 1px solid rgba(0, 0, 0, 0.04);
-            box-shadow: 0 0.25rem 1rem rgba(52, 71, 103, 0.06);
-        }
-        .client-dashboard-page .cd-panel .card-header {
-            background: transparent;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-            padding: 1.1rem 1.25rem 0.85rem;
-        }
-        .client-dashboard-page .cd-panel .card-header h6 {
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin: 0;
-        }
-        .client-dashboard-page .cd-panel .card-header .cd-panel-sub {
-            font-size: 0.8rem;
-            color: var(--bs-secondary-color);
-            margin: 0.15rem 0 0;
-        }
-        .client-dashboard-page .cd-list-item {
-            border: 1px solid rgba(0, 0, 0, 0.06);
-            border-radius: 0.75rem;
-            transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
-        }
-        .client-dashboard-page .cd-list-item:hover {
-            border-color: rgba(94, 114, 228, 0.35);
-            background: rgba(94, 114, 228, 0.04);
-            box-shadow: 0 0.35rem 1rem rgba(94, 114, 228, 0.08);
-        }
-        .client-dashboard-page .cd-list-item .flex-grow-1 { min-width: 0; }
-        .client-dashboard-page .cd-list-item:last-child { margin-bottom: 0 !important; }
+    *, *::before, *::after { box-sizing: border-box; }
+    .client-dashboard-page {
+        background: #f0f2f8;
+        --cp-primary: var(--legalpro-theme-primary, #5e72e4);
+        --cp-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
+        --cp-primary-light: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+        --cp-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
+        --cp-primary-border: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+        --cp-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+        --cp-success: #2dce89;
+        --cp-warning: #fb6340;
+        --cp-text: #1e293b;
+        --cp-muted: #94a3b8;
+        --cp-surface: #ffffff;
+        --cp-border: rgba(0,0,0,0.07);
+        --cp-r: 16px;
+        --cp-ease: 0.18s cubic-bezier(.4,0,.2,1);
+        --cp-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        --cp-shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .cd-hero-card {
+        background: var(--cp-gradient);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+    }
+    .cd-hero-card::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 200px; height: 200px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.08);
+    }
+    .cd-hero-main { flex: 1; min-width: 0; position: relative; z-index: 1; }
+    .cd-hero-kicker {
+        font-size: 11px; font-weight: 600;
+        letter-spacing: .12em; text-transform: uppercase;
+        opacity: .75; margin-bottom: .35rem;
+    }
+    .cd-hero-title {
+        font-size: 1.45rem; font-weight: 800;
+        letter-spacing: -.02em; margin-bottom: .45rem; line-height: 1.2;
+    }
+    .cd-hero-sub {
+        font-size: .82rem; opacity: .85; line-height: 1.55;
+        max-width: 34rem; margin-bottom: .9rem;
+    }
+    .cd-next-appt {
+        display: inline-flex; align-items: center; gap: .5rem;
+        font-size: .76rem; font-weight: 600;
+        background: rgba(255,255,255,.15);
+        border: 1px solid rgba(255,255,255,.25);
+        padding: .45rem 1rem; border-radius: 99px;
+        width: fit-content; color: #fff;
+    }
+    .cd-next-appt svg { flex-shrink: 0; opacity: .9; }
+    .cd-hero-actions {
+        display: flex; flex-wrap: wrap; gap: .5rem;
+        position: relative; z-index: 1; flex-shrink: 0;
+    }
+    .cd-hero-actions .btn {
+        border-radius: 99px !important;
+        font-size: .78rem !important; font-weight: 700 !important;
+        padding: .45rem 1.15rem !important;
+        text-decoration: none;
+    }
+    .cd-hero-actions .btn-primary-solid {
+        background: #fff; color: var(--cp-primary); border: none;
+        box-shadow: 0 4px 14px rgba(0,0,0,.12);
+    }
+    .cd-hero-actions .btn-primary-solid:hover { opacity: .92; color: var(--cp-primary); }
+    .cd-hero-actions .btn-ghost {
+        background: transparent; color: #fff;
+        border: 1.5px solid rgba(255,255,255,.45);
+    }
+    .cd-hero-actions .btn-ghost:hover {
+        background: rgba(255,255,255,.12); color: #fff;
+    }
+
+    .cd-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .cd-kpi {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: var(--cp-r);
+        box-shadow: var(--cp-shadow);
+        padding: 1.1rem 1.25rem;
+        display: flex; align-items: flex-start; justify-content: space-between;
+        gap: .75rem;
+        transition: transform var(--cp-ease), box-shadow var(--cp-ease);
+        position: relative; overflow: hidden;
+    }
+    .cd-kpi::after {
+        content: ''; position: absolute;
+        bottom: 0; left: 0; right: 0; height: 3px;
+        background: var(--kpi-color, var(--cp-primary));
+        border-radius: 0 0 var(--cp-r) var(--cp-r);
+        opacity: 0; transition: opacity var(--cp-ease);
+    }
+    .cd-kpi:hover { transform: translateY(-3px); box-shadow: var(--cp-shadow-lg); }
+    .cd-kpi:hover::after { opacity: 1; }
+    .cd-kpi__val {
+        font-size: 2rem; font-weight: 800; line-height: 1;
+        letter-spacing: -.04em; color: var(--cp-text);
+    }
+    .cd-kpi__lbl {
+        font-size: .66rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .08em;
+        color: var(--cp-muted); margin-top: .3rem;
+    }
+    .cd-kpi__icon {
+        width: 2.4rem; height: 2.4rem; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .cd-kpi--primary { --kpi-color: var(--cp-primary); }
+    .cd-kpi__icon--primary {
+        background: var(--cp-primary-soft);
+        color: var(--cp-primary);
+    }
+
+    .cd-panel {
+        background: var(--cp-surface);
+        border: 1px solid #e9ecf3;
+        border-radius: var(--cp-r);
+        box-shadow: var(--cp-shadow);
+        overflow: hidden;
+        height: 100%;
+    }
+    .cd-panel-hdr {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: .5rem;
+    }
+    .cd-panel-title { font-size: 15px; font-weight: 700; color: var(--cp-text); margin: 0; }
+    .cd-panel-sub { font-size: 12px; color: var(--cp-muted); margin: 2px 0 0; }
+    .cd-panel-body { padding: .75rem 1rem; }
+    .btn-cd-link {
+        padding: .35rem .9rem; border-radius: 8px;
+        border: 1.5px solid var(--cp-primary); color: var(--cp-primary);
+        font-size: 12px; font-weight: 600; background: none;
+        text-decoration: none; display: inline-block;
+        transition: background .15s, color .15s;
+    }
+    .btn-cd-link:hover { background: var(--cp-primary); color: #fff; }
+    .cd-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2rem; }
+    @media (max-width: 991px) { .cd-layout { grid-template-columns: 1fr; } }
+
+    .cd-list-row {
+        display: flex; align-items: center; gap: .85rem;
+        padding: .8rem .85rem; border-radius: 10px;
+        text-decoration: none; color: var(--cp-text);
+        transition: background var(--cp-ease), transform var(--cp-ease);
+        border: 1px solid transparent;
+        margin-bottom: .25rem;
+    }
+    .cd-list-row:hover {
+        background: var(--cp-primary-light);
+        border-color: var(--cp-primary-border);
+        color: var(--cp-text);
+        text-decoration: none;
+    }
+    .cd-list-row__icon {
+        width: 2rem; height: 2rem; border-radius: 8px;
+        background: var(--cp-primary-soft);
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; color: var(--cp-primary);
+    }
+    .cd-list-row__body { flex: 1; min-width: 0; }
+    .cd-list-row__title { font-size: .83rem; font-weight: 700; color: var(--cp-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cd-list-row__meta { font-size: .72rem; color: var(--cp-muted); margin-top: 2px; }
+    .cd-list-row__aside { flex-shrink: 0; }
+
+    .cd-appt-row {
+        display: flex; align-items: flex-start; gap: .9rem;
+        padding: .8rem .85rem; border-radius: 10px;
+        border: 1px solid var(--cp-border);
+        margin-bottom: .5rem;
+        transition: border-color var(--cp-ease), box-shadow var(--cp-ease);
+    }
+    .cd-appt-row:last-child { margin-bottom: 0; }
+    .cd-appt-row:hover {
+        border-color: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.3));
+        box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+        color: var(--cp-text);
+    }
+    .cd-appt-row__date {
+        min-width: 52px; text-align: center;
+        background: var(--cp-primary-light);
+        border-radius: 10px; padding: .55rem .4rem;
+        flex-shrink: 0;
+    }
+    .cd-appt-row__day { display: block; font-size: .78rem; font-weight: 800; color: var(--cp-primary); }
+    .cd-appt-row__time { display: block; font-size: .65rem; font-weight: 600; color: var(--cp-muted); margin-top: 2px; }
+    .cd-appt-row__body { flex: 1; min-width: 0; }
+    .cd-appt-row__title { font-size: .83rem; font-weight: 700; color: var(--cp-text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cd-appt-row__meta { font-size: .71rem; color: var(--cp-muted); display: flex; align-items: center; gap: 4px; }
+    .cd-appt-row__notes { font-size: .71rem; color: var(--cp-muted); margin-top: 4px; }
+    .cd-appt-accepted {
+        display: inline-block; padding: 3px 9px; border-radius: 99px;
+        font-size: .65rem; font-weight: 800;
+        background: rgba(45,206,137,.1); color: #1e9e6a;
+    }
+    .cd-appt-row__badge { flex-shrink: 0; padding-top: 2px; }
+
+    .cd-empty-state { padding: 2rem 1rem; text-align: center; }
+    .cd-empty-icon { font-size: 2rem; margin-bottom: .5rem; }
+    .cd-empty-title { font-size: .85rem; font-weight: 700; color: #64748b; margin: 0 0 .25rem; }
+    .cd-empty-sub { font-size: .76rem; color: var(--cp-muted); margin: 0; }
+
+    .client-dashboard-page .ca-status-pill {
+        font-size: .68rem;
+        padding: 3px 10px;
+    }
+
+    @media (max-width: 1199px) {
+        .cd-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 767px) {
+        .cd-hero-card { padding: 1.4rem 1.25rem; }
+        .cd-hero-title { font-size: 1.2rem; }
+        .cd-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .cd-activity-panel { margin-bottom: 1.5rem; }
+    .cd-activity-panel .cd-panel-body { padding: .5rem 1rem 1rem; max-height: 28rem; overflow-y: auto; }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-dashboard-page">
-    <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
-    <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
-    <main class="main-content position-relative border-radius-lg">
-        {CLIENT_NAVBAR}
-        <div class="container-fluid py-4">
-            {MESSAGE}
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-dashboard-page{PORTAL_THEME_BODY_CLASS}">
+<div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
 
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card cd-hero border-0">
-                        <div class="card-body p-4 p-lg-5 d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-4">
-                            <div class="flex-grow-1" style="max-width: 36rem;">
-                                <p class="cd-hero-kicker mb-2">Your legal workspace</p>
-                                <h4 class="cd-hero-title font-weight-bolder mb-2">Welcome back, {CLIENT_NAME}</h4>
-                                <p class="cd-hero-text text-sm mb-0" style="line-height: 1.55;">Review active matters, prepare for upcoming meetings, and stay on top of court dates—all from one place.</p>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2 flex-shrink-0">
-                                <a href="client-cases.php" class="btn btn-sm bg-gradient-primary text-white font-weight-bold mb-0 px-3">My cases</a>
-                                <a href="client-appointments.php" class="btn btn-sm btn-outline-primary font-weight-bold mb-0 px-3">Appointments</a>
-                                <a href="client-court-tracking.php" class="btn btn-sm btn-outline-primary font-weight-bold mb-0 px-3">Court tracking</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<?php include __DIR__ . '/../inc/client-menunav.php'; ?>
+
+<main class="main-content position-relative border-radius-lg">
+    {CLIENT_NAVBAR}
+
+    <div class="container-fluid py-4 px-4">
+        {MESSAGE}
+
+        <div class="cd-hero-card">
+            <div class="cd-hero-main">
+                <p class="cd-hero-kicker">Your legal workspace</p>
+                <h4 class="cd-hero-title">Welcome back, {CLIENT_NAME}</h4>
+                <p class="cd-hero-sub">Track your cases, prepare for upcoming meetings, and stay on top of court dates — all from one place.</p>
+                {NEXT_APPT_BANNER}
             </div>
-
-            <!-- Stats Cards -->
-            <div class="row">
-                <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card cd-stat-card cd-stat-card--primary border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start gap-3">
-                                <div>
-                                    <p class="cd-stat-label mb-1">Total cases</p>
-                                    <p class="cd-stat-value text-dark mb-0">{TOTAL_CASES}</p>
-                                </div>
-                                <div class="cd-stat-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_STAT_TOTAL}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card cd-stat-card cd-stat-card--success border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start gap-3">
-                                <div>
-                                    <p class="cd-stat-label mb-1">Open</p>
-                                    <p class="cd-stat-value text-dark mb-0">{OPEN_CASES}</p>
-                                </div>
-                                <div class="cd-stat-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">{ICON_STAT_OPEN}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card cd-stat-card cd-stat-card--warning border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start gap-3">
-                                <div>
-                                    <p class="cd-stat-label mb-1">Pending</p>
-                                    <p class="cd-stat-value text-dark mb-0">{PENDING_CASES}</p>
-                                </div>
-                                <div class="cd-stat-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--warning">{ICON_STAT_PENDING}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card cd-stat-card cd-stat-card--dark border-0 shadow-sm h-100">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start gap-3">
-                                <div>
-                                    <p class="cd-stat-label mb-1">Closed</p>
-                                    <p class="cd-stat-value text-dark mb-0">{CLOSED_CASES}</p>
-                                </div>
-                                <div class="cd-stat-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--danger">{ICON_STAT_CLOSED}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="cd-hero-actions">
+                <a href="client-cases.php" class="btn btn-primary-solid">My Cases</a>
+                <a href="client-appointments.php" class="btn btn-ghost">Appointments</a>
+                <a href="client-documents.php" class="btn btn-ghost">Documents</a>
+                <a href="client-court-tracking.php" class="btn btn-ghost">Court Dates</a>
             </div>
-
-            <div class="row mt-2">
-                <!-- Recent Cases -->
-                <div class="col-lg-6 mb-4">
-                    <div class="card cd-panel h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <h6>Recent cases</h6>
-                                <p class="cd-panel-sub">Latest updates on your matters</p>
-                            </div>
-                            <a href="client-cases.php" class="btn btn-sm btn-outline-primary mb-0">View all</a>
-                        </div>
-                        <div class="card-body p-3 pt-2">
-                            {RECENT_CASES}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Upcoming Appointments -->
-                <div class="col-lg-6 mb-4">
-                    <div class="card cd-panel h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div>
-                                <h6>Upcoming appointments</h6>
-                                <p class="cd-panel-sub">Accepted meetings on your calendar</p>
-                            </div>
-                            <a href="client-appointments.php" class="btn btn-sm btn-outline-primary mb-0">Book appointment</a>
-                        </div>
-                        <div class="card-body p-3 pt-2">
-                            {UPCOMING_APPOINTMENTS}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
-    </main>
 
-    <script src="../assets/js/core/popper.min.js"></script>
-    <script src="../assets/js/core/bootstrap.min.js"></script>
-    <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
-    <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+        <div class="cd-kpi-grid">
+            <div class="cd-kpi cd-kpi--primary">
+                <div>
+                    <div class="cd-kpi__val">{TOTAL_CASES}</div>
+                    <div class="cd-kpi__lbl">Total Cases</div>
+                </div>
+                <div class="cd-kpi__icon cd-kpi__icon--primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+            </div>
+            <div class="cd-kpi" style="--kpi-color:#2dce89;">
+                <div>
+                    <div class="cd-kpi__val">{OPEN_CASES}</div>
+                    <div class="cd-kpi__lbl">Open</div>
+                </div>
+                <div class="cd-kpi__icon" style="background:rgba(45,206,137,.1);color:#2dce89;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+            </div>
+            <div class="cd-kpi" style="--kpi-color:#fb6340;">
+                <div>
+                    <div class="cd-kpi__val">{PENDING_CASES}</div>
+                    <div class="cd-kpi__lbl">Pending</div>
+                </div>
+                <div class="cd-kpi__icon" style="background:rgba(251,99,64,.1);color:#fb6340;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+            </div>
+            <div class="cd-kpi" style="--kpi-color:#8898aa;">
+                <div>
+                    <div class="cd-kpi__val">{CLOSED_CASES}</div>
+                    <div class="cd-kpi__lbl">Closed</div>
+                </div>
+                <div class="cd-kpi__icon" style="background:rgba(136,152,170,.12);color:#525f7f;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="cd-panel cd-activity-panel">
+            <div class="cd-panel-hdr">
+                <div>
+                    <p class="cd-panel-title">Recent Activity</p>
+                    <p class="cd-panel-sub">Invoices, hearings, documents, and appointments in one timeline</p>
+                </div>
+                <a href="client-documents.php" class="btn-cd-link">Documents</a>
+            </div>
+            <div class="cd-panel-body">
+                {ACTIVITY_FEED}
+            </div>
+        </div>
+
+        <div class="cd-layout">
+            <div class="cd-panel">
+                <div class="cd-panel-hdr">
+                    <div>
+                        <p class="cd-panel-title">Recent Cases</p>
+                        <p class="cd-panel-sub">Latest updates on your matters</p>
+                    </div>
+                    <a href="client-cases.php" class="btn-cd-link">View all</a>
+                </div>
+                <div class="cd-panel-body">
+                    {RECENT_CASES}
+                </div>
+            </div>
+            <div class="cd-panel">
+                <div class="cd-panel-hdr">
+                    <div>
+                        <p class="cd-panel-title">Upcoming Appointments</p>
+                        <p class="cd-panel-sub">Confirmed meetings on your calendar</p>
+                    </div>
+                    <a href="client-appointments.php" class="btn-cd-link">Book one</a>
+                </div>
+                <div class="cd-panel-body">
+                    {UPCOMING_APPOINTMENTS}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script src="../assets/js/core/popper.min.js"></script>
+<script src="../assets/js/core/bootstrap.min.js"></script>
+<script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
 HTML;
 
-// Replace placeholders
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
 $html = str_replace('{CLIENT_NAME}', htmlspecialchars($client_name), $html);
-$html = str_replace('{TOTAL_CASES}', isset($caseStats['total_cases']) ? $caseStats['total_cases'] : 0, $html);
-$html = str_replace('{OPEN_CASES}', isset($caseStats['open_cases']) ? $caseStats['open_cases'] : 0, $html);
-$html = str_replace('{PENDING_CASES}', isset($caseStats['pending_cases']) ? $caseStats['pending_cases'] : 0, $html);
-$html = str_replace('{CLOSED_CASES}', isset($caseStats['closed_cases']) ? $caseStats['closed_cases'] : 0, $html);
-
-// Recent Cases
-$recentCasesHtml = '';
-if (empty($recentCases)) {
-    $recentCasesHtml = '<div class="text-center text-muted py-5 px-3"><p class="text-sm mb-1 font-weight-bold">No cases yet</p><p class="text-xs mb-3">When your firm opens a matter for you, it will show up here.</p><a href="client-cases.php" class="btn btn-sm btn-primary mb-0">Go to My cases</a></div>';
-} else {
-    foreach ($recentCases as $case) {
-        $lawyerNames = $case['lawyer_names'] ?: 'Unassigned';
-        $caseId = (int) $case['id'];
-        switch ($case['status']) {
-            case 'open':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-success">Open</span>';
-                break;
-            case 'closed':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">Closed</span>';
-                break;
-            case 'pending':
-                $statusBadge = '<span class="badge badge-sm bg-gradient-warning">Pending</span>';
-                break;
-            default:
-                $statusBadge = '<span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($case['status']) . '</span>';
-                break;
-        }
-
-        $recentCasesHtml .= '
-            <a href="client-case-view.php?id=' . $caseId . '" class="cd-list-item d-block text-decoration-none text-reset mb-2 p-3">
-                <div class="d-flex justify-content-between align-items-start gap-2">
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1 text-sm font-weight-bold text-truncate">' . htmlspecialchars($case['title']) . '</h6>
-                        <p class="text-xs text-secondary mb-0"><strong class="font-weight-bold">Lawyer:</strong> ' . htmlspecialchars($lawyerNames) . '</p>
-                        <p class="text-xs text-secondary mb-0"><strong class="font-weight-bold">Updated:</strong> ' . date('M j, Y', strtotime($case['updated_at'])) . '</p>
-                    </div>
-                    <div class="d-flex flex-column align-items-end gap-2 flex-shrink-0">
-                        ' . $statusBadge . '
-                        <span class="text-xs text-primary font-weight-bold d-inline-flex align-items-center">View ' . $iconChevron . '</span>
-                    </div>
-                </div>
-            </a>';
-    }
-}
+$html = str_replace('{NEXT_APPT_BANNER}', $nextApptBanner, $html);
+$html = str_replace('{TOTAL_CASES}', (int) ($caseStats['total_cases'] ?? 0), $html);
+$html = str_replace('{OPEN_CASES}', (int) ($caseStats['open_cases'] ?? 0), $html);
+$html = str_replace('{PENDING_CASES}', (int) ($caseStats['pending_cases'] ?? 0), $html);
+$html = str_replace('{CLOSED_CASES}', (int) ($caseStats['closed_cases'] ?? 0), $html);
 $html = str_replace('{RECENT_CASES}', $recentCasesHtml, $html);
-
-// Upcoming Appointments
-$appointmentsHtml = '';
-if (empty($upcomingAppointments)) {
-    $appointmentsHtml = '<div class="text-center text-muted py-5 px-3"><p class="text-sm mb-1 font-weight-bold">No upcoming meetings</p><p class="text-xs mb-0">Accepted appointments will appear here with date and counsel.</p></div>';
-} else {
-    foreach ($upcomingAppointments as $apt) {
-        $appointmentDate = date('M j, Y g:i A', strtotime($apt['starts_at']));
-        $notesRaw = $apt['notes'] ?: '';
-        $notesPreview = $notesRaw !== '' ? htmlspecialchars(substr($notesRaw, 0, 72)) . (strlen($notesRaw) > 72 ? '…' : '') : 'No notes';
-        $appointmentsHtml .= '
-            <a href="client-appointments.php" class="cd-list-item d-block text-decoration-none text-reset mb-2 p-3">
-                <div class="d-flex justify-content-between align-items-start gap-2">
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1 text-sm font-weight-bold text-truncate">' . htmlspecialchars($apt['case_title'] ?: 'General appointment') . '</h6>
-                        <p class="text-xs text-secondary mb-0"><strong class="font-weight-bold">When:</strong> ' . $appointmentDate . '</p>
-                        <p class="text-xs text-secondary mb-0"><strong class="font-weight-bold">Lawyer:</strong> ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
-                        <p class="text-xs text-secondary mb-0 text-truncate" title="' . htmlspecialchars($apt['notes'] ?: '') . '">' . $notesPreview . '</p>
-                    </div>
-                    <span class="text-xs text-primary font-weight-bold flex-shrink-0 pt-1 d-inline-flex align-items-center">Calendar ' . $iconChevron . '</span>
-                </div>
-            </a>';
-    }
-}
 $html = str_replace('{UPCOMING_APPOINTMENTS}', $appointmentsHtml, $html);
-$html = str_replace('{ICON_STAT_TOTAL}', $iconStatTotal, $html);
-$html = str_replace('{ICON_STAT_OPEN}', $iconStatOpen, $html);
-$html = str_replace('{ICON_STAT_PENDING}', $iconStatPending, $html);
-$html = str_replace('{ICON_STAT_CLOSED}', $iconStatClosed, $html);
+$html = str_replace('{ACTIVITY_FEED}', $activityFeedHtml, $html);
 
 require_once __DIR__ . '/../inc/client-sidebar.php';
 $html = inject_client_sidebar($html);
 
 echo $html;
-?>

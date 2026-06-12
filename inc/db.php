@@ -6,7 +6,7 @@
 $DB_HOST = '127.0.0.1';
 $DB_NAME = 'case_management';
 $DB_USER = 'root';
-$DB_PASS = ''; // change if you have a password
+$DB_PASS = '1234'; // change if you have a password
 
 try {
     $pdo = new PDO("mysql:host=$DB_HOST;dbname=$DB_NAME;charset=utf8mb4", $DB_USER, $DB_PASS, [
@@ -330,5 +330,35 @@ function buildCaseCategoryFieldHtml($currentCategory, $fallback = 'Civil') {
 }
 
 require_once __DIR__ . '/../lib/branding.php';
+require_once __DIR__ . '/../lib/portal-theme.php';
+require_once __DIR__ . '/../lib/client-locale.php';
+
+/**
+ * Allow admin/lawyer staff, or the owning client, to access invoice/receipt downloads.
+ */
+function legalpro_require_financial_document_access(?int $ownerClientId): void
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    if (isset($_SESSION['admin_id']) || isset($_SESSION['lawyer_id'])) {
+        return;
+    }
+
+    if (isset($_SESSION['client_id']) && $ownerClientId !== null
+        && (int) $_SESSION['client_id'] === (int) $ownerClientId) {
+        return;
+    }
+
+    if (isset($_SESSION['client_id'])) {
+        http_response_code(403);
+        echo 'Access denied.';
+        exit;
+    }
+
+    header('Location: login.php');
+    exit;
+}
 
 ?>

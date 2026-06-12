@@ -159,6 +159,27 @@ foreach ($timeSlots as $slot) {
     ];
 }
 
+function buildAvailabilityTimeSelectOptions(): string
+{
+    $html = '<option value="">Select time</option>';
+    $startMinutes = 6 * 60;
+    $endMinutes = 22 * 60;
+    $step = 30;
+
+    for ($minutes = $startMinutes; $minutes <= $endMinutes; $minutes += $step) {
+        $hours = intdiv($minutes, 60);
+        $mins = $minutes % 60;
+        $value = sprintf('%02d:%02d', $hours, $mins);
+        $label = date('g:i A', strtotime($value));
+        $html .= '<option value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '">'
+            . htmlspecialchars($label) . '</option>';
+    }
+
+    return $html;
+}
+
+$availabilityTimeOptions = buildAvailabilityTimeSelectOptions();
+
 ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
@@ -402,11 +423,15 @@ $html = <<<'HTML'
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-control-label">Start Time</label>
-                                <input type="time" class="form-control" name="start_time" id="start_time" required>
+                                <select class="form-control form-select" name="start_time" id="start_time" required>
+                                    {AVAILABILITY_TIME_OPTIONS}
+                                </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-control-label">End Time</label>
-                                <input type="time" class="form-control" name="end_time" id="end_time" required>
+                                <select class="form-control form-select" name="end_time" id="end_time" required>
+                                    {AVAILABILITY_TIME_OPTIONS}
+                                </select>
                             </div>
                         </div>
                         <div class="mb-0">
@@ -489,14 +514,78 @@ $html = <<<'HTML'
             renderAvailabilityCalendar();
         }
 
+        function formatAvailabilityTimeLabel(timeValue) {
+            if (!timeValue) {
+                return '';
+            }
+            var parts = String(timeValue).split(':');
+            var hours = parseInt(parts[0], 10);
+            var minutes = parts[1] || '00';
+            var period = hours >= 12 ? 'PM' : 'AM';
+            var displayHours = hours % 12;
+            if (displayHours === 0) {
+                displayHours = 12;
+            }
+            return displayHours + ':' + minutes + ' ' + period;
+        }
+
+        function ensureAvailabilityTimeOption(selectEl, timeValue) {
+            if (!timeValue || !selectEl || selectEl.querySelector('option[value="' + timeValue + '"]')) {
+                return;
+            }
+            var option = document.createElement('option');
+            option.value = timeValue;
+            option.textContent = formatAvailabilityTimeLabel(timeValue);
+            selectEl.appendChild(option);
+        }
+
+        function refreshAvailabilityEndTimeOptions(preservedEnd) {
+            var startSelect = document.getElementById('start_time');
+            var endSelect = document.getElementById('end_time');
+            if (!startSelect || !endSelect) {
+                return;
+            }
+
+            var startVal = startSelect.value;
+            var firstValid = '';
+
+            endSelect.querySelectorAll('option').forEach(function(option) {
+                if (!option.value) {
+                    option.disabled = false;
+                    return;
+                }
+                var disabled = startVal !== '' && option.value <= startVal;
+                option.disabled = disabled;
+                if (!disabled && firstValid === '') {
+                    firstValid = option.value;
+                }
+            });
+
+            if (preservedEnd) {
+                var match = endSelect.querySelector('option[value="' + preservedEnd + '"]');
+                if (match && !match.disabled) {
+                    endSelect.value = preservedEnd;
+                    return;
+                }
+            }
+
+            if (!endSelect.value || endSelect.options[endSelect.selectedIndex].disabled) {
+                endSelect.value = firstValid || '';
+            }
+        }
+
         function openAvailabilityModal(day, slotId, slotDate, startTime, endTime, slotType) {
             document.getElementById('availabilityModalTitle').textContent = slotId ? 'Edit Time Slot' : 'Add Time Slot';
             document.getElementById('availabilitySaveButton').textContent = slotId ? 'Update Slot' : 'Save Slot';
             document.getElementById('slot_id').value = slotId || '';
             document.getElementById('slot_date').value = slotDate || '';
             document.getElementById('day_of_week').value = day || '';
-            document.getElementById('start_time').value = startTime || '';
-            document.getElementById('end_time').value = endTime || '';
+            var startSelect = document.getElementById('start_time');
+            var endSelect = document.getElementById('end_time');
+            ensureAvailabilityTimeOption(startSelect, startTime || '');
+            ensureAvailabilityTimeOption(endSelect, endTime || '');
+            startSelect.value = startTime || '';
+            refreshAvailabilityEndTimeOptions(endTime || '');
             document.getElementById('slot_type').value = slotType || 'available';
             new bootstrap.Modal(document.getElementById('availabilityModal')).show();
         }
@@ -597,6 +686,10 @@ $html = <<<'HTML'
             document.getElementById('nextWeekBtn').addEventListener('click', function() {
                 shiftFallbackWeek(1);
             });
+            document.getElementById('start_time').addEventListener('change', function() {
+                refreshAvailabilityEndTimeOptions('');
+            });
+
             document.getElementById('addSlotBtn').addEventListener('click', function() {
                 openAvailabilityModal();
             });
@@ -648,6 +741,7 @@ $html = str_replace('{$message}', $messageHtml, $html);
 $html = str_replace('{NAVIGATION}', $navHtml, $html);
 $html = str_replace('{$lawyerName}', htmlspecialchars($lawyerName), $html);
 $html = str_replace('{AVAILABILITY_EVENTS_JSON}', json_encode($availabilityEvents), $html);
+$html = str_replace('{AVAILABILITY_TIME_OPTIONS}', $availabilityTimeOptions, $html);
 
 echo $html;
 ?>

@@ -116,6 +116,7 @@ if (empty($clientCases)) {
     $casesHtml = '<div class="row">';
     foreach ($clientCases as $case) {
         $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+        $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
         $primaryBadge = $case['is_primary'] ? '<span class="ca-status-pill ca-status-pill--pending ms-1">Primary</span>' : '';
 
         $casesHtml .= '
@@ -124,7 +125,7 @@ if (empty($clientCases)) {
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h6 class="mb-0">' . htmlspecialchars($case['title']) . '</h6>
-                        <div>' . $statusBadge . $primaryBadge . '</div>
+                        <div class="d-flex flex-wrap gap-1 justify-content-end">' . $statusBadge . $priorityBadge . $primaryBadge . '</div>
                     </div>
                     <p class="text-sm text-muted mb-2">Case #' . htmlspecialchars($case['id']) . '</p>
                     <p class="text-sm mb-2">' . htmlspecialchars(substr($case['description'] ?: 'No description', 0, 100)) . '...</p>

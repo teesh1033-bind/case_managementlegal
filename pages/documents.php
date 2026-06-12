@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/case_events.php';
 
 $message = '';
@@ -318,19 +319,8 @@ if (empty($cases)) {
         $caseNumber = 'C-' . str_pad($caseId, 4, '0', STR_PAD_LEFT);
         $docsCount = isset($case['total_docs']) ? (int)$case['total_docs'] : 0;
 
-        // Status color mapping
-        $statusColor = 'dark';
-        switch (strtolower($case['status'])) {
-            case 'open':
-                $statusColor = 'success';
-                break;
-            case 'closed':
-                $statusColor = 'secondary';
-                break;
-            case 'pending':
-                $statusColor = 'warning';
-                break;
-        }
+        $statusBadge = legalpro_case_status_badge(isset($case['status']) ? (string) $case['status'] : 'open');
+        $filesBadge = legalpro_document_count_badge($docsCount);
 
         $caseRows .= '
         <div class="case-item border-bottom p-3 hover-shadow" style="cursor: pointer;" data-case-attach="' . $caseId . '" data-case-label="' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '">
@@ -338,14 +328,14 @@ if (empty($cases)) {
                 <div class="flex-grow-1 me-3">
                     <div class="d-flex align-items-center mb-1">
                         <h6 class="mb-0 me-2">' . htmlspecialchars($caseNumber) . '</h6>
-                        <span class="badge bg-gradient-' . $statusColor . ' text-xs">' . htmlspecialchars(ucfirst($case['status'])) . '</span>
+                        ' . $statusBadge . '
                     </div>
                     <p class="text-sm mb-1 font-weight-bold">' . htmlspecialchars($case['title']) . '</p>
                     <p class="text-xs text-muted mb-0">' . htmlspecialchars($case['client_name']) . '</p>
                 </div>
                 <div class="text-end">
                     <div class="mb-2">
-                        ' . ($docsCount > 0 ? '<span class="badge bg-gradient-info">' . $docsCount . ' files</span>' : '<span class="badge bg-gradient-secondary">No files</span>') . '
+                        ' . $filesBadge . '
                     </div>
                     <button class="btn btn-sm btn-primary attach-btn" data-case-attach="' . $caseId . '" data-case-label="' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '">
                         <i class="ni ni-cloud-upload-96 me-1"></i>Attach File
@@ -368,7 +358,10 @@ if (empty($cases)) {
         $docList = '';
 
         if (empty($docs)) {
-            $docList = '<div class="text-center text-muted py-3"><i class="ni ni-single-copy-04 text-lg opacity-50 mb-2"></i><br>No documents uploaded yet.</div>';
+            $docList = '<div class="text-center text-muted py-3">'
+                . '<div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary document-item-icon d-inline-flex align-items-center justify-content-center mb-2">'
+                . legalpro_icon('folder-open')
+                . '</div><br>No documents uploaded yet.</div>';
         } else {
             foreach ($docs as $doc) {
                 $displayName = isset($doc['label']) && $doc['label'] ? $doc['label'] : $doc['filename'];
@@ -376,33 +369,10 @@ if (empty($cases)) {
                 $uploadedAt = isset($doc['uploaded_at']) ? date('M j, Y g:i A', strtotime($doc['uploaded_at'])) : '';
                 $uploadedBy = isset($doc['uploaded_by']) && $doc['uploaded_by'] ? $doc['uploaded_by'] : 'System';
 
-                // Determine file type icon
-                $fileExtension = strtolower(pathinfo($doc['filename'], PATHINFO_EXTENSION));
-                $iconClass = 'ni-single-copy-04';
-                switch ($fileExtension) {
-                    case 'pdf':
-                        $iconClass = 'ni-single-copy-04';
-                        break;
-                    case 'doc':
-                    case 'docx':
-                        $iconClass = 'ni-single-copy-04';
-                        break;
-                    case 'jpg':
-                    case 'jpeg':
-                    case 'png':
-                        $iconClass = 'ni-image';
-                        break;
-                    case 'txt':
-                        $iconClass = 'ni-single-copy-04';
-                        break;
-                }
-
                 $docList .= '
                 <div class="document-item d-flex justify-content-between align-items-center p-3 border-bottom">
                     <div class="d-flex align-items-center">
-                        <div class="icon-shape icon-sm bg-gradient-primary shadow text-center rounded-circle me-3">
-                            <i class="ni ' . $iconClass . ' text-white text-xs"></i>
-                        </div>
+                        ' . legalpro_document_file_icon_wrap($doc['filename']) . '
                         <div>
                             <h6 class="mb-0 text-sm">' . htmlspecialchars($displayName) . '</h6>
                             <p class="text-xs text-muted mb-0">Uploaded ' . htmlspecialchars($uploadedAt) . ' by ' . htmlspecialchars($uploadedBy) . '</p>
@@ -427,7 +397,7 @@ if (empty($cases)) {
                 <button class="accordion-button doc-case-accordion-btn' . ($collapseIndex === 0 ? '' : ' collapsed') . '" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-' . $collapseIndex . '" aria-expanded="' . ($collapseIndex === 0 ? 'true' : 'false') . '">
                     <div class="doc-case-accordion-meta">
                         <div class="doc-case-accordion-title">
-                            <span class="badge bg-gradient-info me-2">' . $docsCount . '</span>
+                            ' . legalpro_document_count_badge($docsCount, true) . '
                             <span class="text-sm font-weight-bold">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</span>
                         </div>
                         <small class="text-muted doc-case-accordion-client">' . htmlspecialchars($case['client_name']) . '</small>
@@ -465,7 +435,10 @@ if (empty($templates)) {
 
 $recentDocsList = '';
 if (empty($recentDocuments)) {
-    $recentDocsList = '<div class="text-center text-muted py-4"><i class="ni ni-single-copy-04 text-lg opacity-50 mb-2"></i><br>No recent documents.</div>';
+    $recentDocsList = '<div class="text-center text-muted py-4">'
+        . '<div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary document-item-icon d-inline-flex align-items-center justify-content-center mb-2">'
+        . legalpro_icon('file-text')
+        . '</div><br>No recent documents.</div>';
 } else {
     foreach ($recentDocuments as $doc) {
         $displayName = isset($doc['label']) && $doc['label'] ? $doc['label'] : $doc['filename'];
@@ -473,33 +446,10 @@ if (empty($recentDocuments)) {
         $caseTitle = isset($doc['case_title']) && $doc['case_title'] ? $doc['case_title'] : 'Unassigned case';
         $uploadedAt = isset($doc['uploaded_at']) ? date('M j, Y', strtotime($doc['uploaded_at'])) : '';
 
-        // Determine file type icon
-        $fileExtension = strtolower(pathinfo($doc['filename'], PATHINFO_EXTENSION));
-        $iconClass = 'ni-single-copy-04';
-        switch ($fileExtension) {
-            case 'pdf':
-                $iconClass = 'ni-single-copy-04';
-                break;
-            case 'doc':
-            case 'docx':
-                $iconClass = 'ni-single-copy-04';
-                break;
-            case 'jpg':
-            case 'jpeg':
-            case 'png':
-                $iconClass = 'ni-image';
-                break;
-            case 'txt':
-                $iconClass = 'ni-single-copy-04';
-                break;
-        }
-
         $recentDocsList .= '
         <div class="document-item recent-document-item d-flex justify-content-between align-items-center p-3 border-bottom">
             <div class="d-flex align-items-center">
-                <div class="icon-shape document-item-icon bg-gradient-success shadow text-center rounded-circle me-3">
-                    <i class="ni ' . $iconClass . ' text-white"></i>
-                </div>
+                ' . legalpro_document_file_icon_wrap($doc['filename']) . '
                 <div>
                     <h6 class="mb-0 text-sm">' . htmlspecialchars($displayName) . '</h6>
                     <p class="text-xs text-muted mb-0">' . htmlspecialchars($caseTitle) . ' • ' . htmlspecialchars($uploadedAt) . '</p>
@@ -606,27 +556,10 @@ $html = <<<'HTML'
         .document-item .btn {
             white-space: nowrap;
         }
-        .recent-document-item .document-item-icon {
-            width: 2.35rem;
-            height: 2.35rem;
-            min-width: 2.35rem;
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
-        .recent-document-item .document-item-icon i {
-            font-size: 0.85rem;
-            line-height: 1;
-            position: static;
-            top: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            margin: 0;
+        .document-item .document-item-icon.dashboard-stat-icon-wrap {
+            width: 2.5rem;
+            height: 2.5rem;
+            min-width: 2.5rem;
         }
         .doc-case-accordion-btn {
             align-items: flex-start;

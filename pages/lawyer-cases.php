@@ -59,7 +59,7 @@ $iconCardHeader = legalpro_icon('briefcase');
 // Build cases table HTML
 $casesTable = '';
 if (empty($cases)) {
-    $casesTable = '<tr><td colspan="6" class="border-0"><div class="text-center py-5 px-4">
+    $casesTable = '<tr><td colspan="7" class="border-0"><div class="text-center py-5 px-4">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseEmpty . '</div>
         <h5 class="font-weight-bolder mt-3 mb-2">No cases found</h5>
         <p class="text-sm text-muted mb-0">Try adjusting your search or status filter.</p>
@@ -68,10 +68,14 @@ if (empty($cases)) {
     foreach ($cases as $case) {
         $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
         $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+        $categoryLabel = trim((string) ($case['category'] ?? ''));
+        $categoryPill = $categoryLabel !== ''
+            ? '<span class="lc-category-pill">' . htmlspecialchars($categoryLabel) . '</span>'
+            : '<span class="ca-status-pill ca-status-pill--muted">—</span>';
 
         $casesTable .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="lawyer-cases-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconCaseRow . '</div>
                     <div>
@@ -80,16 +84,23 @@ if (empty($cases)) {
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="align-middle">
+                <div class="lc-category-cell">' . $categoryPill . '</div>
+            </td>
+            <td class="align-middle">
                 <h6 class="mb-0 text-sm">' . htmlspecialchars($case['first_name'] . ' ' . $case['last_name']) . '</h6>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($case['email']) . '</p>
             </td>
-            <td class="text-center">' . $statusBadge . '</td>
-            <td class="text-center">' . $priorityBadge . '</td>
-            <td class="text-center">
+            <td class="align-middle text-center">
+                <div class="lc-table-pill-cell">' . $statusBadge . '</div>
+            </td>
+            <td class="align-middle text-center">
+                <div class="lc-table-pill-cell">' . $priorityBadge . '</div>
+            </td>
+            <td class="align-middle text-center">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
-            <td class="text-end">
+            <td class="align-middle text-end">
                 <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary">View Details</a>
             </td>
         </tr>';
@@ -117,7 +128,7 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-cases-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-cases-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -174,7 +185,7 @@ $html = <<<'HTML'
                     <div class="card mb-4">
                         <div class="card-header pb-0 pt-3">
                             <div class="d-flex align-items-center">
-                                <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">' . $iconCardHeader . '</div>
+                                <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                 <div>
                                     <h6 class="mb-0">My Cases</h6>
                                     <p class="text-xs text-muted mb-0">Cases assigned to you</p>
@@ -187,6 +198,7 @@ $html = <<<'HTML'
                                     <thead>
                                         <tr>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case Details</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Category</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
@@ -228,6 +240,7 @@ $html = <<<'HTML'
 HTML;
 
 $replacements = [
+    '{ICON_CARD_HEADER}' => $iconCardHeader,
     '{NAVIGATION}' => $navHtml,
     '{SEARCH_VALUE}' => htmlspecialchars($search),
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',

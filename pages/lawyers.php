@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/password-validation.php';
 
 // Check if admin is logged in
@@ -272,18 +273,25 @@ if (empty($lawyers)) {
     $lawyersTable = '<tr><td colspan="5" class="text-center text-muted py-4">No lawyers added yet.</td></tr>';
 } else {
     foreach ($lawyers as $lawyer) {
-        $statusBadge = $lawyer['is_active'] ? '<span class="badge bg-gradient-success">Active</span>' : '<span class="badge bg-gradient-secondary">Inactive</span>';
+        $statusBadge = legalpro_lawyer_active_status_badge((bool) $lawyer['is_active']);
         $activeCases = (int)$lawyer['active_cases'];
 
+        $lawyerName = trim($lawyer['first_name'] . ' ' . $lawyer['last_name']);
+        $searchBlob = strtolower(
+            $lawyerName . ' ' . ($lawyer['email'] ?? '') . ' '
+            . ($lawyer['specialization'] ?? '') . ' ' . ($lawyer['license_number'] ?? '') . ' '
+            . ($lawyer['is_active'] ? 'active' : 'inactive')
+        );
+
         $lawyersTable .= '
-        <tr>
+        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td>
                 <div class="d-flex align-items-center">
                     <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
                         <i class="ni ni-single-02 text-white text-xs opacity-10"></i>
                     </div>
                     <div>
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '</h6>
+                        <h6 class="mb-0 text-sm">' . htmlspecialchars($lawyerName) . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($lawyer['email']) . '</p>
                     </div>
                 </div>
@@ -377,7 +385,8 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-admin-portal.css?v=16" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+    <?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -423,7 +432,7 @@ $html = <<<'HTML'
                 <!-- Lawyers Table -->
                 <div class="col-12">
                     <div class="card mb-4">
-                        <div class="card-header pb-0 pt-3">
+                        <div class="card-header pb-3 pt-3">
                             <div class="d-flex align-items-center">
                                 <div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-md me-3">
                                     <i class="ni ni-single-02 text-white text-lg opacity-10"></i>
@@ -434,7 +443,8 @@ $html = <<<'HTML'
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body px-0 pt-0 pb-2">
+                        <div class="card-body px-0 pt-2 pb-2">
+                            {LAWYERS_SEARCH}
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -446,8 +456,11 @@ $html = <<<'HTML'
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="lawyersTableBody">
                                         {LAWYERS_TABLE}
+                                        <tr id="lawyersFilterEmpty" class="d-none">
+                                            <td colspan="5" class="text-center text-muted text-sm py-4">No lawyers match your search.</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -510,7 +523,7 @@ $html = <<<'HTML'
                         </div>
 
                         <!-- User Account Update Section (for existing lawyers) -->
-                        <div id="user_update_section" style="display: none;">
+                        <div id="user_update_section" style="display: none;" class="legalpro-form-panel border rounded p-3 mb-3">
                             <p class="text-xs text-muted mb-2">Leave password fields empty to keep the current password.</p>
                             {PASSWORD_REQUIREMENTS}
                             <div class="row">
@@ -539,8 +552,8 @@ $html = <<<'HTML'
                         </div>
 
                         <!-- New User Account Creation Form (hidden by default) -->
-                        <div id="create_user_form" style="display: none;" class="border border-primary border-2 rounded p-3 mb-3 bg-light">
-                            <h6 class="mb-1 text-primary fw-bold">Create New User Account</h6>
+                        <div id="create_user_form" style="display: none;" class="legalpro-form-panel border rounded p-3 mb-3">
+                            <h6 class="mb-1 fw-bold">Create New User Account</h6>
                             <p class="text-xs text-muted mb-2">Fill in the fields below, then save the lawyer at the bottom of this form.</p>
                             {PASSWORD_REQUIREMENTS}
                             <div class="row">
@@ -573,7 +586,7 @@ $html = <<<'HTML'
                                     <option value="staff">Staff</option>
                                 </select>
                             </div>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="hideCreateUserForm()">
+                            <button type="button" class="btn btn-sm btn-dark" onclick="hideCreateUserForm()">
                                 <i class="fas fa-times me-1"></i> Cancel
                             </button>
                         </div>
@@ -707,9 +720,13 @@ $html = <<<'HTML'
             }
         }
     </script>
+    {LAWYERS_SEARCH_SCRIPT}
 </body>
 </html>
 HTML;
+
+$lawyersSearchHtml = legalpro_render_admin_list_search('lawyersSearchInput', 'Search lawyers...');
+$lawyersSearchScript = legalpro_admin_list_search_script('lawyersSearchInput', 'lawyersTableBody', 'lawyersFilterEmpty');
 
 // Handle form display for errors
 $showCreateUserForm = false;
@@ -725,6 +742,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
 
 $replacements = [
     '{MESSAGE}' => $messageHtml,
+    '{LAWYERS_SEARCH}' => $lawyersSearchHtml,
+    '{LAWYERS_SEARCH_SCRIPT}' => $lawyersSearchScript,
     '{LAWYERS_TABLE}' => $lawyersTable,
     '{USER_OPTIONS}' => $userOptions,
     '{FORM_TITLE}' => htmlspecialchars($formTitle),

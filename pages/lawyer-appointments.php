@@ -22,6 +22,90 @@ if (isset($_GET['msg'])) {
     $messageType = isset($_GET['type']) ? (string) $_GET['type'] : 'info';
 }
 
+// Handle new appointment creation by the lawyer
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action']) && $_POST['appointment_action'] === 'create') {
+    $caseId = (int) ($_POST['case_id'] ?? 0);
+    $appointmentDate = trim((string) ($_POST['appointment_date'] ?? ''));
+    $appointmentTime = trim((string) ($_POST['appointment_time'] ?? ''));
+    $notes = trim((string) ($_POST['notes'] ?? ''));
+    $durationMinutes = (int) ($_POST['duration_minutes'] ?? 60);
+    $durationMinutes = in_array($durationMinutes, [30, 60], true) ? $durationMinutes : 60;
+    $newStatus = strtolower(trim((string) ($_POST['appointment_status'] ?? 'accepted')));
+    if (!in_array($newStatus, ['pending', 'accepted'], true)) {
+        $newStatus = 'accepted';
+    }
+
+    if ($caseId <= 0 || $appointmentDate === '' || $appointmentTime === '') {
+        $message = 'Please select a case, date, and time.';
+        $messageType = 'danger';
+    } else {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT c.id, c.client_id
+                FROM cases c
+                INNER JOIN case_lawyers cl ON cl.case_id = c.id AND cl.lawyer_id = ?
+                WHERE c.id = ?
+                LIMIT 1
+            ");
+            $stmt->execute([$lawyerId, $caseId]);
+            $caseRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$caseRow) {
+                $message = 'Case not found or you do not have access to it.';
+                $messageType = 'danger';
+            } else {
+                $availabilityCheck = validateLawyerBookingAvailability(
+                    $pdo,
+                    $lawyerId,
+                    $appointmentDate,
+                    $appointmentTime,
+                    null,
+                    $durationMinutes
+                );
+
+                if (!$availabilityCheck['ok']) {
+                    $message = $availabilityCheck['message'] ?? 'The selected time is not available.';
+                    $messageType = 'danger';
+                } else {
+                    $startsAt = $appointmentDate . ' ' . (preg_match('/^\d{2}:\d{2}$/', $appointmentTime) ? $appointmentTime . ':00' : $appointmentTime);
+                    $endsAt = date('Y-m-d H:i:s', strtotime($startsAt . ' +' . $durationMinutes . ' minutes'));
+                    $clientId = (int) ($caseRow['client_id'] ?? 0);
+
+                    $stmt = $pdo->prepare("
+                        INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ");
+                    $stmt->execute([$clientId > 0 ? $clientId : null, $caseId, $lawyerId, $startsAt, $endsAt, $notes, $newStatus]);
+                    $appointmentId = (int) $pdo->lastInsertId();
+
+                    syncAppointmentAvailabilitySlot($pdo, [
+                        'id' => $appointmentId,
+                        'lawyer_id' => $lawyerId,
+                        'starts_at' => $startsAt,
+                        'ends_at' => $endsAt,
+                        'status' => $newStatus,
+                    ]);
+
+                    ensureLawyerAssignedToCase($pdo, $caseId, $lawyerId);
+
+                    $message = $newStatus === 'accepted'
+                        ? 'Appointment scheduled and confirmed with your client.'
+                        : 'Appointment created and sent to your client for review.';
+                    $messageType = 'success';
+                }
+            }
+        } catch (PDOException $e) {
+            $message = 'Error creating appointment: ' . htmlspecialchars($e->getMessage());
+            $messageType = 'danger';
+        }
+    }
+
+    if ($message !== '') {
+        header('Location: lawyer-appointments.php?msg=' . urlencode($message) . '&type=' . urlencode($messageType));
+        exit;
+    }
+}
+
 // Handle appointment status updates and rescheduling
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])) {
     $appointmentId = (int) ($_POST['appointment_id'] ?? 0);
@@ -187,6 +271,28 @@ try {
     $appointments = [];
 }
 
+$lawyerCases = [];
+try {
+    $stmt = $pdo->prepare("
+        SELECT c.id, c.title, cl.first_name, cl.last_name
+        FROM cases c
+        INNER JOIN case_lawyers clw ON clw.case_id = c.id AND clw.lawyer_id = ?
+        INNER JOIN clients cl ON cl.id = c.client_id
+        ORDER BY c.title ASC
+    ");
+    $stmt->execute([$lawyerId]);
+    $lawyerCases = $stmt->fetchAll();
+} catch (PDOException $e) {
+    $lawyerCases = [];
+}
+
+$lawyerCaseOptions = '<option value="">Select a case</option>';
+foreach ($lawyerCases as $caseRow) {
+    $lawyerCaseOptions .= '<option value="' . (int) $caseRow['id'] . '">'
+        . htmlspecialchars($caseRow['title'] . ' — ' . $caseRow['first_name'] . ' ' . $caseRow['last_name'])
+        . '</option>';
+}
+
 $rescheduleAvailabilityByDate = [];
 $rescheduleHasSchedule = false;
 try {
@@ -225,7 +331,7 @@ function buildLawyerAppointmentCaseLink(array $appointment): string
         return '<span class="text-muted text-xs">—</span>';
     }
 
-    return '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-dark mb-0">Case</a>';
+    return '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-primary mb-0">Case</a>';
 }
 
 /**
@@ -405,11 +511,8 @@ $html = <<<'HTML'
         .lawyer-appointment-case-cell .btn {
             min-width: 4.25rem;
         }
-        #reschedule_time option.lp-time-available {
-            color: #2dce89;
-            font-weight: 600;
-        }
-        #reschedule_time option:disabled {
+        #reschedule_time option:disabled,
+        #create_appointment_time option:disabled {
             color: #adb5bd;
         }
     </style>
@@ -456,6 +559,9 @@ $html = <<<'HTML'
                                     <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
                                 </div>
                                 <div class="col-md-5 text-end">
+                                    <button type="button" class="btn btn-success btn-sm mb-2" onclick="openCreateAppointmentModal()">
+                                        Schedule appointment
+                                    </button>
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_APPOINTMENTS} appointments</p>
                                 </div>
                             </form>
@@ -473,7 +579,7 @@ $html = <<<'HTML'
                                 <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                 <div>
                                     <h6 class="mb-0">My Appointments</h6>
-                                    <p class="text-xs text-muted mb-0">Accept, reject, keep pending, or reschedule client requests</p>
+                                    <p class="text-xs text-muted mb-0">Schedule meetings with clients, accept requests, or reschedule</p>
                                 </div>
                             </div>
                         </div>
@@ -515,6 +621,64 @@ $html = <<<'HTML'
         </footer>
     </main>
 
+    <!-- Create appointment modal -->
+    <div class="modal fade" id="createAppointmentModal" tabindex="-1" aria-labelledby="createAppointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="post" id="createAppointmentForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createAppointmentModalLabel">Schedule appointment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="appointment_action" value="create">
+                        <div class="mb-3">
+                            <label class="form-label" for="create_case_id">Case &amp; client</label>
+                            <select class="form-select" name="case_id" id="create_case_id" required>
+                                {LAWYER_CASE_OPTIONS}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="create_appointment_date">Date</label>
+                            <input type="date" class="form-control" name="appointment_date" id="create_appointment_date" min="{MIN_DATE}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="create_appointment_time">Time</label>
+                            <select class="form-control" name="appointment_time" id="create_appointment_time" required>
+                                <option value="">Select time</option>
+                            </select>
+                            <input type="hidden" id="create_duration_minutes" name="duration_minutes" value="60">
+                            <small class="text-muted d-block mt-1">Unavailable times cannot be selected. If you have not set availability, standard business hours are open.</small>
+                        </div>
+                        <div id="createAvailabilityMessage" class="mb-3" style="display: none;"></div>
+                        <div class="mb-3">
+                            <label class="form-label" for="create_duration_select">Duration</label>
+                            <select class="form-select" id="create_duration_select">
+                                <option value="60" selected>1 hour</option>
+                                <option value="30">30 minutes</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="create_appointment_status">Status</label>
+                            <select class="form-select" name="appointment_status" id="create_appointment_status">
+                                <option value="accepted" selected>Confirmed (accepted)</option>
+                                <option value="pending">Pending client review</option>
+                            </select>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label" for="create_notes">Notes <span class="text-muted">(optional)</span></label>
+                            <textarea class="form-control" name="notes" id="create_notes" rows="3" placeholder="Agenda or instructions for the client…"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary mb-0" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success mb-0" id="createAppointmentSubmit">Schedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Reschedule modal -->
     <div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -537,7 +701,7 @@ $html = <<<'HTML'
                                 <option value="">Select time</option>
                             </select>
                             <input type="hidden" id="reschedule_duration_minutes" name="reschedule_duration_minutes" value="60">
-                            <small class="text-muted d-block mt-1">Only <span class="text-success font-weight-bold">green</span> times match your published availability for the selected day.</small>
+                            <small class="text-muted d-block mt-1">Unavailable times cannot be selected. If you have not set availability, standard business hours are open.</small>
                         </div>
                         <div id="rescheduleAvailabilityMessage" class="mb-3" style="display: none;"></div>
                         <div class="mb-3">
@@ -575,6 +739,18 @@ $html = <<<'HTML'
 
         var rescheduleOriginalDate = '';
         var rescheduleOriginalTime = '';
+
+        function openCreateAppointmentModal() {
+            var form = document.getElementById('createAppointmentForm');
+            if (form) {
+                form.reset();
+            }
+            document.getElementById('create_duration_minutes').value = '60';
+            if (typeof window.renderCreateTimeOptions === 'function') {
+                window.renderCreateTimeOptions('');
+            }
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('createAppointmentModal')).show();
+        }
 
         function openRescheduleModal(appointmentId, dateValue, timeValue, statusValue, durationMinutes) {
             document.getElementById('reschedule_appointment_id').value = appointmentId;
@@ -675,11 +851,14 @@ $html = <<<'HTML'
                 };
             }
 
-            function isBlockedByUnavailable(timeValue, slots, durationMinutes, dateValue) {
+            function isBlockedByUnavailable(timeValue, slots, durationMinutes, dateValue, originalDate, originalTime) {
                 var startTime = normalizeTimeValue(timeValue);
                 var endTime = addDurationToTime(startTime, durationMinutes);
-                var isSameAsOriginal = dateValue === rescheduleOriginalDate
-                    && normalizeRescheduleSelectTime(timeValue) === rescheduleOriginalTime;
+                var compareDate = originalDate || rescheduleOriginalDate;
+                var compareTime = originalTime || rescheduleOriginalTime;
+                var isSameAsOriginal = compareDate !== ''
+                    && dateValue === compareDate
+                    && normalizeRescheduleSelectTime(timeValue) === compareTime;
 
                 return slots.some(function(slot) {
                     if (slot.type !== 'unavailable') {
@@ -700,19 +879,24 @@ $html = <<<'HTML'
                 });
             }
 
-            function isTimeSlotBookable(timeValue, dateValue, slots, durationMinutes) {
-                if (!timeValue || !lawyerHasPublishedSchedule) {
+            function isTimeSlotBookable(timeValue, dateValue, slots, durationMinutes, originalDate, originalTime) {
+                if (!timeValue) {
                     return false;
                 }
                 var now = nowParts();
                 if (dateValue === now.date && timeValue < now.time) {
                     return false;
                 }
+                if (isBlockedByUnavailable(timeValue, slots, durationMinutes, dateValue, originalDate || '', originalTime || '')) {
+                    return false;
+                }
+                if (!lawyerHasPublishedSchedule) {
+                    return true;
+                }
                 if (!lawyerHasAvailabilityOnDate(dateValue)) {
                     return false;
                 }
-                return isWithinAvailable(timeValue, slots, durationMinutes)
-                    && !isBlockedByUnavailable(timeValue, slots, durationMinutes, dateValue);
+                return isWithinAvailable(timeValue, slots, durationMinutes);
             }
 
             function setRescheduleMessage(html, visible) {
@@ -757,7 +941,7 @@ $html = <<<'HTML'
                     return;
                 }
 
-                if (!lawyerHasPublishedSchedule || !lawyerHasAvailabilityOnDate(dateValue)) {
+                if (lawyerHasPublishedSchedule && !lawyerHasAvailabilityOnDate(dateValue)) {
                     timeSelect.querySelectorAll('option').forEach(function(option) {
                         if (option.value) {
                             option.disabled = true;
@@ -776,8 +960,7 @@ $html = <<<'HTML'
                     if (!option.value) {
                         return;
                     }
-                    if (isTimeSlotBookable(option.value, dateValue, slots, durationMinutes)) {
-                        option.classList.add('lp-time-available');
+                    if (isTimeSlotBookable(option.value, dateValue, slots, durationMinutes, rescheduleOriginalDate, rescheduleOriginalTime)) {
                         option.disabled = false;
                         hasBookable = true;
                     } else {
@@ -801,7 +984,7 @@ $html = <<<'HTML'
 
                 if (!timeSelect.value) {
                     setRescheduleMessage(
-                        '<div class="alert alert-info py-2 mb-0">Choose a <span class="text-success font-weight-bold">green</span> available time.</div>',
+                        '<div class="alert alert-info py-2 mb-0">Select an available time from the list.</div>',
                         true
                     );
                     setSaveEnabled(false);
@@ -813,6 +996,168 @@ $html = <<<'HTML'
             };
 
             window.normalizeRescheduleSelectTime = normalizeRescheduleSelectTime;
+
+            function renderLawyerTimeSelect(config) {
+                var timeSelect = config.timeSelect;
+                var dateInput = config.dateInput;
+                var durationInput = config.durationInput;
+                var messageEl = config.messageEl;
+                var setEnabled = config.setEnabled;
+                var preservedTime = config.preservedTime || '';
+                var originalDate = config.originalDate || '';
+                var originalTime = config.originalTime || '';
+
+                if (!timeSelect || !dateInput) {
+                    return;
+                }
+
+                var dateValue = dateInput.value;
+                var durationMinutes = durationInput && parseInt(durationInput.value, 10) === 30 ? 30 : 60;
+                var previous = preservedTime || normalizeRescheduleSelectTime(timeSelect.value);
+                var slots = getSlotsForDate(dateValue);
+                var hasBookable = false;
+
+                timeSelect.innerHTML = '<option value="">Select time</option>';
+                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                    var option = document.createElement('option');
+                    option.value = slotValue;
+                    option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);
+                    timeSelect.appendChild(option);
+                });
+
+                if (!dateValue) {
+                    if (messageEl) {
+                        messageEl.style.display = 'block';
+                        messageEl.innerHTML = '<div class="alert alert-info py-2 mb-0">Select a date to see available times.</div>';
+                    }
+                    if (setEnabled) {
+                        setEnabled(false);
+                    }
+                    return;
+                }
+
+                if (lawyerHasPublishedSchedule && !lawyerHasAvailabilityOnDate(dateValue)) {
+                    timeSelect.querySelectorAll('option').forEach(function(option) {
+                        if (option.value) {
+                            option.disabled = true;
+                        }
+                    });
+                    timeSelect.value = '';
+                    if (messageEl) {
+                        messageEl.style.display = 'block';
+                        messageEl.innerHTML = '<div class="alert alert-warning py-2 mb-0">' + NO_AVAILABILITY_ON_DATE_MSG + '</div>';
+                    }
+                    if (setEnabled) {
+                        setEnabled(false);
+                    }
+                    return;
+                }
+
+                timeSelect.querySelectorAll('option').forEach(function(option) {
+                    if (!option.value) {
+                        return;
+                    }
+                    if (isTimeSlotBookable(option.value, dateValue, slots, durationMinutes, originalDate, originalTime)) {
+                        option.disabled = false;
+                        hasBookable = true;
+                    } else {
+                        option.disabled = true;
+                    }
+                });
+
+                if (previous) {
+                    var match = timeSelect.querySelector('option[value="' + previous + '"]');
+                    timeSelect.value = match && !match.disabled ? previous : '';
+                }
+
+                if (!hasBookable) {
+                    if (messageEl) {
+                        messageEl.style.display = 'block';
+                        messageEl.innerHTML = '<div class="alert alert-warning py-2 mb-0">' + NO_AVAILABILITY_ON_DATE_MSG + '</div>';
+                    }
+                    if (setEnabled) {
+                        setEnabled(false);
+                    }
+                    return;
+                }
+
+                if (!timeSelect.value) {
+                    if (messageEl) {
+                        messageEl.style.display = 'block';
+                        messageEl.innerHTML = '<div class="alert alert-info py-2 mb-0">Select an available time from the list.</div>';
+                    }
+                    if (setEnabled) {
+                        setEnabled(false);
+                    }
+                    return;
+                }
+
+                if (messageEl) {
+                    messageEl.style.display = 'none';
+                    messageEl.innerHTML = '';
+                }
+                if (setEnabled) {
+                    setEnabled(true);
+                }
+            }
+
+            window.renderCreateTimeOptions = function(preservedTime) {
+                renderLawyerTimeSelect({
+                    timeSelect: document.getElementById('create_appointment_time'),
+                    dateInput: document.getElementById('create_appointment_date'),
+                    durationInput: document.getElementById('create_duration_minutes'),
+                    messageEl: document.getElementById('createAvailabilityMessage'),
+                    setEnabled: function(enabled) {
+                        var btn = document.getElementById('createAppointmentSubmit');
+                        if (btn) {
+                            btn.disabled = !enabled;
+                        }
+                    },
+                    preservedTime: preservedTime || ''
+                });
+            };
+
+            var createDateInput = document.getElementById('create_appointment_date');
+            var createTimeSelect = document.getElementById('create_appointment_time');
+            var createDurationSelect = document.getElementById('create_duration_select');
+            var createDurationInput = document.getElementById('create_duration_minutes');
+            var createForm = document.getElementById('createAppointmentForm');
+
+            if (createDurationSelect && createDurationInput) {
+                createDurationSelect.addEventListener('change', function() {
+                    createDurationInput.value = createDurationSelect.value === '30' ? '30' : '60';
+                    window.renderCreateTimeOptions(createTimeSelect ? createTimeSelect.value : '');
+                });
+            }
+
+            if (createDateInput) {
+                createDateInput.addEventListener('change', function() {
+                    window.renderCreateTimeOptions('');
+                });
+            }
+
+            if (createTimeSelect) {
+                createTimeSelect.addEventListener('change', function() {
+                    window.renderCreateTimeOptions(createTimeSelect.value);
+                });
+            }
+
+            if (createForm) {
+                createForm.addEventListener('submit', function(event) {
+                    var dateValue = createDateInput ? createDateInput.value : '';
+                    var timeValue = createTimeSelect ? createTimeSelect.value : '';
+                    var selected = createTimeSelect ? createTimeSelect.options[createTimeSelect.selectedIndex] : null;
+
+                    if (!dateValue || !timeValue || !selected || selected.disabled) {
+                        event.preventDefault();
+                        var messageEl = document.getElementById('createAvailabilityMessage');
+                        if (messageEl) {
+                            messageEl.style.display = 'block';
+                            messageEl.innerHTML = '<div class="alert alert-warning py-2 mb-0">Please select an available time.</div>';
+                        }
+                    }
+                });
+            }
 
             if (dateInput) {
                 dateInput.addEventListener('change', function() {
@@ -835,7 +1180,7 @@ $html = <<<'HTML'
                     if (!dateValue || !timeValue || !selected || selected.disabled) {
                         event.preventDefault();
                         setRescheduleMessage(
-                            '<div class="alert alert-warning py-2 mb-0">Please select an available time (green option).</div>',
+                            '<div class="alert alert-warning py-2 mb-0">Please select an available time.</div>',
                             true
                         );
                         setSaveEnabled(false);
@@ -864,6 +1209,7 @@ $replacements = [
     '{TOTAL_APPOINTMENTS}' => count($appointments),
     '{APPOINTMENTS_TABLE}' => $appointmentsTable,
     '{ICON_CARD_HEADER}' => $iconCardHeader,
+    '{LAWYER_CASE_OPTIONS}' => $lawyerCaseOptions,
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);
