@@ -46,7 +46,7 @@ function legalpro_court_booking_entries_from_rows(array $courtDates): array
 function legalpro_is_court_slot_booked(PDO $pdo, string $dateYmd, string $timeHm, ?int $excludeId = null): bool
 {
     $dateYmd = trim($dateYmd);
-    $timeHm = legalpro_normalize_time_hm($timeHm);
+    $timeHm = legalpro_parse_court_time_input($timeHm);
 
     if ($dateYmd === '' || $timeHm === '') {
         return false;
@@ -85,16 +85,20 @@ function legalpro_validate_court_booking_datetime(
     }
 
     $dateYmd = trim($dateYmd);
-    $timeHm = legalpro_normalize_time_hm($timeHm);
+    $timeHm = legalpro_parse_court_time_input($timeHm);
 
     if ($dateYmd === '' || $timeHm === '') {
-        return ['ok' => false, 'message' => 'Court date and time are required.'];
+        return ['ok' => false, 'message' => 'Court date and a valid court time are required (for example 9:30 AM or 14:15).'];
     }
 
     if (!legalpro_is_allowed_court_time_slot($timeHm)) {
         return [
             'ok' => false,
-            'message' => 'Court time must be between 9:00 AM and 5:30 PM.',
+            'message' => 'Court time must be between '
+                . legalpro_format_time_ampm(legalpro_court_time_min())
+                . ' and '
+                . legalpro_format_time_ampm(legalpro_court_time_max())
+                . '.',
         ];
     }
 

@@ -659,6 +659,7 @@ $html = <<<'HTML'
 			if (caseSelect) {
 				caseSelect.addEventListener('change', function() {
 					syncCaseDependentFields(true);
+					refreshAppointmentDatePicker();
 					renderTimeOptions();
 				});
 
@@ -741,20 +742,34 @@ $html = <<<'HTML'
                 return days[date.getDay()];
             }
 
+            function timeToMinutes(timeValue) {
+                if (!timeValue) {
+                    return -1;
+                }
+                var parts = String(timeValue).split(':');
+                return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
+            }
+
             function getSlotsForLawyerAndDate(lawyerId, dateValue) {
                 var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
-                return byDate[dateValue] ? byDate[dateValue].slice() : [];
+                var slots = byDate[dateValue] ? byDate[dateValue].slice() : [];
+                var byDay = lawyerAvailabilityByDay[lawyerId] || lawyerAvailabilityByDay[String(lawyerId)] || {};
+                var dayKey = getDayOfWeekFromDate(dateValue);
+                if (byDay[dayKey]) {
+                    slots = slots.concat(byDay[dayKey]);
+                }
+                return slots;
             }
 
             function lawyerHasAvailabilityOnDate(lawyerId, dateValue) {
-                return getSlotsForLawyerAndDate(lawyerId, dateValue).some(function(slot) {
+                var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
+                return (byDate[dateValue] || []).some(function(slot) {
                     return slot.type === 'available';
                 });
             }
 
             function isLawyerDateUnavailable(dateObj) {
-                var lawyerId = lawyerSelect ? lawyerSelect.value : '';
-                if (!lawyerId || typeof LegalproAvailabilityDatePicker === 'undefined') {
+                if (!(dateObj instanceof Date) || isNaN(dateObj.getTime()) || typeof LegalproAvailabilityDatePicker === 'undefined') {
                     return true;
                 }
 
@@ -784,6 +799,26 @@ $html = <<<'HTML'
                 return !getStandardSlotTimes(durationMinutes).some(function(slotValue) {
                     return isTimeSlotBookable(slotValue, lawyerId, dateValue, slots, published, durationMinutes);
                 });
+                var lawyerId = lawyerSelect ? lawyerSelect.value : '';
+                if (!lawyerId) {
+                    return false;
+                }
+
+                if (!lawyerHasPublishedSchedule(lawyerId)) {
+                    return false;
+                }
+
+                return !lawyerHasAvailabilityOnDate(lawyerId, dateValue);
+            }
+
+            function appointmentDatePickerOptions() {
+                return {
+                    minDate: 'today',
+                    isUnavailable: isLawyerDateUnavailable,
+                    onChange: function() {
+                        renderTimeOptions();
+                    }
+                };
             }
 
             function initAppointmentDatePicker() {
@@ -791,13 +826,7 @@ $html = <<<'HTML'
                     return;
                 }
 
-                LegalproAvailabilityDatePicker.create(dateInput, {
-                    minDate: 'today',
-                    isUnavailable: isLawyerDateUnavailable,
-                    onChange: function() {
-                        renderTimeOptions();
-                    }
-                });
+                LegalproAvailabilityDatePicker.create(dateInput, appointmentDatePickerOptions());
             }
 
             function refreshAppointmentDatePicker() {
@@ -805,8 +834,13 @@ $html = <<<'HTML'
                     return;
                 }
 
-                LegalproAvailabilityDatePicker.clearIfUnavailable(dateInput, isLawyerDateUnavailable);
-                LegalproAvailabilityDatePicker.refresh(dateInput);
+                var pickerOptions = appointmentDatePickerOptions();
+                if (LegalproAvailabilityDatePicker.instances[dateInput.id]) {
+                    LegalproAvailabilityDatePicker.clearIfUnavailable(dateInput, isLawyerDateUnavailable);
+                    LegalproAvailabilityDatePicker.refresh(dateInput, pickerOptions);
+                } else {
+                    LegalproAvailabilityDatePicker.create(dateInput, pickerOptions);
+                }
                 renderTimeOptions();
             }
 
@@ -826,32 +860,39 @@ $html = <<<'HTML'
                 return timeValue.length === 5 ? timeValue + ':00' : timeValue;
             }
 
-            function rangesOverlap(startA, endA, startB, endB) {
+            function rangesOverlapMinutes(startA, endA, startB, endB) {
                 return startA < endB && endA > startB;
             }
 
             function isBlockedByUnavailable(timeValue, slots, durationMinutes) {
-                var startTime = normalizeTimeValue(timeValue);
-                if (!startTime) {
+                var startMinutes = timeToMinutes(timeValue);
+                if (startMinutes < 0) {
                     return false;
                 }
-                var endTime = addDurationToTime(startTime, durationMinutes);
+                var endMinutes = startMinutes + durationMinutes;
                 return slots.some(function(slot) {
                     if (slot.type !== 'unavailable') {
                         return false;
                     }
-                    return rangesOverlap(startTime, endTime, slot.start, slot.end);
+                    return rangesOverlapMinutes(
+                        startMinutes,
+                        endMinutes,
+                        timeToMinutes(slot.start),
+                        timeToMinutes(slot.end)
+                    );
                 });
             }
 
             function isWithinAvailable(timeValue, slots, durationMinutes) {
-                var startTime = normalizeTimeValue(timeValue);
-                if (!startTime) {
+                var startMinutes = timeToMinutes(timeValue);
+                if (startMinutes < 0) {
                     return false;
                 }
-                var endTime = addDurationToTime(startTime, durationMinutes);
+                var endMinutes = startMinutes + durationMinutes;
                 return slots.some(function(slot) {
-                    return slot.type === 'available' && startTime >= slot.start && endTime <= slot.end;
+                    return slot.type === 'available'
+                        && startMinutes >= timeToMinutes(slot.start)
+                        && endMinutes <= timeToMinutes(slot.end);
                 });
             }
 
@@ -1164,6 +1205,9 @@ $html = <<<'HTML'
                 lawyerSelect.addEventListener('change', function() {
                     if (timeInput) {
                         timeInput.value = '';
+                    }
+                    if (dateInput && typeof LegalproAvailabilityDatePicker !== 'undefined') {
+                        LegalproAvailabilityDatePicker.rebuild(dateInput, appointmentDatePickerOptions());
                     }
                     refreshAppointmentDatePicker();
                 });

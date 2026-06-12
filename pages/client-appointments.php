@@ -876,10 +876,19 @@ ob_start(); ?>
         return getSlotsForDate(lawyerId, dateVal).filter(function(s) { return s.type === 'available'; });
     }
 
+    function timeToMinutes(timeVal) {
+        if (!timeVal) return -1;
+        var parts = String(timeVal).split(':');
+        return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
+    }
+
     function isAvailable(timeVal, slots) {
         if (!timeVal || !slots.length) return false;
-        var t = timeVal.length === 5 ? timeVal + ':00' : timeVal;
-        return slots.some(function(s) { return t >= s.start && t < s.end; });
+        var startMinutes = timeToMinutes(timeVal);
+        var endMinutes = startMinutes + 60;
+        return slots.some(function(s) {
+            return startMinutes >= timeToMinutes(s.start) && endMinutes <= timeToMinutes(s.end);
+        });
     }
 
     function isPastTime(dateVal, timeVal) {
@@ -892,13 +901,11 @@ ob_start(); ?>
 
     function isBlockedByUnavailable(timeVal, slots) {
         if (!timeVal || !slots.length) return false;
-        var start = timeVal.length === 5 ? timeVal + ':00' : timeVal;
-        var endParts = start.split(':');
-        var endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1] || '0', 10) + 60;
-        var end = String(Math.floor(endMinutes / 60)).padStart(2, '0') + ':' + String(endMinutes % 60).padStart(2, '0') + ':00';
+        var startMinutes = timeToMinutes(timeVal);
+        var endMinutes = startMinutes + 60;
         return slots.some(function(slot) {
             if (slot.type !== 'unavailable') return false;
-            return start < slot.end && end > slot.start;
+            return startMinutes < timeToMinutes(slot.end) && endMinutes > timeToMinutes(slot.start);
         });
     }
 

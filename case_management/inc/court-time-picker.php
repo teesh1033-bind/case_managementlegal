@@ -35,17 +35,42 @@ function legalpro_format_time_ampm(string $timeHm): string
 
 function legalpro_normalize_time_hm(?string $timeValue): string
 {
+    $parsed = legalpro_parse_court_time_input($timeValue);
+
+    return $parsed !== '' ? $parsed : trim((string) $timeValue);
+}
+
+/**
+ * Parse manual court time entry (24h or 12h with AM/PM).
+ */
+function legalpro_parse_court_time_input(?string $timeValue): string
+{
     $timeValue = trim((string) $timeValue);
     if ($timeValue === '') {
         return '';
     }
 
-    $parts = explode(':', $timeValue);
-    if (count($parts) < 2) {
-        return $timeValue;
+    $timeValue = preg_replace('/\s+/', ' ', $timeValue);
+
+    if (!preg_match('/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i', $timeValue, $matches)) {
+        return '';
     }
 
-    return sprintf('%02d:%02d', (int) $parts[0], (int) $parts[1]);
+    $hours = (int) $matches[1];
+    $minutes = (int) $matches[2];
+    $period = isset($matches[4]) ? strtoupper($matches[4]) : '';
+
+    if ($period === 'PM' && $hours < 12) {
+        $hours += 12;
+    } elseif ($period === 'AM' && $hours === 12) {
+        $hours = 0;
+    }
+
+    if ($hours < 0 || $hours > 23 || $minutes < 0 || $minutes > 59) {
+        return '';
+    }
+
+    return sprintf('%02d:%02d', $hours, $minutes);
 }
 
 function legalpro_court_time_min(): string
@@ -88,25 +113,27 @@ function legalpro_is_time_within_court_hours(string $timeHm): bool
 
 function legalpro_render_court_time_input(string $inputName, string $inputId, string $datalistId, string $selected = ''): string
 {
-    $selected = legalpro_normalize_time_hm($selected);
+    $selected = legalpro_parse_court_time_input($selected);
+    $displayValue = $selected !== '' ? legalpro_format_time_ampm($selected) : '';
     $inputIdEsc = htmlspecialchars($inputId, ENT_QUOTES, 'UTF-8');
     $inputNameEsc = htmlspecialchars($inputName, ENT_QUOTES, 'UTF-8');
     $datalistIdEsc = htmlspecialchars($datalistId, ENT_QUOTES, 'UTF-8');
-    $selectedEsc = htmlspecialchars($selected, ENT_QUOTES, 'UTF-8');
-    $minEsc = htmlspecialchars(legalpro_court_time_min(), ENT_QUOTES, 'UTF-8');
-    $maxEsc = htmlspecialchars(legalpro_court_time_max(), ENT_QUOTES, 'UTF-8');
+    $displayEsc = htmlspecialchars($displayValue, ENT_QUOTES, 'UTF-8');
 
     $presetOptions = '';
     foreach (legalpro_appointment_time_slots() as $value => $label) {
-        $presetOptions .= '<option value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '" label="'
-            . htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
-            . '"></option>';
+        $presetOptions .= '<option value="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '"></option>';
     }
 
-    return '<input type="time" name="' . $inputNameEsc . '" id="' . $inputIdEsc . '" class="form-control legalpro-court-time-input"'
-        . ' min="' . $minEsc . '" max="' . $maxEsc . '" step="60" list="' . $datalistIdEsc . '" value="' . $selectedEsc . '" required disabled>'
+    return '<input type="text" name="' . $inputNameEsc . '" id="' . $inputIdEsc . '" class="form-control legalpro-court-time-input"'
+        . ' placeholder="e.g. 9:30 AM or 14:15" autocomplete="off" spellcheck="false"'
+        . ' list="' . $datalistIdEsc . '" value="' . $displayEsc . '" required disabled>'
         . '<datalist id="' . $datalistIdEsc . '">' . $presetOptions . '</datalist>'
-        . '<small class="text-muted d-block mt-2 legalpro-time-slot-hint">Enter any time between 9:00 AM and 5:30 PM (e.g. 9:15, 10:45). Suggested times appear as you type.</small>';
+        . '<small class="text-muted d-block mt-2 legalpro-time-slot-hint">Type the court time manually (for example <strong>9:15 AM</strong>, <strong>2:45 PM</strong>, or <strong>14:15</strong>). Allowed between '
+        . htmlspecialchars(legalpro_format_time_ampm(legalpro_court_time_min()), ENT_QUOTES, 'UTF-8')
+        . ' and '
+        . htmlspecialchars(legalpro_format_time_ampm(legalpro_court_time_max()), ENT_QUOTES, 'UTF-8')
+        . '.</small>';
 }
 
 function legalpro_render_time_slot_dropdown(string $inputName, string $selectId, string $selected = ''): string
@@ -171,8 +198,11 @@ function legalpro_render_time_slot_picker_styles(): void
         . '.legalpro-time-slot-select option.legalpro-time-unavailable{color:#94a3b8;text-decoration:line-through;}'
         . 'body.legalpro-dark-mode .legalpro-time-slot-select option.legalpro-time-available{color:#6ee7b7;}'
         . 'body.legalpro-dark-mode .legalpro-time-slot-select option.legalpro-time-unavailable{color:#64748b;}'
+        . '.legalpro-court-time-input{font-variant-numeric:tabular-nums;}'
         . '.legalpro-court-time-input:disabled{opacity:.65;cursor:not-allowed;}'
-        . 'body.legalpro-dark-mode .legalpro-court-time-input{color-scheme:dark;background:#1e293b;border-color:rgba(255,255,255,.12);color:#e2e8f0;}'
+        . '.legalpro-court-time-input::placeholder{color:#94a3b8;opacity:1;}'
+        . 'body.legalpro-dark-mode .legalpro-court-time-input{background:#1e293b;border-color:rgba(255,255,255,.12);color:#e2e8f0;}'
+        . 'body.legalpro-dark-mode .legalpro-court-time-input::placeholder{color:#64748b;}'
         . 'body.legalpro-dark-mode .legalpro-court-time-input:disabled{background:rgba(255,255,255,.04);}'
         . '</style>';
 }
