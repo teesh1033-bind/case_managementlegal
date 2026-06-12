@@ -708,6 +708,7 @@ if (!empty($tasks)) {
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Due Date</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Lawyer Comment</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                 </tr>
             </thead>
