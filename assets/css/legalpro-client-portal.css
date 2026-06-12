@@ -566,47 +566,41 @@ body.legalpro-dark-mode.legalpro-client-portal.client-court-tracking-page .cct-e
 .cdoc-empty { text-align: center; padding: 3rem 1.5rem; }
 .cdoc-touch-btn { min-height: 44px; min-width: 44px; padding: .5rem 1rem !important; }
 
-/* ── Notification panel ────────────────────────────────────────────────── */
-.legalpro-client-notif-panel {
-    position: fixed; inset: 0; z-index: 1060;
-    display: flex; justify-content: flex-end;
+/* ── Client notification dropdown (header bell) ───────────────────────── */
+.legalpro-client-notif-dropdown {
+    width: min(20rem, calc(100vw - 2rem));
+    max-height: min(22rem, calc(100vh - 6rem));
 }
-.legalpro-client-notif-panel[hidden] { display: none !important; }
-.legalpro-client-notif-panel__backdrop {
-    position: absolute; inset: 0; background: rgba(15, 23, 42, .45);
+
+.legalpro-client-notif-dropdown__mark-all {
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap;
 }
-.legalpro-client-notif-panel__sheet {
-    position: relative; width: min(24rem, 100vw); height: 100%;
-    background: #fff; box-shadow: -8px 0 32px rgba(0,0,0,.12);
-    display: flex; flex-direction: column; z-index: 1;
-    animation: cpSlideIn .2s ease;
+
+.legalpro-client-notif-dropdown__foot[hidden] {
+    display: none !important;
 }
-@keyframes cpSlideIn {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+
+.legalpro-client-notif-dropdown__toggle {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    width: 100%;
+    padding: 0;
 }
-.legalpro-client-notif-panel__hdr {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.15rem; border-bottom: 1px solid #f1f5f9;
+
+.legalpro-client-notif-dropdown .legalpro-notif-item.is-unread {
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.06);
+    border-left: 3px solid var(--legalpro-theme-primary, #5e72e4);
 }
-.legalpro-client-notif-panel__list {
-    flex: 1; overflow-y: auto; padding: .5rem 0;
+
+.legalpro-client-notif-dropdown .legalpro-notif-panel__body {
+    max-height: 14rem;
 }
-.legalpro-client-notif-item {
-    display: flex; gap: .75rem; align-items: flex-start;
-    padding: .85rem 1.15rem; text-decoration: none; color: inherit;
-    border-left: 3px solid transparent;
-}
-.legalpro-client-notif-item:hover { background: #f8fafc; color: inherit; }
-.legalpro-client-notif-item.is-unread {
-    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.05);
-    border-left-color: var(--legalpro-theme-primary, #5e72e4);
-}
-.legalpro-client-notif-item__title { display: block; font-size: .82rem; font-weight: 700; }
-.legalpro-client-notif-item__text { display: block; font-size: .74rem; color: #64748b; margin-top: 2px; }
-.legalpro-client-notif-item__time { font-size: .68rem; color: #94a3b8; white-space: nowrap; }
-.legalpro-client-notif-panel__footer {
-    padding: .75rem 1.15rem; border-top: 1px solid #f1f5f9; text-align: center;
+
+.legalpro-client-notif-dropdown.is-expanded .legalpro-notif-panel__body {
+    max-height: min(18rem, calc(100vh - 10rem));
 }
 
 /* ── Mobile bottom nav ─────────────────────────────────────────────────── */
@@ -675,7 +669,7 @@ body.legalpro-dark-mode.legalpro-client-portal.client-court-tracking-page .cct-e
 /* Dark mode overrides */
 body.legalpro-dark-mode.legalpro-client-portal .cp-activity-item__title,
 body.legalpro-dark-mode.legalpro-client-portal .cdoc-row__title { color: var(--lp-dark-text, #f8f9fc); }
-body.legalpro-dark-mode.legalpro-client-portal .legalpro-client-notif-panel__sheet,
+body.legalpro-dark-mode.legalpro-client-portal .legalpro-client-notif-dropdown,
 body.legalpro-dark-mode.legalpro-client-portal .legalpro-client-bottom-nav,
 body.legalpro-dark-mode.legalpro-client-portal .legalpro-client-more-sheet__panel {
     background: var(--lp-dark-surface, #343b4f);

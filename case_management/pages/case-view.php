@@ -3,6 +3,9 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/legalpro-icons.php';
 require_once __DIR__ . '/../lib/case_events.php';
+require_once __DIR__ . '/../lib/task_helpers.php';
+
+ensure_task_support_schema($pdo);
 
 $message = '';
 $messageType = '';
@@ -640,7 +643,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/case-detail-tabs.css?v=3" rel="stylesheet" />
+    <link href="../assets/css/case-detail-tabs.css?v=4" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -914,13 +917,7 @@ if (!empty($tasks)) {
 
         $dueDate = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
         $lawyerName = htmlspecialchars($task['lawyer_first_name'] . ' ' . $task['lawyer_last_name']);
-        $taskCommentRaw = trim((string)($task['task_comment'] ?? ''));
-        if ($taskCommentRaw === '') {
-            $taskCommentCell = '<span class="text-muted">—</span>';
-        } else {
-            $taskCommentShort = strlen($taskCommentRaw) > 80 ? substr($taskCommentRaw, 0, 80) . '…' : $taskCommentRaw;
-            $taskCommentCell = '<span class="text-sm" title="' . htmlspecialchars($taskCommentRaw) . '">' . htmlspecialchars($taskCommentShort) . '</span>';
-        }
+        $taskCommentCell = render_admin_task_comment_html((string)($task['task_comment'] ?? ''));
 
         $tasksHtml .= '<tr>
             <td>
@@ -928,6 +925,9 @@ if (!empty($tasks)) {
                     <h6 class="mb-0 text-sm">' . htmlspecialchars($task['title']) . '</h6>';
         if (!empty($task['description'])) {
             $tasksHtml .= '<small class="text-muted">' . htmlspecialchars(substr($task['description'], 0, 50)) . (strlen($task['description']) > 50 ? '...' : '') . '</small>';
+        }
+        if (trim((string)($task['task_comment'] ?? '')) !== '') {
+            $tasksHtml .= render_admin_task_comment_html((string)$task['task_comment']);
         }
         $tasksHtml .= '</div>
             </td>

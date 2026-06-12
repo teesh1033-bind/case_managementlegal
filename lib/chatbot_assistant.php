@@ -87,11 +87,11 @@ class ChatbotAssistant
             return $this->handleGreeting();
         }
 
-        if ($this->matchesAny($normalized, ['active case', 'open case', 'my cases', 'how many cases', 'list cases', 'show cases'])) {
+        if ($this->isCaseRelatedQuery($normalized)) {
             return $this->handleCases($normalized);
         }
 
-        if ($this->matchesAny($normalized, ['appointment', 'appointments', 'meeting', 'schedule', 'upcoming meeting'])) {
+        if ($this->isAppointmentRelatedQuery($normalized)) {
             return $this->handleAppointments($normalized);
         }
 
@@ -123,9 +123,55 @@ class ChatbotAssistant
             return $this->handleDashboardSummary();
         }
 
+        if ($this->context['role'] === 'client') {
+            $hint = $this->buildClientFallbackHint($message, $normalized);
+            if ($hint !== null) {
+                return $hint;
+            }
+        }
+
         return $this->result(
             "I'm not sure about that yet. Try asking about your **cases**, **appointments**, **payments**, **documents**, or **court dates**. Say **help** for examples."
         );
+    }
+
+    private function buildClientFallbackHint(string $message, string $normalized): ?array
+    {
+        if (!preg_match('/\b(update|change|edit|open|view|work|dispute|case)\b/i', $normalized)) {
+            return null;
+        }
+
+        $clientId = (int) ($this->context['client_id'] ?? 0);
+        $stmt = $this->pdo->prepare('SELECT id, title, status FROM cases WHERE client_id = ? ORDER BY updated_at DESC LIMIT 8');
+        $stmt->execute([$clientId]);
+        $cases = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (!$cases) {
+            return null;
+        }
+
+        foreach ($cases as $c) {
+            $title = strtolower((string) $c['title']);
+            if ($title !== '' && strpos($normalized, $title) !== false) {
+                $id = (int) $c['id'];
+                $num = $this->caseNumber($id);
+                return $this->result(
+                    "Sounds like you mean **{$num} — {$c['title']}**. Say _open {$num}_ or _update the {$c['title']} case_ and I'll take you there.",
+                    [['label' => 'Open ' . $num, 'url' => 'client-case-view.php?id=' . $id]]
+                );
+            }
+            foreach (preg_split('/\s+/', $title) as $word) {
+                if (strlen($word) >= 4 && strpos($normalized, $word) !== false) {
+                    $id = (int) $c['id'];
+                    $num = $this->caseNumber($id);
+                    return $this->result(
+                        "Did you mean **{$num} — {$c['title']}**? Say _update the {$c['title']} case_ to open it and send an update to your lawyer.",
+                        [['label' => 'Open ' . $num, 'url' => 'client-case-view.php?id=' . $id]]
+                    );
+                }
+            }
+        }
+
+        return null;
     }
 
     private function matchKnowledge(string $normalized): ?array
@@ -192,6 +238,9 @@ class ChatbotAssistant
         $name = $this->context['display_name'];
         $role = ucfirst($this->context['role']);
 
+        if ($this->context['role'] === 'client') {
+            return $this->result("Hello {$name}! I'm your smart assistant — I analyze your live account data, **open pages** for you, **update your profile**, and **book appointments**. Say **help** for examples.");
+        }
         return $this->result("Hello {$name}! I'm your {$role} assistant. Ask me about cases, appointments, documents, payments, or court dates. Say **help** for examples.");
     }
 
@@ -215,11 +264,13 @@ class ChatbotAssistant
                 'Upcoming court dates',
             ],
             'client' => [
-                'Show my cases',
-                'My upcoming appointments',
-                'What is my payment balance?',
-                'Documents on my cases',
-                'Upcoming court dates',
+                'Weekly summary — what should I focus on?',
+                'Take me to payments',
+                'Book appointment tomorrow 2pm case C-0003',
+                'Update my phone to +230 5xxx xxxx',
+                'How should I prepare for my next court date?',
+                'Open case C-0007',
+                'Request a callback from my lawyer',
             ],
         ];
 
@@ -238,81 +289,260 @@ class ChatbotAssistant
     private function handleCases(string $normalized): array
     {
         $role = $this->context['role'];
+        $statusFilter = $this->parseCaseStatusIntent($normalized);
+        $wantsCount = $this->isCountQuestion($normalized);
 
         if ($role === 'admin') {
-            $active = (int) $this->pdo->query("SELECT COUNT(*) FROM cases WHERE status != 'closed'")->fetchColumn();
-            $total = (int) $this->pdo->query('SELECT COUNT(*) FROM cases')->fetchColumn();
-            $stmt = $this->pdo->query("
-                SELECT c.id, c.title, c.status, cl.first_name, cl.last_name
-                FROM cases c
-                INNER JOIN clients cl ON cl.id = c.client_id
-                WHERE c.status != 'closed'
-                ORDER BY c.updated_at DESC
-                LIMIT 5
-            ");
-            $rows = $stmt->fetchAll();
-            $lines = "There are **{$active}** active cases ({$total} total).\n\nRecent active cases:\n";
-            foreach ($rows as $row) {
-                $lines .= $this->formatCaseLine($row) . "\n";
-            }
-            return $this->result(trim($lines), [['label' => 'All cases', 'url' => 'tables.php']]);
+            return $this->handleCasesForScope($normalized, $statusFilter, $wantsCount, null, null, 'tables.php', 'All cases');
         }
 
         if ($role === 'lawyer') {
             $lawyerId = (int) $this->context['lawyer_id'];
-            $stmt = $this->pdo->prepare("
-                SELECT COUNT(*) FROM cases c
-                INNER JOIN case_lawyers cl ON cl.case_id = c.id
-                WHERE cl.lawyer_id = ? AND c.status != 'closed'
-            ");
-            $stmt->execute([$lawyerId]);
-            $active = (int) $stmt->fetchColumn();
-
-            $stmt = $this->pdo->prepare("
-                SELECT c.id, c.title, c.status, cl.first_name, cl.last_name
-                FROM cases c
-                INNER JOIN case_lawyers cl2 ON cl2.case_id = c.id
-                INNER JOIN clients cl ON cl.id = c.client_id
-                WHERE cl2.lawyer_id = ? AND c.status != 'closed'
-                ORDER BY c.updated_at DESC
-                LIMIT 5
-            ");
-            $stmt->execute([$lawyerId]);
-            $rows = $stmt->fetchAll();
-
-            $lines = "You have **{$active}** active cases assigned to you.\n\n";
-            if (empty($rows)) {
-                $lines .= 'No active cases found.';
-            } else {
-                $lines .= "Recent cases:\n";
-                foreach ($rows as $row) {
-                    $lines .= $this->formatCaseLine($row) . "\n";
-                }
-            }
-            return $this->result(trim($lines), [['label' => 'My cases', 'url' => 'lawyer-cases.php']]);
+            return $this->handleCasesForScope($normalized, $statusFilter, $wantsCount, null, $lawyerId, 'lawyer-cases.php', 'My cases');
         }
 
         $clientId = (int) $this->context['client_id'];
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM cases WHERE client_id = ? AND status != 'closed'");
-        $stmt->execute([$clientId]);
-        $active = (int) $stmt->fetchColumn();
+        return $this->handleCasesForScope($normalized, $statusFilter, $wantsCount, $clientId, null, 'client-cases.php', 'My cases');
+    }
 
-        $stmt = $this->pdo->prepare("
-            SELECT id, title, status FROM cases
-            WHERE client_id = ? AND status != 'closed'
-            ORDER BY updated_at DESC
-            LIMIT 5
-        ");
-        $stmt->execute([$clientId]);
-        $rows = $stmt->fetchAll();
+    private function handleCasesForScope(
+        string $normalized,
+        ?string $statusFilter,
+        bool $wantsCount,
+        ?int $clientId,
+        ?int $lawyerId,
+        string $listUrl,
+        string $listLabel
+    ): array {
+        $breakdown = $this->fetchCaseStatusBreakdown($clientId, $lawyerId);
 
-        $lines = "You have **{$active}** active case(s).\n\n";
-        foreach ($rows as $row) {
-            $num = $this->caseNumber((int) $row['id']);
-            $status = ucfirst(str_replace('_', ' ', (string) $row['status']));
-            $lines .= "• **{$num}** — {$row['title']} ({$status})\n";
+        if ($statusFilter === 'all' || ($statusFilter === null && ($wantsCount || $this->matchesAny($normalized, ['summary', 'breakdown', 'by status'])))) {
+            return $this->result($this->formatCaseBreakdownReply($breakdown, $clientId !== null), [
+                ['label' => $listLabel, 'url' => $listUrl],
+            ]);
         }
-        return $this->result(trim($lines), [['label' => 'My cases', 'url' => 'client-cases.php']]);
+
+        $filterStatus = $statusFilter ?? 'open';
+        if ($filterStatus === 'active') {
+            $filterStatus = 'open';
+        }
+
+        $count = $breakdown['by_status'][$filterStatus] ?? 0;
+        if ($filterStatus === 'open') {
+            $count = $breakdown['open_total'];
+        }
+
+        $label = ucfirst($filterStatus);
+        $rows = $this->fetchCasesByStatus($filterStatus, $clientId, $lawyerId, 6);
+
+        $subject = $clientId !== null ? 'You have' : ($lawyerId !== null ? 'You have' : 'There are');
+
+        if ($count === 0) {
+            $reply = "{$subject} **0** {$label} case(s).";
+            if ($filterStatus === 'closed' && $breakdown['open_total'] > 0) {
+                $reply .= "\n\n{$subject} **{$breakdown['open_total']}** open case(s) still active.";
+            } elseif ($filterStatus === 'open' && ($breakdown['by_status']['closed'] ?? 0) > 0) {
+                $closed = (int) ($breakdown['by_status']['closed'] ?? 0);
+                $reply .= "\n\n{$subject} also **{$closed}** closed case(s).";
+            }
+            return $this->result($reply, [['label' => $listLabel, 'url' => $listUrl]]);
+        }
+
+        $lines = "{$subject} **{$count}** {$label} case(s).\n\n";
+        foreach ($rows as $row) {
+            if ($clientId !== null) {
+                $num = $this->caseNumber((int) $row['id']);
+                $status = ucfirst(str_replace('_', ' ', (string) $row['status']));
+                $lines .= "• **{$num}** — {$row['title']} ({$status})\n";
+            } else {
+                $lines .= $this->formatCaseLine($row) . "\n";
+            }
+        }
+
+        return $this->result(trim($lines), [['label' => $listLabel, 'url' => $listUrl]]);
+    }
+
+    private function fetchCaseStatusBreakdown(?int $clientId, ?int $lawyerId): array
+    {
+        $where = '1=1';
+        $params = [];
+
+        if ($clientId !== null) {
+            $where = 'c.client_id = ?';
+            $params[] = $clientId;
+        } elseif ($lawyerId !== null) {
+            $where = 'EXISTS (SELECT 1 FROM case_lawyers cl WHERE cl.case_id = c.id AND cl.lawyer_id = ?)';
+            $params[] = $lawyerId;
+        }
+
+        $sql = "
+            SELECT LOWER(TRIM(c.status)) AS st, COUNT(*) AS cnt
+            FROM cases c
+            WHERE {$where}
+            GROUP BY LOWER(TRIM(c.status))
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $byStatus = [];
+        $total = 0;
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $st = (string) ($row['st'] ?? 'unknown');
+            $cnt = (int) ($row['cnt'] ?? 0);
+            $byStatus[$st] = $cnt;
+            $total += $cnt;
+        }
+
+        $openTotal = 0;
+        foreach ($byStatus as $st => $cnt) {
+            if ($st !== 'closed') {
+                $openTotal += $cnt;
+            }
+        }
+
+        return ['by_status' => $byStatus, 'total' => $total, 'open_total' => $openTotal];
+    }
+
+    private function fetchCasesByStatus(string $filterStatus, ?int $clientId, ?int $lawyerId, int $limit): array
+    {
+        $where = [];
+        $params = [];
+
+        if ($clientId !== null) {
+            $where[] = 'c.client_id = ?';
+            $params[] = $clientId;
+        }
+        if ($lawyerId !== null) {
+            $where[] = 'EXISTS (SELECT 1 FROM case_lawyers cl WHERE cl.case_id = c.id AND cl.lawyer_id = ?)';
+            $params[] = $lawyerId;
+        }
+
+        if ($filterStatus === 'closed') {
+            $where[] = "LOWER(TRIM(c.status)) = 'closed'";
+        } elseif ($filterStatus === 'pending') {
+            $where[] = "LOWER(TRIM(c.status)) = 'pending'";
+        } elseif ($filterStatus === 'open') {
+            $where[] = "LOWER(TRIM(c.status)) != 'closed'";
+        } else {
+            $where[] = 'LOWER(TRIM(c.status)) = ?';
+            $params[] = strtolower($filterStatus);
+        }
+
+        if ($clientId !== null) {
+            $select = 'SELECT c.id, c.title, c.status';
+            $join = '';
+        } elseif ($lawyerId !== null) {
+            $select = 'SELECT c.id, c.title, c.status, cl.first_name, cl.last_name';
+            $join = 'INNER JOIN case_lawyers cl2 ON cl2.case_id = c.id INNER JOIN clients cl ON cl.id = c.client_id';
+        } else {
+            $select = 'SELECT c.id, c.title, c.status, cl.first_name, cl.last_name';
+            $join = 'INNER JOIN clients cl ON cl.id = c.client_id';
+        }
+
+        $sql = "
+            {$select}
+            FROM cases c
+            {$join}
+            WHERE " . implode(' AND ', $where) . "
+            ORDER BY c.updated_at DESC
+            LIMIT " . (int) $limit;
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function formatCaseBreakdownReply(array $breakdown, bool $forClient): string
+    {
+        $by = $breakdown['by_status'];
+        $total = (int) $breakdown['total'];
+        if ($total === 0) {
+            return 'You have **no cases** on file yet.';
+        }
+
+        $lines = $forClient ? "**Your cases by status:**\n" : "**Cases by status:**\n";
+        ksort($by);
+        foreach ($by as $status => $count) {
+            $label = ucfirst(str_replace('_', ' ', $status));
+            $lines .= "• **{$count}** {$label}\n";
+        }
+        $lines .= "\n**{$total}** total.";
+        return $lines;
+    }
+
+    private function isCaseRelatedQuery(string $normalized): bool
+    {
+        if (strpos($normalized, 'case') === false && strpos($normalized, 'matter') === false) {
+            return false;
+        }
+
+        if ($this->parseCaseStatusIntent($normalized) !== null) {
+            return true;
+        }
+
+        return $this->matchesAny($normalized, [
+            'active case', 'open case', 'closed case', 'my cases', 'how many cases',
+            'how many closed', 'how many open', 'list cases', 'show cases',
+            'cases are', 'cases is', 'case count', 'number of cases', 'pending case',
+        ]) || (bool) preg_match('/\bhow many\b.*\b(case|cases|closed|open|pending)\b/', $normalized);
+    }
+
+    private function parseCaseStatusIntent(string $normalized): ?string
+    {
+        if (preg_match('/\b(closed|close|finished|resolved|completed|ended|archived)\b/', $normalized)) {
+            return 'closed';
+        }
+        if (preg_match('/\b(pending|on hold|waiting)\b/', $normalized)) {
+            return 'pending';
+        }
+        if (preg_match('/\b(open|active|ongoing|in progress|live)\b/', $normalized)) {
+            return 'open';
+        }
+        if (preg_match('/\b(all|total)\b/', $normalized)) {
+            return 'all';
+        }
+
+        return null;
+    }
+
+    private function isCountQuestion(string $normalized): bool
+    {
+        return (bool) preg_match('/\b(how many|how much|count|number of|total|amount of)\b/', $normalized);
+    }
+
+    private function isAppointmentRelatedQuery(string $normalized): bool
+    {
+        if (strpos($normalized, 'appointment') === false && strpos($normalized, 'meeting') === false) {
+            return false;
+        }
+
+        if ($this->parseAppointmentStatusIntent($normalized) !== null) {
+            return true;
+        }
+
+        return $this->matchesAny($normalized, [
+            'appointment', 'appointments', 'meeting', 'schedule', 'upcoming meeting',
+            'how many appointment', 'pending appointment', 'rejected appointment',
+        ]) || (bool) preg_match('/\bhow many\b.*\b(appointment|meeting)\b/', $normalized);
+    }
+
+    private function parseAppointmentStatusIntent(string $normalized): ?string
+    {
+        if (preg_match('/\b(pending|awaiting|waiting approval)\b/', $normalized)) {
+            return 'pending';
+        }
+        if (preg_match('/\b(accepted|confirmed|approved)\b/', $normalized)) {
+            return 'accepted';
+        }
+        if (preg_match('/\b(rejected|declined|cancelled|canceled)\b/', $normalized)) {
+            return 'rejected';
+        }
+        if (preg_match('/\b(past|previous|history)\b/', $normalized)) {
+            return 'past';
+        }
+        if (preg_match('/\b(upcoming|future)\b/', $normalized)) {
+            return 'upcoming';
+        }
+
+        return null;
     }
 
     private function handleCaseLookup(int $caseId): array
@@ -417,27 +647,78 @@ class ChatbotAssistant
             return $this->result(trim($lines), [['label' => 'My appointments', 'url' => 'lawyer-appointments.php']]);
         }
 
+        return $this->handleClientAppointments($normalized);
+    }
+
+    private function handleClientAppointments(string $normalized): array
+    {
         $clientId = (int) $this->context['client_id'];
-        $stmt = $this->pdo->prepare("
-            SELECT COUNT(*) FROM appointments
-            WHERE client_id = ? AND starts_at >= NOW() AND status IN ('pending', 'accepted')
-        ");
-        $stmt->execute([$clientId]);
-        $count = (int) $stmt->fetchColumn();
+        $statusFilter = $this->parseAppointmentStatusIntent($normalized);
+        $wantsCount = $this->isCountQuestion($normalized);
 
         $stmt = $this->pdo->prepare("
+            SELECT LOWER(status) AS st, COUNT(*) AS cnt
+            FROM appointments WHERE client_id = ?
+            GROUP BY LOWER(status)
+        ");
+        $stmt->execute([$clientId]);
+        $byStatus = [];
+        $total = 0;
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $byStatus[(string) $row['st']] = (int) $row['cnt'];
+            $total += (int) $row['cnt'];
+        }
+
+        if ($statusFilter === null && ($wantsCount || $this->matchesAny($normalized, ['breakdown', 'by status']))) {
+            if ($total === 0) {
+                return $this->result('You have **no appointments** yet.', [['label' => 'Book appointment', 'url' => 'client-appointments.php']]);
+            }
+            $lines = "**Your appointments by status:**\n";
+            ksort($byStatus);
+            foreach ($byStatus as $st => $cnt) {
+                $lines .= '• **' . $cnt . '** ' . ucfirst($st) . "\n";
+            }
+            $lines .= "\n**{$total}** total.";
+            return $this->result($lines, [['label' => 'My appointments', 'url' => 'client-appointments.php']]);
+        }
+
+        $filter = $statusFilter ?? 'upcoming';
+        $where = 'a.client_id = ?';
+        $params = [$clientId];
+
+        if ($filter === 'pending' || $filter === 'accepted' || $filter === 'rejected') {
+            $where .= ' AND a.status = ?';
+            $params[] = $filter;
+        } elseif ($filter === 'past') {
+            $where .= ' AND a.starts_at < NOW()';
+        } else {
+            $where .= " AND a.starts_at >= NOW() AND a.status IN ('pending', 'accepted')";
+            $filter = 'upcoming';
+        }
+
+        $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM appointments a WHERE {$where}");
+        $countStmt->execute($params);
+        $count = (int) $countStmt->fetchColumn();
+
+        $listStmt = $this->pdo->prepare("
             SELECT a.starts_at, a.status, c.title AS case_title,
                    l.first_name AS lawyer_first, l.last_name AS lawyer_last
             FROM appointments a
             LEFT JOIN cases c ON c.id = a.case_id
             LEFT JOIN lawyers l ON l.id = a.lawyer_id
-            WHERE a.client_id = ? AND a.starts_at >= NOW() AND a.status IN ('pending', 'accepted')
+            WHERE {$where}
             ORDER BY a.starts_at ASC
             LIMIT 5
         ");
-        $stmt->execute([$clientId]);
-        $rows = $stmt->fetchAll();
-        $lines = "You have **{$count}** upcoming appointment(s).\n\n";
+        $listStmt->execute($params);
+        $rows = $listStmt->fetchAll();
+
+        $label = ucfirst($filter);
+        if ($count === 0) {
+            return $this->result("You have **0** {$label} appointment(s).", [['label' => 'My appointments', 'url' => 'client-appointments.php']]);
+        }
+
+        $lines = "You have **{$count}** {$label} appointment(s).\n\n";
         foreach ($rows as $row) {
             $lines .= $this->formatAppointmentLine($row) . "\n";
         }

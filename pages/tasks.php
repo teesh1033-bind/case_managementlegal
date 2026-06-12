@@ -302,7 +302,8 @@ try {
     $lawyerCases = [];
 }
 
-$iconTaskHeader = legalpro_icon('list-checks');
+$iconTaskEmpty = legalpro_icon('list-checks');
+$iconCardHeader = legalpro_icon('list-checks');
 
 // Build HTML
 $messageHtml = '';
@@ -313,17 +314,24 @@ if ($message) {
     </div>';
 }
 
-$tasksHtml = '';
-if (!empty($tasks)) {
+$tasksListHtml = '';
+if (empty($tasks)) {
+    $tasksListHtml = '<div class="text-center py-5 px-4">
+        <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconTaskEmpty . '</div>
+        <h5 class="font-weight-bolder mt-3 mb-2">No tasks found</h5>
+        <p class="text-sm text-muted mb-0">Try adjusting your search or filters, or add a new task.</p>
+    </div>';
+} else {
     foreach ($tasks as $task) {
         $statusBadge = legalpro_task_status_badge((string) ($task['status'] ?? ''));
         $priorityBadge = legalpro_task_priority_badge((string) ($task['priority'] ?? 'medium'));
-
-        $dueDate = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
+        $dueLabel = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
         $isOverdue = $task['due_date'] && strtotime($task['due_date']) < time() && $task['status'] !== 'completed';
+        $dueClass = $isOverdue ? 'lt-task-row__due lt-task-row__due--overdue' : 'lt-task-row__due';
         $taskTitleJs = htmlspecialchars(json_encode($task['title']), ENT_QUOTES, 'UTF-8');
-        $taskDescriptionJs = htmlspecialchars(json_encode((string)$task['description']), ENT_QUOTES, 'UTF-8');
+        $taskDescriptionJs = htmlspecialchars(json_encode((string) $task['description']), ENT_QUOTES, 'UTF-8');
         $taskPriorityJs = htmlspecialchars(json_encode($task['priority']), ENT_QUOTES, 'UTF-8');
+<<<<<<< HEAD
         $taskDueDateJs = htmlspecialchars(json_encode((string)$task['due_date']), ENT_QUOTES, 'UTF-8');
         $taskCommentJs = htmlspecialchars(json_encode((string)($task['task_comment'] ?? '')), ENT_QUOTES, 'UTF-8');
 
@@ -370,17 +378,49 @@ if (!empty($tasks)) {
                                 </select>
                             </form>
                         </div>
+=======
+        $taskDueDateJs = htmlspecialchars(json_encode((string) $task['due_date']), ENT_QUOTES, 'UTF-8');
+        $clientName = htmlspecialchars(trim($task['client_first_name'] . ' ' . $task['client_last_name']));
+        $caseNumber = 'C-' . str_pad((string) $task['case_id'], 4, '0', STR_PAD_LEFT);
+
+        $tasksListHtml .= '
+        <div class="lt-task-row">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-6">
+                    <h6 class="lt-task-row__title mb-1">' . htmlspecialchars($task['title']) . '</h6>
+                    <p class="lt-task-row__meta mb-1">' . htmlspecialchars($task['case_title']) . ' (' . $caseNumber . ')</p>
+                    <p class="lt-task-row__meta mb-0">Client: ' . $clientName . '</p>
+                </div>
+                <div class="col-lg-3">
+                    <div class="lt-task-row__badges d-flex flex-column gap-2 align-items-lg-end">
+                        ' . $statusBadge . '
+                        ' . $priorityBadge . '
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <p class="' . $dueClass . ' text-lg-end mb-2">Due: ' . htmlspecialchars($dueLabel) . '</p>
+                    <div class="lt-task-row__actions d-flex align-items-center gap-2 justify-content-lg-end flex-wrap">
+                        <button
+                            type="button"
+                            class="btn btn-sm lt-task-edit-btn mb-0"
+                            onclick="showEditTaskModal(' . (int) $task['id'] . ', ' . (int) $task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ')"
+                        >Edit</button>
+                        <form method="POST" action="" class="d-flex align-items-center mb-0">
+                            <input type="hidden" name="action" value="update_status">
+                            <input type="hidden" name="task_id" value="' . (int) $task['id'] . '">
+                            <select name="status" class="form-select form-select-sm lawyer-tasks-status-select mb-0" onchange="this.form.submit()" aria-label="Update task status">
+                                <option value="pending"' . ($task['status'] === 'pending' ? ' selected' : '') . '>Pending</option>
+                                <option value="in_progress"' . ($task['status'] === 'in_progress' ? ' selected' : '') . '>In Progress</option>
+                                <option value="completed"' . ($task['status'] === 'completed' ? ' selected' : '') . '>Completed</option>
+                                <option value="cancelled"' . ($task['status'] === 'cancelled' ? ' selected' : '') . '>Cancelled</option>
+                            </select>
+                        </form>
+>>>>>>> 38bd99745124054e2bb525c16924ba8f44ca1bbe
                     </div>
                 </div>
             </div>
         </div>';
     }
-} else {
-    $tasksHtml = '<div class="text-center py-5">
-        <i class="ni ni-check-bold text-muted" style="font-size: 4rem;"></i>
-        <h4 class="text-muted mt-3">No tasks found</h4>
-        <p class="text-muted">You don\'t have any tasks assigned to you yet.</p>
-    </div>';
 }
 
 $caseOptions = '<option value="">Select case</option>';
@@ -407,56 +447,84 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
     <style>
-        /* More space between option text and dropdown chevron (in-card filters) */
-        .lawyer-tasks-page .task-actions-row .form-select,
+        .lawyer-tasks-page .lt-task-row {
+            background: linear-gradient(180deg, #ffffff 0%, #f4f6fc 100%);
+            border: 1px solid #dbe4f7;
+            border-radius: 14px;
+            padding: 1.1rem 1.25rem;
+            margin-bottom: 0.85rem;
+        }
+        .lawyer-tasks-page .lt-task-row:last-child {
+            margin-bottom: 0;
+        }
+        .lawyer-tasks-page .lt-task-row__title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #344767;
+        }
+        .lawyer-tasks-page .lt-task-row__meta {
+            font-size: 0.82rem;
+            color: #8392ab;
+            margin-bottom: 0;
+        }
+        .lawyer-tasks-page .lt-task-row__due {
+            font-size: 0.82rem;
+            color: #8392ab;
+            margin-bottom: 0;
+        }
+        .lawyer-tasks-page .lt-task-row__due--overdue {
+            color: #ea0606;
+            font-weight: 700;
+        }
+        .lawyer-tasks-page .lt-task-row__badges .ca-status-pill {
+            min-width: 5.5rem;
+            text-align: center;
+        }
+        .lawyer-tasks-page .lt-task-edit-btn {
+            background: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            padding: 0.35rem 0.9rem;
+        }
+        .lawyer-tasks-page .lt-task-edit-btn:hover {
+            color: #fff;
+            opacity: 0.92;
+        }
+        .lawyer-tasks-page .lawyer-tasks-status-select {
+            min-width: 9.75rem;
+            height: 31px;
+            padding-left: 0.75rem;
+            padding-right: 2.25rem;
+            background-position: right 0.65rem center;
+        }
+        .lawyer-tasks-page .lt-task-row__actions {
+            flex-wrap: wrap;
+        }
         .lawyer-tasks-page #taskModal .form-select {
             padding-left: 0.875rem;
             padding-right: 2.85rem;
             background-position: right 0.85rem center;
         }
-        .lawyer-tasks-page .task-card-themed {
-            background: var(--lp-task-card-bg, #f4f6fc);
-            border: 1px solid var(--lp-task-card-border, #dbe4f7);
-        }
-        .lawyer-tasks-page .task-card-themed .card-body {
-            background: var(--lp-task-card-body-bg, linear-gradient(180deg, #ffffff 0%, #f0f3fa 100%));
-        }
-        .lawyer-tasks-page .task-edit-btn {
-            background: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
-            border: none;
-            color: #fff;
-        }
-        .lawyer-tasks-page .task-edit-btn:hover {
-            color: #fff;
-            opacity: 0.92;
-        }
         .lawyer-tasks-page #taskModal .modal-header {
             background: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
             color: #fff;
-            border-bottom: none;
-        }
-        .lawyer-tasks-page #taskModal .modal-header .modal-title {
-            color: #fff !important;
-            font-weight: 700;
         }
         .lawyer-tasks-page #taskModal .modal-header .btn-close {
             filter: invert(1) grayscale(1) brightness(200%);
-            opacity: 0.9;
         }
-        .lawyer-tasks-page .task-actions-row {
-            flex-wrap: wrap;
-        }
-        .lawyer-tasks-page .task-actions-row .task-edit-btn,
-        .lawyer-tasks-page .task-actions-row .task-status-select {
-            height: 31px;
-            line-height: 1.25;
-        }
-        .lawyer-tasks-page .task-actions-row .task-status-select {
-            min-width: 9.75rem;
-            width: auto;
+        @media (max-width: 991.98px) {
+            .lawyer-tasks-page .lt-task-row__badges {
+                align-items: flex-start !important;
+            }
+            .lawyer-tasks-page .lt-task-row__due,
+            .lawyer-tasks-page .lt-task-row__actions {
+                justify-content: flex-start !important;
+                text-align: left !important;
+            }
         }
     </style>
 </head>
@@ -477,41 +545,43 @@ $html = <<<'HTML'
                 </nav>
             </div>
         </nav>
+
         <div class="container-fluid py-4">
-            <!-- Filters -->
+            {MESSAGE}
+
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body p-3">
                             <form method="GET" class="row align-items-end">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label class="form-label">Search Tasks</label>
                                     <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="Task title, case or client">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label">Status Filter</label>
+                                    <label class="form-label">Status</label>
                                     <select class="form-select" name="status">
-                                        <option value="all"{STATUS_ALL_SELECTED}>All Status</option>
-                                        <option value="pending"{STATUS_PENDING_SELECTED}>Pending</option>
-                                        <option value="in_progress"{STATUS_IN_PROGRESS_SELECTED}>In Progress</option>
-                                        <option value="completed"{STATUS_COMPLETED_SELECTED}>Completed</option>
-                                        <option value="cancelled"{STATUS_CANCELLED_SELECTED}>Cancelled</option>
+                                        <option value="all"{STATUS_ALL}>All Status</option>
+                                        <option value="pending"{STATUS_PENDING}>Pending</option>
+                                        <option value="in_progress"{STATUS_IN_PROGRESS}>In Progress</option>
+                                        <option value="completed"{STATUS_COMPLETED}>Completed</option>
+                                        <option value="cancelled"{STATUS_CANCELLED}>Cancelled</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label">Priority Filter</label>
+                                    <label class="form-label">Priority</label>
                                     <select class="form-select" name="priority">
-                                        <option value="all"{PRIORITY_ALL_SELECTED}>All Priorities</option>
-                                        <option value="high"{PRIORITY_HIGH_SELECTED}>High</option>
-                                        <option value="medium"{PRIORITY_MEDIUM_SELECTED}>Medium</option>
-                                        <option value="low"{PRIORITY_LOW_SELECTED}>Low</option>
+                                        <option value="all"{PRIORITY_ALL}>All Priorities</option>
+                                        <option value="high"{PRIORITY_HIGH}>High</option>
+                                        <option value="medium"{PRIORITY_MEDIUM}>Medium</option>
+                                        <option value="low"{PRIORITY_LOW}>Low</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label d-block invisible">Filter</label>
                                     <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
                                 </div>
-                                <div class="col-md-3 text-end">
+                                <div class="col-md-2 text-end">
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_TASKS} tasks</p>
                                 </div>
                             </form>
@@ -520,32 +590,42 @@ $html = <<<'HTML'
                 </div>
             </div>
 
-            <!-- Tasks list -->
             <div class="row">
                 <div class="col-12">
                     <div class="card mb-4">
                         <div class="card-header pb-0 pt-3">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                 <div class="d-flex align-items-center">
-                                    <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_TASK_HEADER}</div>
+                                    <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                     <div>
                                         <h6 class="mb-0">My Tasks</h6>
                                         <p class="text-xs text-muted mb-0">Tasks assigned to you</p>
                                     </div>
                                 </div>
-                                <button class="btn btn-sm btn-primary mb-0" type="button" onclick="showAddTaskModal()">
+                                <button type="button" class="btn btn-sm btn-primary mb-0" onclick="showAddTaskModal()">
                                     <i class="ni ni-fat-add me-1"></i>Add Task
                                 </button>
                             </div>
                         </div>
-                        <div class="card-body">
-                            {MESSAGE}
-                            {TASKS_HTML}
+                        <div class="card-body pt-3 pb-3">
+                            {TASKS_LIST}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <footer class="footer pt-3">
+            <div class="container-fluid">
+                <div class="row align-items-center justify-content-lg-between">
+                    <div class="col-lg-6 mb-lg-0 mb-4">
+                        <div class="copyright text-center text-sm text-muted text-lg-start">
+                            © <script>document.write(new Date().getFullYear())</script>, LegalPro Lawyer Portal.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </main>
     <div class="modal fade" id="taskModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -644,11 +724,14 @@ HTML;
 
 // Replace placeholders
 $replacements = [
+    '{ICON_CARD_HEADER}' => $iconCardHeader,
     '{NAVIGATION}' => $navHtml,
     '{MESSAGE}' => $messageHtml,
-    '{TASKS_HTML}' => $tasksHtml,
+    '{TASKS_LIST}' => $tasksListHtml,
+    '{SEARCH_VALUE}' => htmlspecialchars($search),
+    '{TOTAL_TASKS}' => count($tasks),
     '{TASK_CASE_OPTIONS}' => $caseOptions,
-    '{TASK_FORM_ID}' => (int)$taskForm['task_id'],
+    '{TASK_FORM_ID}' => (int) $taskForm['task_id'],
     '{TASK_FORM_TITLE}' => htmlspecialchars($taskForm['task_title']),
     '{TASK_FORM_DESCRIPTION}' => htmlspecialchars($taskForm['task_description']),
     '{TASK_FORM_COMMENT}' => htmlspecialchars($taskForm['task_comment']),
@@ -656,6 +739,7 @@ $replacements = [
     '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
     '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
+<<<<<<< HEAD
     '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ if (parseInt(document.getElementById("task_id").value, 10) > 0) { document.getElementById("task_comment_wrap").style.display = ""; } new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
     '{LAWYER_NAME}' => htmlspecialchars($lawyerName),
     '{SEARCH_VALUE}' => htmlspecialchars($search),
@@ -670,6 +754,18 @@ $replacements = [
     '{PRIORITY_HIGH_SELECTED}' => $priorityFilter === 'high' ? ' selected' : '',
     '{PRIORITY_MEDIUM_SELECTED}' => $priorityFilter === 'medium' ? ' selected' : '',
     '{PRIORITY_LOW_SELECTED}' => $priorityFilter === 'low' ? ' selected' : '',
+=======
+    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
+    '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
+    '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
+    '{STATUS_IN_PROGRESS}' => $statusFilter === 'in_progress' ? ' selected' : '',
+    '{STATUS_COMPLETED}' => $statusFilter === 'completed' ? ' selected' : '',
+    '{STATUS_CANCELLED}' => $statusFilter === 'cancelled' ? ' selected' : '',
+    '{PRIORITY_ALL}' => $priorityFilter === 'all' ? ' selected' : '',
+    '{PRIORITY_HIGH}' => $priorityFilter === 'high' ? ' selected' : '',
+    '{PRIORITY_MEDIUM}' => $priorityFilter === 'medium' ? ' selected' : '',
+    '{PRIORITY_LOW}' => $priorityFilter === 'low' ? ' selected' : '',
+>>>>>>> 38bd99745124054e2bb525c16924ba8f44ca1bbe
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

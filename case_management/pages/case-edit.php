@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
+require_once __DIR__ . '/../lib/task_helpers.php';
 
 function case_edit_pdo_error_message($prefix, PDOException $e) {
     $detail = $e->getMessage();
@@ -82,6 +83,7 @@ function case_edit_load_tasks(PDO $pdo, $caseId) {
 
 try {
     case_edit_ensure_task_lawyers_table($pdo);
+    ensure_task_support_schema($pdo);
 } catch (PDOException $e) {
     // Keep the page usable; task saves will show a detailed error if the table is unavailable.
 }
@@ -762,14 +764,7 @@ if (!empty($tasks)) {
         $taskStatusJs = htmlspecialchars(json_encode($task['status']), ENT_QUOTES, 'UTF-8');
         $taskDueDateJs = htmlspecialchars(json_encode((string)$task['due_date']), ENT_QUOTES, 'UTF-8');
         $taskCommentJs = htmlspecialchars(json_encode((string)($task['task_comment'] ?? '')), ENT_QUOTES, 'UTF-8');
-        $taskCommentDisplay = trim((string)($task['task_comment'] ?? ''));
-        if ($taskCommentDisplay === '') {
-            $taskCommentDisplay = '—';
-        } elseif (strlen($taskCommentDisplay) > 80) {
-            $taskCommentDisplay = htmlspecialchars(substr($taskCommentDisplay, 0, 80)) . '…';
-        } else {
-            $taskCommentDisplay = htmlspecialchars($taskCommentDisplay);
-        }
+        $taskCommentCell = render_admin_task_comment_html((string)($task['task_comment'] ?? ''));
 
         $tasksHtml .= '<tr>
             <td>
@@ -778,13 +773,16 @@ if (!empty($tasks)) {
         if (!empty($task['description'])) {
             $tasksHtml .= '<small class="text-muted">' . htmlspecialchars(substr($task['description'], 0, 50)) . (strlen($task['description']) > 50 ? '...' : '') . '</small>';
         }
+        if (trim((string)($task['task_comment'] ?? '')) !== '') {
+            $tasksHtml .= render_admin_task_comment_html((string)$task['task_comment']);
+        }
         $tasksHtml .= '</div>
             </td>
             <td class="text-sm">' . $lawyerName . '</td>
             <td><span class="badge badge-sm ' . $statusClass . '">' . $statusBadge . '</span></td>
             <td><span class="badge badge-sm ' . $priorityClass . '">' . $priorityBadge . '</span></td>
             <td class="text-sm">' . $dueDate . '</td>
-            <td class="text-sm" title="' . htmlspecialchars((string)($task['task_comment'] ?? '')) . '">' . $taskCommentDisplay . '</td>
+            <td>' . $taskCommentCell . '</td>
             <td>
                 <div class="d-flex align-items-center gap-2">
                     <button
@@ -891,6 +889,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/case-detail-tabs.css?v=4" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -1138,9 +1137,9 @@ $html = <<<'HTML'
                             <textarea class="form-control" name="task_description" id="task_description" rows="3" placeholder="Task description (optional)"></textarea>
                         </div>
                         <div class="mb-0" id="task_comment_admin_wrap" style="display: none;">
-                            <label class="form-label">Lawyer comment</label>
-                            <div class="form-control bg-light text-sm" id="task_comment_admin" style="min-height: 4.5rem; white-space: pre-wrap;">—</div>
-                            <small class="text-muted">Added by the assigned lawyer when updating the task.</small>
+                            <label class="form-label">Commentaire avocat</label>
+                            <div id="task_comment_admin"></div>
+                            <small class="text-muted">Ajouté par l'avocat lors de la modification de la tâche (lecture seule).</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1235,6 +1234,20 @@ $html = <<<'HTML'
             });
         }
 
+        function renderTaskCommentAdminHtml(comment) {
+            var text = String(comment || '').trim();
+            if (!text) {
+                return '<span class="text-muted">—</span>';
+            }
+            var escaped = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/\n/g, '<br>');
+            return '<div class="admin-task-comment"><span class="admin-task-comment__label">Commentaire avocat</span><p class="admin-task-comment__text mb-0">' + escaped + '</p></div>';
+        }
+
         function showAddTaskModal() {
             document.getElementById('taskModalTitle').textContent = 'Add Task';
             document.getElementById('taskSubmitBtn').textContent = 'Add Task';
@@ -1260,7 +1273,7 @@ $html = <<<'HTML'
             document.getElementById('task_due_date').value = dueDate || '';
             document.getElementById('task_status_wrap').style.display = '';
             document.getElementById('task_comment_admin_wrap').style.display = '';
-            document.getElementById('task_comment_admin').textContent = taskComment && String(taskComment).trim() !== '' ? taskComment : '—';
+            document.getElementById('task_comment_admin').innerHTML = renderTaskCommentAdminHtml(taskComment);
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 

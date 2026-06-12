@@ -289,13 +289,8 @@ $html = <<<'HTML'
 			font-weight: 600;
 			color: #67748e;
 		}
-		.settings-theme-color-input {
-			width: 3.5rem;
-			height: 2.5rem;
-			padding: 0.15rem;
-		}
 	</style>
-	{PORTAL_THEME_HEAD}
+	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -521,9 +516,6 @@ ob_start(); include __DIR__ . '/../inc/menunav.php'; $sidebar = ob_get_clean();
 $html = preg_replace('/<aside[\s\S]*?<\/aside>/', $sidebar, $html, 1);
 ob_start(); include __DIR__ . '/../inc/footer.php'; $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
-ob_start(); include __DIR__ . '/../inc/portal-theme-head.php'; $portalThemeHead = ob_get_clean();
-$html = str_replace('{PORTAL_THEME_HEAD}', $portalThemeHead, $html);
-$html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CURRENCY_OPTIONS}', $currencyOptionsHtml, $html);
 $html = str_replace('{SERVICES_LIST}', $servicesListHtml, $html);
@@ -533,9 +525,5 @@ $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name'])
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
 $html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
-ob_start();
-include __DIR__ . '/../inc/portal-theme-head.php';
-$portalThemeHead = ob_get_clean();
-$html = str_replace('{PORTAL_THEME_HEAD}', $portalThemeHead, $html);
 echo $html;
 ?>

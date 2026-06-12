@@ -68,30 +68,47 @@ body .input-group > .input-group-prepend + .form-select {
 /* Top navbar search — text/placeholder flush to inner edge of input (after icon) */
 
 .navbar-main .legalpro-navbar-search .input-group {
-
   max-width: min(22rem, 92vw);
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
 
+.navbar-main .legalpro-navbar-search .input-group:hover {
+  border-color: rgba(94, 114, 228, 0.42);
+}
+
+.navbar-main .legalpro-navbar-search .input-group:focus-within {
+  border-color: var(--lp-admin-primary, var(--bs-primary, #5e72e4));
+  box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.12);
 }
 
 .navbar-main .legalpro-navbar-search .input-group-text {
-
   padding: 0.5rem 0.5rem 0.5rem 0.65rem;
-
   min-width: auto;
-
+  border: 0 !important;
   border-right: 0;
-
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .navbar-main .legalpro-navbar-search .input-group > .input-group-text + .form-control,
 .navbar-main .legalpro-navbar-search .input-group > .input-group-text + input[type="search"].form-control {
-
   padding-left: 0 !important;
-
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   -webkit-appearance: none;
-
   appearance: none;
+}
 
+.navbar-main .legalpro-navbar-search .input-group .form-control:focus,
+.navbar-main .legalpro-navbar-search .input-group input[type="search"].form-control:focus {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none;
 }
 
 .navbar-main .legalpro-navbar-search input[type="search"].form-control::-webkit-search-decoration,
@@ -168,6 +185,27 @@ body .input-group > .input-group-prepend + .form-select {
 
 .search-portal-page .search-hero-field .legalpro-search-clear i {
   font-size: 0.78rem;
+}
+
+/* Search hero — unified hover/focus ring on whole field */
+.search-portal-page .search-hero-field {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-portal-page .search-hero-field:hover {
+  border-color: rgba(94, 114, 228, 0.42) !important;
+}
+
+.search-portal-page .search-hero-field:focus-within {
+  border-color: var(--lp-admin-primary, var(--bs-primary, #5e72e4)) !important;
+  box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.12) !important;
+}
+
+.search-portal-page .search-hero-field .form-control:focus,
+.search-portal-page .search-hero-field input[type="search"].form-control:focus {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none;
 }
 
 /* Checkboxes: visible box + tick when checked (no purple fill) */

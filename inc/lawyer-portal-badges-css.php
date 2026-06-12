@@ -59,13 +59,17 @@ body.legalpro-lawyer-portal .lp-pill--priority-urgent {
     color: #f5365c !important;
 }
 body.legalpro-lawyer-portal .lc-category-pill {
-    display: inline-block !important;
-    padding: 0.2rem 0.55rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.35rem 0.65rem !important;
     border-radius: 2rem !important;
     background: rgba(94, 114, 228, 0.08) !important;
     color: #324cdd !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
+    line-height: 1 !important;
     white-space: nowrap !important;
+    vertical-align: middle !important;
 }
 </style>

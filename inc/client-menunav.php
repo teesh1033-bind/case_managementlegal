@@ -19,9 +19,7 @@ $clientMenuPrimary = [
     ['title_key' => 'nav.ai_assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
 
-$clientMenuFooter = [
-    ['title_key' => 'nav.settings', 'url' => 'client-settings.php', 'icon' => 'settings', 'id' => 'client-settings'],
-];
+$clientMenuFooter = [];
 
 if (!function_exists('clientNavIsActive')) {
     function clientNavIsActive($itemId, $currentPage)
@@ -35,7 +33,13 @@ if (!function_exists('clientNavIsActive')) {
         if ($itemId === 'chatbot' && $currentPage === 'chatbot') {
             return true;
         }
-        if ($itemId === 'client-settings' && $currentPage === 'client-settings') {
+        if ($itemId === 'client-appointments' && $currentPage === 'client-appointments') {
+            return true;
+        }
+        if ($itemId === 'client-payments' && $currentPage === 'client-payments') {
+            return true;
+        }
+        if ($itemId === 'client-court-tracking' && $currentPage === 'client-court-tracking') {
             return true;
         }
 
@@ -89,6 +93,7 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
             <?php endforeach; ?>
         </ul>
     </div>
+    <?php if ($clientMenuFooter): ?>
     <div class="legalpro-sidebar-footer">
         <?php foreach ($clientMenuFooter as $item): ?>
             <?php $active = clientNavIsActive($item['id'], $currentPage); ?>
@@ -98,22 +103,13 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
             </a>
         <?php endforeach; ?>
     </div>
+    <?php endif; ?>
 </aside>
 
 <?php echo $navbarUtilitiesMount; ?>
-<?php echo legalpro_render_client_notification_panel(); ?>
 <?php echo legalpro_client_render_bottom_nav($currentPage); ?>
 
-<script src="../assets/js/client-portal.js?v=4"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var collapseBtn = document.getElementById('legalproSidebarCollapse');
-    if (collapseBtn) {
-        collapseBtn.addEventListener('click', function() {
-            document.body.classList.toggle('legalpro-sidebar-collapsed');
-        });
-    }
-});
-</script>
+<script src="../assets/js/client-portal.js?v=5"></script>
+<script src="../assets/js/legalpro-sidebar.js?v=2"></script>
 <script src="../assets/js/legalpro-search-clear.js?v=1"></script>
 <?php legalpro_icons_footer_scripts(); ?>

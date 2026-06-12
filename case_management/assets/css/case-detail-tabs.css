@@ -314,6 +314,30 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
+.admin-task-comment {
+    background: #f0f4ff;
+    border-left: 3px solid #5e72e4;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0 6px 6px 0;
+    max-width: 28rem;
+}
+
+.admin-task-comment__label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #5e72e4;
+    margin-bottom: 0.2rem;
+}
+
+.admin-task-comment__text {
+    font-size: 0.82rem;
+    color: #334155;
+    white-space: pre-wrap;
+}
+
 @media (max-width: 767px) {
     .case-feed-item {
         flex-wrap: wrap;

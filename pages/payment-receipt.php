@@ -34,6 +34,10 @@ if (!$payment) {
     exit;
 }
 
+legalpro_require_financial_document_access(
+    isset($payment['client_id']) ? (int) $payment['client_id'] : null
+);
+
 $caseId = isset($payment['case_id']) ? (int)$payment['case_id'] : 0;
 $caseNumber = $caseId ? 'C-' . str_pad($caseId, 4, '0', STR_PAD_LEFT) : 'N/A';
 $receiptNumber = 'RC-' . str_pad($paymentId, 6, '0', STR_PAD_LEFT);
