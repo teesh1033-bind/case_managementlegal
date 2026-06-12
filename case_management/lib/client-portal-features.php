@@ -948,13 +948,14 @@ function legalpro_client_render_bottom_nav(string $currentPage): string
         ['url' => 'client-court-tracking.php', 'icon' => 'landmark', 'label_key' => 'nav.court_tracking', 'fallback' => 'Court'],
         ['url' => 'client-settings.php', 'icon' => 'settings', 'label_key' => 'nav.settings', 'fallback' => 'Settings'],
         ['url' => 'client-profile.php', 'icon' => 'user', 'label_key' => 'nav.profile', 'fallback' => 'Profile'],
+        ['url' => 'client-requests.php', 'icon' => 'message-circle', 'label_key' => 'nav.my_requests', 'fallback' => 'My requests'],
     ];
 
     $html = '<nav class="legalpro-client-bottom-nav d-xl-none" aria-label="Mobile navigation">';
     foreach ($items as $item) {
         $active = clientNavIsActive($item['id'], $currentPage);
         if (!empty($item['is_more'])) {
-            $active = in_array($currentPage, ['client-documents', 'client-payments', 'client-court-tracking', 'client-settings', 'client-profile', 'client-appointments'], true);
+            $active = in_array($currentPage, ['client-documents', 'client-payments', 'client-court-tracking', 'client-settings', 'client-profile', 'client-appointments', 'client-requests'], true);
         }
         $label = function_exists('client_t') ? client_t($item['label_key']) : $item['fallback'];
         if ($label === $item['label_key']) {

@@ -328,13 +328,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-<<<<<<< HEAD
         fixClientSidenavLayout();
         initClientPageSearch();
-        initNotificationPanel();
-=======
         initNotificationDropdown();
->>>>>>> fc9ada41e11b0500d7e86ef5aa013eec7cdec99e
         initMoreSheet();
         initActivityIcons();
     });

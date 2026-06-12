@@ -13,6 +13,7 @@ return [
     'nav.ai_assistant' => 'AI Assistant',
     'nav.settings' => 'Settings',
     'nav.profile' => 'Profile',
+    'nav.my_requests' => 'My requests',
     'header.client' => 'Client',
     'settings.title' => 'Settings',
     'settings.appearance' => 'Appearance & language',
