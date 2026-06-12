@@ -253,14 +253,14 @@ if (empty($services)) {
         $servicesHtml .= '
         <tr>
             <td>' . htmlspecialchars($service['service_name']) . '</td>
-            <td class="text-end">$' . number_format($service['price'], 2) . '</td>
+            <td class="text-end">Rs' . number_format($service['price'], 2) . '</td>
         </tr>';
         $totalFees += $service['price'];
     }
     $servicesHtml .= '
     <tr class="table-active">
         <td><strong>Total Estimated Fees</strong></td>
-        <td class="text-end"><strong>$' . number_format($totalFees, 2) . '</strong></td>
+        <td class="text-end"><strong>Rs' . number_format($totalFees, 2) . '</strong></td>
     </tr>';
 }
 

@@ -1,0 +1,54 @@
+{
+  "topics": [
+    {
+      "id": "help",
+      "patterns": ["help", "what can you", "what do you", "how do i use", "commands", "examples"],
+      "response": "__HELP__"
+    },
+    {
+      "id": "greeting",
+      "patterns": ["hello", "hi ", "hey", "good morning", "good afternoon"],
+      "response": "__GREETING__"
+    },
+    {
+      "id": "navigation_cases",
+      "patterns": ["where are cases", "open cases page", "go to cases", "case list", "my cases page"],
+      "response": "Open **My cases** to see all your matters, statuses, and lawyers.",
+      "links": [{ "label": "My cases", "url": "__CASES_URL__" }]
+    },
+    {
+      "id": "navigation_appointments",
+      "patterns": ["book appointment", "schedule appointment", "new appointment", "appointments page"],
+      "response": "Use **Appointments** to book, view, or manage meetings with your lawyer.",
+      "links": [{ "label": "Appointments", "url": "__APPOINTMENTS_URL__" }]
+    },
+    {
+      "id": "navigation_documents",
+      "patterns": ["upload document", "document center", "my documents", "files page"],
+      "response": "Your **Document center** has all case files. You can search and acknowledge receipts.",
+      "links": [{ "label": "Documents", "url": "__DOCUMENTS_URL__" }],
+      "roles": ["client"]
+    },
+    {
+      "id": "navigation_payments_client",
+      "patterns": ["pay invoice", "pay online", "payments page", "billing page"],
+      "response": "Go to **Payments** to see balances and pay invoices online.",
+      "links": [{ "label": "Payments", "url": "client-payments.php" }],
+      "roles": ["client"]
+    },
+    {
+      "id": "navigation_profile_client",
+      "patterns": ["edit profile", "change profile", "my profile page"],
+      "response": "Update your details on **Profile**, or say e.g. _update my phone to +230 5xxx xxxx_ here.",
+      "links": [{ "label": "Profile", "url": "client-profile.php" }],
+      "roles": ["client"]
+    },
+    {
+      "id": "navigation_settings",
+      "patterns": ["company branding", "change logo", "currency setting", "services offered"],
+      "response": "Admins can update branding, currency, and offered services under **Settings**.",
+      "links": [{ "label": "Settings", "url": "settings.php" }],
+      "roles": ["admin"]
+    }
+  ]
+}

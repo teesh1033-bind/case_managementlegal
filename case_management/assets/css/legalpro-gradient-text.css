@@ -1,0 +1,184 @@
+/**
+ * LegalPro — white text on gradient backgrounds (alerts, badges, buttons, icons, etc.)
+ */
+
+/* Bootstrap alerts with Argon gradient backgrounds */
+.alert-primary,
+.alert-secondary,
+.alert-success,
+.alert-info,
+.alert-warning,
+.alert-danger,
+.alert-dark {
+    --bs-alert-color: #fff;
+    --bs-alert-link-color: rgba(255, 255, 255, 0.95);
+    color: #fff !important;
+}
+
+.alert-primary .alert-link,
+.alert-secondary .alert-link,
+.alert-success .alert-link,
+.alert-info .alert-link,
+.alert-warning .alert-link,
+.alert-danger .alert-link,
+.alert-dark .alert-link {
+    color: #fff !important;
+}
+
+.alert-primary .btn-close,
+.alert-secondary .btn-close,
+.alert-success .btn-close,
+.alert-info .btn-close,
+.alert-warning .btn-close,
+.alert-danger .btn-close,
+.alert-dark .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.85;
+}
+
+/* Argon / Bootstrap gradient utility classes (exclude light & white gradients) */
+[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
+    color: #fff !important;
+}
+
+/* Icons inside gradient shapes */
+[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) i,
+[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) .ni,
+[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) .fas,
+[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) .fa {
+    color: #fff !important;
+}
+
+/* Gradient buttons */
+.btn[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
+    color: #fff !important;
+    border-color: transparent;
+}
+
+.btn[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]):hover,
+.btn[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]):focus {
+    color: #fff !important;
+}
+
+/* Gradient badges */
+.badge[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
+    color: #fff !important;
+}
+
+/* Progress bars on gradients */
+.progress-bar[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
+    color: #fff !important;
+}
+
+/* Card / modal headers using gradient utilities */
+.card-header[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]),
+.modal-header[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
+    color: #fff !important;
+}
+
+.card-header[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) .text-muted,
+.modal-header[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) .text-muted {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* FullCalendar — gradient toolbar + white month title (May 2026, etc.) */
+.fc .fc-toolbar.fc-header-toolbar {
+    background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
+    border-radius: 0.5rem;
+    padding: 0.65rem 1rem;
+    margin-bottom: 1rem !important;
+    gap: 0.5rem;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button-group {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    vertical-align: middle;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button-group > .fc-button {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: 0.5rem !important;
+}
+
+.fc .fc-toolbar-title {
+    color: #fff !important;
+}
+
+/* Prev/next, Today, Month/Week/List — white on purple */
+.fc .fc-toolbar.fc-header-toolbar .fc-button {
+    background-color: #5e72e4 !important;
+    background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%) !important;
+    border-color: #5e72e4 !important;
+    color: #fff !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+.fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
+.fc .fc-toolbar.fc-header-toolbar .fc-button:active {
+    background-color: #324cdd !important;
+    background-image: none !important;
+    border-color: #324cdd !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled):active,
+.fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active {
+    background-color: #324cdd !important;
+    background-image: none !important;
+    border-color: #fff !important;
+    color: #fff !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button-primary:disabled,
+.fc .fc-toolbar.fc-header-toolbar .fc-button:disabled {
+    color: rgba(255, 255, 255, 0.65) !important;
+    opacity: 0.55 !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-icon,
+.fc .fc-toolbar.fc-header-toolbar .fc-icon-chevron-left,
+.fc .fc-toolbar.fc-header-toolbar .fc-icon-chevron-right {
+    color: #fff !important;
+}
+
+/* Simple calendar fallback month label */
+.simple-calendar .calendar-header,
+.simple-calendar .calendar-header h5,
+.simple-calendar .calendar-header .h5,
+.simple-calendar .calendar-header .mb-0 {
+    color: #fff !important;
+}
+
+/* Inline gradient headers (e.g. appointment modal on dashboard) */
+[style*="linear-gradient"][style*="background"] {
+    color: #fff;
+}
+
+[style*="linear-gradient"].modal-header,
+[style*="linear-gradient"].modal-header .modal-title,
+[style*="linear-gradient"].modal-header .btn-close {
+    color: #fff !important;
+}
+
+[style*="linear-gradient"].modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Subtle gradient panels — white text when gradient is the main fill */
+.availability-hero {
+    color: #344767;
+}

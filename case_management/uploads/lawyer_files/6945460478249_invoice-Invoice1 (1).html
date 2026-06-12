@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Invoice 1 · Invoice</title>
+    <style>
+        body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 24px; color: #222; }
+        .invoice { max-width: 760px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 32px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 12px; }
+        .header h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
+        .badge { background: #111827; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; }
+        .print-btn { background: #111827; color: #fff; border: none; border-radius: 4px; padding: 8px 14px; cursor: pointer; font-size: 13px; }
+        .print-btn:hover { opacity: 0.9; }
+        .section { margin-bottom: 24px; }
+        .section-title { font-size: 14px; letter-spacing: 1px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+        th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; }
+        th { background: #f9fafb; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; color: #6b7280; }
+        .totals { width: 50%; margin-left: auto; margin-top: 18px; font-size: 14px; }
+        .totals td { border: none; padding: 4px 0; }
+        .totals td.label { color: #6b7280; text-transform: uppercase; font-size: 12px; }
+        .totals td.value { text-align: right; font-weight: bold; }
+        @media print { body { padding: 0; } .invoice { border: none; border-radius: 0; } .print-btn { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="invoice">
+        <div class="header">
+            <div>
+                <h1>Invoice</h1>
+                <div>LegalPro Case Manager</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button class="print-btn" onclick="window.print()">Print</button>
+                <div class="badge">Invoice 1</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Invoice Details</div>
+            <div class="info-grid">
+                <div><strong>Issue Date:</strong><br>December 10, 2025</div>
+                <div><strong>Due Date:</strong><br>December 15, 2025</div>
+                <div><strong>Status:</strong><br>Paid</div>
+                <div><strong>Case:</strong><br>Contract Dispute</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Client</div>
+            <div class="info-grid">
+                <div><strong>Name:</strong><br>Arassen Mount</div>
+                <div><strong>Email:</strong><br>arassen.mount@gmail.com</div>
+                <div><strong>Phone:</strong><br>59092928</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Invoice Summary</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Professional Services · Contract Dispute</td>
+                        <td>Rs5,000.00</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="totals">
+                <tr>
+                    <td class="label">Total Due</td>
+                    <td class="value">Rs5,000.00</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Notes</div>
+            <div>qwerty</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Issued By</div>
+            <div>LegalPro Case Manager · 123 Legal Street, Capital City<br>Email: support@legalpro.local · Phone: +1 (555) 010-0000</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -438,7 +438,7 @@ if (empty($appointments)) {
         $rowClass = $appointment['status'] === 'rejected' ? 'table-danger' : ($isToday && $appointment['status'] === 'accepted' ? 'table-info' : '');
 
         $appointmentsTable .= '
-        <tr class="' . $rowClass . '">
+        <tr id="apt-' . (int) $appointment['id'] . '" class="' . $rowClass . '">
             <td>
                 <div class="d-flex align-items-center">
                     <div class="lawyer-appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconApptRow . '</div>
