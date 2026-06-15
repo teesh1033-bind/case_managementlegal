@@ -493,7 +493,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, {COMPANY_NAME}.
+								{COPYRIGHT_LINE}
 							</div>
 						</div>
 					</div>
@@ -525,5 +525,5 @@ $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name'])
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
 $html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>

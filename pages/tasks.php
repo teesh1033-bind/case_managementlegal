@@ -560,7 +560,7 @@ $html = <<<'HTML'
                 <div class="row align-items-center justify-content-lg-between">
                     <div class="col-lg-6 mb-lg-0 mb-4">
                         <div class="copyright text-center text-sm text-muted text-lg-start">
-                            © <script>document.write(new Date().getFullYear())</script>, LegalPro Lawyer Portal.
+                            {COPYRIGHT_LINE}
                         </div>
                     </div>
                 </div>
@@ -690,5 +690,5 @@ $html = str_replace(array_keys($replacements), array_values($replacements), $htm
 
 // rewrite internal links from .html to .php
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>

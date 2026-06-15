@@ -773,9 +773,34 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode .btn-dark,'
         . 'body.legalpro-dark-mode .btn-outline-dark {'
+        . 'color: var(--lp-dark-text) !important;'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border: 1px solid var(--lp-dark-border-strong) !important;'
+        . 'box-shadow: none !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .btn-dark:hover,'
+        . 'body.legalpro-dark-mode .btn-dark:focus,'
+        . 'body.legalpro-dark-mode .btn-outline-dark:hover,'
+        . 'body.legalpro-dark-mode .btn-outline-dark:focus {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
         . 'color: #fff !important;'
-        . 'background-color: #252b3d !important;'
         . 'border-color: var(--lp-dark-border-strong) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.legalpro-admin-portal .btn-dark,'
+        . 'body.legalpro-dark-mode.legalpro-admin-portal .btn-outline-dark {'
+        . 'background: var(--lp-dark-surface-raised) !important;'
+        . 'border: 1px solid var(--lp-dark-border-strong) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode.legalpro-admin-portal .btn-dark:hover,'
+        . 'body.legalpro-dark-mode.legalpro-admin-portal .btn-dark:focus,'
+        . 'body.legalpro-dark-mode.legalpro-admin-portal .btn-outline-dark:hover,'
+        . 'body.legalpro-dark-mode.legalpro-admin-portal .btn-outline-dark:focus {'
+        . 'background: var(--lp-dark-surface-hover) !important;'
+        . 'color: #fff !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .btn-primary,'
@@ -928,6 +953,11 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.badge) {'
         . 'color: ' . $primary . ';'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .text-muted a:not(.btn),'
+        . 'body.legalpro-dark-mode .modal-content a:not(.btn):not(.nav-link):not(.dropdown-item) {'
+        . 'color: ' . $primary . ' !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .text-primary,'

@@ -42,6 +42,37 @@ function getCompanyBranding(): array
     ];
 }
 
+/**
+ * Footer copyright line (year via JS). Uses company name from Settings, default LegalPro.
+ */
+function legalpro_copyright_line(): string
+{
+    return '© <script>document.write(new Date().getFullYear())</script>, '
+        . htmlspecialchars(getCompanyName(), ENT_QUOTES, 'UTF-8') . '.';
+}
+
+/**
+ * Full copyright block for portal footers.
+ */
+function legalpro_copyright_html(string $classes = 'text-center text-sm text-muted text-lg-start'): string
+{
+    return '<div class="copyright ' . htmlspecialchars($classes, ENT_QUOTES, 'UTF-8') . '">'
+        . legalpro_copyright_line()
+        . '</div>';
+}
+
+/**
+ * Replace {COPYRIGHT_LINE} placeholders in rendered page HTML.
+ */
+function legalpro_apply_copyright_line(string $html): string
+{
+    if (strpos($html, '{COPYRIGHT_LINE}') === false) {
+        return $html;
+    }
+
+    return str_replace('{COPYRIGHT_LINE}', legalpro_copyright_line(), $html);
+}
+
 function saveCompanyBranding(string $companyName, string $companyDetails, ?array $logoFile = null): array
 {
     $companyName = trim($companyName);

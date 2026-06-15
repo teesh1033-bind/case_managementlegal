@@ -159,3 +159,48 @@ body.legalpro-dark-mode.legalpro-finance-page .table thead th {
 body.legalpro-dark-mode.legalpro-finance-page .table tbody tr:hover {
     background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
 }
+
+/* Client detail — financial summary */
+body.admin-client-detail-page .client-fin-summary .dashboard-stat-card {
+    border-radius: 14px;
+    border: 1px solid #e9ecf3;
+    box-shadow: none;
+}
+
+body.admin-client-detail-page .client-fin-summary .dashboard-stat-icon-wrap {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.admin-client-detail-page .client-fin-summary .dashboard-stat-icon-wrap--primary {
+    background: rgba(94, 114, 228, 0.12);
+    color: #5e72e4;
+}
+
+body.admin-client-detail-page .client-fin-summary .dashboard-stat-icon-wrap--success {
+    background: rgba(45, 206, 137, 0.12);
+    color: #2dce89;
+}
+
+body.admin-client-detail-page .client-fin-summary .dashboard-stat-icon-wrap--warning {
+    background: rgba(251, 99, 64, 0.12);
+    color: #fb6340;
+}
+
+body.admin-client-detail-page .client-fin-summary .dashboard-stat-icon-wrap--info {
+    background: rgba(17, 205, 239, 0.12);
+    color: #11cdef;
+}
+
+body.admin-client-detail-page .client-fin-summary__payments .list-group-item:last-child {
+    border-bottom: none !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .dashboard-stat-card {
+    background: var(--lp-dark-surface) !important;
+    border-color: var(--lp-dark-border) !important;
+}
