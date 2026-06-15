@@ -396,48 +396,6 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
             );
         }
 
-        try {
-            $stmt = $pdo->prepare("
-                SELECT q.id, q.quotation_number, q.title, q.total_amount, q.status, q.valid_until,
-                       q.created_at, q.case_id, c.title AS case_title
-                FROM case_quotations q
-                INNER JOIN cases c ON c.id = q.case_id
-                WHERE c.client_id = ?
-                  AND q.status <> 'draft'
-                  AND COALESCE(q.created_at, NOW()) >= DATE_SUB(NOW(), INTERVAL 90 DAY)
-                ORDER BY q.created_at DESC
-                LIMIT 30
-            ");
-            $stmt->execute([$clientId]);
-            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $quote) {
-                $eventAt = (string) ($quote['created_at'] ?? '');
-                $number = $quote['quotation_number'] ?: ('QUO-' . str_pad((string) $quote['id'], 4, '0', STR_PAD_LEFT));
-                $title = trim((string) ($quote['title'] ?? '')) ?: 'Quotation';
-                $total = function_exists('formatCurrency')
-                    ? formatCurrency((float) ($quote['total_amount'] ?? 0))
-                    : number_format((float) ($quote['total_amount'] ?? 0), 2);
-                $body = $number . ' · ' . $title . ' — ' . $total;
-                if (!empty($quote['case_title'])) {
-                    $body .= ' · ' . $quote['case_title'];
-                }
-
-                legalpro_client_create_notification(
-                    $pdo,
-                    $clientId,
-                    'quotation',
-                    'Quotation received',
-                    $body,
-                    'client-quotation-view.php?id=' . (int) $quote['id'],
-                    'clipboard-list',
-                    'quotation',
-                    (int) $quote['id'],
-                    $eventAt
-                );
-            }
-        } catch (PDOException $e) {
-            // quotations table may not exist yet on older installs
-        }
-
         $stmt = $pdo->prepare("
             SELECT p.id, p.amount, p.payment_date, p.created_at, p.case_id, c.title AS case_title
             FROM payments p
@@ -534,13 +492,6 @@ function legalpro_client_repair_notification_timestamps(?PDO $pdo, int $clientId
             INNER JOIN payments p ON n.ref_type = 'payment' AND n.ref_id = p.id
             SET n.created_at = COALESCE(p.payment_date, p.created_at)
             WHERE n.client_id = ? AND p.client_id = n.client_id
-        ",
-        "
-            UPDATE client_notifications n
-            INNER JOIN case_quotations q ON n.ref_type = 'quotation' AND n.ref_id = q.id
-            INNER JOIN cases c ON c.id = q.case_id AND c.client_id = n.client_id
-            SET n.created_at = q.created_at
-            WHERE n.client_id = ? AND q.created_at IS NOT NULL
         ",
     ];
 

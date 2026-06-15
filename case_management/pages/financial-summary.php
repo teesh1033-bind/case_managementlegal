@@ -247,9 +247,10 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
+    <link href="../assets/css/legalpro-finance-pages.css?v=1" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <!-- replaced dynamically -->
@@ -268,6 +269,11 @@ $html = <<<'HTML'
         </nav>
         <div class="container-fluid py-4">
             {MESSAGE}
+            <div class="fin-hero-card">
+                <p class="fin-hero-kicker">Finance</p>
+                <h4 class="fin-hero-title">Financial summary</h4>
+                <p class="fin-hero-sub">Overview of fees, collections, and outstanding balances across all active matters.</p>
+            </div>
             <div class="row">
                 <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
                     <div class="card dashboard-stat-card">

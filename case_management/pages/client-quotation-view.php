@@ -42,109 +42,94 @@ function h($value)
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
+
+require_once __DIR__ . '/../inc/finance-document-styles.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <title><?php echo h($quotationNumber); ?> · Quotation</title>
-    <style>
-        body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 24px; color: #222; background: #f8fafc; }
-        .quotation { max-width: 760px; margin: 0 auto; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 32px; }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 12px; }
-        .header h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: 0.5px; }
-        .badge { background: #111827; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; display: inline-block; }
-        .print-btn { background: #111827; color: #fff; border: none; border-radius: 4px; padding: 8px 14px; cursor: pointer; font-size: 13px; }
-        .print-btn:hover { opacity: 0.9; }
-        .section { margin-bottom: 24px; }
-        .section-title { font-size: 14px; letter-spacing: 1px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px; }
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
-        th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; }
-        th { background: #f9fafb; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; color: #6b7280; }
-        .text-end { text-align: right; }
-        .totals { width: 50%; margin-left: auto; margin-top: 18px; font-size: 14px; }
-        .totals td { border: none; padding: 4px 0; }
-        .totals td.label { color: #6b7280; text-transform: uppercase; font-size: 12px; }
-        .totals td.value { text-align: right; font-weight: bold; }
-        .notes { background: #f9fafb; border-radius: 6px; padding: 14px; font-size: 14px; line-height: 1.5; }
-        @media print { body { padding: 0; background: #fff; } .quotation { border: none; border-radius: 0; } .print-btn { display: none; } }
-    </style>
+    <?php legalpro_render_finance_document_head('Quotation'); ?>
 </head>
-<body>
-    <div class="quotation">
-        <div class="header">
+<body class="fin-doc-page">
+    <div class="fin-doc">
+        <div class="fin-doc-top">
             <div>
                 <h1><?php echo h($title); ?></h1>
-                <div><span class="badge"><?php echo h($quotationNumber); ?></span></div>
-                <p style="margin:10px 0 0;font-size:14px;color:#6b7280;">Prepared on <?php echo h($today); ?></p>
+                <div class="fin-doc-firm"><?php echo h($firmName); ?></div>
             </div>
-            <button type="button" class="print-btn" onclick="window.print()">Print / Save PDF</button>
-        </div>
-
-        <div class="section">
-            <div class="section-title">From</div>
-            <div class="info-grid">
-                <div><strong><?php echo h($firmName); ?></strong><br><?php echo nl2br(h($firmAddress)); ?></div>
+            <div class="fin-doc-top-actions">
+                <button type="button" class="fin-doc-print" onclick="window.print()">Print / Save PDF</button>
+                <div class="fin-doc-badge"><?php echo h($quotationNumber); ?></div>
             </div>
         </div>
 
-        <div class="section">
-            <div class="section-title">Prepared for</div>
-            <div class="info-grid">
-                <div><strong><?php echo h($clientName); ?></strong></div>
-                <div><strong>Case:</strong> <?php echo h($caseTitle); ?></div>
-                <div><strong>Status:</strong> <?php echo h($status); ?></div>
-                <div><strong>Issued:</strong> <?php echo h($issuedDate); ?></div>
-                <div><strong>Valid until:</strong> <?php echo h($validUntil); ?></div>
+        <div class="fin-doc-body">
+            <div class="fin-doc-section">
+                <div class="fin-doc-section-title">From</div>
+                <div class="fin-doc-grid">
+                    <div><strong><?php echo h($firmName); ?></strong><?php echo nl2br(h($firmAddress)); ?></div>
+                </div>
             </div>
-        </div>
 
-        <div class="section">
-            <div class="section-title">Quoted services</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th class="text-end">Qty</th>
-                        <th class="text-end">Unit price</th>
-                        <th class="text-end">Line total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($items as $item): ?>
+            <div class="fin-doc-section">
+                <div class="fin-doc-section-title">Prepared for</div>
+                <div class="fin-doc-grid">
+                    <div><strong>Client</strong><?php echo h($clientName); ?></div>
+                    <div><strong>Case</strong><?php echo h($caseTitle); ?></div>
+                    <div><strong>Status</strong><?php echo h($status); ?></div>
+                    <div><strong>Issued</strong><?php echo h($issuedDate); ?></div>
+                    <div><strong>Valid until</strong><?php echo h($validUntil); ?></div>
+                </div>
+            </div>
+
+            <div class="fin-doc-section">
+                <div class="fin-doc-section-title">Quoted services</div>
+                <table class="fin-doc-table">
+                    <thead>
                         <tr>
-                            <td><?php echo h($item['description']); ?></td>
-                            <td class="text-end"><?php echo h(rtrim(rtrim(number_format((float) $item['quantity'], 2, '.', ''), '0'), '.')); ?></td>
-                            <td class="text-end"><?php echo h(formatCurrency((float) $item['unit_price'])); ?></td>
-                            <td class="text-end"><?php echo h(formatCurrency((float) $item['line_total'])); ?></td>
+                            <th>Description</th>
+                            <th class="text-end">Qty</th>
+                            <th class="text-end">Unit price</th>
+                            <th class="text-end">Line total</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($items as $item): ?>
+                            <tr>
+                                <td><?php echo h($item['description']); ?></td>
+                                <td class="text-end"><?php echo h(rtrim(rtrim(number_format((float) $item['quantity'], 2, '.', ''), '0'), '.')); ?></td>
+                                <td class="text-end"><?php echo h(formatCurrency((float) $item['unit_price'])); ?></td>
+                                <td class="text-end"><?php echo h(formatCurrency((float) $item['line_total'])); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
 
-            <table class="totals">
-                <tr>
-                    <td class="label">Subtotal</td>
-                    <td class="value"><?php echo h(formatCurrency((float) $quotation['subtotal'])); ?></td>
-                </tr>
-                <tr>
-                    <td class="label">Tax (<?php echo h(number_format((float) $quotation['tax_rate'], 2)); ?>%)</td>
-                    <td class="value"><?php echo h(formatCurrency((float) $quotation['tax_amount'])); ?></td>
-                </tr>
-                <tr>
-                    <td class="label">Total</td>
-                    <td class="value"><?php echo h(formatCurrency((float) $quotation['total_amount'])); ?></td>
-                </tr>
-            </table>
-        </div>
-
-        <?php if ($notes !== ''): ?>
-            <div class="section">
-                <div class="section-title">Notes</div>
-                <div class="notes"><?php echo nl2br(h($notes)); ?></div>
+                <table class="fin-doc-totals">
+                    <tr>
+                        <td class="label">Subtotal</td>
+                        <td class="value"><?php echo h(formatCurrency((float) $quotation['subtotal'])); ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Tax (<?php echo h(number_format((float) $quotation['tax_rate'], 2)); ?>%)</td>
+                        <td class="value"><?php echo h(formatCurrency((float) $quotation['tax_amount'])); ?></td>
+                    </tr>
+                    <tr class="grand">
+                        <td class="label">Total</td>
+                        <td class="value"><?php echo h(formatCurrency((float) $quotation['total_amount'])); ?></td>
+                    </tr>
+                </table>
             </div>
-        <?php endif; ?>
+
+            <?php if ($notes !== ''): ?>
+                <div class="fin-doc-section">
+                    <div class="fin-doc-section-title">Notes</div>
+                    <div class="fin-doc-notes"><?php echo nl2br(h($notes)); ?></div>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 </body>
 </html>

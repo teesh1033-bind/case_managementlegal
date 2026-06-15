@@ -1,0 +1,161 @@
+/* Admin finance pages — invoices, payments, financial summary */
+body.legalpro-finance-page {
+    --fin-primary: var(--legalpro-theme-primary, #5e72e4);
+    --fin-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
+    --fin-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
+    --fin-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+    --fin-radius: 16px;
+}
+
+body.legalpro-finance-page .fin-hero-card {
+    background: var(--fin-gradient);
+    border-radius: 20px;
+    padding: 1.75rem 2rem;
+    color: #fff;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+body.legalpro-finance-page .fin-hero-card::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-finance-page .fin-hero-kicker {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 0.35rem;
+    position: relative;
+}
+
+body.legalpro-finance-page .fin-hero-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+    position: relative;
+}
+
+body.legalpro-finance-page .fin-hero-sub {
+    font-size: 13px;
+    opacity: 0.85;
+    margin: 0;
+    max-width: 36rem;
+    position: relative;
+}
+
+body.legalpro-finance-page .card {
+    border-radius: var(--fin-radius);
+    border: 1px solid #e9ecf3;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+}
+
+body.legalpro-finance-page .card-header {
+    border-bottom: 1px solid #f1f5f9;
+    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.05) 0%, transparent 100%);
+}
+
+body.legalpro-finance-page .card-header h6 {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+body.legalpro-finance-page .dashboard-stat-card {
+    border-radius: var(--fin-radius);
+    border: 1px solid #e9ecf3;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.legalpro-finance-page .dashboard-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+body.legalpro-finance-page .dashboard-stat-icon-wrap--primary {
+    background: var(--fin-primary-soft);
+    color: var(--fin-primary);
+}
+
+body.legalpro-finance-page .btn-primary,
+body.legalpro-finance-page .btn.bg-gradient-primary {
+    background-image: var(--fin-gradient) !important;
+    border-color: var(--fin-primary) !important;
+}
+
+body.legalpro-finance-page .btn-outline-primary {
+    color: var(--fin-primary);
+    border-color: var(--fin-primary);
+}
+
+body.legalpro-finance-page .btn-outline-primary:hover {
+    background: var(--fin-primary);
+    border-color: var(--fin-primary);
+    color: #fff;
+}
+
+body.legalpro-finance-page .table thead th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+body.legalpro-finance-page .table tbody tr:hover {
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+}
+
+body.legalpro-finance-page .legalpro-form-panel {
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) !important;
+}
+
+body.legalpro-finance-page .form-control:focus,
+body.legalpro-finance-page .form-select:focus {
+    border-color: var(--fin-primary);
+    box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+}
+
+body.legalpro-finance-page .payments-summary-card .table thead th {
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.06);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page {
+    background: #0f172a !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .card {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .card-header {
+    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, transparent 100%);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .card-header h6,
+body.legalpro-dark-mode.legalpro-finance-page .fin-hero-title {
+    color: #f1f5f9;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .table thead th {
+    background: #0f172a;
+    color: #94a3b8;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .table tbody tr:hover {
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+}

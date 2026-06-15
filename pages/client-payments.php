@@ -478,6 +478,29 @@ $html = <<<'HTML'
         @media (max-width: 640px) {
             .cp-hero-card { padding: 1.5rem; }
         }
+
+        body.legalpro-dark-mode.client-payments-page {
+            background: #0f172a;
+        }
+        body.legalpro-dark-mode.client-payments-page .cp-panel {
+            background: #1e293b;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        body.legalpro-dark-mode.client-payments-page .cp-panel-hdr {
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        body.legalpro-dark-mode.client-payments-page .cp-panel-hdr h5,
+        body.legalpro-dark-mode.client-payments-page .cp-empty h5 {
+            color: #f1f5f9;
+        }
+        body.legalpro-dark-mode.client-payments-page .cp-table thead th {
+            background: #0f172a;
+            color: #94a3b8;
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        body.legalpro-dark-mode.client-payments-page .cp-table tbody tr:hover {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-payments-page{PORTAL_THEME_BODY_CLASS}">

@@ -65,6 +65,8 @@ function h($value) {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
+require_once __DIR__ . '/../inc/finance-document-styles.php';
+
 ob_start();
 ?>
 <!DOCTYPE html>
@@ -72,91 +74,77 @@ ob_start();
 <head>
     <meta charset="utf-8">
     <title><?php echo h($invoiceNumber); ?> · Invoice</title>
-    <style>
-        body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 24px; color: #222; }
-        .invoice { max-width: 760px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 32px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 12px; }
-        .header h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
-        .badge { background: #111827; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px; }
-        .print-btn { background: #111827; color: #fff; border: none; border-radius: 4px; padding: 8px 14px; cursor: pointer; font-size: 13px; }
-        .print-btn:hover { opacity: 0.9; }
-        .section { margin-bottom: 24px; }
-        .section-title { font-size: 14px; letter-spacing: 1px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px; }
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
-        th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; }
-        th { background: #f9fafb; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; color: #6b7280; }
-        .totals { width: 50%; margin-left: auto; margin-top: 18px; font-size: 14px; }
-        .totals td { border: none; padding: 4px 0; }
-        .totals td.label { color: #6b7280; text-transform: uppercase; font-size: 12px; }
-        .totals td.value { text-align: right; font-weight: bold; }
-        @media print { body { padding: 0; } .invoice { border: none; border-radius: 0; } .print-btn { display: none; } }
-    </style>
+    <?php legalpro_render_finance_document_head('Invoice'); ?>
 </head>
-<body>
-    <div class="invoice">
-        <div class="header">
+<body class="fin-doc-page">
+    <div class="fin-doc">
+        <div class="fin-doc-top">
             <div>
                 <h1>Invoice</h1>
-                <div><?php echo h($firmName); ?></div>
+                <div class="fin-doc-firm"><?php echo h($firmName); ?></div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <button class="print-btn" onclick="window.print()">Print</button>
-                <div class="badge"><?php echo h($invoiceNumber); ?></div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">Invoice Details</div>
-            <div class="info-grid">
-                <div><strong>Issue Date:</strong><br><?php echo h($issueDate); ?></div>
-                <div><strong>Due Date:</strong><br><?php echo h($dueDate); ?></div>
-                <div><strong>Status:</strong><br><?php echo h($status); ?></div>
-                <div><strong>Case:</strong><br><?php echo h($caseTitle); ?></div>
+            <div class="fin-doc-top-actions">
+                <button type="button" class="fin-doc-print" onclick="window.print()">Print</button>
+                <div class="fin-doc-badge"><?php echo h($invoiceNumber); ?></div>
             </div>
         </div>
 
-        <div class="section">
-            <div class="section-title">Client</div>
-            <div class="info-grid">
-                <div><strong>Name:</strong><br><?php echo h($clientName); ?></div>
-                <div><strong>Email:</strong><br><?php echo h($clientEmail); ?></div>
-                <div><strong>Phone:</strong><br><?php echo h($clientPhone); ?></div>
+        <div class="fin-doc-body">
+            <div class="fin-doc-section">
+                <div class="fin-doc-section-title">Invoice details</div>
+                <div class="fin-doc-grid">
+                    <div><strong>Issue date</strong><?php echo h($issueDate); ?></div>
+                    <div><strong>Due date</strong><?php echo h($dueDate); ?></div>
+                    <div><strong>Status</strong><?php echo h($status); ?></div>
+                    <div><strong>Case</strong><?php echo h($caseTitle); ?></div>
+                </div>
             </div>
-        </div>
 
-        <div class="section">
-            <div class="section-title">Invoice Summary</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th>Amount</th>
+            <div class="fin-doc-section">
+                <div class="fin-doc-section-title">Client</div>
+                <div class="fin-doc-grid">
+                    <div><strong>Name</strong><?php echo h($clientName); ?></div>
+                    <div><strong>Email</strong><?php echo h($clientEmail); ?></div>
+                    <div><strong>Phone</strong><?php echo h($clientPhone); ?></div>
+                </div>
+            </div>
+
+            <div class="fin-doc-section">
+                <div class="fin-doc-section-title">Summary</div>
+                <table class="fin-doc-table">
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Professional services · <?php echo h($caseTitle); ?></td>
+                            <td class="text-end"><?php echo h($amountDisplay); ?></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="fin-doc-totals">
+                    <tr class="grand">
+                        <td class="label">Total due</td>
+                        <td class="value"><?php echo h($amountDisplay); ?></td>
                     </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Professional Services · <?php echo h($caseTitle); ?></td>
-                        <td><?php echo h($amountDisplay); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-            <table class="totals">
-                <tr>
-                    <td class="label">Total Due</td>
-                    <td class="value"><?php echo h($amountDisplay); ?></td>
-                </tr>
-            </table>
-        </div>
+                </table>
+            </div>
 
-        <div class="section">
-            <div class="section-title">Notes</div>
-            <div><?php echo nl2br(h($notes)); ?></div>
-        </div>
+            <div class="fin-doc-section">
+                <div class="fin-doc-section-title">Notes</div>
+                <div class="fin-doc-notes"><?php echo nl2br(h($notes)); ?></div>
+            </div>
 
-        <div class="section">
-            <div class="section-title">Issued By</div>
-            <div><?php echo h($firmName); ?> · <?php echo h($firmAddress); ?><br>Email: <?php echo h($firmEmail); ?> · Phone: <?php echo h($firmPhone); ?></div>
+            <div class="fin-doc-section">
+                <div class="fin-doc-section-title">Issued by</div>
+                <div class="fin-doc-footer">
+                    <?php echo h($firmName); ?> · <?php echo h($firmAddress); ?><br>
+                    Email: <?php echo h($firmEmail); ?> · Phone: <?php echo h($firmPhone); ?>
+                </div>
+            </div>
         </div>
     </div>
 </body>
