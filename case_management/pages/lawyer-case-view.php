@@ -253,14 +253,14 @@ if (empty($services)) {
         $servicesHtml .= '
         <tr>
             <td>' . htmlspecialchars($service['service_name']) . '</td>
-            <td class="text-end">$' . number_format($service['price'], 2) . '</td>
+            <td class="text-end">Rs' . number_format($service['price'], 2) . '</td>
         </tr>';
         $totalFees += $service['price'];
     }
     $servicesHtml .= '
     <tr class="table-active">
         <td><strong>Total Estimated Fees</strong></td>
-        <td class="text-end"><strong>$' . number_format($totalFees, 2) . '</strong></td>
+        <td class="text-end"><strong>Rs' . number_format($totalFees, 2) . '</strong></td>
     </tr>';
 }
 
@@ -454,6 +454,12 @@ $html = <<<'HTML'
         .lawyer-case-comments .cc-comment-delete-form {
             display: inline-flex;
             margin: 0;
+        }
+        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link,
+        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link:hover,
+        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link:focus,
+        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link.active {
+            color: #344767 !important;
         }
     </style>
 </head>
