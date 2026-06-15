@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_court_date'])) {
         $case_id = (int)$_POST['case_id'];
         $courtDatePart = trim((string) ($_POST['court_date'] ?? ''));
-        $courtTimePart = legalpro_normalize_time_hm($_POST['court_time'] ?? '');
+        $courtTimePart = legalpro_parse_court_time_input($_POST['court_time'] ?? '');
         $court_date = $courtDatePart . ' ' . $courtTimePart;
         $title = trim($_POST['title']);
         $description = trim($_POST['description']);
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)$_POST['id'];
         $case_id = (int)$_POST['case_id'];
         $courtDatePart = trim((string) ($_POST['court_date'] ?? ''));
-        $courtTimePart = legalpro_normalize_time_hm($_POST['court_time'] ?? '');
+        $courtTimePart = legalpro_parse_court_time_input($_POST['court_time'] ?? '');
         $court_date = $courtDatePart . ' ' . $courtTimePart;
         $title = trim($_POST['title']);
         $description = trim($_POST['description']);
@@ -279,13 +279,7 @@ if (empty($upcomingCourtDates)) {
                     <h6 class="font-weight-bolder text-white mb-0">Court Tracking</h6>
                 </nav>
                 <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
-                        <div class="input-group">
-                            <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="Search…" value="" autocomplete="off" maxlength="200" aria-label="Search">
-                        </div>
-                    </form>
-                    <ul class="navbar-nav justify-content-end">
+                    <ul class="navbar-nav ms-md-auto justify-content-end">
                         <li class="nav-item d-flex align-items-center">
                             <a href="admin-logout.php" class="nav-link text-white font-weight-bold px-0">
                                 <i class="fa fa-user me-sm-1"></i>
@@ -686,15 +680,49 @@ if (empty($upcomingCourtDates)) {
         var courtTimeBounds = <?php echo json_encode(['min' => legalpro_court_time_min(), 'max' => legalpro_court_time_max()], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
         var editOriginalCourtDate = '';
 
-        function normalizeCourtTime(timeValue) {
+        function formatCourtTimeDisplay(timeHm) {
+            if (!timeHm) {
+                return '';
+            }
+            var parts = String(timeHm).split(':');
+            var hours = parseInt(parts[0], 10);
+            var minutes = parts[1] || '00';
+            if (isNaN(hours)) {
+                return '';
+            }
+            var period = hours >= 12 ? 'PM' : 'AM';
+            var displayHours = hours % 12;
+            if (displayHours === 0) {
+                displayHours = 12;
+            }
+            return displayHours + ':' + minutes + ' ' + period;
+        }
+
+        function parseCourtTimeInput(timeValue) {
             if (!timeValue) {
                 return '';
             }
-            var parts = String(timeValue).split(':');
-            if (parts.length < 2) {
+            var raw = String(timeValue).trim().replace(/\s+/g, ' ');
+            var match = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+            if (!match) {
                 return '';
             }
-            return String(parts[0]).padStart(2, '0') + ':' + String(parts[1]).padStart(2, '0');
+            var hours = parseInt(match[1], 10);
+            var minutes = parseInt(match[2], 10);
+            var period = match[4] ? match[4].toUpperCase() : '';
+            if (period === 'PM' && hours < 12) {
+                hours += 12;
+            } else if (period === 'AM' && hours === 12) {
+                hours = 0;
+            }
+            if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+                return '';
+            }
+            return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
+        }
+
+        function normalizeCourtTime(timeValue) {
+            return parseCourtTimeInput(timeValue);
         }
 
         function courtTimeToMinutes(timeValue) {
@@ -832,22 +860,31 @@ if (empty($upcomingCourtDates)) {
             }
 
             var dateValue = dateInput.value;
-            var timeValue = timeInput.value;
+            var rawTimeValue = timeInput.value;
+            var timeValue = parseCourtTimeInput(rawTimeValue);
             var status = statusInput ? statusInput.value : 'scheduled';
 
             if (!dateValue) {
                 return {
                     valid: false,
                     type: 'info',
-                    message: 'Select a court date to view available time slots.'
+                    message: 'Select a court date first, then type the court time.'
+                };
+            }
+
+            if (!rawTimeValue) {
+                return {
+                    valid: false,
+                    type: 'info',
+                    message: 'Type the court time (for example 9:30 AM or 14:15).'
                 };
             }
 
             if (!timeValue) {
                 return {
                     valid: false,
-                    type: 'info',
-                    message: 'Enter a court time to continue.'
+                    type: 'warning',
+                    message: 'Enter a valid court time (for example 9:30 AM or 14:15).'
                 };
             }
 
@@ -855,7 +892,7 @@ if (empty($upcomingCourtDates)) {
                 return {
                     valid: false,
                     type: 'warning',
-                    message: 'Court time must be between 9:00 AM and 5:30 PM.'
+                    message: 'Court time must be between ' + formatCourtTimeDisplay(courtTimeBounds.min) + ' and ' + formatCourtTimeDisplay(courtTimeBounds.max) + '.'
                 };
             }
 
@@ -871,14 +908,14 @@ if (empty($upcomingCourtDates)) {
                 return {
                     valid: false,
                     type: 'warning',
-                    message: 'This time slot is not available. Please choose another.'
+                    message: 'Another court date is already scheduled at this time. Please choose a different time.'
                 };
             }
 
             return {
                 valid: true,
                 type: 'success',
-                message: 'This time slot is available.'
+                message: 'Court time ' + formatCourtTimeDisplay(timeValue) + ' is available.'
             };
         }
 
@@ -958,7 +995,8 @@ if (empty($upcomingCourtDates)) {
                 return;
             }
 
-            if (timeInput.value && statusBlocksCourtBooking(timeInputId) && isCourtTimeBooked(dateValue, timeInput.value, excludeId)) {
+            var parsedTime = parseCourtTimeInput(timeInput.value);
+            if (parsedTime && statusBlocksCourtBooking(timeInputId) && isCourtTimeBooked(dateValue, parsedTime, excludeId)) {
                 timeInput.value = '';
             }
         }
@@ -990,8 +1028,26 @@ if (empty($upcomingCourtDates)) {
                 return;
             }
             syncCourtTimeInput(timeInputId, dateValue, excludeId);
-            timeInput.value = normalizeCourtTime(timeValue);
+            var normalized = normalizeCourtTime(timeValue);
+            timeInput.value = normalized ? formatCourtTimeDisplay(normalized) : '';
             timeInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        function bindCourtTimeManualInput(timeInputId, refreshFn) {
+            var timeInput = document.getElementById(timeInputId);
+            if (!timeInput || timeInput.dataset.manualBound === '1') {
+                return;
+            }
+            timeInput.dataset.manualBound = '1';
+            timeInput.addEventListener('change', refreshFn);
+            timeInput.addEventListener('input', refreshFn);
+            timeInput.addEventListener('blur', function() {
+                var parsed = parseCourtTimeInput(timeInput.value);
+                if (parsed) {
+                    timeInput.value = formatCourtTimeDisplay(parsed);
+                }
+                refreshFn();
+            });
         }
 
         function editCourtDate(id) {
@@ -1087,23 +1143,8 @@ if (empty($upcomingCourtDates)) {
             });
         }
 
-        var addCourtTimeInput = document.getElementById('add_court_time');
-        if (addCourtTimeInput) {
-            addCourtTimeInput.addEventListener('change', refreshAddCourtTimeAvailability);
-            addCourtTimeInput.addEventListener('input', function() {
-                updateCourtSubmitState('addCourtDateForm', 'add_court_date_submit', { noticeId: 'add_court_slot_notice' });
-            });
-        }
-
-        var editCourtTimeInput = document.getElementById('edit_court_time');
-        if (editCourtTimeInput) {
-            editCourtTimeInput.addEventListener('change', refreshEditCourtTimeAvailability);
-            editCourtTimeInput.addEventListener('input', function() {
-                var excludeId = document.getElementById('edit_id') ? document.getElementById('edit_id').value : null;
-                updateCourtSubmitState('editCourtDateForm', 'edit_court_date_submit', { excludeId: excludeId, noticeId: 'edit_court_slot_notice' });
-            });
-        }
+        bindCourtTimeManualInput('add_court_time', refreshAddCourtTimeAvailability);
+        bindCourtTimeManualInput('edit_court_time', refreshEditCourtTimeAvailability);
     </script>
-    <?php legalpro_render_time_slot_picker_script(); ?>
     <?php legalpro_render_availability_date_picker_script(); ?>
 <?php include __DIR__ . '/../inc/footer.php'; ?>

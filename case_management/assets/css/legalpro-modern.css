@@ -95,11 +95,10 @@ body.legalpro-admin-portal.legalpro-sidebar-collapsed .legalpro-admin-sidebar {
 }
 body.legalpro-admin-portal.legalpro-sidebar-collapsed .legalpro-sidebar-brand__text,
 body.legalpro-admin-portal.legalpro-sidebar-collapsed .legalpro-sidebar-nav__label {
+    display: none !important;
     opacity: 0;
     width: 0;
     overflow: hidden;
-    display: inline-block !important;
-    transition: opacity var(--lp-ease), width var(--lp-ease);
 }
 
 /* Brand */

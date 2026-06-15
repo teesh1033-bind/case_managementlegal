@@ -75,9 +75,57 @@ try {
 }
 
 $prefillAmount = isset($_GET['amount']) ? (float) $_GET['amount'] : 0;
+$selectedInvoiceId = isset($_GET['invoice_id']) ? (int) $_GET['invoice_id'] : 0;
+
+$caseInvoices = [];
+try {
+    $invoiceRows = $pdo->query("
+        SELECT
+            i.id,
+            i.case_id,
+            i.invoice_number,
+            i.amount,
+            COALESCE(SUM(p.amount), 0) AS paid_total
+        FROM invoices i
+        LEFT JOIN payments p ON p.invoice_id = i.id
+        WHERE i.case_id IS NOT NULL
+        GROUP BY i.id, i.case_id, i.invoice_number, i.amount
+        ORDER BY i.id ASC
+    ")->fetchAll();
+    foreach ($invoiceRows as $row) {
+        $caseIdKey = (int) $row['case_id'];
+        $invoiceAmount = (float) $row['amount'];
+        $paidTotal = (float) $row['paid_total'];
+        $balance = max($invoiceAmount - $paidTotal, 0);
+        $invoiceNumber = !empty($row['invoice_number'])
+            ? $row['invoice_number']
+            : 'INV-' . str_pad((string) $row['id'], 4, '0', STR_PAD_LEFT);
+
+        if (!isset($caseInvoices[$caseIdKey])) {
+            $caseInvoices[$caseIdKey] = [];
+        }
+
+        $caseInvoices[$caseIdKey][] = [
+            'id' => (int) $row['id'],
+            'number' => $invoiceNumber,
+            'amount_raw' => $invoiceAmount,
+            'paid_raw' => $paidTotal,
+            'balance_raw' => $balance,
+            'amount' => formatCurrency($invoiceAmount),
+            'balance' => formatCurrency($balance),
+            'label' => $balance <= 0.01
+                ? $invoiceNumber . ' · ' . formatCurrency($invoiceAmount) . ' (paid in full)'
+                : $invoiceNumber . ' · ' . formatCurrency($invoiceAmount) . ' (' . formatCurrency($balance) . ' remaining)',
+            'is_paid' => $balance <= 0.01,
+        ];
+    }
+} catch (PDOException $e) {
+    $caseInvoices = [];
+}
 
 $formData = [
     'case_id' => $selectedCaseId ?: '',
+    'invoice_id' => $selectedInvoiceId ?: '',
     'amount' => $prefillAmount > 0 ? $prefillAmount : '',
     'method' => 'cash',
     'reference' => '',
@@ -87,25 +135,56 @@ $formData = [
 ];
 
 if ($selectedCaseId > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST' && $prefillAmount <= 0) {
-    try {
-        $stmt = $pdo->prepare("
-            SELECT COALESCE(c.estimated_fees, 0) AS estimated_fees,
-                   COALESCE(SUM(p.amount), 0) AS paid_total
-            FROM cases c
-            LEFT JOIN payments p ON p.case_id = c.id
-            WHERE c.id = ?
-            GROUP BY c.id, c.estimated_fees
-        ");
-        $stmt->execute([$selectedCaseId]);
-        $casePrefill = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($casePrefill) {
-            $remaining = max((float) $casePrefill['estimated_fees'] - (float) $casePrefill['paid_total'], 0);
-            if ($remaining > 0) {
-                $formData['amount'] = $remaining;
+    $prefilled = false;
+
+    if ($selectedInvoiceId > 0) {
+        foreach ($caseInvoices[$selectedCaseId] ?? [] as $invoiceOption) {
+            if ($invoiceOption['id'] === $selectedInvoiceId && $invoiceOption['balance_raw'] > 0) {
+                $formData['amount'] = $invoiceOption['balance_raw'];
+                $prefilled = true;
+                break;
             }
         }
-    } catch (PDOException $e) {
-        // Continue without amount prefill
+    }
+
+    if (!$prefilled && !empty($caseInvoices[$selectedCaseId])) {
+        foreach ($caseInvoices[$selectedCaseId] as $invoiceOption) {
+            if ($invoiceOption['balance_raw'] <= 0.01) {
+                continue;
+            }
+            if (!$selectedInvoiceId) {
+                $selectedInvoiceId = $invoiceOption['id'];
+                $formData['invoice_id'] = $invoiceOption['id'];
+            }
+            if ((int) $formData['invoice_id'] === $invoiceOption['id']) {
+                $formData['amount'] = $invoiceOption['balance_raw'];
+                $prefilled = true;
+                break;
+            }
+        }
+    }
+
+    if (!$prefilled) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT COALESCE(c.estimated_fees, 0) AS estimated_fees,
+                       COALESCE(SUM(p.amount), 0) AS paid_total
+                FROM cases c
+                LEFT JOIN payments p ON p.case_id = c.id
+                WHERE c.id = ?
+                GROUP BY c.id, c.estimated_fees
+            ");
+            $stmt->execute([$selectedCaseId]);
+            $casePrefill = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($casePrefill) {
+                $remaining = max((float) $casePrefill['estimated_fees'] - (float) $casePrefill['paid_total'], 0);
+                if ($remaining > 0) {
+                    $formData['amount'] = $remaining;
+                }
+            }
+        } catch (PDOException $e) {
+            // Continue without amount prefill
+        }
     }
 }
 
@@ -120,6 +199,7 @@ $allowedMethods = [
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $caseId = isset($_POST['case_id']) ? (int)$_POST['case_id'] : 0;
+    $invoiceId = isset($_POST['invoice_id']) && $_POST['invoice_id'] !== '' ? (int) $_POST['invoice_id'] : 0;
     $amount = isset($_POST['amount']) ? (float)$_POST['amount'] : 0;
     $method = isset($_POST['method']) ? trim($_POST['method']) : 'cash';
     $reference = isset($_POST['reference']) ? trim($_POST['reference']) : '';
@@ -129,6 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $formData = [
         'case_id' => $caseId ?: '',
+        'invoice_id' => $invoiceId ?: '',
         'amount' => $amount,
         'method' => $method,
         'reference' => $reference,
@@ -163,34 +244,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Case not found.';
                 $messageType = 'danger';
             } else {
-                // Calculate remaining balance if the case has an estimated fee
-                $estimatedFees = isset($caseRow['estimated_fees']) ? (float)$caseRow['estimated_fees'] : 0;
-                $paidTotal = 0;
-                if ($estimatedFees > 0) {
-                    $sumStmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) AS total_paid FROM payments WHERE case_id = ?");
-                    $sumStmt->execute([$caseRow['id']]);
-                    $paidTotal = (float)$sumStmt->fetchColumn();
-                    $remaining = max($estimatedFees - $paidTotal, 0);
-                    if ($remaining <= 0.01) {
-                        $message = 'This case is already fully paid.';
+                $unpaidInvoices = [];
+                foreach ($caseInvoices[$caseId] ?? [] as $invoiceOption) {
+                    if ($invoiceOption['balance_raw'] > 0.01) {
+                        $unpaidInvoices[] = $invoiceOption;
+                    }
+                }
+
+                if ($invoiceId <= 0 && count($unpaidInvoices) === 1) {
+                    $invoiceId = $unpaidInvoices[0]['id'];
+                    $formData['invoice_id'] = $invoiceId;
+                } elseif ($invoiceId <= 0 && count($unpaidInvoices) > 1) {
+                    $message = 'Please select which invoice this payment applies to.';
+                    $messageType = 'danger';
+                    goto render_page;
+                }
+
+                if ($invoiceId > 0) {
+                    $invStmt = $pdo->prepare("
+                        SELECT i.id, i.case_id, i.amount, i.invoice_number,
+                               COALESCE(SUM(p.amount), 0) AS paid_total
+                        FROM invoices i
+                        LEFT JOIN payments p ON p.invoice_id = i.id
+                        WHERE i.id = ?
+                        GROUP BY i.id, i.case_id, i.amount, i.invoice_number
+                    ");
+                    $invStmt->execute([$invoiceId]);
+                    $invoiceRow = $invStmt->fetch();
+
+                    if (!$invoiceRow || (int) $invoiceRow['case_id'] !== (int) $caseRow['id']) {
+                        $message = 'Selected invoice does not belong to this case.';
+                        $messageType = 'danger';
+                        goto render_page;
+                    }
+
+                    $invoiceBalance = max((float) $invoiceRow['amount'] - (float) $invoiceRow['paid_total'], 0);
+                    if ($invoiceBalance <= 0.01) {
+                        $invoiceLabel = !empty($invoiceRow['invoice_number'])
+                            ? $invoiceRow['invoice_number']
+                            : 'This invoice';
+                        $message = $invoiceLabel . ' has already been paid.';
                         $messageType = 'warning';
                         goto render_page;
                     }
-                    if ($amount > $remaining) {
-                        $message = 'Payment exceeds the remaining balance of ' . formatCurrency($remaining) . '.';
+                    if ($amount > $invoiceBalance + 0.001) {
+                        $message = 'Payment exceeds the remaining invoice balance of ' . formatCurrency($invoiceBalance) . '.';
                         $messageType = 'danger';
                         goto render_page;
+                    }
+                } else {
+                    $estimatedFees = isset($caseRow['estimated_fees']) ? (float) $caseRow['estimated_fees'] : 0;
+                    if ($estimatedFees > 0) {
+                        $sumStmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) AS total_paid FROM payments WHERE case_id = ?");
+                        $sumStmt->execute([$caseRow['id']]);
+                        $paidTotal = (float) $sumStmt->fetchColumn();
+                        $remaining = max($estimatedFees - $paidTotal, 0);
+                        if ($remaining <= 0.01) {
+                            $message = 'This case is already fully paid.';
+                            $messageType = 'warning';
+                            goto render_page;
+                        }
+                        if ($amount > $remaining) {
+                            $message = 'Payment exceeds the remaining balance of ' . formatCurrency($remaining) . '.';
+                            $messageType = 'danger';
+                            goto render_page;
+                        }
                     }
                 }
 
                 try {
                     $insert = $pdo->prepare("
-                        INSERT INTO payments (case_id, client_id, amount, method, reference, notes, payment_date, recorded_by)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO payments (case_id, client_id, invoice_id, amount, method, reference, notes, payment_date, recorded_by)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
                     $insert->execute([
                         $caseRow['id'],
                         $caseRow['client_id'],
+                        $invoiceId > 0 ? $invoiceId : null,
                         $amount,
                         $method,
                         $reference,
@@ -199,11 +329,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $recordedBy
                     ]);
 
-                    // Track payment addition
+                    if ($invoiceId > 0) {
+                        $checkPaid = $pdo->prepare("
+                            SELECT i.amount, COALESCE(SUM(p.amount), 0) AS paid_total
+                            FROM invoices i
+                            LEFT JOIN payments p ON p.invoice_id = i.id
+                            WHERE i.id = ?
+                            GROUP BY i.id, i.amount
+                        ");
+                        $checkPaid->execute([$invoiceId]);
+                        $invoicePaid = $checkPaid->fetch();
+                        if ($invoicePaid && (float) $invoicePaid['paid_total'] >= (float) $invoicePaid['amount'] - 0.01) {
+                            $pdo->prepare("UPDATE invoices SET status = 'paid' WHERE id = ?")->execute([$invoiceId]);
+                        }
+                    }
+
                     CaseEvents::trackPaymentAdded($caseRow['id'], [
                         'amount' => $amount,
                         'method' => $method,
-                        'reference' => $reference
+                        'reference' => $reference,
+                        'invoice_id' => $invoiceId > 0 ? $invoiceId : null,
                     ]);
 
                     $msg = 'Payment recorded successfully.';
@@ -342,10 +487,12 @@ try {
         SELECT 
             p.*,
             c.title AS case_title,
-            CONCAT(cl.first_name, ' ', cl.last_name) AS client_name
+            CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
+            i.invoice_number
         FROM payments p
         LEFT JOIN cases c ON c.id = p.case_id
         LEFT JOIN clients cl ON cl.id = p.client_id
+        LEFT JOIN invoices i ON i.id = p.invoice_id
         ORDER BY p.payment_date DESC, p.id DESC
         LIMIT 12
     ");
@@ -366,18 +513,23 @@ if (empty($recentPayments)) {
             ? '<span class="text-xs text-secondary d-inline-block text-truncate payments-notes-cell" title="' . htmlspecialchars($notesRaw) . '">' . htmlspecialchars($notesRaw) . '</span>'
             : '<span class="text-muted">—</span>';
 
+        $invoiceLabel = !empty($payment['invoice_number']) ? $payment['invoice_number'] : '';
         $searchBlob = strtolower(
             $clientName . ' ' . $caseNumber . ' ' . ($payment['case_title'] ?? '') . ' '
-            . $methodLabel . ' ' . ($payment['payment_date'] ?? '') . ' '
+            . $invoiceLabel . ' ' . $methodLabel . ' ' . ($payment['payment_date'] ?? '') . ' '
             . formatCurrency($payment['amount']) . ' ' . $notesRaw
         );
+        $caseSubtitle = $caseNumber . ' · ' . ($payment['case_title'] ?: 'No case');
+        if ($invoiceLabel !== '') {
+            $caseSubtitle .= ' · ' . $invoiceLabel;
+        }
 
         $recentPaymentsRows .= '
         <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-4">
                 <div class="d-flex flex-column">
                     <span class="text-sm font-weight-bold mb-0">' . htmlspecialchars($clientName) . '</span>
-                    <small class="text-muted">' . htmlspecialchars($caseNumber . ' · ' . ($payment['case_title'] ?: 'No case')) . '</small>
+                    <small class="text-muted">' . htmlspecialchars($caseSubtitle) . '</small>
                 </div>
             </td>
             <td class="text-center text-sm font-weight-bold">' . formatCurrency($payment['amount']) . '</td>
@@ -562,6 +714,16 @@ $html = <<<'HTML'
                                         {CASE_OPTIONS}
                                     </select>
                                 </div>
+                                <div class="mb-3" id="invoice-select-wrap" style="display: none;">
+                                    <label class="form-label">Apply to Invoice</label>
+                                    <select class="form-select" name="invoice_id" id="invoice_id">
+                                        <option value="">General payment (not tied to invoice)</option>
+                                    </select>
+                                    <p class="text-xs text-muted mb-0 mt-1" id="invoice-balance-hint"></p>
+                                    <div class="alert alert-warning py-2 px-3 mb-0 mt-2 d-none" id="invoice-paid-alert" role="alert">
+                                        <span class="text-sm mb-0" id="invoice-paid-alert-text">This invoice has already been paid.</span>
+                                    </div>
+                                </div>
                                 <div class="row">
                                     <div class="col-6 mb-3">
                                         <label class="form-label">Payment Date</label>
@@ -590,7 +752,7 @@ $html = <<<'HTML'
                                     <label class="form-label">Recorded By</label>
                                     <input type="text" class="form-control" name="recorded_by" value="{FORM_RECORDED_BY}" placeholder="Staff name">
                                 </div>
-                                <button type="submit" class="btn btn-dark w-100">Save Payment</button>
+                                <button type="submit" class="btn btn-dark w-100" id="payment-submit-btn">Save Payment</button>
                             </form>
                         </div>
                     </div>
@@ -715,8 +877,14 @@ $html = <<<'HTML'
     <script>
         (function() {
             var ledgerData = {CASE_DATA_JSON};
+            var invoiceData = {CASE_INVOICES_JSON};
+            var initialInvoiceId = '{FORM_INVOICE_ID}';
             var currencyZero = '{CURRENCY_ZERO}';
             var caseSelect = document.getElementById('case_id');
+            var invoiceSelect = document.getElementById('invoice_id');
+            var invoiceWrap = document.getElementById('invoice-select-wrap');
+            var invoiceHint = document.getElementById('invoice-balance-hint');
+            var amountInput = document.querySelector('input[name="amount"]');
             var ledgerSelect = document.getElementById('ledger_case_select');
             var feeEl = document.getElementById('ledger-fee');
             var paidEl = document.getElementById('ledger-paid');
@@ -725,6 +893,113 @@ $html = <<<'HTML'
             var statusEl = document.getElementById('ledger-status');
             var lastEl = document.getElementById('ledger-last-payment');
             var labelEl = document.getElementById('selected-case-label');
+            var amountTouched = false;
+            var paidAlert = document.getElementById('invoice-paid-alert');
+            var paidAlertText = document.getElementById('invoice-paid-alert-text');
+            var submitBtn = document.getElementById('payment-submit-btn');
+            var paymentForm = document.querySelector('form[method="post"]');
+
+            if (amountInput) {
+                amountInput.addEventListener('input', function() {
+                    amountTouched = true;
+                });
+            }
+
+            function invoiceIsPaid(invoice) {
+                return !!(invoice && invoice.balance_raw <= 0.01);
+            }
+
+            function updateInvoicePaidState(invoice) {
+                var isPaid = invoiceIsPaid(invoice);
+                if (paidAlert) {
+                    paidAlert.classList.toggle('d-none', !isPaid);
+                }
+                if (paidAlertText) {
+                    paidAlertText.textContent = isPaid && invoice
+                        ? invoice.number + ' has already been paid.'
+                        : 'This invoice has already been paid.';
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = isPaid;
+                }
+                if (amountInput) {
+                    amountInput.readOnly = isPaid;
+                }
+            }
+
+            function findInvoice(caseId, invoiceId) {
+                var invoices = invoiceData[caseId] || [];
+                for (var i = 0; i < invoices.length; i++) {
+                    if (String(invoices[i].id) === String(invoiceId)) {
+                        return invoices[i];
+                    }
+                }
+                return null;
+            }
+
+            function updateInvoiceHint(invoice) {
+                if (!invoiceHint) {
+                    return;
+                }
+                if (!invoice) {
+                    invoiceHint.textContent = '';
+                    return;
+                }
+                invoiceHint.textContent = invoice.balance_raw > 0.01
+                    ? invoice.number + ' has ' + invoice.balance + ' remaining.'
+                    : '';
+            }
+
+            function updateInvoiceSelect(caseId, preferredInvoiceId) {
+                if (!invoiceSelect || !invoiceWrap) {
+                    return;
+                }
+
+                var invoices = invoiceData[caseId] || [];
+                var unpaidInvoices = invoices.filter(function(invoice) {
+                    return invoice.balance_raw > 0.01;
+                });
+
+                if (!invoices.length) {
+                    invoiceWrap.style.display = 'none';
+                    updateInvoiceHint(null);
+                    updateInvoicePaidState(null);
+                    return;
+                }
+
+                invoiceWrap.style.display = 'block';
+                invoiceSelect.innerHTML = unpaidInvoices.length > 1
+                    ? ''
+                    : '<option value="">General payment (not tied to invoice)</option>';
+                var firstUnpaidId = '';
+
+                invoices.forEach(function(invoice) {
+                    var option = document.createElement('option');
+                    option.value = invoice.id;
+                    option.textContent = invoice.label;
+                    if (invoice.balance_raw > 0.01 && !firstUnpaidId) {
+                        firstUnpaidId = String(invoice.id);
+                    }
+                    invoiceSelect.appendChild(option);
+                });
+
+                var targetId = preferredInvoiceId || initialInvoiceId || firstUnpaidId || '';
+                if (targetId && findInvoice(caseId, targetId) && findInvoice(caseId, targetId).balance_raw > 0.01) {
+                    invoiceSelect.value = targetId;
+                } else if (firstUnpaidId) {
+                    invoiceSelect.value = firstUnpaidId;
+                } else {
+                    invoiceSelect.value = '';
+                }
+
+                var selectedInvoice = findInvoice(caseId, invoiceSelect.value);
+                updateInvoiceHint(selectedInvoice);
+                updateInvoicePaidState(selectedInvoice);
+
+                if (!amountTouched && selectedInvoice && selectedInvoice.balance_raw > 0.01 && amountInput) {
+                    amountInput.value = selectedInvoice.balance_raw.toFixed(2);
+                }
+            }
 
             function setProgress(percent) {
                 progressEl.style.width = percent + '%';
@@ -764,7 +1039,31 @@ $html = <<<'HTML'
 
             if (caseSelect) {
                 caseSelect.addEventListener('change', function() {
+                    amountTouched = false;
+                    initialInvoiceId = '';
                     updateLedger(this.value, { skipSyncForm: true });
+                    updateInvoiceSelect(this.value, '');
+                });
+            }
+            if (invoiceSelect) {
+                invoiceSelect.addEventListener('change', function() {
+                    var caseId = caseSelect ? caseSelect.value : '';
+                    var selectedInvoice = findInvoice(caseId, this.value);
+                    updateInvoiceHint(selectedInvoice);
+                    updateInvoicePaidState(selectedInvoice);
+                    if (!amountTouched && selectedInvoice && selectedInvoice.balance_raw > 0.01 && amountInput) {
+                        amountInput.value = selectedInvoice.balance_raw.toFixed(2);
+                    }
+                });
+            }
+            if (paymentForm) {
+                paymentForm.addEventListener('submit', function(event) {
+                    var caseId = caseSelect ? caseSelect.value : '';
+                    var selectedInvoice = findInvoice(caseId, invoiceSelect ? invoiceSelect.value : '');
+                    if (invoiceIsPaid(selectedInvoice)) {
+                        event.preventDefault();
+                        updateInvoicePaidState(selectedInvoice);
+                    }
                 });
             }
             if (ledgerSelect) {
@@ -784,6 +1083,7 @@ $html = <<<'HTML'
             }
             if (initialCaseId) {
                 updateLedger(initialCaseId);
+                updateInvoiceSelect(initialCaseId, initialInvoiceId);
             } else {
                 setProgress(0);
             }
@@ -813,6 +1113,7 @@ $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CASE_OPTIONS}', $caseOptions, $html);
 $html = str_replace('{LEDGER_OPTIONS}', $ledgerOptions, $html);
 $html = str_replace('{FORM_DATE}', htmlspecialchars($formData['payment_date']), $html);
+$html = str_replace('{FORM_INVOICE_ID}', htmlspecialchars((string) ($formData['invoice_id'] ?? '')), $html);
 $html = str_replace('{FORM_AMOUNT}', htmlspecialchars($formData['amount']), $html);
 $html = str_replace('{FORM_REFERENCE}', htmlspecialchars($formData['reference']), $html);
 $html = str_replace('{FORM_NOTES}', htmlspecialchars($formData['notes']), $html);
@@ -830,6 +1131,7 @@ $html = str_replace('{ACTIVE_PLANS}', $activePaymentPlans, $html);
 $html = str_replace('{CASES_PAID_OFF}', $casesPaidOff, $html);
 $html = str_replace('{PAST_30}', formatCurrency($paymentsThisMonth), $html);
 $html = str_replace('{CASE_DATA_JSON}', json_encode($caseLedger), $html);
+$html = str_replace('{CASE_INVOICES_JSON}', json_encode($caseInvoices), $html);
 $html = str_replace('{CURRENCY_ZERO}', formatCurrency(0), $html);
 $html = str_replace('{ICON_STAT_COLLECTED}', $iconStatCollected, $html);
 $html = str_replace('{ICON_STAT_OUTSTANDING}', $iconStatOutstanding, $html);

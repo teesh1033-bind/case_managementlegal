@@ -65,7 +65,7 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
 }
 ?>
 
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs fixed-start legalpro-admin-sidebar" id="sidenav-main">
+<aside class="navbar navbar-vertical navbar-expand-xs fixed-start legalpro-admin-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
         <a href="client-dashboard.php" class="legalpro-sidebar-brand__link">
             <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="42" height="42" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">

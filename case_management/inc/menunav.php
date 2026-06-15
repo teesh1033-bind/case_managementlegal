@@ -25,7 +25,7 @@ $menuItems = [
     ['title' => 'Court Tracking', 'url' => 'court-tracking.php', 'icon' => 'landmark', 'id' => 'court-tracking'],
     ['title' => 'Lawyers', 'url' => 'lawyers.php', 'icon' => 'user-round', 'id' => 'lawyers'],
     ['title' => 'Invoices', 'url' => 'invoices.php', 'icon' => 'file-text', 'id' => 'invoices'],
-    ['title' => 'Financial Summary', 'url' => 'financial-summary.php', 'icon' => 'pie-chart', 'id' => 'financial-summary'],
+    ['title' => 'Finance', 'url' => 'financial-summary.php', 'icon' => 'pie-chart', 'id' => 'financial-summary'],
     ['title' => 'Documents', 'url' => 'documents.php', 'icon' => 'folder-open', 'id' => 'documents'],
     ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
@@ -56,14 +56,18 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 );
 ?>
 
-<link href="../assets/css/legalpro-admin-portal.css?v=21" rel="stylesheet" />
-<link href="../assets/css/legalpro-sidebar-nav.css?v=5" rel="stylesheet" />
+<?php if (!defined('LEGALPRO_ADMIN_PORTAL_HEAD')): ?>
+<link href="../assets/css/legalpro-portal-shell.css?v=21" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=25" rel="stylesheet" />
+<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
+<link href="../assets/css/legalpro-sidebar-nav.css?v=14" rel="stylesheet" />
 <?php legalpro_icons_asset_links(); ?>
+<?php endif; ?>
 
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs fixed-start legalpro-admin-sidebar legalpro-admin-sidebar--compact" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
         <a href="dashboard.php" class="legalpro-sidebar-brand__link">
-            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="42" height="42" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
+            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="34" height="34" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
             <span class="legalpro-sidebar-brand__text">
                 <span class="legalpro-sidebar-brand__name"><?php echo htmlspecialchars($companyName); ?></span>
                 <span class="legalpro-sidebar-brand__role">ADMIN</span>
@@ -75,7 +79,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
         <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
 
-    <div class="collapse navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
+    <div class="collapse show navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
         <ul class="navbar-nav legalpro-sidebar-nav">
             <?php foreach ($menuItems as $item): ?>
                 <?php $active = legalpro_admin_menu_is_active($item['id'], $currentPage); ?>
@@ -90,15 +94,63 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
     </div>
 </aside>
 
+<script>
+(function () {
+    var body = document.body;
+    if (!body) {
+        return;
+    }
+    body.classList.remove('g-sidenav-hidden');
+    body.classList.add('g-sidenav-pinned');
+})();
+</script>
+
 <?php echo $navbarUtilitiesMount; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var body = document.body;
     var collapseBtn = document.getElementById('legalproSidebarCollapse');
+    var navWrap = document.getElementById('sidenav-collapse-main');
+    var sidenav = document.getElementById('sidenav-main');
+
+    function fixAdminSidenavLayout() {
+        if (!body || !body.classList.contains('legalpro-admin-portal')) {
+            return;
+        }
+
+        body.classList.remove('g-sidenav-hidden');
+        body.classList.add('g-sidenav-pinned');
+
+        if (sidenav) {
+            sidenav.classList.remove('ps', 'ps--active-y');
+            sidenav.style.overflow = 'hidden';
+            sidenav.querySelectorAll('.ps__rail-y, .ps__thumb-y').forEach(function(node) {
+                node.remove();
+            });
+        }
+
+        if (navWrap) {
+            navWrap.classList.add('show');
+            navWrap.style.display = 'block';
+            navWrap.style.removeProperty('height');
+            navWrap.style.removeProperty('max-height');
+            navWrap.style.minHeight = '0';
+            navWrap.style.overflowY = 'auto';
+        }
+    }
+
+    fixAdminSidenavLayout();
+    window.addEventListener('load', fixAdminSidenavLayout);
+    setTimeout(fixAdminSidenavLayout, 150);
+    setTimeout(fixAdminSidenavLayout, 600);
+
     if (collapseBtn) {
         collapseBtn.addEventListener('click', function() {
             body.classList.toggle('legalpro-sidebar-collapsed');
+            body.classList.remove('g-sidenav-hidden');
+            body.classList.add('g-sidenav-pinned');
+            fixAdminSidenavLayout();
         });
     }
 });

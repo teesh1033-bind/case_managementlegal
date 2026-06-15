@@ -278,16 +278,6 @@ $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCate
         }
         .lp-kpi-delta--up   { color: #2dce89; }
         .lp-kpi-delta--down { color: #f5365c; }
-        /* Navbar search */
-        .lp-nav-search { position: relative; }
-        .lp-nav-search input {
-            background: #f8fafc; border: 1px solid rgba(0,0,0,0.08);
-            border-radius: 99px; padding: 0.38rem 1rem 0.38rem 2.2rem;
-            font-size: 0.8rem; font-family: 'Montserrat',sans-serif;
-            width: 200px; transition: all 0.2s ease; outline: none;
-        }
-        .lp-nav-search input:focus { width: 260px; border-color: #5e72e4; box-shadow: 0 0 0 3px rgba(94,114,228,.12); }
-        .lp-nav-search svg { position:absolute; left:0.7rem; top:50%; transform:translateY(-50%); width:14px; height:14px; color:#94a3b8; pointer-events:none; }
         /* Collection rate badge */
         .lp-collection-badge {
             display: inline-flex; align-items: center; gap: 5px;
@@ -337,12 +327,6 @@ echo ob_get_clean();
                 <p class="dashboard-welcome-sub mb-0 mt-1">
                     Welcome back, <?= htmlspecialchars($adminDisplayName) ?> &nbsp;·&nbsp; <?= htmlspecialchars($welcomeDate) ?>
                 </p>
-            </div>
-
-            <!-- Search -->
-            <div class="lp-nav-search d-none d-md-block">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="search" placeholder="Search cases, clients…" id="lp-global-search" autocomplete="off">
             </div>
 
             <!-- Quick actions -->

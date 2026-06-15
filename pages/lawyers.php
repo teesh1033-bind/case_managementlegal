@@ -99,8 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($firstName) || empty($lastName) || empty($email)) {
             $message = 'First name, last name, and email are required.';
             $messageType = 'danger';
-        } elseif (!$createNewUser && empty($userId) && !$lawyerId) {
-            $message = 'Please select an existing user account or create a new one.';
+        } elseif (!$lawyerId && empty($userId)) {
+            $message = 'Please create a user account for this lawyer using the button at the bottom of the form.';
             $messageType = 'danger';
         } elseif ($createNewUser && !empty($message)) {
             // Error message already set above
@@ -243,30 +243,8 @@ try {
     $lawyers = [];
 }
 
-// Fetch available user accounts for lawyer assignment
-$availableUsers = [];
-try {
-    // Show all users that are not assigned to other lawyers, or the current lawyer being edited
-    $stmt = $pdo->query("
-        SELECT u.*, CASE WHEN l.id IS NOT NULL THEN '(Assigned to Lawyer)' ELSE '' END as status
-        FROM users u
-        LEFT JOIN lawyers l ON l.user_id = u.id
-        WHERE l.id IS NULL OR l.id = " . (isset($editLawyer['id']) ? (int)$editLawyer['id'] : 0) . "
-        ORDER BY u.username
-    ");
-    $availableUsers = $stmt->fetchAll();
-} catch (PDOException $e) {
-    $availableUsers = [];
-}
-
 // Build HTML
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
-
-$userOptions = '<option value="">Select user account</option>';
-foreach ($availableUsers as $user) {
-    $selected = (isset($editLawyer['user_id']) && (int)$editLawyer['user_id'] === (int)$user['id']) ? ' selected' : '';
-    $userOptions .= '<option value="' . (int)$user['id'] . '"' . $selected . '>' . htmlspecialchars($user['username']) . ' (' . htmlspecialchars($user['email']) . ')</option>';
-}
 
 $lawyersTable = '';
 if (empty($lawyers)) {
@@ -496,32 +474,6 @@ $html = <<<'HTML'
                         <input type="hidden" name="form_type" value="save_lawyer">
                         <input type="hidden" name="lawyer_id" value="{LAWYER_ID}">
 
-                        <!-- User Account Section -->
-                        <div id="user_account_section">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">User Account <span class="text-danger">*</span></label>
-                                    <select class="form-control" name="user_id" id="user_select" required>
-                                        <option value="">Select existing user account</option>
-                                        {USER_OPTIONS}
-                                    </select>
-                                    <small class="text-muted d-block mt-1">
-                                        <strong>Important:</strong> Each lawyer needs their own login. Pick an existing account above, or create one below.
-                                    </small>
-                                    <button type="button" class="btn btn-primary btn-sm mt-2 w-100" id="btn_show_create_user" onclick="showCreateUserForm(); return false;">
-                                        <i class="fas fa-user-plus me-1"></i> Create new user account
-                                    </button>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Status</label>
-                                    <div class="form-check form-switch legalpro-status-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" name="is_active" value="1" id="lawyer_is_active" {IS_ACTIVE_CHECKED}>
-                                        <label class="form-check-label" for="lawyer_is_active">Active</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- User Account Update Section (for existing lawyers) -->
                         <div id="user_update_section" style="display: none;" class="legalpro-form-panel border rounded p-3 mb-3">
                             <p class="text-xs text-muted mb-2">Leave password fields empty to keep the current password.</p>
@@ -551,44 +503,14 @@ $html = <<<'HTML'
                             </div>
                         </div>
 
-                        <!-- New User Account Creation Form (hidden by default) -->
-                        <div id="create_user_form" style="display: none;" class="legalpro-form-panel border rounded p-3 mb-3">
-                            <h6 class="mb-1 fw-bold">Create New User Account</h6>
-                            <p class="text-xs text-muted mb-2">Fill in the fields below, then save the lawyer at the bottom of this form.</p>
-                            {PASSWORD_REQUIREMENTS}
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Username <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="new_username" id="new_username">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="new_email" id="new_email">
+                        <div class="row" id="new_lawyer_status_row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status</label>
+                                <div class="form-check form-switch legalpro-status-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" name="is_active" value="1" id="lawyer_is_active" {IS_ACTIVE_CHECKED}>
+                                    <label class="form-check-label" for="lawyer_is_active">Active</label>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control{NEW_PASSWORD_INVALID}" name="new_password" id="new_password" minlength="8" maxlength="128" autocomplete="new-password">
-                                    {NEW_PASSWORD_ERROR}
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control{NEW_CONFIRM_INVALID}" name="new_password_confirm" id="new_password_confirm" minlength="8" maxlength="128" autocomplete="new-password">
-                                    {NEW_CONFIRM_ERROR}
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Role</label>
-                                <select class="form-control" name="new_role" id="new_role">
-                                    <option value="lawyer">Lawyer</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="staff">Staff</option>
-                                </select>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-dark" onclick="hideCreateUserForm()">
-                                <i class="fas fa-times me-1"></i> Cancel
-                            </button>
                         </div>
 
                         <div class="row">
@@ -647,6 +569,51 @@ $html = <<<'HTML'
                         <div class="alert alert-info">
                             Availability schedule is managed by each lawyer.
                         </div>
+
+                        <div id="new_lawyer_user_section" class="border-top pt-3 mt-2">
+                            <div id="create_user_form" style="display: none;" class="legalpro-form-panel border rounded p-3 mb-3">
+                                <h6 class="mb-1 fw-bold">Create New User Account</h6>
+                                <p class="text-xs text-muted mb-2">Fill in the fields below, then click Save Lawyer.</p>
+                                {PASSWORD_REQUIREMENTS}
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Username <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="new_username" id="new_username">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="new_email" id="new_email">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Password <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control{NEW_PASSWORD_INVALID}" name="new_password" id="new_password" minlength="8" maxlength="128" autocomplete="new-password">
+                                        {NEW_PASSWORD_ERROR}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control{NEW_CONFIRM_INVALID}" name="new_password_confirm" id="new_password_confirm" minlength="8" maxlength="128" autocomplete="new-password">
+                                        {NEW_CONFIRM_ERROR}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Role</label>
+                                    <select class="form-control" name="new_role" id="new_role">
+                                        <option value="lawyer">Lawyer</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="staff">Staff</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-dark" onclick="hideCreateUserForm()">
+                                    <i class="fas fa-times me-1"></i> Cancel
+                                </button>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100" id="btn_show_create_user" onclick="showCreateUserForm(); return false;">
+                                <i class="fas fa-user-plus me-1"></i> Create new user account
+                            </button>
+                            <small class="text-muted d-block mt-2 text-center">Required for new lawyers. Each lawyer needs their own login.</small>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -669,9 +636,10 @@ $html = <<<'HTML'
             document.querySelector('#lawyerModal input[name="lawyer_id"]').value = '';
             document.getElementById('lawyerModal').querySelector('form').reset();
             // Reset form display for new lawyer
-            document.getElementById('user_account_section').style.display = 'block';
+            document.getElementById('new_lawyer_user_section').style.display = 'block';
+            document.getElementById('new_lawyer_status_row').style.display = '';
             document.getElementById('user_update_section').style.display = 'none';
-            document.getElementById('user_select').required = true;
+            hideCreateUserForm();
             new bootstrap.Modal(document.getElementById('lawyerModal')).show();
         }
 
@@ -693,15 +661,12 @@ $html = <<<'HTML'
             document.getElementById('create_user_form').style.display = 'block';
             var btn = document.getElementById('btn_show_create_user');
             if (btn) btn.style.display = 'none';
-            document.getElementById('user_select').value = '';
-            document.getElementById('user_select').required = false;
         }
 
         function hideCreateUserForm() {
             document.getElementById('create_user_form').style.display = 'none';
             var btn = document.getElementById('btn_show_create_user');
             if (btn) btn.style.display = '';
-            document.getElementById('user_select').required = true;
             // Clear the form fields
             document.getElementById('new_username').value = '';
             document.getElementById('new_email').value = '';
@@ -711,12 +676,11 @@ $html = <<<'HTML'
         }
 
         function showEditSections() {
-            // For editing existing lawyers, show the update section and hide the user selection
             const lawyerId = document.querySelector('#lawyerModal input[name="lawyer_id"]').value;
             if (lawyerId) {
-                document.getElementById('user_account_section').style.display = 'none';
+                document.getElementById('new_lawyer_user_section').style.display = 'none';
+                document.getElementById('new_lawyer_status_row').style.display = '';
                 document.getElementById('user_update_section').style.display = 'block';
-                document.getElementById('user_select').required = false;
             }
         }
     </script>
@@ -745,7 +709,6 @@ $replacements = [
     '{LAWYERS_SEARCH}' => $lawyersSearchHtml,
     '{LAWYERS_SEARCH_SCRIPT}' => $lawyersSearchScript,
     '{LAWYERS_TABLE}' => $lawyersTable,
-    '{USER_OPTIONS}' => $userOptions,
     '{FORM_TITLE}' => htmlspecialchars($formTitle),
     '{SUBMIT_LABEL}' => htmlspecialchars($submitLabel),
     '{LAWYER_ID}' => htmlspecialchars($formData['lawyer_id']),
