@@ -11,6 +11,9 @@ if (!isset($_SESSION['client_id'])) {
 $client_id = $_SESSION['client_id'];
 $client_name = $_SESSION['client_name'];
 
+require_once __DIR__ . '/../lib/case_quotations.php';
+ensure_case_quotation_schema($pdo);
+
 function clientInvoiceStatusMeta(float $balanceDue, ?string $dueDate): array
 {
     if ($balanceDue <= 0) {
@@ -28,6 +31,11 @@ function clientInvoiceStatusBadge(array $meta): string
     $pill = isset($meta['pill']) ? $meta['pill'] : 'ca-status-pill--muted';
 
     return '<span class="ca-status-pill ' . htmlspecialchars($pill) . '">' . htmlspecialchars($meta['label']) . '</span>';
+}
+
+function clientQuotationStatusBadge(array $meta): string
+{
+    return clientInvoiceStatusBadge($meta);
 }
 
 $message = '';
@@ -67,6 +75,8 @@ try {
     $stmt->execute([$client_id]);
     $payments = $stmt->fetchAll();
 
+    $quotations = fetch_client_quotations($pdo, (int) $client_id);
+
     // Calculate totals
     $totalInvoiced = 0;
     $totalPaid = 0;
@@ -86,6 +96,7 @@ try {
     $messageType = 'danger';
     $invoices = [];
     $payments = [];
+    $quotations = [];
     $totalInvoiced = 0;
     $totalPaid = 0;
     $totalOutstanding = 0;
@@ -93,6 +104,7 @@ try {
 
 $invoiceCount = count($invoices);
 $paymentCount = count($payments);
+$quotationCount = count($quotations);
 $overdueInvoiceCount = 0;
 foreach ($invoices as $_inv) {
     if ((float) ($_inv['balance_due'] ?? 0) > 0 && !empty($_inv['due_date']) && strtotime($_inv['due_date']) < time()) {
@@ -105,6 +117,8 @@ $iconInvoiceRow = legalpro_icon('file-text');
 $iconInvoiceEmpty = legalpro_icon('file-text');
 $iconPaymentRow = legalpro_icon('credit-card');
 $iconPaymentEmpty = legalpro_icon('credit-card');
+$iconQuotationRow = legalpro_icon('clipboard-list');
+$iconQuotationEmpty = legalpro_icon('clipboard-list');
 
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
 
@@ -218,6 +232,77 @@ if (empty($payments)) {
             </td>
             <td class="align-middle text-center pe-4">
                 <a href="payment-receipt.php?id=' . (int) $payment['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Receipt</a>
+            </td>
+        </tr>';
+    }
+}
+
+// Build quotations table rows
+$quotationsRows = '';
+if (empty($quotations)) {
+    $quotationsRows = '<tr><td colspan="7" class="border-0">
+        <div class="cp-empty">
+            <div class="cp-empty-icon cp-empty-icon--primary">' . $iconQuotationEmpty . '</div>
+            <h5>No quotations yet</h5>
+            <p>When your firm sends a fee quotation for a matter, it will appear here for review.</p>
+        </div>
+    </td></tr>';
+} else {
+    foreach ($quotations as $quotation) {
+        $quoteNumber = !empty($quotation['quotation_number'])
+            ? $quotation['quotation_number']
+            : 'QUO-' . str_pad((string) $quotation['id'], 4, '0', STR_PAD_LEFT);
+        $quoteTitle = trim((string) ($quotation['title'] ?? '')) ?: 'Quotation';
+        $caseTitle = $quotation['case_title'] ?: '—';
+        $statusMeta = client_quotation_status_meta(
+            (string) ($quotation['status'] ?? 'sent'),
+            !empty($quotation['valid_until']) ? (string) $quotation['valid_until'] : null
+        );
+        $statusBadge = clientQuotationStatusBadge($statusMeta);
+        $issuedDate = !empty($quotation['created_at'])
+            ? date('M j, Y', strtotime($quotation['created_at']))
+            : '—';
+        $validUntilDate = !empty($quotation['valid_until'])
+            ? date('M j, Y', strtotime($quotation['valid_until']))
+            : '—';
+
+        $quoteHay = strtolower(implode(' ', [
+            $quoteNumber,
+            $quoteTitle,
+            $caseTitle,
+            $statusMeta['label'],
+            $issuedDate,
+            $validUntilDate,
+            (string) $quotation['total_amount'],
+        ]));
+
+        $quotationsRows .= '<tr class="cp-quotation-row cp-search-row" data-search="' . htmlspecialchars($quoteHay, ENT_QUOTES, 'UTF-8') . '">
+            <td class="ps-4">
+                <div class="d-flex align-items-center gap-3 py-1">
+                    <div class="cp-row-icon flex-shrink-0">' . $iconQuotationRow . '</div>
+                    <div class="min-width-0">
+                        <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 12rem;">' . htmlspecialchars($quoteNumber) . '</h6>
+                        <p class="text-xs text-muted mb-0 text-truncate" style="max-width: 14rem;" title="' . htmlspecialchars($quoteTitle) . '">' . htmlspecialchars($quoteTitle) . '</p>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 11rem;" title="' . htmlspecialchars($caseTitle) . '">' . htmlspecialchars($caseTitle) . '</p>
+            </td>
+            <td>
+                <p class="text-xs font-weight-bold mb-0">' . htmlspecialchars($issuedDate) . '</p>
+            </td>
+            <td>
+                <p class="text-xs font-weight-bold mb-0">' . htmlspecialchars($validUntilDate) . '</p>
+            </td>
+            <td class="text-end">
+                <span class="text-xs font-weight-bold">' . formatCurrency($quotation['total_amount']) . '</span>
+            </td>
+            <td class="align-middle text-center">
+                ' . $statusBadge . '
+            </td>
+            <td class="align-middle text-center pe-4">
+                <a href="client-quotation-view.php?id=' . (int) $quotation['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">View</a>
             </td>
         </tr>';
     }
@@ -406,8 +491,8 @@ $html = <<<'HTML'
             <div class="cp-hero-card">
                 <p class="cp-hero-kicker">Billing</p>
                 <h4 class="cp-hero-title">Your financial snapshot</h4>
-                <p class="cp-hero-sub">Review issued invoices, what you have paid, and any balance still due. Contact your firm if you need a payment plan or receipt.</p>
-                <p class="cp-hero-meta">{INVOICE_COUNT} invoices on file · {PAYMENT_COUNT} payments recorded</p>
+                <p class="cp-hero-sub">Review issued invoices, quotations, what you have paid, and any balance still due. Contact your firm if you need a payment plan or receipt.</p>
+                <p class="cp-hero-meta">{INVOICE_COUNT} invoices · {QUOTATION_COUNT} quotations · {PAYMENT_COUNT} payments recorded</p>
                 <div class="cp-hero-stats">
                     <div class="cp-stat-pill">
                         <div class="num">{TOTAL_INVOICED}</div>
@@ -490,6 +575,36 @@ $html = <<<'HTML'
                     </div>
                 </div>
             </div>
+
+            <div class="cp-panel" id="quotations">
+                <div class="cp-panel-hdr">
+                    <div>
+                        <h5>Quotations</h5>
+                        <p>Fee quotes sent by your firm for review.</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+                        <span class="cp-count" id="cpQuotationCount">{QUOTATION_COUNT} total</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="cp-table">
+                        <thead>
+                            <tr>
+                                <th>Quotation</th>
+                                <th>Case</th>
+                                <th>Issued</th>
+                                <th>Valid until</th>
+                                <th style="text-align:right">Amount</th>
+                                <th style="text-align:center">Status</th>
+                                <th style="text-align:center;padding-right:1.5rem">View</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {QUOTATIONS_ROWS}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -523,6 +638,7 @@ $html = <<<'HTML'
                 }
             }
             filterRows('.cp-invoice-row.cp-search-row', 'cpInvoiceCount', 'invoice', 'invoices');
+            filterRows('.cp-quotation-row.cp-search-row', 'cpQuotationCount', 'quotation', 'quotations');
             filterRows('.cp-payment-row.cp-search-row', 'cpPaymentCount', 'payment', 'payments');
         }
         document.addEventListener('DOMContentLoaded', applyPaymentsPageSearch);
@@ -540,8 +656,10 @@ $html = str_replace('{TOTAL_INVOICED}', formatCurrency($totalInvoiced), $html);
 $html = str_replace('{TOTAL_PAID}', formatCurrency($totalPaid), $html);
 $html = str_replace('{TOTAL_OUTSTANDING}', formatCurrency($totalOutstanding), $html);
 $html = str_replace('{INVOICES_ROWS}', $invoicesRows, $html);
+$html = str_replace('{QUOTATIONS_ROWS}', $quotationsRows, $html);
 $html = str_replace('{PAYMENTS_ROWS}', $paymentsRows, $html);
 $html = str_replace('{INVOICE_COUNT}', (string) $invoiceCount, $html);
+$html = str_replace('{QUOTATION_COUNT}', (string) $quotationCount, $html);
 $html = str_replace('{PAYMENT_COUNT}', (string) $paymentCount, $html);
 $html = str_replace('{OVERDUE_COUNT}', (string) $overdueInvoiceCount, $html);
 
