@@ -360,6 +360,10 @@ ob_start(); ?>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <?php
+    require_once __DIR__ . '/../inc/availability-date-picker.php';
+    legalpro_render_availability_date_picker_assets();
+    ?>
 
     <style>
         *, *::before, *::after { box-sizing: border-box; }
@@ -545,8 +549,9 @@ ob_start(); ?>
         /* ── Booking panel ──────────────────────────────────────────── */
         .ca-book-card {
             background: #fff; border-radius: 16px;
-            border: 1px solid #e9ecf3; overflow: hidden;
+            border: 1px solid #e9ecf3; overflow: visible;
         }
+        .ca-book-body { overflow: visible; }
         .ca-book-hdr {
             padding: 1.1rem 1.5rem; border-bottom: 1px solid #f1f5f9;
             background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.06) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.03) 100%);
@@ -563,6 +568,7 @@ ob_start(); ?>
         }
         .ca-fld select,
         .ca-fld input[type="date"],
+        .ca-fld .ca-date-picker-wrap .flatpickr-input,
         .ca-fld textarea {
             width: 100%; padding: .55rem .75rem;
             border: 1px solid var(--ca-field-border); border-radius: 10px;
@@ -570,11 +576,210 @@ ob_start(); ?>
             outline: none; font-family: inherit;
             transition: border-color .15s, box-shadow .15s;
         }
+        .ca-fld .ca-date-picker-wrap .flatpickr-input {
+            cursor: pointer;
+        }
         .ca-fld select:focus,
         .ca-fld input[type="date"]:focus,
+        .ca-fld .ca-date-picker-wrap .flatpickr-input:focus,
         .ca-fld textarea:focus {
             border-color: var(--ca-primary);
             box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+        }
+        .ca-fld .ca-date-picker-wrap {
+            width: 100%;
+            position: relative;
+        }
+        .client-appointments-page .ca-date-picker-wrap .flatpickr-wrapper {
+            width: 100%;
+        }
+        .client-appointments-page .flatpickr-calendar.legalpro-calendar-below.open {
+            position: fixed !important;
+            margin: 0 !important;
+            transform: none !important;
+        }
+
+        /* Booking calendar — compact panel */
+        .client-appointments-page .flatpickr-calendar {
+            width: 268px !important;
+            max-width: calc(100vw - 24px);
+            background: var(--ca-field-bg);
+            border: 1px solid var(--ca-field-border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.2;
+            padding: 2px 0 6px;
+        }
+        .client-appointments-page .flatpickr-months {
+            background: var(--ca-field-bg);
+            padding: 4px 6px 0;
+        }
+        .client-appointments-page .flatpickr-months .flatpickr-month {
+            height: 30px;
+        }
+        .client-appointments-page .flatpickr-months .flatpickr-prev-month,
+        .client-appointments-page .flatpickr-months .flatpickr-next-month {
+            height: 30px;
+            padding: 6px 8px;
+            top: 2px;
+            color: var(--ca-field-color);
+            fill: var(--ca-field-color);
+        }
+        .client-appointments-page .flatpickr-months .flatpickr-prev-month svg,
+        .client-appointments-page .flatpickr-months .flatpickr-next-month svg {
+            width: 12px;
+            height: 12px;
+        }
+        .client-appointments-page .flatpickr-current-month {
+            font-size: 14px;
+            font-weight: 600;
+            height: 30px;
+            padding-top: 4px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .client-appointments-page .flatpickr-current-month .flatpickr-monthDropdown-months {
+            appearance: auto;
+            -webkit-appearance: auto;
+            -moz-appearance: auto;
+            background: var(--ca-field-bg);
+            color: var(--ca-field-color) !important;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            line-height: 1.3;
+            margin: 0;
+            padding: 2px 20px 2px 6px;
+            border: 1px solid var(--ca-field-border);
+            border-radius: 6px;
+            cursor: pointer;
+            max-width: 118px;
+        }
+        .client-appointments-page .flatpickr-current-month .flatpickr-monthDropdown-months:hover {
+            border-color: var(--ca-primary);
+            background: var(--ca-field-bg);
+        }
+        .client-appointments-page .flatpickr-current-month .flatpickr-monthDropdown-months option {
+            background: #fff;
+            color: #1e293b;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 6px 10px;
+        }
+        .client-appointments-page .flatpickr-current-month input.cur-year {
+            color: var(--ca-field-color) !important;
+            background: var(--ca-field-bg);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            padding: 2px 4px;
+            border: 1px solid var(--ca-field-border);
+            border-radius: 6px;
+            width: 4.5em !important;
+        }
+        .client-appointments-page .flatpickr-current-month .numInputWrapper {
+            width: 4.8em;
+        }
+        .client-appointments-page .flatpickr-weekdays {
+            background: var(--ca-field-bg);
+            height: 22px;
+            margin-top: 2px;
+        }
+        .client-appointments-page span.flatpickr-weekday {
+            color: var(--ca-field-muted);
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .client-appointments-page .flatpickr-days,
+        .client-appointments-page .dayContainer {
+            width: 268px !important;
+            min-width: 268px !important;
+            max-width: 268px !important;
+        }
+        .client-appointments-page .flatpickr-day {
+            color: var(--ca-field-color);
+            max-width: 34px;
+            height: 34px;
+            line-height: 34px;
+            font-size: 12.5px;
+        }
+        .client-appointments-page .flatpickr-day.prevMonthDay,
+        .client-appointments-page .flatpickr-day.nextMonthDay {
+            color: var(--ca-field-muted);
+            opacity: 0.38;
+            background: transparent !important;
+        }
+        .client-appointments-page .flatpickr-day.today {
+            border-color: var(--ca-primary);
+        }
+        .client-appointments-page .flatpickr-day.selected,
+        .client-appointments-page .flatpickr-day.selected:hover {
+            background: var(--ca-primary);
+            border-color: var(--ca-primary);
+            color: #fff;
+            opacity: 1;
+        }
+        .client-appointments-page .flatpickr-day:not(.flatpickr-disabled):not(.selected):not(.prevMonthDay):not(.nextMonthDay):hover {
+            background: var(--ca-primary-soft);
+            border-color: transparent;
+        }
+        /* Unavailable / past — faded like native disabled days */
+        .client-appointments-page .flatpickr-day.flatpickr-disabled,
+        .client-appointments-page .flatpickr-day.legalpro-day-unavailable,
+        .client-appointments-page .flatpickr-day.flatpickr-disabled.legalpro-day-unavailable {
+            text-decoration: none !important;
+            color: var(--ca-field-muted) !important;
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            opacity: 0.38;
+            cursor: default;
+            pointer-events: none;
+        }
+        .client-appointments-page .flatpickr-day.flatpickr-disabled:hover,
+        .client-appointments-page .flatpickr-day.legalpro-day-unavailable:hover,
+        .client-appointments-page .flatpickr-day.flatpickr-disabled:focus,
+        .client-appointments-page .flatpickr-day.legalpro-day-unavailable:focus {
+            background: transparent !important;
+            border-color: transparent !important;
+            color: var(--ca-field-muted) !important;
+            opacity: 0.38;
+        }
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-calendar.legalpro-flatpickr-dark,
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-calendar {
+            background: var(--ca-field-bg);
+            border-color: var(--ca-field-border);
+        }
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-current-month .flatpickr-monthDropdown-months,
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-current-month input.cur-year {
+            color: #f1f5f9 !important;
+            background: #1e293b;
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-current-month .flatpickr-monthDropdown-months option {
+            background: #1e293b;
+            color: #f1f5f9;
+        }
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-months .flatpickr-prev-month,
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-months .flatpickr-next-month {
+            color: #e2e8f0;
+            fill: #e2e8f0;
+        }
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay):not(.selected) {
+            color: #f1f5f9;
+        }
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-day.flatpickr-disabled,
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-day.legalpro-day-unavailable,
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-day.prevMonthDay,
+        body.legalpro-dark-mode.client-appointments-page .flatpickr-day.nextMonthDay {
+            color: #64748b !important;
+            opacity: 0.45;
         }
         .ca-fld textarea { resize: vertical; min-height: 72px; }
 
@@ -779,9 +984,11 @@ ob_start(); ?>
                             </div>
                             <div class="ca-fld">
                                 <label>Date</label>
-                                <input type="date" name="appointment_date" id="appointment_date"
-                                       min="<?= date('Y-m-d') ?>" required onchange="onDateChange()">
-                                <div id="caDateAlert" class="ca-avail-alert info">Select a date to see available times.</div>
+                                <div class="ca-date-picker-wrap">
+                                    <input type="text" name="appointment_date" id="appointment_date"
+                                           placeholder="Select date" autocomplete="off" readonly required>
+                                </div>
+                                <div id="caDateAlert" class="ca-avail-alert info">Select a lawyer, then choose an available date.</div>
                             </div>
                             <div class="ca-fld">
                                 <label>Time</label>
@@ -840,6 +1047,7 @@ ob_start(); ?>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <?php legalpro_render_availability_date_picker_script(); ?>
 
     <script>
     var lawyerAvailabilityByDate = <?= json_encode($lawyerAvailabilityByDate) ?>;
@@ -1068,8 +1276,87 @@ ob_start(); ?>
         document.getElementById('caDateAlert').style.display = 'none';
     }
 
+    function nowParts() {
+        var now = new Date();
+        var yyyy = now.getFullYear();
+        var mm = String(now.getMonth() + 1).padStart(2, '0');
+        var dd = String(now.getDate()).padStart(2, '0');
+        var hh = String(now.getHours()).padStart(2, '0');
+        var mi = String(now.getMinutes()).padStart(2, '0');
+        return {
+            date: yyyy + '-' + mm + '-' + dd,
+            time: hh + ':' + mi
+        };
+    }
+
+    function dateHasBookableTimes(lawyerId, dateVal) {
+        if (!lawyerId || !dateVal) {
+            return false;
+        }
+        var allSlots = getSlotsForDate(lawyerId, dateVal);
+        var published = hasSchedule(lawyerId);
+        var availableSlots = getAvailableSlots(lawyerId, dateVal);
+        var dayHours = getWorkingHoursForDate(lawyerId, dateVal);
+
+        if (hasWorkingHoursConfig(lawyerId) && (!dayHours || !dayHours.enabled)) {
+            return false;
+        }
+        if (published && !availableSlots.length && !hasWorkingHoursConfig(lawyerId)) {
+            return false;
+        }
+        return getStandardSlotTimes().some(function(t) {
+            return isTimeBookable(lawyerId, dateVal, t, allSlots, availableSlots, published);
+        });
+    }
+
+    function isDateUnavailable(dateValue) {
+        if (!dateValue) {
+            return false;
+        }
+        if (dateValue < nowParts().date) {
+            return true;
+        }
+        var lawyerId = document.getElementById('lawyer_id').value;
+        if (!lawyerId) {
+            return false;
+        }
+        return !dateHasBookableTimes(lawyerId, dateValue);
+    }
+
+    function isLawyerDateUnavailable(dateObj) {
+        if (!(dateObj instanceof Date) || isNaN(dateObj.getTime()) || typeof LegalproAvailabilityDatePicker === 'undefined') {
+            return true;
+        }
+        return isDateUnavailable(LegalproAvailabilityDatePicker.formatDate(dateObj));
+    }
+
+    function appointmentDatePickerOptions() {
+        return {
+            minDate: 'today',
+            isUnavailable: isLawyerDateUnavailable,
+            positionBelow: true,
+            onChange: function() {
+                onDateChange();
+            }
+        };
+    }
+
+    function initAppointmentDatePicker() {
+        var dateInput = document.getElementById('appointment_date');
+        if (!dateInput || typeof LegalproAvailabilityDatePicker === 'undefined') {
+            return;
+        }
+        LegalproAvailabilityDatePicker.create(dateInput, appointmentDatePickerOptions());
+    }
+
     function onLawyerChange() {
         resetTimeSelect();
+        var dateInput = document.getElementById('appointment_date');
+        if (dateInput && typeof LegalproAvailabilityDatePicker !== 'undefined') {
+            LegalproAvailabilityDatePicker.rebuild(dateInput, appointmentDatePickerOptions());
+        } else if (dateInput && dateInput.value && isDateUnavailable(dateInput.value)) {
+            dateInput.value = '';
+        }
         onDateChange();
     }
 
@@ -1083,6 +1370,16 @@ ob_start(); ?>
         if (!dateVal) {
             showDateAlert('info', 'Select a date to see available times.');
             trigger.disabled = true;
+            return;
+        }
+        if (isDateUnavailable(dateVal)) {
+            document.getElementById('appointment_date').value = '';
+            if (typeof LegalproAvailabilityDatePicker !== 'undefined') {
+                var fp = LegalproAvailabilityDatePicker.instances.appointment_date;
+                if (fp) fp.clear();
+            }
+            trigger.disabled = true;
+            showDateAlert('warning', 'This date is not available. Please choose another date.');
             return;
         }
         var allSlots = getSlotsForDate(lawyerId, dateVal);
@@ -1135,6 +1432,10 @@ ob_start(); ?>
         if (!lawyerId) { alert('Please select a lawyer.'); return false; }
         if (!caseId)   { alert('Please select a case.');   return false; }
         if (!dateVal)  { alert('Please select a date.');   return false; }
+        if (isDateUnavailable(dateVal)) {
+            alert('The selected date is not available. Please choose another date.');
+            return false;
+        }
         if (!timeVal)  { alert('Please select a time slot.'); return false; }
         var allSlots = getSlotsForDate(lawyerId, dateVal);
         var published = hasSchedule(lawyerId);
@@ -1204,6 +1505,7 @@ ob_start(); ?>
 
     document.addEventListener('DOMContentLoaded', function() {
         buildTimeMenuOptions();
+        initAppointmentDatePicker();
         var trigger = document.getElementById('caTimeTrigger');
         var menu = document.getElementById('caTimeMenu');
 
