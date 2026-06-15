@@ -331,55 +331,8 @@ if (empty($tasks)) {
         $taskTitleJs = htmlspecialchars(json_encode($task['title']), ENT_QUOTES, 'UTF-8');
         $taskDescriptionJs = htmlspecialchars(json_encode((string) $task['description']), ENT_QUOTES, 'UTF-8');
         $taskPriorityJs = htmlspecialchars(json_encode($task['priority']), ENT_QUOTES, 'UTF-8');
-<<<<<<< HEAD
-        $taskDueDateJs = htmlspecialchars(json_encode((string)$task['due_date']), ENT_QUOTES, 'UTF-8');
-        $taskCommentJs = htmlspecialchars(json_encode((string)($task['task_comment'] ?? '')), ENT_QUOTES, 'UTF-8');
-
-        $caseNumber = 'C-' . str_pad($task['case_id'], 4, '0', STR_PAD_LEFT);
-
-        $tasksHtml .= '<div class="card mb-3 task-card-themed">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h6 class="mb-1">' . htmlspecialchars($task['title']) . '</h6>
-                        <p class="text-sm text-muted mb-2">' . htmlspecialchars($task['case_title']) . ' (' . $caseNumber . ')</p>
-                        <p class="text-sm mb-0">Client: ' . htmlspecialchars($task['client_first_name'] . ' ' . $task['client_last_name']) . '</p>';
-        if (!empty($task['description'])) {
-            $tasksHtml .= '<p class="text-sm mt-2">' . htmlspecialchars($task['description']) . '</p>';
-        }
-        if (!empty($task['task_comment'])) {
-            $tasksHtml .= '<p class="text-sm mt-2 mb-0"><span class="text-muted">Your comment:</span> ' . htmlspecialchars($task['task_comment']) . '</p>';
-        }
-        $tasksHtml .= '</div>
-                    <div class="col-md-3">
-                        <div class="d-flex flex-column gap-2">
-                            ' . $statusBadge . '
-                            ' . $priorityBadge . '
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <p class="text-sm mb-2 ' . ($isOverdue ? 'text-danger font-weight-bold' : 'text-muted') . '">Due: ' . $dueDate . '</p>
-                        <div class="d-flex align-items-center gap-2 task-actions-row">
-                            <button
-                                type="button"
-                                class="btn btn-sm task-edit-btn mb-0"
-                                onclick="showEditTaskModal(' . (int)$task['id'] . ', ' . (int)$task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ', ' . $taskCommentJs . ')"
-                            >
-                                Edit
-                            </button>
-                            <form method="POST" action="" class="d-flex align-items-center mb-0">
-                                <input type="hidden" name="action" value="update_status">
-                                <input type="hidden" name="task_id" value="' . $task['id'] . '">
-                                <select name="status" class="form-select form-select-sm task-status-select mb-0" onchange="this.form.submit()">
-                                    <option value="pending" ' . ($task['status'] === 'pending' ? 'selected' : '') . '>Pending</option>
-                                    <option value="in_progress" ' . ($task['status'] === 'in_progress' ? 'selected' : '') . '>In Progress</option>
-                                    <option value="completed" ' . ($task['status'] === 'completed' ? 'selected' : '') . '>Completed</option>
-                                    <option value="cancelled" ' . ($task['status'] === 'cancelled' ? 'selected' : '') . '>Cancelled</option>
-                                </select>
-                            </form>
-                        </div>
-=======
         $taskDueDateJs = htmlspecialchars(json_encode((string) $task['due_date']), ENT_QUOTES, 'UTF-8');
+        $taskCommentJs = htmlspecialchars(json_encode((string) ($task['task_comment'] ?? '')), ENT_QUOTES, 'UTF-8');
         $clientName = htmlspecialchars(trim($task['client_first_name'] . ' ' . $task['client_last_name']));
         $caseNumber = 'C-' . str_pad((string) $task['case_id'], 4, '0', STR_PAD_LEFT);
 
@@ -389,7 +342,11 @@ if (empty($tasks)) {
                 <div class="col-lg-6">
                     <h6 class="lt-task-row__title mb-1">' . htmlspecialchars($task['title']) . '</h6>
                     <p class="lt-task-row__meta mb-1">' . htmlspecialchars($task['case_title']) . ' (' . $caseNumber . ')</p>
-                    <p class="lt-task-row__meta mb-0">Client: ' . $clientName . '</p>
+                    <p class="lt-task-row__meta mb-0">Client: ' . $clientName . '</p>';
+        if (!empty($task['task_comment'])) {
+            $tasksListHtml .= '<p class="lt-task-row__meta mb-0 mt-1"><span class="text-muted">Your comment:</span> ' . htmlspecialchars($task['task_comment']) . '</p>';
+        }
+        $tasksListHtml .= '
                 </div>
                 <div class="col-lg-3">
                     <div class="lt-task-row__badges d-flex flex-column gap-2 align-items-lg-end">
@@ -403,7 +360,7 @@ if (empty($tasks)) {
                         <button
                             type="button"
                             class="btn btn-sm lt-task-edit-btn mb-0"
-                            onclick="showEditTaskModal(' . (int) $task['id'] . ', ' . (int) $task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ')"
+                            onclick="showEditTaskModal(' . (int) $task['id'] . ', ' . (int) $task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ', ' . $taskCommentJs . ')"
                         >Edit</button>
                         <form method="POST" action="" class="d-flex align-items-center mb-0">
                             <input type="hidden" name="action" value="update_status">
@@ -415,7 +372,6 @@ if (empty($tasks)) {
                                 <option value="cancelled"' . ($task['status'] === 'cancelled' ? ' selected' : '') . '>Cancelled</option>
                             </select>
                         </form>
->>>>>>> 38bd99745124054e2bb525c16924ba8f44ca1bbe
                     </div>
                 </div>
             </div>
@@ -671,7 +627,7 @@ $html = <<<'HTML'
                         <div class="mb-0" id="task_comment_wrap" style="display: none;">
                             <label class="form-label">Your comment</label>
                             <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Add a note for the admin about this task (optional)">{TASK_FORM_COMMENT}</textarea>
-                            
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -739,23 +695,7 @@ $replacements = [
     '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
     '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
-<<<<<<< HEAD
     '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ if (parseInt(document.getElementById("task_id").value, 10) > 0) { document.getElementById("task_comment_wrap").style.display = ""; } new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
-    '{LAWYER_NAME}' => htmlspecialchars($lawyerName),
-    '{SEARCH_VALUE}' => htmlspecialchars($search),
-    '{TOTAL_TASKS}' => count($tasks),
-    '{ICON_TASK_HEADER}' => $iconTaskHeader,
-    '{STATUS_ALL_SELECTED}' => $statusFilter === 'all' ? ' selected' : '',
-    '{STATUS_PENDING_SELECTED}' => $statusFilter === 'pending' ? ' selected' : '',
-    '{STATUS_IN_PROGRESS_SELECTED}' => $statusFilter === 'in_progress' ? ' selected' : '',
-    '{STATUS_COMPLETED_SELECTED}' => $statusFilter === 'completed' ? ' selected' : '',
-    '{STATUS_CANCELLED_SELECTED}' => $statusFilter === 'cancelled' ? ' selected' : '',
-    '{PRIORITY_ALL_SELECTED}' => $priorityFilter === 'all' ? ' selected' : '',
-    '{PRIORITY_HIGH_SELECTED}' => $priorityFilter === 'high' ? ' selected' : '',
-    '{PRIORITY_MEDIUM_SELECTED}' => $priorityFilter === 'medium' ? ' selected' : '',
-    '{PRIORITY_LOW_SELECTED}' => $priorityFilter === 'low' ? ' selected' : '',
-=======
-    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
     '{STATUS_IN_PROGRESS}' => $statusFilter === 'in_progress' ? ' selected' : '',
@@ -765,7 +705,6 @@ $replacements = [
     '{PRIORITY_HIGH}' => $priorityFilter === 'high' ? ' selected' : '',
     '{PRIORITY_MEDIUM}' => $priorityFilter === 'medium' ? ' selected' : '',
     '{PRIORITY_LOW}' => $priorityFilter === 'low' ? ' selected' : '',
->>>>>>> 38bd99745124054e2bb525c16924ba8f44ca1bbe
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);
