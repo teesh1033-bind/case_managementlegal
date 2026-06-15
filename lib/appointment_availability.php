@@ -229,6 +229,18 @@ function isSlotWithinWorkingHours(array $workingHours, string $dayOfWeek, string
     return isAppointmentWithinWorkingHours($workingHours, $dayOfWeek, $startTime, $endTime);
 }
 
+function lawyerHasExplicitSlotsOnDate(PDO $pdo, int $lawyerId, string $appointmentDate): bool
+{
+    if ($lawyerId <= 0 || $appointmentDate === '') {
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM lawyer_time_slots WHERE lawyer_id = ? AND slot_date IS NOT NULL AND slot_date = ?');
+    $stmt->execute([$lawyerId, $appointmentDate]);
+
+    return (int) $stmt->fetchColumn() > 0;
+}
+
 function loadLawyerWorkingHoursForBooking(PDO $pdo, array $lawyerIds): array
 {
     $workingHours = [];
@@ -457,14 +469,27 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
         SELECT id FROM lawyer_time_slots
         WHERE lawyer_id = ?
           AND slot_type = 'unavailable'
-          AND (
+    ";
+    $unavailableParams = [$lawyerId];
+
+    if (lawyerHasExplicitSlotsOnDate($pdo, $lawyerId, $appointmentDate)) {
+        $unavailableSql .= ' AND slot_date = ?';
+        $unavailableParams[] = $appointmentDate;
+    } else {
+        $unavailableSql .= ' AND (
             (slot_date IS NOT NULL AND slot_date = ?)
             OR (slot_date IS NULL AND day_of_week = ?)
-          )
+        )';
+        $unavailableParams[] = $appointmentDate;
+        $unavailableParams[] = $dayOfWeek;
+    }
+
+    $unavailableSql .= '
           AND start_time < ?
           AND end_time > ?
-    ";
-    $unavailableParams = [$lawyerId, $appointmentDate, $dayOfWeek, $endTime, $requestedTime];
+    ';
+    $unavailableParams[] = $endTime;
+    $unavailableParams[] = $requestedTime;
     if ($excludeAppointmentId !== null && $excludeAppointmentId > 0) {
         $unavailableSql .= ' AND (appointment_id IS NULL OR appointment_id <> ?)';
         $unavailableParams[] = $excludeAppointmentId;
@@ -501,7 +526,7 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
               AND end_time >= ?
             LIMIT 1
         ");
-        $stmt->execute([$lawyerId, $appointmentDate, $requestedTime, $endTime]);
+        $stmt->execute([$lawyerId, $appointmentDate, $requestedTime, $requestedTime]);
         if (!$stmt->fetch()) {
             return [
                 'ok' => false,

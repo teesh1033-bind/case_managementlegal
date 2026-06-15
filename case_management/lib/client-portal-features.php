@@ -1,6 +1,6 @@
 <?php
 /**
- * Client portal: activity feed, notifications, documents, case progress, calendar export.
+ * Client portal: activity feed, notifications, documents, case progress.
  */
 
 if (function_exists('legalpro_client_portal_ensure_tables')) {
@@ -887,49 +887,6 @@ function legalpro_client_render_case_progress_stepper(array $phases): string
     }
     $html .= '</div>';
     return $html;
-}
-
-function legalpro_client_generate_ics_content(
-    string $uid,
-    string $title,
-    string $startAt,
-    ?string $endAt,
-    string $description = '',
-    string $location = ''
-): string {
-    $start = new DateTime($startAt);
-    $end = $endAt ? new DateTime($endAt) : (clone $start)->modify('+1 hour');
-
-    $fmt = static fn (DateTime $dt) => $dt->format('Ymd\THis');
-
-    $desc = str_replace(["\r\n", "\n", "\r"], '\\n', $description);
-    $desc = str_replace(',', '\\,', $desc);
-
-    return "BEGIN:VCALENDAR\r\n"
-        . "VERSION:2.0\r\n"
-        . "PRODID:-//LegalPro//Client Portal//EN\r\n"
-        . "CALSCALE:GREGORIAN\r\n"
-        . "METHOD:PUBLISH\r\n"
-        . "BEGIN:VEVENT\r\n"
-        . "UID:" . $uid . "@legalpro\r\n"
-        . "DTSTAMP:" . gmdate('Ymd\THis') . "Z\r\n"
-        . "DTSTART:" . $fmt($start) . "\r\n"
-        . "DTEND:" . $fmt($end) . "\r\n"
-        . "SUMMARY:" . str_replace(',', '\\,', $title) . "\r\n"
-        . ($location !== '' ? "LOCATION:" . str_replace(',', '\\,', $location) . "\r\n" : '')
-        . ($desc !== '' ? "DESCRIPTION:" . $desc . "\r\n" : '')
-        . "END:VEVENT\r\n"
-        . "END:VCALENDAR\r\n";
-}
-
-function legalpro_client_render_calendar_links(string $exportUrl): string
-{
-    $url = htmlspecialchars($exportUrl);
-    return '<div class="cp-calendar-links">
-        <a href="' . $url . '" class="cp-calendar-links__btn" download>
-            <span aria-hidden="true">📅</span> Add to calendar (.ics)
-        </a>
-    </div>';
 }
 
 function legalpro_client_render_bottom_nav(string $currentPage): string
