@@ -1100,7 +1100,7 @@ $html = <<<'HTML'
                                                     <h4 class="mb-0">{TOTAL_FEES}</h4>
                                                 </div>
                                                 <div class="col-6 mb-3">
-                                                    <p class="text-sm mb-1">Invoiced</p>
+                                                    <p class="text-sm mb-1">Last Invoiced</p>
                                                     <h6 class="mb-0 text-primary">{TOTAL_INVOICED}</h6>
                                                 </div>
                                                 <div class="col-6 mb-3">
@@ -1302,7 +1302,7 @@ $html = <<<'HTML'
                     <div class="row align-items-center justify-content-lg-between">
                         <div class="col-lg-6 mb-lg-0 mb-4">
                             <div class="copyright text-center text-sm text-muted text-lg-start">
-                                © <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+                                {COPYRIGHT_LINE}
                             </div>
                         </div>
                     </div>
@@ -1654,5 +1654,5 @@ ob_start(); include __DIR__ . '/../inc/menunav.php'; $sidebar = ob_get_clean();
 $html = preg_replace('/<aside[\s\S]*?<\/aside>/', $sidebar, $html, 1);
 ob_start(); include __DIR__ . '/../inc/footer.php'; $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>

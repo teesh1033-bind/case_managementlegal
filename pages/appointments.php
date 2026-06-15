@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../inc/legalpro-icons.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
@@ -218,11 +219,85 @@ $appointmentsSubtitle = $upcomingCount === 1
     ? '1 upcoming'
     : $upcomingCount . ' upcoming';
 
-require_once __DIR__ . '/../inc/admin-layout.php';
+// Calendar events (appointments only)
+$appointmentCalendarEvents = [];
+foreach ($appointments as $row) {
+    if (empty($row['starts_at'])) {
+        continue;
+    }
+
+    $status = strtolower((string) ($row['status'] ?? 'pending'));
+    $caseDisplay = !empty($row['case_display'])
+        ? $row['case_display']
+        : (!empty($row['case_title']) ? $row['case_title'] : 'General appointment');
+    $clientName = trim(($row['client_first_name'] ?? '') . ' ' . ($row['client_last_name'] ?? ''));
+    $lawyerName = trim((string) ($row['lawyer_name'] ?? ''));
+
+    $appointmentCalendarEvents[] = [
+        'id' => (string) $row['id'],
+        'title' => $caseDisplay,
+        'start' => $row['starts_at'],
+        'end' => !empty($row['ends_at']) ? $row['ends_at'] : null,
+        'backgroundColor' => 'transparent',
+        'borderColor' => 'transparent',
+        'textColor' => '#344767',
+        'extendedProps' => [
+            'client' => $clientName !== '' ? $clientName : 'Unknown',
+            'lawyer' => $lawyerName !== '' ? $lawyerName : 'Unassigned',
+            'notes' => $row['notes'] ?? '',
+            'status' => $status,
+            'statusLabel' => ucfirst($status === 'approved' ? 'accepted' : $status),
+            'appointmentId' => (int) $row['id'],
+            'caseDisplay' => $caseDisplay,
+        ],
+    ];
+}
+
+$appointmentCalendarEventsJson = json_encode(
+    $appointmentCalendarEvents,
+    JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+);
+
+$iconAppointmentEmpty = legalpro_icon('calendar');
+$upcomingAppointmentsCalendarHtml = '';
+$upcomingForCalendar = array_values(array_filter($appointments, function ($row) {
+    if (empty($row['starts_at']) || strtotime($row['starts_at']) < time()) {
+        return false;
+    }
+    $status = strtolower((string) ($row['status'] ?? 'pending'));
+
+    return $status !== 'rejected';
+}));
+if (empty($upcomingForCalendar)) {
+    $upcomingAppointmentsCalendarHtml = '<div class="dashboard-upcoming-empty">'
+        . $iconAppointmentEmpty
+        . '<span>No upcoming appointments</span></div>';
+} else {
+    usort($upcomingForCalendar, function ($a, $b) {
+        return strtotime($a['starts_at']) <=> strtotime($b['starts_at']);
+    });
+    foreach (array_slice($upcomingForCalendar, 0, 8) as $row) {
+        $status = strtolower((string) ($row['status'] ?? 'pending'));
+        $caseDisplay = !empty($row['case_display']) ? $row['case_display'] : 'Appointment';
+        $clientName = trim(($row['client_first_name'] ?? '') . ' ' . ($row['client_last_name'] ?? ''));
+        $clientName = $clientName !== '' ? $clientName : '—';
+        $hourLabel = date('g:i A', strtotime($row['starts_at']));
+        $dayLabel = date('M j', strtotime($row['starts_at']));
+
+        $upcomingAppointmentsCalendarHtml .= '
+        <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . '" data-appointment-id="' . (int) $row['id'] . '">
+            <span class="dashboard-upcoming-item__time">' . htmlspecialchars($hourLabel) . '<br><small style="font-weight:500;opacity:.8">' . htmlspecialchars($dayLabel) . '</small></span>
+            <span class="flex-grow-1">
+                <p class="dashboard-upcoming-item__title">' . htmlspecialchars($caseDisplay) . '</p>
+                <p class="dashboard-upcoming-item__sub">' . htmlspecialchars($clientName) . '</p>
+            </span>
+        </button>';
+    }
+}
+
 $pageToolbar = legalpro_render_page_toolbar(
     'Appointment list',
-    'View appointments on the calendar or in the list below.',
-    '<a href="new_appointment.php" class="btn btn-sm btn-primary mb-0"><i class="ni ni-fat-add me-1"></i> Schedule Appointment</a>'
+    'View appointments on the calendar or in the list below.'
 );
 
 $html = <<<'HTML'
@@ -240,10 +315,12 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=27" rel="stylesheet" />
+	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
+	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
 	<?php legalpro_icons_asset_links(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-appointments-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
@@ -259,7 +336,44 @@ $html = <<<'HTML'
 			{MESSAGE}
 			{PAGE_TOOLBAR}
 
-			<div class="row">
+			<div class="row mb-4">
+				<div class="col-12">
+					<div class="dashboard-calendar-hub">
+						<div class="dashboard-calendar-hub__head">
+							<div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+								<div>
+									<h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Appointments Calendar</h6>
+									<p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
+									<div class="dashboard-legend-pills">
+										<span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
+										<span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
+										<span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
+									</div>
+								</div>
+								<a href="new_appointment.php" class="btn btn-sm bg-gradient-primary mb-0 appointments-schedule-btn">
+									<i class="ni ni-fat-add appointments-schedule-btn__icon me-1"></i> Schedule Appointment
+								</a>
+							</div>
+						</div>
+						<div class="dashboard-calendar-hub__body">
+							<div class="dashboard-calendar-layout">
+								<div id="appointmentsCalendar"></div>
+								<aside class="dashboard-upcoming-panel">
+									<div class="dashboard-upcoming-panel__title">
+										<span>Upcoming</span>
+										<a href="#appointmentsTable" class="text-xs text-primary font-weight-bold">View list</a>
+									</div>
+									<div class="dashboard-upcoming-list" id="upcomingAppointmentsList">
+										{UPCOMING_APPOINTMENTS_CALENDAR}
+									</div>
+								</aside>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row" id="appointmentsTable">
 				<div class="col-12">
 					<div class="card">
 						<div class="card-header pb-3 pt-3 lp-card-header-primary">
@@ -300,7 +414,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, LegalPro Case Manager.
+								{COPYRIGHT_LINE}
 							</div>
 						</div>
 					</div>
@@ -308,11 +422,51 @@ $html = <<<'HTML'
 			</footer>
 		</div>
 	</main>
+
+	<div class="modal fade" id="appointmentCalendarModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header" style="background:linear-gradient(135deg,#5e72e4 0%,#825ee4 100%);">
+					<h6 class="modal-title text-white font-weight-bold" id="appointmentModalTitle">Appointment</h6>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="row g-3 mb-3">
+						<div class="col-6">
+							<label class="text-xs text-uppercase text-muted">Client</label>
+							<p id="appointmentModalClient" class="mb-0 text-sm font-weight-bold"></p>
+						</div>
+						<div class="col-6">
+							<label class="text-xs text-uppercase text-muted">Lawyer</label>
+							<p id="appointmentModalLawyer" class="mb-0 text-sm font-weight-bold"></p>
+						</div>
+					</div>
+					<div class="row g-3 mb-3">
+						<div class="col-6">
+							<label class="text-xs text-uppercase text-muted">Status</label>
+							<p id="appointmentModalStatus" class="mb-0 text-sm font-weight-bold"></p>
+						</div>
+						<div class="col-6">
+							<label class="text-xs text-uppercase text-muted">Scheduled time</label>
+							<p id="appointmentModalTime" class="mb-0 text-sm font-weight-bold"></p>
+						</div>
+					</div>
+					<div class="mb-3">
+						<label class="text-xs text-uppercase text-muted">Notes</label>
+						<div id="appointmentModalNotes" class="p-3 rounded" style="background:#f8fafc;font-size:.83rem;color:#64748b;min-height:52px;white-space:pre-wrap;"></div>
+					</div>
+					<a id="appointmentModalEditLink" href="new_appointment.php" class="btn btn-sm bg-gradient-dark w-100 mb-0">Edit appointment</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<script src="../assets/js/core/popper.min.js"></script>
 	<script src="../assets/js/core/bootstrap.min.js"></script>
 	<script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
 	<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
 	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+	<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 	<script src="../assets/js/spa-nav.js"></script>
 	<script>
 		function deleteAppointment(appointmentId, caseDisplay) {
@@ -324,6 +478,134 @@ $html = <<<'HTML'
 				form.submit();
 			}
 		}
+
+		document.addEventListener('DOMContentLoaded', function () {
+			var calendarEl = document.getElementById('appointmentsCalendar');
+			var appointmentEvents = {APPOINTMENT_CALENDAR_EVENTS_JSON};
+			var upcomingList = document.getElementById('upcomingAppointmentsList');
+
+			function formatAppointmentDateTime(dateValue) {
+				if (!dateValue) {
+					return '—';
+				}
+				var date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+				if (isNaN(date.getTime())) {
+					return '—';
+				}
+				var dd = String(date.getDate()).padStart(2, '0');
+				var mm = String(date.getMonth() + 1).padStart(2, '0');
+				var yy = date.getFullYear();
+				var h = String(date.getHours()).padStart(2, '0');
+				var mi = String(date.getMinutes()).padStart(2, '0');
+				return dd + '/' + mm + '/' + yy + ' at ' + h + ':' + mi;
+			}
+
+			function appointmentStatusKey(status) {
+				var value = String(status || 'pending').toLowerCase();
+				return value === 'approved' ? 'accepted' : value;
+			}
+
+			function openAppointmentModal(eventLike) {
+				var props = eventLike.extendedProps || {};
+				document.getElementById('appointmentModalTitle').textContent = eventLike.title || 'Appointment';
+				document.getElementById('appointmentModalClient').textContent = props.client || '—';
+				document.getElementById('appointmentModalLawyer').textContent = props.lawyer || '—';
+				document.getElementById('appointmentModalStatus').textContent = props.statusLabel || props.status || 'Pending';
+				document.getElementById('appointmentModalNotes').textContent = props.notes || 'No notes added.';
+
+				var start = eventLike.start instanceof Date ? eventLike.start : new Date(eventLike.start);
+				var timeText = formatAppointmentDateTime(start);
+				if (eventLike.end) {
+					var end = eventLike.end instanceof Date ? eventLike.end : new Date(eventLike.end);
+					timeText += ' — ' + formatAppointmentDateTime(end);
+				}
+				document.getElementById('appointmentModalTime').textContent = timeText;
+				document.getElementById('appointmentModalEditLink').href = 'new_appointment.php?id=' + (props.appointmentId || eventLike.id);
+
+				if (window.bootstrap && bootstrap.Modal) {
+					bootstrap.Modal.getOrCreateInstance(document.getElementById('appointmentCalendarModal')).show();
+				}
+			}
+
+			function renderAppointmentEvent(arg) {
+				var props = arg.event.extendedProps || {};
+				var statusKey = appointmentStatusKey(props.status);
+				var timeText = arg.timeText || '';
+				var title = arg.event.title || 'Appointment';
+				if (title.length > 22) {
+					title = title.slice(0, 19) + '...';
+				}
+				var wrap = document.createElement('div');
+				wrap.className = 'dashboard-cal-event';
+				wrap.innerHTML =
+					'<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
+					'<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
+				return { domNodes: [wrap] };
+			}
+
+			if (upcomingList) {
+				upcomingList.addEventListener('click', function (e) {
+					var btn = e.target.closest('[data-appointment-id]');
+					if (!btn) {
+						return;
+					}
+					var id = btn.getAttribute('data-appointment-id');
+					var match = appointmentEvents.find(function (item) {
+						return String(item.id) === String(id);
+					});
+					if (match) {
+						openAppointmentModal({
+							id: match.id,
+							title: match.title,
+							start: match.start,
+							end: match.end,
+							extendedProps: match.extendedProps
+						});
+					}
+				});
+			}
+
+			if (!calendarEl || typeof FullCalendar === 'undefined') {
+				return;
+			}
+
+			var calendar = new FullCalendar.Calendar(calendarEl, {
+				initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+				height: 'auto',
+				firstDay: 1,
+				navLinks: true,
+				nowIndicator: true,
+				fixedWeekCount: false,
+				dayMaxEvents: 3,
+				moreLinkClick: 'day',
+				buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+				eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+				dayHeaderFormat: { weekday: 'short' },
+				headerToolbar: {
+					left: 'prev,next today',
+					center: 'title',
+					right: 'dayGridMonth,timeGridWeek,listWeek'
+				},
+				events: appointmentEvents,
+				eventContent: renderAppointmentEvent,
+				eventClick: function (info) {
+					info.jsEvent.preventDefault();
+					openAppointmentModal(info.event);
+				},
+				eventDidMount: function (info) {
+					var props = info.event.extendedProps || {};
+					var tip = info.event.title;
+					if (props.client) {
+						tip += '\nClient: ' + props.client;
+					}
+					if (props.lawyer) {
+						tip += '\nLawyer: ' + props.lawyer;
+					}
+					info.el.setAttribute('title', tip);
+				}
+			});
+			calendar.render();
+		});
 	</script>
 	{APPOINTMENTS_SEARCH_SCRIPT}
 </body>
@@ -337,6 +619,8 @@ $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{PAGE_TOOLBAR}', $pageToolbar, $html);
 $html = str_replace('{APPOINTMENTS_SUBTITLE}', htmlspecialchars($appointmentsSubtitle), $html);
 $html = str_replace('{APPOINTMENT_ROWS}', $appointmentsRows, $html);
+$html = str_replace('{UPCOMING_APPOINTMENTS_CALENDAR}', $upcomingAppointmentsCalendarHtml, $html);
+$html = str_replace('{APPOINTMENT_CALENDAR_EVENTS_JSON}', $appointmentCalendarEventsJson, $html);
 $html = str_replace('{APPOINTMENTS_SEARCH}', $appointmentsSearchHtml, $html);
 $html = str_replace('{APPOINTMENTS_SEARCH_SCRIPT}', $appointmentsSearchScript, $html);
 
@@ -353,6 +637,6 @@ include __DIR__ . '/../inc/footer.php';
 $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
 
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>
 

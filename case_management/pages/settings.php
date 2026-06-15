@@ -562,7 +562,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, {COMPANY_NAME}.
+								{COPYRIGHT_LINE}
 							</div>
 						</div>
 					</div>
@@ -594,9 +594,13 @@ $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name'])
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
 $html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
+<<<<<<< HEAD
 $html = str_replace('{CHATBOT_AI_STATUS}', $chatbotAiStatusHtml, $html);
 $html = str_replace('{CHATBOT_AI_ENABLED_CHECKED}', $chatbotAiEnabledChecked, $html);
 $html = str_replace('{OPENAI_KEY_PLACEHOLDER}', htmlspecialchars($openaiKeyPlaceholder), $html);
 $html = str_replace('{OPENAI_MODEL_OPTIONS}', $openaiModelOptionsHtml, $html);
 echo $html;
+=======
+echo legalpro_apply_copyright_line($html);
+>>>>>>> 18b9834782fcbc68e4e9947d5a7b5b287205f630
 ?>

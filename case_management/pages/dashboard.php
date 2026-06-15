@@ -593,7 +593,7 @@ echo ob_get_clean();
         <footer class="footer pt-3 pb-4">
             <div class="container-fluid">
                 <div class="copyright text-sm text-muted">
-                    © <script>document.write(new Date().getFullYear())</script> LegalPro Case Manager
+                    <?php echo legalpro_copyright_line(); ?>
                 </div>
             </div>
         </footer>

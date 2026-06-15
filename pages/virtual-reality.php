@@ -268,12 +268,7 @@ $html = <<<'HTML'
 			<div class="row align-items-center justify-content-lg-between">
 				<div class="col-lg-6 mb-lg-0 mb-4">
 					<div class="copyright text-center text-sm text-muted text-lg-start">
-						© <script>
-							document.write(new Date().getFullYear())
-						</script>,
-						made with <i class="fa fa-heart"></i> by
-						<a href="https://www.creative-tim.com" class="font-weight-bold" target="_blank">Creative Tim</a>
-						for a better web.
+						{COPYRIGHT_LINE}
 					</div>
 				</div>
 			</div>
@@ -310,5 +305,5 @@ ob_start(); include __DIR__ . '/../inc/sidebar.php'; $sidebar = ob_get_clean();
 $html = preg_replace('/<aside[\s\S]*?<\/aside>/', $sidebar, $html, 1);
 ob_start(); include __DIR__ . '/../inc/footer.php'; $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>

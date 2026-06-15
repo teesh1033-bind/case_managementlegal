@@ -859,8 +859,9 @@ body.legalpro-admin-portal .dashboard-calendar-hub .lp-card-header-primary {
     background: var(--lp-admin-gradient) !important;
 }
 
-/* —— Court tracking calendar hub —— */
-body.admin-court-tracking-page .dashboard-calendar-hub {
+/* —— Court tracking & appointments calendar hub —— */
+body.admin-court-tracking-page .dashboard-calendar-hub,
+body.admin-appointments-page .dashboard-calendar-hub {
     border-radius: var(--lp-admin-card-radius) !important;
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.08);
@@ -868,31 +869,50 @@ body.admin-court-tracking-page .dashboard-calendar-hub {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
-body.admin-court-tracking-page .dashboard-calendar-hub__head {
+body.admin-court-tracking-page .dashboard-calendar-hub__head,
+body.admin-appointments-page .dashboard-calendar-hub__head {
     padding: 1.35rem 1.75rem 1.15rem !important;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-body.admin-court-tracking-page .dashboard-calendar-hub__head > .d-flex {
+body.admin-court-tracking-page .dashboard-calendar-hub__head > .d-flex,
+body.admin-appointments-page .dashboard-calendar-hub__head > .d-flex {
     gap: 1.25rem !important;
 }
 
-body.admin-court-tracking-page .dashboard-calendar-hub__head .btn {
+body.admin-court-tracking-page .dashboard-calendar-hub__head .btn,
+body.admin-appointments-page .dashboard-calendar-hub__head .btn {
     margin-top: 0.15rem;
     flex-shrink: 0;
     white-space: nowrap;
 }
 
-body.admin-court-tracking-page .dashboard-calendar-hub__body {
+body.admin-appointments-page .appointments-schedule-btn__icon {
+    font-size: 1.2em;
+    line-height: 1;
+    vertical-align: -0.12em;
+    display: inline-block;
+    max-height: 1em;
+}
+
+body.admin-appointments-page .legalpro-page-toolbar .appointments-schedule-btn__icon,
+body.admin-appointments-page .appointments-schedule-btn .appointments-schedule-btn__icon {
+    font-size: 1.15em;
+}
+
+body.admin-court-tracking-page .dashboard-calendar-hub__body,
+body.admin-appointments-page .dashboard-calendar-hub__body {
     padding: 1.25rem 1.75rem 1.5rem !important;
 }
 
-body.admin-court-tracking-page .dashboard-upcoming-panel {
+body.admin-court-tracking-page .dashboard-upcoming-panel,
+body.admin-appointments-page .dashboard-upcoming-panel {
     border-radius: calc(var(--lp-admin-card-radius) - 2px);
     overflow: hidden;
 }
 
-body.admin-court-tracking-page #courtTrackingCalendar {
+body.admin-court-tracking-page #courtTrackingCalendar,
+body.admin-appointments-page #appointmentsCalendar {
     border-radius: calc(var(--lp-admin-card-radius) - 2px);
     overflow: hidden;
 }

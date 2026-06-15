@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/password-validation.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../lib/client-financial.php';
 require_once __DIR__ . '/../lib/mail.php';
 
 function ensureClientProfileColumns(PDO $pdo) {
@@ -356,6 +358,10 @@ if ($client_id) {
     $linkedCasesRows = '<tr><td colspan="4" class="text-center py-3 text-muted">Save the client first to view linked cases.</td></tr>';
 }
 
+$clientFinancialId = $client_id ? (int) $client_id : 0;
+$clientFinancialSummary = legalpro_get_client_financial_summary($pdo, $clientFinancialId);
+$financialSummaryHtml = legalpro_render_client_financial_summary_html($clientFinancialSummary, $clientFinancialId);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -371,6 +377,9 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=25" rel="stylesheet" />
+	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
+	<link href="../assets/css/legalpro-finance-pages.css?v=2" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-client-detail-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -519,12 +528,13 @@ $html = <<<'HTML'
 					</div>
 				</div>
 			</div>
+			{FINANCIAL_SUMMARY_SECTION}
 			<footer class="footer pt-3  ">
 				<div class="container-fluid">
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-muted text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
+								{COPYRIGHT_LINE}
 							</div>
 						</div>
 					</div>
@@ -754,6 +764,7 @@ $html = str_replace('{TYPE_CORPORATE}', $type === 'Corporate' ? 'selected' : '',
 $html = str_replace('{USER_ACCOUNT_UPDATE_SECTION}', $userAccountUpdateSection, $html);
 $html = str_replace('{NEW_USER_ACCOUNT_SECTION}', $newUserAccountSection, $html);
 $html = str_replace('{LINKED_CASES_ROWS}', $linkedCasesRows, $html);
+$html = str_replace('{FINANCIAL_SUMMARY_SECTION}', $financialSummaryHtml, $html);
 $showCreateUserFieldsJs = $showCreateUserFields
     ? "if (typeof toggleUserAccountFields === 'function') { toggleUserAccountFields(); }"
     : '';
@@ -775,5 +786,5 @@ ob_start(); include __DIR__ . '/../inc/menunav.php'; $sidebar = ob_get_clean();
 $html = preg_replace('/<aside[\s\S]*?<\/aside>/', $sidebar, $html, 1);
 ob_start(); include __DIR__ . '/../inc/footer.php'; $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>

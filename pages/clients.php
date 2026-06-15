@@ -248,7 +248,7 @@ $html = <<<'HTML'
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
 							<div class="copyright text-center text-sm text-white text-lg-start">
-								© <script>document.write(new Date().getFullYear())</script>, Argon Dashboard.
+								{COPYRIGHT_LINE}
 							</div>
 						</div>
 					</div>
@@ -386,5 +386,5 @@ function deleteClient(clientId, clientName) {
 
 </body>
 </html>', $html);
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>
