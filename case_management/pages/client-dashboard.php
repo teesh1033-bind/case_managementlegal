@@ -134,7 +134,6 @@ if (empty($upcomingAppointments)) {
         $lawyerTxt = htmlspecialchars($apt['lawyer_name'] ?: 'TBD');
         $notesRaw  = $apt['notes'] ? (string) $apt['notes'] : '';
         $notes     = $notesRaw !== '' ? htmlspecialchars(mb_substr($notesRaw, 0, 68)) . (strlen($notesRaw) > 68 ? '…' : '') : '';
-        $calUrl = 'client-calendar-export.php?type=appointment&id=' . (int) $apt['id'];
         $apptSearchHay = htmlspecialchars(strtolower($caseTitle . ' ' . $lawyerTxt . ' ' . $dayLabel . ' ' . $timeLabel . ' ' . $notesRaw), ENT_QUOTES, 'UTF-8');
         $appointmentsHtml .= '<div class="cd-appt-row text-reset" data-search="' . $apptSearchHay . '">
             <div class="cd-appt-row__date">
@@ -149,9 +148,8 @@ if (empty($upcomingAppointments)) {
                 </div>
                 ' . ($notes !== '' ? '<div class="cd-appt-row__notes">' . $notes . '</div>' : '') . '
             </div>
-            <div class="cd-appt-row__badge d-flex flex-column align-items-end gap-1">
+            <div class="cd-appt-row__badge">
                 <span class="cd-appt-accepted">Confirmed</span>
-                <a href="' . htmlspecialchars($calUrl) . '" class="cp-calendar-links__btn" download style="font-size:.65rem;padding:.3rem .6rem;min-height:auto" onclick="event.stopPropagation()">+.ics</a>
             </div>
         </div>';
     }

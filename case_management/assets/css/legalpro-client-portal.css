@@ -655,17 +655,6 @@ body.legalpro-dark-mode.legalpro-client-portal.client-court-tracking-page .cct-e
 }
 .legalpro-client-more-sheet__link:hover { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08); color: var(--legalpro-theme-primary, #5e72e4); }
 
-/* ── Calendar links ────────────────────────────────────────────────────── */
-.cp-calendar-links { margin-top: .5rem; }
-.cp-calendar-links__btn {
-    display: inline-flex; align-items: center; gap: .35rem;
-    font-size: .72rem; font-weight: 700; padding: .45rem .85rem;
-    border-radius: 8px; border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.25);
-    color: var(--legalpro-theme-primary, #5e72e4); text-decoration: none;
-    min-height: 44px;
-}
-.cp-calendar-links__btn:hover { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08); color: var(--legalpro-theme-primary, #5e72e4); }
-
 /* Dark mode overrides */
 body.legalpro-dark-mode.legalpro-client-portal .cp-activity-item__title,
 body.legalpro-dark-mode.legalpro-client-portal .cdoc-row__title { color: var(--lp-dark-text, #f8f9fc); }

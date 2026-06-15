@@ -218,6 +218,7 @@ try {
 
 // ── Availability maps ─────────────────────────────────────────────────────────
 $lawyerAvailabilityByDate = [];
+$lawyerAvailabilityByDay    = [];
 $lawyerHasAvailability    = [];
 $lawyerWorkingHours       = [];
 $lawyerHasWorkingHours    = [];
@@ -225,6 +226,7 @@ try {
     $lawyerIds = array_map(fn($l) => (int) $l['id'], $availableLawyers);
     $maps = loadLawyerAvailabilityForBooking($pdo, $lawyerIds);
     $lawyerAvailabilityByDate = $maps['byDate'];
+    $lawyerAvailabilityByDay  = $maps['byDay'];
     $lawyerHasAvailability    = $maps['hasSchedule'];
     $lawyerWorkingHours       = $maps['workingHours'] ?? [];
     $lawyerHasWorkingHours    = $maps['hasWorkingHours'] ?? [];
@@ -273,21 +275,12 @@ if (empty($appointments)) {
         $notesDisp   = $notesRaw === '' ? '—' : (strlen($notesRaw) > 52 ? htmlspecialchars(substr($notesRaw, 0, 52)) . '…' : htmlspecialchars($notesRaw));
         $isRejected  = ($meta['key'] === 'rejected');
 
-        $calendarBtn = '';
-        if ($meta['key'] === 'accepted' || $meta['key'] === 'upcoming') {
-            $calendarBtn = '<a href="client-calendar-export.php?type=appointment&amp;id=' . $aid . '" class="btn-det cdoc-touch-btn" download title="Add to calendar">Calendar</a>';
-        }
-
         $deleteBtn = '';
         if ($isRejected) {
             $deleteBtn = '<form method="POST" style="display:inline" onsubmit="return confirm(\'Remove this rejected appointment?\')">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="appointment_id" value="' . $aid . '">
-                <button type="submit" class="btn-del" title="Delete">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-                    </svg>
-                </button>
+                <button type="submit" class="btn-del cdoc-touch-btn">Delete</button>
             </form>';
         }
 
@@ -324,7 +317,6 @@ if (empty($appointments)) {
             </td>
             <td>
                 <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">
-                    ' . $calendarBtn . '
                     <button type="button" class="btn-det cdoc-touch-btn" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
                     ' . $deleteBtn . '
                 </div>
@@ -532,13 +524,12 @@ ob_start(); ?>
         }
         .btn-det:hover { background: var(--ca-primary); color: #fff; }
         .btn-del {
-            width: 28px; height: 28px; border-radius: 7px;
-            border: 1.5px solid #fca5a5; color: #dc2626;
-            background: #fff; cursor: pointer; display: flex;
-            align-items: center; justify-content: center;
-            transition: background .15s, color .15s;
+            padding: .3rem .8rem; border-radius: 8px;
+            border: 1.5px solid #dc2626; color: #fff;
+            font-size: 12px; font-weight: 600; background: #dc2626; cursor: pointer;
+            transition: background .15s, color .15s, border-color .15s;
         }
-        .btn-del:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+        .btn-del:hover { background: #b91c1c; color: #fff; border-color: #b91c1c; }
 
         /* ── Empty state ────────────────────────────────────────────── */
         .ca-empty { padding: 3.5rem 1.5rem; text-align: center; }
@@ -641,19 +632,20 @@ ob_start(); ?>
             cursor: not-allowed; user-select: none; opacity: .55;
         }
         .ca-time-dd-opt.bookable {
-            color: var(--ca-field-text);
+            color: var(--ca-time-available-color);
             background: transparent;
             cursor: pointer;
             opacity: 1;
+            font-weight: 600;
         }
         .ca-time-dd-opt.bookable:hover {
-            color: var(--ca-primary);
-            background: var(--ca-primary-soft);
+            color: var(--ca-time-available-color);
+            background: rgba(5, 150, 105, 0.12);
         }
         .ca-time-dd-opt.selected,
         .ca-time-dd-opt.selected:hover {
-            color: var(--ca-primary);
-            background: var(--ca-primary-soft);
+            color: var(--ca-time-available-color);
+            background: rgba(5, 150, 105, 0.18);
             font-weight: 700;
             opacity: 1;
         }
@@ -801,24 +793,13 @@ ob_start(); ?>
                                             <polyline points="6 9 12 15 18 9"></polyline>
                                         </svg>
                                     </button>
-                                    <ul class="ca-time-dd-menu" id="caTimeMenu" role="listbox" aria-label="Available times">
-                                        <?php
-                                        $times = [
-                                            '09:00' => '9:00', '10:00' => '10:00', '11:00' => '11:00',
-                                            '12:00' => '12:00', '13:00' => '1:00', '14:00' => '2:00',
-                                            '15:00' => '3:00', '16:00' => '4:00', '17:00' => '5:00',
-                                        ];
-                                        foreach ($times as $val => $lbl): ?>
-                                        <li class="ca-time-dd-opt"
-                                            role="option"
-                                            data-time="<?= $val ?>"
-                                            data-label="<?= $lbl ?>"
-                                            aria-disabled="true"><?= $lbl ?></li>
-                                        <?php endforeach; ?>
-                                    </ul>
+                                    <ul class="ca-time-dd-menu" id="caTimeMenu" role="listbox" aria-label="Available times"></ul>
                                     <input type="hidden" name="appointment_time" id="appointment_time" value="">
                                 </div>
-                                <div class="ca-avail-hint">Unavailable times cannot be selected.</div>
+                                <div class="ca-avail-hint" style="display:flex;align-items:center;gap:.4rem">
+                                    <span class="ca-avail-hint-dot" aria-hidden="true"></span>
+                                    Green times are available to book.
+                                </div>
                             </div>
                             <div class="ca-fld">
                                 <label>Notes
@@ -862,14 +843,80 @@ ob_start(); ?>
 
     <script>
     var lawyerAvailabilityByDate = <?= json_encode($lawyerAvailabilityByDate) ?>;
+    var lawyerAvailabilityByDay  = <?= json_encode($lawyerAvailabilityByDay) ?>;
     var lawyerHasAvailability    = <?= json_encode($lawyerHasAvailability) ?>;
     var lawyerWorkingHours       = <?= json_encode($lawyerWorkingHours) ?>;
     var lawyerHasWorkingHours    = <?= json_encode($lawyerHasWorkingHours) ?>;
     var selectedTime             = null;
     var aptModalInstance         = null;
+    var APPOINTMENT_DURATION_MINUTES = 60;
+
+    function getDurationMinutes() {
+        return APPOINTMENT_DURATION_MINUTES;
+    }
+
+    function formatTimeLabel(timeVal) {
+        var parts = timeVal.split(':');
+        var hours = parseInt(parts[0], 10);
+        var minutes = parts[1] || '00';
+        var period = hours >= 12 ? 'PM' : 'AM';
+        var displayHours = hours % 12;
+        if (displayHours === 0) {
+            displayHours = 12;
+        }
+        return displayHours + ':' + minutes + ' ' + period;
+    }
+
+    function getStandardSlotTimes() {
+        var times = [];
+        for (var t = 8 * 60; t <= 18 * 60; t += 30) {
+            var h = Math.floor(t / 60);
+            var m = t % 60;
+            times.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
+        }
+        return times;
+    }
+
+    function buildTimeMenuOptions() {
+        var menu = document.getElementById('caTimeMenu');
+        if (!menu) {
+            return;
+        }
+        menu.innerHTML = '';
+        getStandardSlotTimes().forEach(function(val) {
+            var li = document.createElement('li');
+            li.className = 'ca-time-dd-opt';
+            li.setAttribute('role', 'option');
+            li.setAttribute('data-time', val);
+            li.setAttribute('data-label', formatTimeLabel(val));
+            li.setAttribute('aria-disabled', 'true');
+            li.textContent = formatTimeLabel(val);
+            menu.appendChild(li);
+        });
+    }
+
+    function getDayOfWeekFromDate(dateVal) {
+        var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        return days[new Date(dateVal + 'T00:00:00').getDay()];
+    }
+
+    function dateHasExplicitSlots(lawyerId, dateVal) {
+        var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
+        return Array.isArray(byDate[dateVal]) && byDate[dateVal].length > 0;
+    }
+
     function getSlotsForDate(lawyerId, dateVal) {
         var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
-        return byDate[dateVal] || [];
+        if (dateHasExplicitSlots(lawyerId, dateVal)) {
+            return byDate[dateVal].slice();
+        }
+        var slots = byDate[dateVal] ? byDate[dateVal].slice() : [];
+        var byDay = lawyerAvailabilityByDay[lawyerId] || lawyerAvailabilityByDay[String(lawyerId)] || {};
+        var dayKey = getDayOfWeekFromDate(dateVal);
+        if (byDay[dayKey]) {
+            slots = slots.concat(byDay[dayKey]);
+        }
+        return slots;
     }
 
     function getAvailableSlots(lawyerId, dateVal) {
@@ -882,10 +929,17 @@ ob_start(); ?>
         return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
     }
 
-    function isAvailable(timeVal, slots) {
-        if (!timeVal || !slots.length) return false;
+    function isAvailable(timeVal, slots, startOnly) {
+        if (!timeVal || !slots.length) {
+            return false;
+        }
         var startMinutes = timeToMinutes(timeVal);
-        var endMinutes = startMinutes + 60;
+        if (startOnly) {
+            return slots.some(function(s) {
+                return startMinutes >= timeToMinutes(s.start) && startMinutes <= timeToMinutes(s.end);
+            });
+        }
+        var endMinutes = startMinutes + getDurationMinutes();
         return slots.some(function(s) {
             return startMinutes >= timeToMinutes(s.start) && endMinutes <= timeToMinutes(s.end);
         });
@@ -902,7 +956,7 @@ ob_start(); ?>
     function isBlockedByUnavailable(timeVal, slots) {
         if (!timeVal || !slots.length) return false;
         var startMinutes = timeToMinutes(timeVal);
-        var endMinutes = startMinutes + 60;
+        var endMinutes = startMinutes + getDurationMinutes();
         return slots.some(function(slot) {
             if (slot.type !== 'unavailable') return false;
             return startMinutes < timeToMinutes(slot.end) && endMinutes > timeToMinutes(slot.start);
@@ -915,11 +969,6 @@ ob_start(); ?>
 
     function hasWorkingHoursConfig(lawyerId) {
         return !!(lawyerHasWorkingHours[lawyerId] || lawyerHasWorkingHours[String(lawyerId)]);
-    }
-
-    function getDayOfWeekFromDate(dateVal) {
-        var days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        return days[new Date(dateVal + 'T00:00:00').getDay()];
     }
 
     function getWorkingHoursForDate(lawyerId, dateVal) {
@@ -937,7 +986,7 @@ ob_start(); ?>
         }
         var start = timeVal.length === 5 ? timeVal + ':00' : timeVal;
         var endParts = start.split(':');
-        var endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1] || '0', 10) + 60;
+        var endMinutes = parseInt(endParts[0], 10) * 60 + parseInt(endParts[1] || '0', 10) + getDurationMinutes();
         var end = String(Math.floor(endMinutes / 60)).padStart(2, '0') + ':' + String(endMinutes % 60).padStart(2, '0') + ':00';
         return start >= day.start && end <= day.end;
     }
@@ -950,7 +999,7 @@ ob_start(); ?>
             return false;
         }
         if (availableSlots.length > 0) {
-            return isAvailable(timeVal, availableSlots);
+            return isAvailable(timeVal, availableSlots, true);
         }
         if (published && !hasWorkingHoursConfig(lawyerId)) {
             return false;
@@ -1154,6 +1203,7 @@ ob_start(); ?>
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        buildTimeMenuOptions();
         var trigger = document.getElementById('caTimeTrigger');
         var menu = document.getElementById('caTimeMenu');
 
@@ -1167,7 +1217,7 @@ ob_start(); ?>
         });
 
         menu.addEventListener('click', function(e) {
-            var opt = e.target.closest('.ca-time-dd-opt.available');
+            var opt = e.target.closest('.ca-time-dd-opt.bookable');
             if (!opt) return;
             selectTime(opt.getAttribute('data-time'), opt.getAttribute('data-label') || opt.textContent.trim());
         });

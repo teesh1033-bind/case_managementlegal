@@ -380,12 +380,6 @@ $appointmentsHtml = '';
 if (!empty($appointments)) {
     foreach ($appointments as $apt) {
         $statusBadge = client_appointment_status_badge($apt);
-        $calLink = '';
-        if (strtolower((string) ($apt['status'] ?? '')) === 'accepted') {
-            $calLink = legalpro_client_render_calendar_links(
-                'client-calendar-export.php?type=appointment&id=' . (int) $apt['id']
-            );
-        }
         $appointmentsHtml .= '<div class="d-flex align-items-start gap-3 mb-3 cp-appt-card">
             <div class="ccv-appt-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconApptRow . '</div>
             <div class="w-100 min-width-0">
@@ -395,7 +389,6 @@ if (!empty($appointments)) {
                 </div>
                 <p class="text-xs text-secondary mb-0 mt-1">Lawyer: ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
                 <p class="text-xs text-secondary mb-0">Notes: ' . htmlspecialchars($apt['notes'] ?: 'No notes') . '</p>
-                ' . $calLink . '
             </div>
         </div>';
     }
