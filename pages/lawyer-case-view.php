@@ -455,6 +455,12 @@ $html = <<<'HTML'
             display: inline-flex;
             margin: 0;
         }
+        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link,
+        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link:hover,
+        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link:focus,
+        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link.active {
+            color: #344767 !important;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-case-view-page">

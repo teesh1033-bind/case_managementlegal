@@ -326,6 +326,12 @@ $html = <<<'HTML'
             overflow-wrap: anywhere;
             margin: 0;
         }
+        body.lawyer-client-view-page:not(.legalpro-dark-mode) #clientTabs .nav-link,
+        body.lawyer-client-view-page:not(.legalpro-dark-mode) #clientTabs .nav-link:hover,
+        body.lawyer-client-view-page:not(.legalpro-dark-mode) #clientTabs .nav-link:focus,
+        body.lawyer-client-view-page:not(.legalpro-dark-mode) #clientTabs .nav-link.active {
+            color: #344767 !important;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-client-view-page">

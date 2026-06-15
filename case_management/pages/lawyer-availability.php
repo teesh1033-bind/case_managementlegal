@@ -444,13 +444,14 @@ $html = <<<'HTML'
             width: 18px;
         }
         .wh-day-switch input:checked + .wh-day-switch__track {
-            background: #22c55e;
+            background-color: var(--legalpro-theme-primary, #11cdef);
+            background-image: var(--legalpro-theme-gradient-310, linear-gradient(310deg, #11cdef 0%, #1171ef 100%));
         }
         .wh-day-switch input:checked + .wh-day-switch__track::after {
             transform: translateX(20px);
         }
         .wh-day-switch input:focus-visible + .wh-day-switch__track {
-            outline: 2px solid rgba(34, 197, 94, 0.45);
+            outline: 2px solid rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.45);
             outline-offset: 2px;
         }
         .working-hours-band {

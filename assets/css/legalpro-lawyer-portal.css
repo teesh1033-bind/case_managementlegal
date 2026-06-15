@@ -117,6 +117,13 @@ body.lawyer-profile-page:not(.legalpro-dark-mode) .main-content .card,
 html.legalpro-theme-dark body.legalpro-lawyer-portal .main-content .card,
 html.legalpro-theme-dark body.lawyer-cases-page .main-content .card,
 html.legalpro-theme-dark body.lawyer-tasks-page .main-content .card,
+html.legalpro-theme-dark body.lawyer-clients-page .main-content .card,
+html.legalpro-theme-dark body.lawyer-client-view-page .main-content .card,
+html.legalpro-theme-dark body.lawyer-appointments-page .main-content .card,
+html.legalpro-theme-dark body.lawyer-availability-page .main-content .card,
+html.legalpro-theme-dark body.lawyer-case-view-page .main-content .card,
+html.legalpro-theme-dark body.lawyer-court-tracking-page .main-content .card,
+html.legalpro-theme-dark body.lawyer-dashboard-page .main-content .card,
 body.legalpro-dark-mode.legalpro-lawyer-portal .main-content .card,
 body.legalpro-dark-mode.lawyer-cases-page .main-content .card,
 body.legalpro-dark-mode.lawyer-tasks-page .main-content .card,
@@ -493,4 +500,161 @@ body.legalpro-dark-mode.lawyer-settings-page .settings-theme-mode__option {
     background: var(--lp-dark-surface-raised, #3d455c) !important;
     border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
     color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+}
+
+/* Lawyer case view — dark mode tabs and tables (lawyer portal only) */
+body.legalpro-dark-mode.lawyer-case-view-page .card-header {
+    background: var(--lp-dark-surface, #252b3d) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabs {
+    border-bottom-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabs .nav-link {
+    color: var(--lp-dark-text-muted, #a8b3cf) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabs .nav-link:hover,
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabs .nav-link:focus {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+    background: var(--lp-dark-surface-hover, #2f3547) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) var(--lp-dark-border, rgba(255, 255, 255, 0.1)) transparent !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabs .nav-link.active {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+    background-color: var(--lp-dark-surface-raised, #2f3547) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) var(--lp-dark-border, rgba(255, 255, 255, 0.1)) var(--lp-dark-surface-raised, #2f3547) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabsContent .table thead th {
+    color: var(--lp-dark-text-muted, #a8b3cf) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabsContent .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: var(--lp-dark-surface-raised, #2f3547) !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabsContent .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: var(--lp-dark-surface, #252b3d) !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabsContent .table tbody tr.table-active > td,
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabsContent .table tbody tr.table-active > th {
+    background-color: rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.14) !important;
+    color: var(--lp-dark-text, #f8f9fc) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabsContent .table tbody tr.table-active strong {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #caseTabsContent .text-muted {
+    color: var(--lp-dark-text-subtle, #8b95ad) !important;
+}
+
+/* Lawyer client view — dark mode (lawyer portal only) */
+body.legalpro-dark-mode.lawyer-client-view-page .main-content .card .card,
+html.legalpro-theme-dark body.lawyer-client-view-page .main-content .card .card {
+    background-color: var(--lp-dark-surface-raised, #2f3547) !important;
+    background: var(--lp-dark-surface-raised, #2f3547) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .main-content .card h5,
+body.legalpro-dark-mode.lawyer-client-view-page .main-content .card h6,
+body.legalpro-dark-mode.lawyer-client-view-page .main-content .card .font-weight-bold {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .main-content .card .text-muted {
+    color: var(--lp-dark-text-subtle, #8b95ad) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .card-header {
+    background: var(--lp-dark-surface, #252b3d) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page #clientTabs {
+    border-bottom-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page #clientTabs .nav-link {
+    color: var(--lp-dark-text-muted, #a8b3cf) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page #clientTabs .nav-link:hover,
+body.legalpro-dark-mode.lawyer-client-view-page #clientTabs .nav-link:focus {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+    background: var(--lp-dark-surface-hover, #2f3547) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) var(--lp-dark-border, rgba(255, 255, 255, 0.1)) transparent !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page #clientTabs .nav-link.active {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+    background-color: var(--lp-dark-surface-raised, #2f3547) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) var(--lp-dark-border, rgba(255, 255, 255, 0.1)) var(--lp-dark-surface-raised, #2f3547) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page #clientTabsContent .table thead th {
+    color: var(--lp-dark-text-muted, #a8b3cf) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page #clientTabsContent .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: var(--lp-dark-surface-raised, #2f3547) !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page #clientTabsContent .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: var(--lp-dark-surface, #252b3d) !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .lawyer-client-comments-feed .cc-comment-item-inner {
+    background: var(--lp-dark-surface-raised, #2f3547) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+    box-shadow: none !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .lawyer-client-comments-feed .cc-comment-author {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .lawyer-client-comments-feed .cc-comment-text {
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .lawyer-client-comments-feed .cc-comment-time {
+    color: var(--lp-dark-text-subtle, #8b95ad) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .cc-comments-empty .text-muted {
+    color: var(--lp-dark-text-subtle, #8b95ad) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .btn-outline-primary {
+    color: var(--legalpro-theme-primary, #11cdef) !important;
+    border-color: var(--legalpro-theme-primary, #11cdef) !important;
+}
+
+body.legalpro-dark-mode.lawyer-client-view-page .btn-outline-primary:hover {
+    color: #fff !important;
+    background-color: var(--legalpro-theme-primary, #11cdef) !important;
+    border-color: var(--legalpro-theme-primary, #11cdef) !important;
 }
