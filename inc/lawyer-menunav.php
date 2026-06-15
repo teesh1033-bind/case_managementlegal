@@ -51,7 +51,7 @@ if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
 }
 ?>
 
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs legalpro-admin-sidebar" id="sidenav-main">
+<aside class="sidenav navbar navbar-vertical navbar-expand-xs fixed-start legalpro-admin-sidebar" id="sidenav-main">
     <div class="legalpro-sidebar-brand">
         <a href="lawyer-dashboard.php" class="legalpro-sidebar-brand__link">
             <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="42" height="42" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
@@ -66,7 +66,7 @@ if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
         <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
 
-    <div class="collapse navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
+    <div class="collapse show navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
         <ul class="navbar-nav legalpro-sidebar-nav">
             <?php foreach ($lawyerMenuItems as $item): ?>
                 <?php $active = lawyerNavIsActive($item['id'], $currentPage); ?>
@@ -81,14 +81,37 @@ if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
     </div>
 </aside>
 
+<script>
+(function () {
+    var body = document.body;
+    if (!body) {
+        return;
+    }
+    body.classList.remove('g-sidenav-hidden');
+    body.classList.add('g-sidenav-pinned');
+})();
+</script>
+
 <?php echo $navbarUtilitiesMount; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    var body = document.body;
     var collapseBtn = document.getElementById('legalproSidebarCollapse');
+    var navWrap = document.getElementById('sidenav-collapse-main');
+
+    body.classList.remove('g-sidenav-hidden');
+    body.classList.add('g-sidenav-pinned');
+
+    if (navWrap) {
+        navWrap.classList.add('show');
+    }
+
     if (collapseBtn) {
         collapseBtn.addEventListener('click', function() {
-            document.body.classList.toggle('legalpro-sidebar-collapsed');
+            body.classList.toggle('legalpro-sidebar-collapsed');
+            body.classList.remove('g-sidenav-hidden');
+            body.classList.add('g-sidenav-pinned');
         });
     }
 });

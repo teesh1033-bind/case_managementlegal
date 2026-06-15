@@ -223,9 +223,10 @@ function buildWorkingHoursRowHtml(string $day, array $schedule): string
     return '<tr>
         <td class="text-sm font-weight-bold text-capitalize">' . htmlspecialchars($label) . '</td>
         <td class="text-center">
-            <div class="form-check form-switch d-inline-block mb-0">
-                <input class="form-check-input wh-day-toggle" type="checkbox" name="wh_enabled[' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . ']" id="wh_enabled_' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '" value="1"' . ($enabled ? ' checked' : '') . '>
-            </div>
+            <label class="wh-day-switch" for="wh_enabled_' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '" aria-label="Working on ' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '">
+                <input class="wh-day-toggle" type="checkbox" name="wh_enabled[' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . ']" id="wh_enabled_' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '" value="1"' . ($enabled ? ' checked' : '') . '>
+                <span class="wh-day-switch__track" aria-hidden="true"></span>
+            </label>
         </td>
         <td>
             <select class="form-control form-select wh-start-select" name="wh_start[' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . ']" data-day="' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '">' . $startOptions . '</select>
@@ -265,7 +266,9 @@ $html = <<<'HTML'
     <link rel="stylesheet" href="../assets/css/simple-calendar.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.css" />
     <style>
-        #availabilityCalendar { min-height: 620px; }
+        #availabilityCalendar {
+            min-height: 0;
+        }
         .fc-event {
             cursor: pointer;
             font-weight: 700;
@@ -362,7 +365,7 @@ $html = <<<'HTML'
         }
         .availability-fallback-day {
             cursor: pointer;
-            min-height: 150px;
+            min-height: 5.5rem;
             border-right: 1px solid #e9ecef;
             padding: 0.75rem;
         }
@@ -405,6 +408,50 @@ $html = <<<'HTML'
         .working-hours-table th,
         .working-hours-table td {
             vertical-align: middle;
+        }
+        .wh-day-switch {
+            align-items: center;
+            cursor: pointer;
+            display: inline-flex;
+            margin: 0;
+            position: relative;
+        }
+        .wh-day-switch input {
+            height: 0;
+            opacity: 0;
+            position: absolute;
+            width: 0;
+        }
+        .wh-day-switch__track {
+            background: #cbd5e1;
+            border-radius: 999px;
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            transition: background-color 0.2s ease;
+            width: 44px;
+        }
+        .wh-day-switch__track::after {
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
+            content: '';
+            height: 18px;
+            left: 3px;
+            position: absolute;
+            top: 3px;
+            transition: transform 0.2s ease;
+            width: 18px;
+        }
+        .wh-day-switch input:checked + .wh-day-switch__track {
+            background: #22c55e;
+        }
+        .wh-day-switch input:checked + .wh-day-switch__track::after {
+            transform: translateX(20px);
+        }
+        .wh-day-switch input:focus-visible + .wh-day-switch__track {
+            outline: 2px solid rgba(34, 197, 94, 0.45);
+            outline-offset: 2px;
         }
         .working-hours-band {
             background: #eef2ff;

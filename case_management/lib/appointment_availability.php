@@ -254,6 +254,16 @@ function formatSlotTimeForBooking(string $time): string
     return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
 }
 
+function formatSlotTimeForBooking(string $time): string
+{
+    $parts = explode(':', trim($time));
+    $hours = (int) ($parts[0] ?? 0);
+    $minutes = (int) ($parts[1] ?? 0);
+    $seconds = (int) ($parts[2] ?? 0);
+
+    return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+}
+
 /**
  * Build availability maps for booking UIs (keyed by lawyer id).
  *
@@ -554,5 +564,8 @@ function backfillLawyerAppointmentAvailability(PDO $pdo, int $lawyerId): void
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $appointment) {
         syncAppointmentAvailabilitySlot($pdo, $appointment);
     }
+<<<<<<< HEAD
 }
+=======
+>>>>>>> ec293a5f93f0bf9477806a77983f04adc15329cc
 }
