@@ -529,3 +529,24 @@ body.legalpro-dark-mode .case-detail-hub .chat-messages {
         padding: 0.65rem 0.85rem 0;
     }
 }
+
+.case-quotation-card {
+    align-items: flex-start !important;
+}
+
+.case-quotation-lines {
+    background: rgba(94, 114, 228, 0.04);
+    border-radius: 0.65rem;
+    padding: 0.5rem 0.65rem;
+}
+
+.case-quotation-totals {
+    background: rgba(94, 114, 228, 0.06);
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+}
+
+body.legalpro-dark-mode .case-quotation-lines,
+body.legalpro-dark-mode .case-quotation-totals {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
