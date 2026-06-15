@@ -60,7 +60,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 <link href="../assets/css/legalpro-portal-shell.css?v=21" rel="stylesheet" />
 <link href="../assets/css/legalpro-admin-portal.css?v=25" rel="stylesheet" />
 <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
-<link href="../assets/css/legalpro-sidebar-nav.css?v=14" rel="stylesheet" />
+<link href="../assets/css/legalpro-sidebar-nav.css?v=17" rel="stylesheet" />
 <?php legalpro_icons_asset_links(); ?>
 <?php endif; ?>
 
@@ -79,12 +79,12 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
         <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
     </div>
 
-    <div class="collapse show navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
+    <div class="collapse show navbar-collapse w-100 legalpro-sidebar-nav-wrap legalpro-sidebar-nav-wrap--expanded" id="sidenav-collapse-main">
         <ul class="navbar-nav legalpro-sidebar-nav">
             <?php foreach ($menuItems as $item): ?>
                 <?php $active = legalpro_admin_menu_is_active($item['id'], $currentPage); ?>
                 <li class="nav-item">
-                    <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
+                    <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>" title="<?php echo htmlspecialchars($item['title']); ?>" aria-label="<?php echo htmlspecialchars($item['title']); ?>">
                         <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
                         <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
                     </a>
@@ -92,6 +92,18 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
             <?php endforeach; ?>
         </ul>
     </div>
+
+    <nav class="legalpro-sidebar-collapsed-rail" id="legalpro-sidebar-collapsed-rail" aria-label="Collapsed navigation">
+        <?php foreach ($menuItems as $item): ?>
+            <?php $active = legalpro_admin_menu_is_active($item['id'], $currentPage); ?>
+            <a class="legalpro-sidebar-collapsed-rail__link<?php echo $active ? ' active' : ''; ?>"
+               href="<?php echo htmlspecialchars($item['url']); ?>"
+               title="<?php echo htmlspecialchars($item['title']); ?>"
+               aria-label="<?php echo htmlspecialchars($item['title']); ?>">
+                <span class="legalpro-sidebar-collapsed-rail__icon"><?php echo legalpro_icon($item['icon']); ?></span>
+            </a>
+        <?php endforeach; ?>
+    </nav>
 </aside>
 
 <script>
@@ -130,13 +142,24 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
+        var isCollapsed = body.classList.contains('legalpro-sidebar-collapsed');
+
         if (navWrap) {
-            navWrap.classList.add('show');
-            navWrap.style.display = 'block';
-            navWrap.style.removeProperty('height');
-            navWrap.style.removeProperty('max-height');
-            navWrap.style.minHeight = '0';
-            navWrap.style.overflowY = 'auto';
+            if (isCollapsed) {
+                navWrap.classList.add('show');
+                navWrap.style.removeProperty('display');
+                navWrap.style.removeProperty('height');
+                navWrap.style.removeProperty('max-height');
+                navWrap.style.removeProperty('min-height');
+                navWrap.style.removeProperty('overflow-y');
+            } else {
+                navWrap.classList.add('show');
+                navWrap.style.removeProperty('display');
+                navWrap.style.removeProperty('height');
+                navWrap.style.removeProperty('max-height');
+                navWrap.style.minHeight = '0';
+                navWrap.style.overflowY = 'auto';
+            }
         }
     }
 
