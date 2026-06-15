@@ -608,14 +608,11 @@ $html = <<<'HTML'
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="task_description" id="task_description" rows="3" placeholder="Task description (optional)">{TASK_FORM_DESCRIPTION}</textarea>
                         </div>
-<<<<<<< HEAD
-=======
                         <div class="mb-0" id="task_comment_wrap" style="display: none;">
                             <label class="form-label">Your comment</label>
                             <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Add a note for the admin about this task (optional)">{TASK_FORM_COMMENT}</textarea>
 
                         </div>
->>>>>>> ec293a5f93f0bf9477806a77983f04adc15329cc
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -677,7 +674,6 @@ $replacements = [
     '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
     '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
-    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
     '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ if (parseInt(document.getElementById("task_id").value, 10) > 0) { document.getElementById("task_comment_wrap").style.display = ""; } new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',

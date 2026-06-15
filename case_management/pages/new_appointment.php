@@ -783,7 +783,11 @@ $html = <<<'HTML'
                     return true;
                 }
 
-<<<<<<< HEAD
+                var lawyerId = lawyerSelect ? lawyerSelect.value : '';
+                if (!lawyerId) {
+                    return false;
+                }
+
                 if (lawyerHasWorkingHoursConfig(lawyerId)) {
                     var dayHours = getWorkingHoursForDate(lawyerId, dateValue);
                     if (!dayHours || !dayHours.enabled) {
@@ -800,17 +804,6 @@ $html = <<<'HTML'
                 return !getStandardSlotTimes(durationMinutes).some(function(slotValue) {
                     return isTimeSlotBookable(slotValue, lawyerId, dateValue, slots, published, durationMinutes);
                 });
-=======
-                var lawyerId = lawyerSelect ? lawyerSelect.value : '';
-                if (!lawyerId) {
-                    return false;
-                }
-
-                if (!lawyerHasPublishedSchedule(lawyerId)) {
-                    return false;
-                }
-
-                return !lawyerHasAvailabilityOnDate(lawyerId, dateValue);
             }
 
             function appointmentDatePickerOptions() {
@@ -821,7 +814,6 @@ $html = <<<'HTML'
                         renderTimeOptions();
                     }
                 };
->>>>>>> b6cf310 (improvemnet in admin in global)
             }
 
             function initAppointmentDatePicker() {

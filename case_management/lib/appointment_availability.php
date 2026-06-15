@@ -244,14 +244,6 @@ function loadLawyerWorkingHoursForBooking(PDO $pdo, array $lawyerIds): array
     }
 
     return ['workingHours' => $workingHours, 'hasWorkingHours' => $hasWorkingHours];
-function formatSlotTimeForBooking(string $time): string
-{
-    $parts = explode(':', trim($time));
-    $hours = (int) ($parts[0] ?? 0);
-    $minutes = (int) ($parts[1] ?? 0);
-    $seconds = (int) ($parts[2] ?? 0);
-
-    return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
 }
 
 function formatSlotTimeForBooking(string $time): string
@@ -564,8 +556,4 @@ function backfillLawyerAppointmentAvailability(PDO $pdo, int $lawyerId): void
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $appointment) {
         syncAppointmentAvailabilitySlot($pdo, $appointment);
     }
-<<<<<<< HEAD
-}
-=======
->>>>>>> ec293a5f93f0bf9477806a77983f04adc15329cc
 }
