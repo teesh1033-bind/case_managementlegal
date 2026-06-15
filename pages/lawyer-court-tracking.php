@@ -10,6 +10,9 @@ if (!isset($_SESSION['lawyer_id'])) {
 }
 
 $lawyerId = $_SESSION['lawyer_id'];
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$statusFilter = isset($_GET['status']) ? strtolower(trim((string) $_GET['status'])) : 'all';
+$allowedStatusFilters = ['scheduled', 'completed', 'cancelled', 'postponed'];
 
 // Check if court_dates table exists
 $tableExists = false;
@@ -137,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Get court dates for cases assigned to this lawyer
 try {
-    $stmt = $pdo->prepare("
+    $sql = "
         SELECT
             cd.*,
             c.title as case_title,
@@ -151,9 +154,31 @@ try {
         LEFT JOIN clients cl ON c.client_id = cl.id
         LEFT JOIN users u ON cd.created_by = u.id
         WHERE clw.lawyer_id = ?
-        ORDER BY cd.court_date ASC
-    ");
-    $stmt->execute([$lawyerId]);
+    ";
+    $params = [$lawyerId];
+
+    if ($statusFilter !== 'all' && in_array($statusFilter, $allowedStatusFilters, true)) {
+        $sql .= " AND LOWER(COALESCE(cd.status, 'scheduled')) = ?";
+        $params[] = $statusFilter;
+    }
+
+    if ($search !== '') {
+        $sql .= " AND (
+            c.title LIKE ?
+            OR cl.first_name LIKE ?
+            OR cl.last_name LIKE ?
+            OR CONCAT(cl.first_name, ' ', cl.last_name) LIKE ?
+            OR cd.title LIKE ?
+            OR cd.location LIKE ?
+        )";
+        $searchParam = '%' . $search . '%';
+        $params = array_merge($params, array_fill(0, 6, $searchParam));
+    }
+
+    $sql .= " ORDER BY cd.court_date ASC";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $court_dates = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $court_dates = [];
@@ -288,7 +313,7 @@ if (empty($upcomingCourtDates)) {
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-court-tracking-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/lawyer-menunav.php'; ?>
 
@@ -302,26 +327,42 @@ if (empty($upcomingCourtDates)) {
                     </ol>
                     <h6 class="font-weight-bolder text-white mb-0">Court Tracking</h6>
                 </nav>
-                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="search.php" role="search">
-                        <div class="input-group">
-                            <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="Search…" value="" autocomplete="off" maxlength="200" aria-label="Search">
-                        </div>
-                    </form>
-                    <ul class="navbar-nav justify-content-end">
-                        <!-- <li class="nav-item d-flex align-items-center">
-                            <a href="lawyer-logout.php" class="nav-link text-white font-weight-bold px-0">
-                                <i class="fa fa-user me-sm-1"></i>
-                                <span class="d-sm-inline d-none">Logout</span>
-                            </a>
-                        </li> -->
-                    </ul>
-                </div>
             </div>
         </nav>
 
         <div class="container-fluid py-4">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body p-3">
+                            <form method="GET" class="row align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label">Search Court Dates</label>
+                                    <input type="text" class="form-control" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Case, client, title or location">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" name="status">
+                                        <option value="all"<?php echo $statusFilter === 'all' ? ' selected' : ''; ?>>All Status</option>
+                                        <option value="scheduled"<?php echo $statusFilter === 'scheduled' ? ' selected' : ''; ?>>Scheduled</option>
+                                        <option value="completed"<?php echo $statusFilter === 'completed' ? ' selected' : ''; ?>>Completed</option>
+                                        <option value="postponed"<?php echo $statusFilter === 'postponed' ? ' selected' : ''; ?>>Postponed</option>
+                                        <option value="cancelled"<?php echo $statusFilter === 'cancelled' ? ' selected' : ''; ?>>Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label d-block invisible">Filter</label>
+                                    <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <p class="text-sm text-muted mb-0">Total: <?php echo count($court_dates); ?> court dates</p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <?php if (isset($_SESSION['success_message'])): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <?php echo htmlspecialchars($_SESSION['success_message']); ?>
@@ -397,6 +438,11 @@ if (empty($upcomingCourtDates)) {
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        <?php if (empty($court_dates)): ?>
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted py-4">No court dates found. Try adjusting your search or status filter.</td>
+                                            </tr>
+                                        <?php else: ?>
                                         <?php foreach ($court_dates as $date): ?>
                                             <tr>
                                                 <td>
@@ -420,6 +466,7 @@ if (empty($upcomingCourtDates)) {
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
+                                        <?php endif; ?>
                                     </tbody>
                                 </table>
                             </div>
