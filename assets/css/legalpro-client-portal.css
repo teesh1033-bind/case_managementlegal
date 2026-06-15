@@ -564,6 +564,10 @@ body.legalpro-dark-mode.legalpro-client-portal.client-court-tracking-page .cct-e
 .cdoc-row__actions { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
 .cdoc-ack-done { font-size: .72rem; font-weight: 600; color: #2dce89; }
 .cdoc-empty { text-align: center; padding: 3rem 1.5rem; }
+.client-documents-page .cdoc-filters .cdoc-field,
+.client-documents-page .cdoc-filters .cdoc-search-btn {
+    min-height: 44px;
+}
 .cdoc-touch-btn { min-height: 44px; min-width: 44px; padding: .5rem 1rem !important; }
 
 /* ── Client notification dropdown (header bell) ───────────────────────── */

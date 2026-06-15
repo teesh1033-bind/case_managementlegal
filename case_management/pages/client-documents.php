@@ -141,7 +141,7 @@ $html = <<<'HTML'
         </div>
         <div class="cdoc-filters card mb-4">
             <div class="card-body">
-                <form method="get" class="row g-3 align-items-end">
+                <form method="get" class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label text-sm font-weight-bold">Filter by case</label>
                         <select name="case_id" class="form-select cdoc-field" onchange="this.form.submit()">
@@ -153,7 +153,8 @@ $html = <<<'HTML'
                         <input type="search" name="q" value="{SEARCH_Q}" class="form-control cdoc-field" placeholder="Search by filename or case…">
                     </div>
                     <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100 cdoc-touch-btn">Search</button>
+                        <label class="form-label text-sm font-weight-bold" for="cdoc-search-submit">Apply</label>
+                        <button type="submit" id="cdoc-search-submit" class="btn btn-primary w-100 cdoc-touch-btn cdoc-search-btn">Search</button>
                     </div>
                 </form>
             </div>

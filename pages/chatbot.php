@@ -108,17 +108,13 @@ if ($role === 'client') {
 								<div class="cb-bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
 								<div class="chat-bubble">
 									<span class="chat-bubble-label">' . htmlspecialchars($assistantName) . ':</span>
-									<div class="chat-bubble-body">Hello ' . $displayName . '! I\'m your **smart legal assistant**. I read your live cases, invoices, appointments, and court dates — then advise you, **open pages** for you, **update your profile**, **book appointments**, and **submit requests**. No API key needed.' . $welcomeHint . '</div>
+									<div class="chat-bubble-body">Hello ' . $displayName . '! I\'m your smart legal assistant. I read your live cases, invoices, appointments, and court dates — then advise you, open pages for you, update your profile, book appointments, and submit requests. No API key needed.' . $welcomeHint . '</div>
 								</div>
 							</div>
 						</div>
 						<div class="chat-compose chat-compose--textarea">
 							<textarea id="chatInput" class="form-control chat-input" rows="2" placeholder="Ask me anything… paste long notes, describe your situation, or request an update." autocomplete="off"></textarea>
 							<button type="button" id="sendBtn" class="cb-send-btn">Send</button>
-						</div>
-						<div class="chat-compose-meta">
-							<span id="tokenEstimate" class="text-xs text-muted">~0 tokens</span>
-							<span class="text-xs text-muted">Max ~6,000 tokens per message</span>
 						</div>
 					</div>
 				</div>
@@ -369,9 +365,6 @@ $html = <<<'HTML'
 			min-height: 3.25rem !important; height: auto !important; align-self: stretch;
 			border-radius: 0 0.5rem 0.5rem 0 !important;
 		}
-		.chat-compose-meta {
-			display: flex; justify-content: space-between; margin-top: 0.35rem; padding: 0 0.15rem;
-		}
 		.chat-bubble-body em { font-style: italic; opacity: 0.85; }
 		.chat-bubble-body ul { margin: 0.35rem 0 0.35rem 1.1rem; padding: 0; }
 		.chat-bubble-body li { margin-bottom: 0.2rem; }
@@ -391,7 +384,6 @@ $html = <<<'HTML'
 		const chatInput = document.getElementById('chatInput');
 		const sendBtn = document.getElementById('sendBtn');
 		const clearChatBtn = document.getElementById('clearChatBtn');
-		const tokenEstimateEl = document.getElementById('tokenEstimate');
 		const assistantName = {ASSISTANT_NAME_JSON};
 		const isTextarea = chatInput && chatInput.tagName === 'TEXTAREA';
 		const welcomeHtml = chatWindow ? chatWindow.innerHTML : '';
@@ -402,23 +394,11 @@ $html = <<<'HTML'
 			return div.innerHTML;
 		}
 
-		function estimateTokens(text) {
-			const t = (text || '').trim();
-			if (!t) return 0;
-			return Math.max(1, Math.ceil(t.length / 3.8));
-		}
-
-		function updateTokenEstimate() {
-			if (!tokenEstimateEl || !chatInput) return;
-			const n = estimateTokens(chatInput.value);
-			tokenEstimateEl.textContent = '~' + n.toLocaleString() + ' tokens';
-			tokenEstimateEl.classList.toggle('text-danger', n > 6000);
-		}
-
 		function formatReply(text) {
 			let safe = escapeHtml(text);
-			safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-			safe = safe.replace(/_(.+?)_/g, '<em>$1</em>');
+			safe = safe.replace(/\*\*(.+?)\*\*/g, '$1');
+			safe = safe.replace(/_(.+?)_/g, '$1');
+			safe = safe.replace(/\*\*/g, '');
 			safe = safe.replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
 			safe = safe.replace(/(<li>.*<\/li>\n?)+/g, function(block) {
 				return '<ul>' + block + '</ul>';
@@ -436,11 +416,8 @@ $html = <<<'HTML'
 				}).join('') + '</div>';
 			}
 			let metaHtml = '';
-			if (meta && (meta.mode || meta.tokens_used)) {
-				const parts = [];
-				if (meta.mode === 'smart') parts.push('Smart');
-				if (meta.tokens_used) parts.push('~' + meta.tokens_used + ' tokens');
-				metaHtml = '<span class="cb-hint">' + parts.join(' · ') + '</span>';
+			if (meta && meta.mode === 'smart') {
+				metaHtml = '<span class="cb-hint">Smart</span>';
 			}
 			if (sender === 'You') {
 				row.innerHTML = '<div class="chat-bubble ms-auto"><span class="chat-bubble-label">You:</span><div class="chat-bubble-body">' + escapeHtml(html) + '</div></div>';
@@ -476,7 +453,6 @@ $html = <<<'HTML'
 			if (!q) return;
 			appendMessage('You', q);
 			chatInput.value = '';
-			updateTokenEstimate();
 			sendBtn.disabled = true;
 			appendTyping();
 			try {
@@ -492,8 +468,7 @@ $html = <<<'HTML'
 					return;
 				}
 				appendMessage(assistantName, data.reply, data.links || [], {
-					mode: data.mode,
-					tokens_used: data.tokens_used
+					mode: data.mode
 				});
 				if (data.redirect) {
 					var delay = data.redirect_delay || 900;
@@ -527,14 +502,12 @@ $html = <<<'HTML'
 		if (sendBtn) sendBtn.addEventListener('click', function() { sendMessage(); });
 		if (clearChatBtn) clearChatBtn.addEventListener('click', clearConversation);
 		if (chatInput) {
-			chatInput.addEventListener('input', updateTokenEstimate);
 			chatInput.addEventListener('keydown', function(e) {
 				if (e.key !== 'Enter') return;
 				if (isTextarea && e.shiftKey) return;
 				e.preventDefault();
 				sendMessage();
 			});
-			updateTokenEstimate();
 		}
 		document.querySelectorAll('.chat-shortcut').forEach(function(btn) {
 			btn.addEventListener('click', function() {

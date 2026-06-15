@@ -32,10 +32,11 @@ try {
 
     $message = is_array($payload) && isset($payload['message']) ? trim((string) $payload['message']) : '';
     $result = $engine->chat($message);
+    $reply = legalpro_chatbot_plain_reply((string) ($result['reply'] ?? ''));
 
     echo json_encode([
         'ok' => $result['ok'] ?? true,
-        'reply' => $result['reply'] ?? '',
+        'reply' => $reply,
         'links' => $result['links'] ?? [],
         'actions' => $result['actions'] ?? [],
         'redirect' => $result['redirect'] ?? null,

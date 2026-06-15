@@ -3,6 +3,21 @@
 require_once __DIR__ . '/case_lawyers.php';
 
 /**
+ * Strip markdown markers from chatbot replies for plain display.
+ */
+function legalpro_chatbot_plain_reply(string $text): string
+{
+    if ($text === '') {
+        return $text;
+    }
+    $text = preg_replace('/\*\*(.+?)\*\*/s', '$1', $text);
+    $text = preg_replace('/_(.+?)_/s', '$1', $text);
+    $text = str_replace(['**', '__'], '', $text);
+
+    return $text;
+}
+
+/**
  * Role-aware assistant: matches intents + FAQ knowledge, then queries live DB data.
  */
 class ChatbotAssistant
