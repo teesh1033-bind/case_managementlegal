@@ -823,7 +823,7 @@ if (empty($documents)) {
     $documentsHtml = caseDetailFeedWrap($items);
 }
 
-$caseDetailTabsNav = '<ul class="nav case-detail-tabs" role="tablist">'
+$caseDetailTabsNav = '<ul class="nav case-detail-tabs case-detail-tabs--sidebar" role="tablist">'
     . legalpro_case_detail_tab('#appointments', 'calendar', 'Appointments', count($appointments), true)
     . legalpro_case_detail_tab('#invoices', 'file-text', 'Invoices', count($invoices))
     . legalpro_case_detail_tab('#payments', 'banknote', 'Payments', count($payments))
@@ -849,7 +849,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/case-detail-tabs.css?v=4" rel="stylesheet" />
+    <link href="../assets/css/case-detail-tabs.css?v=5" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -977,14 +977,17 @@ $html = <<<'HTML'
             <div class="row">
                 <div class="col-12">
                     <div class="card case-detail-hub border-0 shadow-sm">
-                        <div class="card-header case-detail-hub__header border-0">
-                            <div class="case-detail-tabs-wrap">
-                                {CASE_DETAIL_TABS_NAV}
-                            </div>
-                            {CASE_DETAIL_TAB_ACTIONS}
-                        </div>
-                        <div class="card-body case-detail-hub__body">
-                            <div class="tab-content case-detail-panels">
+                        <div class="case-detail-hub__layout">
+                            <aside class="case-detail-hub__sidebar" aria-label="Case sections">
+                                <div class="case-detail-tabs-wrap">
+                                    {CASE_DETAIL_TABS_NAV}
+                                </div>
+                            </aside>
+                            <div class="case-detail-hub__content">
+                                <div class="case-detail-hub__toolbar">
+                                    {CASE_DETAIL_TAB_ACTIONS}
+                                </div>
+                                <div class="tab-content case-detail-panels">
                                 <div class="tab-pane active" id="appointments" role="tabpanel">
                                     {APPOINTMENTS_HTML}
                                 </div>
@@ -1002,21 +1005,24 @@ $html = <<<'HTML'
                                     {STAGES_FORM_HTML}
                                 </div>
                                 <div class="tab-pane" id="comments" role="tabpanel">
-                                    {COMMENTS_HTML}
+                                    <div class="d-flex justify-content-end mb-3">
+                                        <button type="button" class="btn btn-sm bg-gradient-dark mb-0" id="case-comment-add-btn">Add Comment</button>
+                                    </div>
 
-                                    <div class="mt-4">
-                                        <div class="card case-detail-form-card border-0">
-                                            <div class="card-header border-0">
-                                                <h6 class="mb-0">Add Comment</h6>
-                                            </div>
-                                            <div class="card-body pt-0">
-                                                <form method="POST" action="">
-                                                    <textarea class="form-control" name="comment" rows="3" placeholder="Write a comment for this case..." required></textarea>
-                                                    <button type="submit" class="btn btn-dark btn-sm mt-3 mb-0">Post Comment</button>
-                                                </form>
-                                            </div>
+                                    <div class="card case-detail-form-card border-0 mb-4" id="case-comment-form-card" hidden>
+                                        <div class="card-header border-0 d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">Add Comment</h6>
+                                            <button type="button" class="btn btn-link text-secondary btn-sm mb-0 p-0" id="case-comment-cancel-btn">Cancel</button>
+                                        </div>
+                                        <div class="card-body pt-0">
+                                            <form method="POST" action="" id="case-comment-form">
+                                                <textarea class="form-control" name="comment" id="case_comment_text" rows="3" placeholder="Write a comment for this case..." required></textarea>
+                                                <button type="submit" class="btn btn-dark btn-sm mt-3 mb-0">Post Comment</button>
+                                            </form>
                                         </div>
                                     </div>
+
+                                    {COMMENTS_HTML}
 
                                     <div class="mt-3">
                                         <div class="card case-detail-form-card border-0">
@@ -1044,6 +1050,7 @@ $html = <<<'HTML'
                                 </div>
                                 <div class="tab-pane" id="events" role="tabpanel">
                                     {EVENTS_HTML}
+                                </div>
                                 </div>
                             </div>
                         </div>
@@ -1101,7 +1108,7 @@ if (!empty($comments)) {
     }
     $commentsHtml .= '</div>';
 } else {
-    $commentsHtml = caseDetailFeedEmpty('message-circle', 'No comments yet. Start the conversation below.');
+    $commentsHtml = caseDetailFeedEmpty('message-circle', 'No comments yet. Click Add Comment to start the conversation.');
 }
 
 // Build tasks HTML
@@ -1186,7 +1193,7 @@ if ($activeTab === '' && isset($_GET['tab'])) {
     $activeTab = preg_replace('/[^a-z]/', '', strtolower((string) $_GET['tab']));
 }
 
-$caseDetailTabScript = '<script>document.addEventListener("DOMContentLoaded",function(){var nextStageNumber=' . (int) $nextStageNumber . ';function showCaseSummaryForm(){var card=document.getElementById("case-summary-form-card");if(card){card.hidden=false;}}function hideCaseSummaryForm(){var card=document.getElementById("case-summary-form-card");if(card){card.hidden=true;}resetCaseSummaryForm();}function focusCaseSummaryForm(){showCaseSummaryForm();var card=document.getElementById("case-summary-form-card");var titleInput=document.getElementById("case_summary_stage_title");if(card){card.scrollIntoView({behavior:"smooth",block:"start"});}if(titleInput){titleInput.focus();}}function resetCaseSummaryForm(){var form=document.getElementById("case-summary-form");if(!form){return;}form.reset();document.getElementById("case_summary_stage_id").value="";document.getElementById("case_summary_stage_number").value=String(nextStageNumber);document.getElementById("case-summary-form-title").textContent="Add Summary Entry";document.getElementById("case-summary-submit-btn").textContent="Save Summary Entry";}function fillCaseSummaryForm(stage){if(!stage){return;}document.getElementById("case_summary_stage_id").value=stage.id||"";document.getElementById("case_summary_stage_number").value=stage.stage_number||nextStageNumber;document.getElementById("case_summary_stage_title").value=stage.title||"";document.getElementById("case_summary_stage_description").value=stage.description||"";document.getElementById("case_summary_stage_result").value=stage.result||"";document.getElementById("case_summary_stage_start_date").value=stage.start_date||"";document.getElementById("case_summary_stage_expected_end_date").value=stage.expected_end_date||"";document.getElementById("case_summary_stage_actual_end_date").value=stage.actual_end_date||"";document.getElementById("case-summary-form-title").textContent="Edit Summary Entry";document.getElementById("case-summary-submit-btn").textContent="Update Summary Entry";focusCaseSummaryForm();}function updateCaseDetailTabActions(tabId){var inv=document.getElementById("case-detail-action-invoices");var pay=document.getElementById("case-detail-action-payments");var stages=document.getElementById("case-detail-action-stages");if(inv){inv.hidden=tabId!=="invoices";}if(pay){pay.hidden=tabId!=="payments";}if(stages){stages.hidden=tabId!=="stages";}if(tabId!=="stages"){hideCaseSummaryForm();}}function getActiveCaseDetailTabId(){var active=document.querySelector(".case-detail-tabs .nav-link.active");return active&&active.getAttribute("href")?active.getAttribute("href").slice(1):"appointments";}document.querySelectorAll(".case-detail-tabs a[data-bs-toggle=\'tab\']").forEach(function(link){link.addEventListener("shown.bs.tab",function(e){var tabId=e.target.getAttribute("href").slice(1);updateCaseDetailTabActions(tabId);});});document.querySelectorAll(".case-stage-edit-btn").forEach(function(btn){btn.addEventListener("click",function(){try{fillCaseSummaryForm(JSON.parse(btn.getAttribute("data-stage")||"{}"));}catch(err){}});});var addSummaryBtn=document.getElementById("case-summary-add-btn");if(addSummaryBtn){addSummaryBtn.addEventListener("click",function(){resetCaseSummaryForm();focusCaseSummaryForm();});}var summaryEmpty=document.getElementById("case-summary-empty");if(summaryEmpty){summaryEmpty.addEventListener("click",function(){resetCaseSummaryForm();focusCaseSummaryForm();});summaryEmpty.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();resetCaseSummaryForm();focusCaseSummaryForm();}});}var cancelEditBtn=document.getElementById("case-summary-cancel-edit");if(cancelEditBtn){cancelEditBtn.addEventListener("click",hideCaseSummaryForm);}var tab=' . json_encode($activeTab) . ';if(!tab&&window.location.hash){tab=window.location.hash.slice(1);}if(tab){var link=document.querySelector(\'.case-detail-tabs a[href="#\'+tab+\'"]\');if(link&&window.bootstrap&&bootstrap.Tab){bootstrap.Tab.getOrCreateInstance(link).show();}}updateCaseDetailTabActions(tab||getActiveCaseDetailTabId());});</script>';
+$caseDetailTabScript = '<script>document.addEventListener("DOMContentLoaded",function(){var nextStageNumber=' . (int) $nextStageNumber . ';function showCaseSummaryForm(){var card=document.getElementById("case-summary-form-card");if(card){card.hidden=false;}}function hideCaseSummaryForm(){var card=document.getElementById("case-summary-form-card");if(card){card.hidden=true;}resetCaseSummaryForm();}function focusCaseSummaryForm(){showCaseSummaryForm();var card=document.getElementById("case-summary-form-card");var titleInput=document.getElementById("case_summary_stage_title");if(card){card.scrollIntoView({behavior:"smooth",block:"start"});}if(titleInput){titleInput.focus();}}function resetCaseSummaryForm(){var form=document.getElementById("case-summary-form");if(!form){return;}form.reset();document.getElementById("case_summary_stage_id").value="";document.getElementById("case_summary_stage_number").value=String(nextStageNumber);document.getElementById("case-summary-form-title").textContent="Add Summary Entry";document.getElementById("case-summary-submit-btn").textContent="Save Summary Entry";}function fillCaseSummaryForm(stage){if(!stage){return;}document.getElementById("case_summary_stage_id").value=stage.id||"";document.getElementById("case_summary_stage_number").value=stage.stage_number||nextStageNumber;document.getElementById("case_summary_stage_title").value=stage.title||"";document.getElementById("case_summary_stage_description").value=stage.description||"";document.getElementById("case_summary_stage_result").value=stage.result||"";document.getElementById("case_summary_stage_start_date").value=stage.start_date||"";document.getElementById("case_summary_stage_expected_end_date").value=stage.expected_end_date||"";document.getElementById("case_summary_stage_actual_end_date").value=stage.actual_end_date||"";document.getElementById("case-summary-form-title").textContent="Edit Summary Entry";document.getElementById("case-summary-submit-btn").textContent="Update Summary Entry";focusCaseSummaryForm();}function showCaseCommentForm(){var card=document.getElementById("case-comment-form-card");if(card){card.hidden=false;}}function hideCaseCommentForm(){var card=document.getElementById("case-comment-form-card");if(card){card.hidden=true;}var form=document.getElementById("case-comment-form");if(form){form.reset();}}function focusCaseCommentForm(){showCaseCommentForm();var input=document.getElementById("case_comment_text");if(input){input.focus();}}function updateCaseDetailTabActions(tabId){var inv=document.getElementById("case-detail-action-invoices");var pay=document.getElementById("case-detail-action-payments");var stages=document.getElementById("case-detail-action-stages");if(inv){inv.hidden=tabId!=="invoices";}if(pay){pay.hidden=tabId!=="payments";}if(stages){stages.hidden=tabId!=="stages";}if(tabId!=="stages"){hideCaseSummaryForm();}if(tabId!=="comments"){hideCaseCommentForm();}}function getActiveCaseDetailTabId(){var active=document.querySelector(".case-detail-tabs .nav-link.active");return active&&active.getAttribute("href")?active.getAttribute("href").slice(1):"appointments";}document.querySelectorAll(".case-detail-tabs a[data-bs-toggle=\'tab\']").forEach(function(link){link.addEventListener("shown.bs.tab",function(e){var tabId=e.target.getAttribute("href").slice(1);updateCaseDetailTabActions(tabId);});});document.querySelectorAll(".case-stage-edit-btn").forEach(function(btn){btn.addEventListener("click",function(){try{fillCaseSummaryForm(JSON.parse(btn.getAttribute("data-stage")||"{}"));}catch(err){}});});var addSummaryBtn=document.getElementById("case-summary-add-btn");if(addSummaryBtn){addSummaryBtn.addEventListener("click",function(){resetCaseSummaryForm();focusCaseSummaryForm();});}var summaryEmpty=document.getElementById("case-summary-empty");if(summaryEmpty){summaryEmpty.addEventListener("click",function(){resetCaseSummaryForm();focusCaseSummaryForm();});summaryEmpty.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();resetCaseSummaryForm();focusCaseSummaryForm();}});}var cancelEditBtn=document.getElementById("case-summary-cancel-edit");if(cancelEditBtn){cancelEditBtn.addEventListener("click",hideCaseSummaryForm);}var addCommentBtn=document.getElementById("case-comment-add-btn");if(addCommentBtn){addCommentBtn.addEventListener("click",focusCaseCommentForm);}var cancelCommentBtn=document.getElementById("case-comment-cancel-btn");if(cancelCommentBtn){cancelCommentBtn.addEventListener("click",hideCaseCommentForm);}var tab=' . json_encode($activeTab) . ';if(!tab&&window.location.hash){tab=window.location.hash.slice(1);}if(tab){var link=document.querySelector(\'.case-detail-tabs a[href="#\'+tab+\'"]\');if(link&&window.bootstrap&&bootstrap.Tab){bootstrap.Tab.getOrCreateInstance(link).show();}}updateCaseDetailTabActions(tab||getActiveCaseDetailTabId());});</script>';
 
 // Replace placeholders
 $replacements = [

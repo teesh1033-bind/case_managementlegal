@@ -527,12 +527,18 @@ $html = <<<'HTML'
             background-color: #f8f9fa !important;
             transition: background-color 0.2s ease;
         }
+        body.legalpro-dark-mode .case-item:hover {
+            background-color: var(--lp-dark-surface-hover, #464f68) !important;
+        }
         .document-item {
             gap: 0.75rem;
         }
         .document-item:hover {
             background-color: #f8f9fa !important;
             transition: background-color 0.2s ease;
+        }
+        body.legalpro-dark-mode .document-item:hover {
+            background-color: var(--lp-dark-surface-hover, #464f68) !important;
         }
         .document-item > .d-flex.align-items-center:first-child {
             flex: 1 1 auto;
@@ -601,9 +607,24 @@ $html = <<<'HTML'
         .case-library-container::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
+        body.legalpro-dark-mode .case-library-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        body.legalpro-dark-mode .case-library-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        body.legalpro-dark-mode .case-library-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.32);
+        }
+        body.legalpro-dark-mode .case-item.border-bottom {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
         .hover-shadow:hover {
             box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
             transition: box-shadow 0.2s ease;
+        }
+        body.legalpro-dark-mode .hover-shadow:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
         }
     </style>
 </head>
@@ -907,16 +928,6 @@ $html = <<<'HTML'
                 }
             });
 
-            // Add hover effect for case items
-            var caseItems = document.querySelectorAll('.case-item');
-            caseItems.forEach(function(item) {
-                item.addEventListener('mouseenter', function() {
-                    this.style.backgroundColor = '#f8f9fa';
-                });
-                item.addEventListener('mouseleave', function() {
-                    this.style.backgroundColor = '';
-                });
-            });
         });
     </script>
 </body>
