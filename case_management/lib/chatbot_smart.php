@@ -7,12 +7,14 @@
 require_once __DIR__ . '/chatbot_assistant.php';
 require_once __DIR__ . '/client-self-service.php';
 require_once __DIR__ . '/appointment_availability.php';
+require_once __DIR__ . '/chatbot_client_updates.php';
 
 class ChatbotSmartEngine
 {
     private PDO $pdo;
     private array $context;
     private ?array $clientData = null;
+    private string $activeHandler = 'assistant';
 
     public function __construct(PDO $pdo, array $context)
     {
@@ -22,22 +24,26 @@ class ChatbotSmartEngine
 
     public function chat(string $message, string $tokenNote = ''): array
     {
+        $this->activeHandler = 'assistant';
         $role = $this->context['role'] ?? 'guest';
         $lower = strtolower($message);
 
         $nav = $this->tryNavigation($message, $lower);
         if ($nav !== null) {
+            $this->activeHandler = 'navigation';
             return $this->finish($nav, $tokenNote);
         }
 
         if ($role === 'client') {
             $action = $this->tryClientActions($message, $lower);
             if ($action !== null) {
+                $this->activeHandler = 'action';
                 return $this->finish($action, $tokenNote);
             }
 
             $insight = $this->tryClientInsights($message, $lower);
             if ($insight !== null) {
+                $this->activeHandler = 'insight';
                 return $this->finish($insight, $tokenNote);
             }
         }
@@ -45,6 +51,7 @@ class ChatbotSmartEngine
         if (in_array($role, ['lawyer', 'admin'], true)) {
             $navAdmin = $this->tryStaffNavigation($message, $lower, $role);
             if ($navAdmin !== null) {
+                $this->activeHandler = 'navigation';
                 return $this->finish($navAdmin, $tokenNote);
             }
         }
@@ -74,6 +81,7 @@ class ChatbotSmartEngine
             $result['reply'] .= $tokenNote;
         }
         $result['mode'] = 'smart';
+        $result['handler'] = $this->activeHandler;
         $result['links'] = $result['links'] ?? [];
         $result['actions'] = $result['actions'] ?? [];
         return $result;
@@ -229,6 +237,12 @@ class ChatbotSmartEngine
             return null;
         }
 
+        $updateFlow = new ChatbotClientUpdateFlow($this->pdo, $this->context);
+        $updateResult = $updateFlow->tryHandle($message, $lower);
+        if ($updateResult !== null) {
+            return $updateResult;
+        }
+
         $caseWork = $this->tryCaseWorkIntent($message, $lower);
         if ($caseWork !== null) {
             return $caseWork;
@@ -373,7 +387,6 @@ class ChatbotSmartEngine
 
     private function handleCaseWork(array $case, string $message, string $lower): array
     {
-        $clientId = (int) ($this->context['client_id'] ?? 0);
         $caseId = (int) $case['id'];
         $label = $this->caseLabel($caseId);
         $title = (string) ($case['title'] ?? '');
@@ -381,29 +394,21 @@ class ChatbotSmartEngine
         $url = 'client-case-view.php?id=' . $caseId;
 
         $wantsUpdate = (bool) preg_match('/\b(update|change|edit|modify|fix|work on)\b/i', $lower);
-        $submitted = false;
 
-        if ($wantsUpdate && $clientId > 0) {
-            $r = legalpro_client_submit_request($this->pdo, $clientId, [
-                'request_type' => 'callback',
-                'case_id' => $caseId,
-                'message' => $message,
-                'subject' => 'Case update: ' . $title,
-            ], null);
-            $submitted = $r['ok'] ?? false;
+        if ($wantsUpdate) {
+            $flow = new ChatbotClientUpdateFlow($this->pdo, $this->context);
+            $updateResult = $flow->tryCaseUpdateForCase($case, $message);
+            if ($updateResult !== null) {
+                return $updateResult;
+            }
         }
 
         $lines = "Got it — **{$label} — {$title}** ({$status}).\n\n";
-
-        if ($submitted) {
-            $lines .= "I've sent your update request to your **legal team** for this case.\n\n";
-        }
-
         $lines .= "Opening the case page where you can:\n";
         $lines .= "• **Add a comment** with details\n";
         $lines .= "• **Upload documents**\n";
         $lines .= "• See appointments & court dates\n\n";
-        $lines .= "_Status and legal details are updated by your lawyer — your message has been logged._";
+        $lines .= "_Say **update {$label}** to post an update here in chat._";
 
         return [
             'ok' => true,
@@ -412,9 +417,8 @@ class ChatbotSmartEngine
             'redirect_delay' => 1400,
             'links' => [
                 ['label' => 'Open ' . $label, 'url' => $url],
-                ['label' => 'My requests', 'url' => 'client-requests.php'],
             ],
-            'actions' => $submitted ? ['case_update_submitted', 'case_opened'] : ['case_opened'],
+            'actions' => ['case_opened'],
         ];
     }
 

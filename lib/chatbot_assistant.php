@@ -63,6 +63,7 @@ class ChatbotAssistant
             return [
                 'role' => 'client',
                 'client_id' => (int) $_SESSION['client_id'],
+                'client_user_id' => isset($_SESSION['client_user_id']) ? (int) $_SESSION['client_user_id'] : 0,
                 'display_name' => isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'] : 'Client',
             ];
         }
@@ -98,8 +99,13 @@ class ChatbotAssistant
             return $this->handleHelp();
         }
 
-        if ($this->matchesAny($normalized, ['hello', 'hi ', 'hey', 'good morning', 'good afternoon', 'good evening'])) {
+        if ($this->isGreeting($message)) {
             return $this->handleGreeting();
+        }
+
+        $casual = $this->matchCasualChat($message);
+        if ($casual !== null) {
+            return $casual;
         }
 
         if ($this->isCaseRelatedQuery($normalized)) {
@@ -254,7 +260,7 @@ class ChatbotAssistant
         $role = ucfirst($this->context['role']);
 
         if ($this->context['role'] === 'client') {
-            return $this->result("Hello {$name}! I'm your smart assistant — I analyze your live account data, **open pages** for you, **update your profile**, and **book appointments**. Say **help** for examples.");
+            return $this->result("Hello {$name}! I'm your smart assistant — I can update your profile, post case updates, open pages, and book appointments right here in chat. Say **update my profile** or **update my case**, or **help** for examples.");
         }
         return $this->result("Hello {$name}! I'm your {$role} assistant. Ask me about cases, appointments, documents, payments, or court dates. Say **help** for examples.");
     }
@@ -279,13 +285,13 @@ class ChatbotAssistant
                 'Upcoming court dates',
             ],
             'client' => [
+                'Update my profile',
+                'Update my case',
                 'Weekly summary — what should I focus on?',
                 'Take me to payments',
                 'Book appointment tomorrow 2pm case C-0003',
-                'Update my phone to +230 5xxx xxxx',
                 'How should I prepare for my next court date?',
                 'Open case C-0007',
-                'Request a callback from my lawyer',
             ],
         ];
 
@@ -1127,6 +1133,73 @@ class ChatbotAssistant
     private function caseNumber(int $id): string
     {
         return 'C-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function isGreeting(string $message): bool
+    {
+        $t = $this->normalizeChatText($message);
+        if ($t === '') {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/^(hi{1,}|hey{1,}|heya|hello|howdy|greetings?|hola|yo|sup|good (morning|afternoon|evening|day))(\s+(there|again|everyone))?$/',
+            $t
+        );
+    }
+
+    private function normalizeChatText(string $message): string
+    {
+        $t = strtolower(trim($message));
+        $t = str_replace(["'", "'"], '', $t);
+        $t = preg_replace('/[^\w\s]/', '', $t);
+
+        return preg_replace('/\s+/', ' ', trim($t));
+    }
+
+    private function matchCasualChat(string $message): ?array
+    {
+        $t = $this->normalizeChatText($message);
+        if ($t === '') {
+            return null;
+        }
+
+        $name = $this->context['display_name'] ?? 'there';
+
+        if (preg_match('/^how are you(\s+doing)?$/', $t)
+            || preg_match('/^how re you(\s+doing)?$/', $t)
+            || preg_match('/^how r u$/', $t)
+            || preg_match('/^how (are|is) things$/', $t)
+            || preg_match('/^how (are|is) you (today|doing today)$/', $t)) {
+            return $this->result(
+                "I'm doing well, thanks for asking {$name}! I'm here and ready to help with your cases, appointments, billing, or documents. What would you like to look at?"
+            );
+        }
+
+        if (preg_match('/^how (is|s) it going$/', $t)
+            || preg_match('/^hows it going$/', $t)
+            || preg_match('/^whats up$/', $t)
+            || preg_match('/^what is up$/', $t)
+            || preg_match('/^how do you do$/', $t)) {
+            return $this->result(
+                "All good on my end! How can I help you today — cases, appointments, payments, or something else?"
+            );
+        }
+
+        if (preg_match('/^are you (ok|okay|there|well|alright)$/', $t)
+            || preg_match('/^you (ok|okay|there|well|alright)$/', $t)) {
+            return $this->result("Yes, I'm here and working. Ask me anything about your account, or say help for ideas.");
+        }
+
+        if (preg_match('/^(thanks?|thank you|thx|ty|cheers)(\s+(a lot|so much|anyway))?$/', $t)) {
+            return $this->result("You're welcome! Let me know if you need anything else.");
+        }
+
+        if (preg_match('/^(bye|goodbye|see you|see ya|later|good night|goodnight|take care)$/', $t)) {
+            return $this->result('Goodbye! Come back anytime you need help with your account.');
+        }
+
+        return null;
     }
 
     private function matchesAny(string $haystack, array $needles): bool

@@ -140,6 +140,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: settings.php?msg=' . urlencode('Specialization removed successfully.') . '&type=success');
             exit;
         }
+    } elseif ($formType === 'chatbot_ai') {
+        $aiEnabled = isset($_POST['chatbot_ai_enabled']) ? '1' : '0';
+        $apiKey = isset($_POST['openai_api_key']) ? trim((string) $_POST['openai_api_key']) : '';
+        $model = isset($_POST['openai_model']) ? trim((string) $_POST['openai_model']) : 'gpt-4o-mini';
+        $allowedModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+        if (!in_array($model, $allowedModels, true)) {
+            $model = 'gpt-4o-mini';
+        }
+        setSetting('chatbot_ai_enabled', $aiEnabled);
+        setSetting('openai_model', $model);
+        if ($apiKey !== '') {
+            setSetting('openai_api_key', $apiKey);
+        }
+        header('Location: settings.php?msg=' . urlencode('AI assistant settings saved.') . '&type=success');
+        exit;
     }
 }
 
@@ -196,6 +211,26 @@ foreach ($currencyOptionsList as $code => $meta) {
     $selected = $currencyConfig['code'] === $code ? ' selected' : '';
     $currencyOptionsHtml .= '<option value="' . htmlspecialchars($code) . '"' . $selected . '>' . htmlspecialchars($meta['label']) . '</option>';
 }
+
+$chatbotAiEnabled = getSetting('chatbot_ai_enabled', '1') !== '0';
+$openaiModel = (string) getSetting('openai_model', 'gpt-4o-mini');
+$openaiKeyStored = trim((string) getSetting('openai_api_key', '')) !== '';
+$chatbotAiStatusHtml = $openaiKeyStored && $chatbotAiEnabled
+    ? '<span class="badge bg-success">AI active</span>'
+    : ($openaiKeyStored ? '<span class="badge bg-warning text-dark">Key saved — AI disabled</span>' : '<span class="badge bg-secondary">Local mode only</span>');
+$chatbotAiEnabledChecked = $chatbotAiEnabled ? ' checked' : '';
+$openaiModelOptions = [
+    'gpt-4o-mini' => 'GPT-4o mini (recommended — fast & affordable)',
+    'gpt-4o' => 'GPT-4o (most capable)',
+    'gpt-4-turbo' => 'GPT-4 Turbo',
+    'gpt-3.5-turbo' => 'GPT-3.5 Turbo (legacy)',
+];
+$openaiModelOptionsHtml = '';
+foreach ($openaiModelOptions as $value => $label) {
+    $sel = $openaiModel === $value ? ' selected' : '';
+    $openaiModelOptionsHtml .= '<option value="' . htmlspecialchars($value) . '"' . $sel . '>' . htmlspecialchars($label) . '</option>';
+}
+$openaiKeyPlaceholder = $openaiKeyStored ? '•••••••••••••••• (saved — leave blank to keep)' : 'sk-...';
 
 $messageHtml = '';
 if (!empty($message)) {
@@ -486,6 +521,40 @@ $html = <<<'HTML'
                             </div>
                         </div>
                     </div>
+                    <div class="card mt-4">
+                        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                            <h6>AI Assistant</h6>
+                            {CHATBOT_AI_STATUS}
+                        </div>
+                        <div class="card-body">
+                            <p class="text-sm text-muted mb-3">Connect OpenAI to power natural-language answers with your live case data. Booking, navigation, and profile updates still run locally for reliability.</p>
+                            <form method="post">
+                                <input type="hidden" name="form_type" value="chatbot_ai">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="chatbot_ai_enabled" id="chatbotAiEnabled" value="1"{CHATBOT_AI_ENABLED_CHECKED}>
+                                    <label class="form-check-label" for="chatbotAiEnabled">Enable OpenAI-powered responses</label>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-control-label">OpenAI API key</label>
+                                            <input class="form-control" type="password" name="openai_api_key" autocomplete="off" placeholder="{OPENAI_KEY_PLACEHOLDER}">
+                                            <small class="text-muted">Get a key at platform.openai.com. You can also set the OPENAI_API_KEY environment variable on the server.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-control-label">Model</label>
+                                            <select class="form-control" name="openai_model">
+                                                {OPENAI_MODEL_OPTIONS}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-dark btn-sm mt-2">Save AI settings</button>
+                            </form>
+                        </div>
+                    </div>
 				</div>
 			</div>
 			<footer class="footer pt-3  ">
@@ -525,5 +594,9 @@ $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name'])
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
 $html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
+$html = str_replace('{CHATBOT_AI_STATUS}', $chatbotAiStatusHtml, $html);
+$html = str_replace('{CHATBOT_AI_ENABLED_CHECKED}', $chatbotAiEnabledChecked, $html);
+$html = str_replace('{OPENAI_KEY_PLACEHOLDER}', htmlspecialchars($openaiKeyPlaceholder), $html);
+$html = str_replace('{OPENAI_MODEL_OPTIONS}', $openaiModelOptionsHtml, $html);
 echo $html;
 ?>

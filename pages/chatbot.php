@@ -4,7 +4,10 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/chatbot_assistant.php';
 require_once __DIR__ . '/../lib/chatbot_ai.php';
 
-$aiModeLabel = 'Smart assistant';
+$aiModeLabel = ChatbotAI::openAiConfigured() ? 'AI powered' : 'Smart assistant';
+$aiHeroSub = ChatbotAI::openAiConfigured()
+    ? 'AI-powered assistant with live access to your account — I answer naturally, analyze your cases and billing, navigate the portal, and book appointments when you ask.'
+    : 'Smart assistant powered by your live account data. I analyze your cases, billing, and court dates, redirect you anywhere in the portal, and update your profile or book appointments when you ask. Add an OpenAI API key in Settings for full AI responses.';
 
 $context = ChatbotAssistant::resolveContextFromSession();
 if ($context['role'] === 'guest') {
@@ -90,7 +93,7 @@ if ($role === 'client') {
 			<div class="cb-hero-card">
 				<p class="cb-hero-kicker">AI Assistant</p>
 				<h4 class="cb-hero-title">Chat with ' . htmlspecialchars($assistantName) . '</h4>
-				<p class="cb-hero-sub">Smart assistant powered by your live account data — no external API. I analyze your cases, billing, and court dates, redirect you anywhere in the portal, and update your profile or book appointments when you ask.</p>
+				<p class="cb-hero-sub">' . htmlspecialchars($aiHeroSub) . '</p>
 				<p class="cb-hero-meta">Logged in as ' . $displayName . ' · <span class="cb-mode-badge">' . htmlspecialchars($aiModeLabel) . '</span></p>
 			</div>
 			<div class="cb-layout">
@@ -416,7 +419,9 @@ $html = <<<'HTML'
 				}).join('') + '</div>';
 			}
 			let metaHtml = '';
-			if (meta && meta.mode === 'smart') {
+			if (meta && meta.mode === 'ai') {
+				metaHtml = '<span class="cb-hint">AI</span>';
+			} else if (meta && meta.mode === 'smart') {
 				metaHtml = '<span class="cb-hint">Smart</span>';
 			}
 			if (sender === 'You') {
