@@ -112,11 +112,6 @@ try {
     $stmt->execute([$case_id]);
     $services = $stmt->fetchAll();
 
-    // Get case stages
-    $stmt = $pdo->prepare("SELECT * FROM case_stages WHERE case_id = ? ORDER BY stage_number ASC");
-    $stmt->execute([$case_id]);
-    $stages = $stmt->fetchAll();
-
     // Get case comments (all comments for this case)
     $stmt = $pdo->prepare("
         SELECT cc.*, u.username,
@@ -156,25 +151,15 @@ try {
     $stmt->execute([$case_id]);
     $appointments = $stmt->fetchAll();
 
-    $courtDateCount = 0;
-    try {
-        $cdStmt = $pdo->prepare('SELECT COUNT(*) FROM court_dates WHERE case_id = ?');
-        $cdStmt->execute([$case_id]);
-        $courtDateCount = (int) $cdStmt->fetchColumn();
-    } catch (PDOException $e) {
-        $courtDateCount = 0;
-    }
-
 } catch (PDOException $e) {
     $message = 'Error loading case details: ' . htmlspecialchars($e->getMessage());
     $messageType = 'danger';
     $case = null;
     $services = [];
-    $stages = [];
     $comments = [];
+    $caseEvents = [];
     $documents = [];
     $appointments = [];
-    $courtDateCount = 0;
 }
 
 $messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
@@ -222,52 +207,14 @@ if (!empty($services)) {
     </div>';
 }
 
-$progressPhases = legalpro_client_case_progress_phase(
-    (string) ($case['status'] ?? 'open'),
-    $stages,
-    $courtDateCount > 0
-);
-$progressStepperHtml = legalpro_client_render_case_progress_stepper($progressPhases);
-
-// Build stages list
-$stagesHtml = '';
-if (!empty($stages)) {
-    foreach ($stages as $stage) {
-        $statusIcon = '';
-        if ($stage['actual_end_date']) {
-            $statusIcon = '<i class="ni ni-check-bold text-success"></i>';
-        } elseif ($stage['start_date']) {
-            $statusIcon = '<i class="ni ni-time-alarm text-warning"></i>';
-        } else {
-            $statusIcon = '<i class="ni ni-circle-08 text-muted"></i>';
-        }
-
-        $stagesHtml .= '<div class="timeline-block mb-3">
-            <span class="timeline-step">' . $statusIcon . '</span>
-            <div class="timeline-content">
-                <h6 class="text-dark text-sm font-weight-bold mb-0">' . htmlspecialchars($stage['title']) . '</h6>
-                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">' . htmlspecialchars($stage['description'] ?: 'No description') . '</p>
-                <p class="text-secondary text-xs mt-1 mb-0">Result: ' . htmlspecialchars($stage['result'] ?: 'Pending') . '</p>';
-        if ($stage['file_path']) {
-            $stagesHtml .= '<p class="text-secondary text-xs mt-1 mb-0"><a href="' . htmlspecialchars($stage['file_path']) . '" target="_blank" class="text-primary">View Attachment</a></p>';
-        }
-        $stagesHtml .= '<div class="text-secondary text-xs mt-2">
-                <span>Start: ' . ($stage['start_date'] ? date('M d, Y', strtotime($stage['start_date'])) : 'Not started') . '</span><br>
-                <span>Expected End: ' . ($stage['expected_end_date'] ? date('M d, Y', strtotime($stage['expected_end_date'])) : 'Not set') . '</span><br>
-                <span>Actual End: ' . ($stage['actual_end_date'] ? date('M d, Y', strtotime($stage['actual_end_date'])) : 'Not completed') . '</span>
-            </div>
-            </div>
-        </div>';
-    }
-} else {
-    $stagesHtml = '<p class="text-muted text-sm">No case stages defined yet.</p>';
-}
+// Build case activity timeline
+$activityHtml = CaseEvents::renderEventsTimeline($case_id);
 
 // Role badge for comment thread
 $commentRoleBadge = static function (string $type): string {
     switch ($type) {
         case 'client':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-info">Client</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Client</span>';
         case 'lawyer':
             return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
         case 'admin':
@@ -345,7 +292,10 @@ $documentsHtml = '';
 if (!empty($documents)) {
     foreach ($documents as $doc) {
         $docMeta = $ackMap[(int) $doc['id']] ?? null;
-        $filepath = '../' . ltrim((string) $doc['filepath'], '/');
+        $viewUrl = (string) ($docMeta['view_url'] ?? '../' . ltrim((string) $doc['filepath'], '/'));
+        $downloadUrl = (string) ($docMeta['download_url'] ?? $viewUrl);
+        $downloadName = (string) ($docMeta['download_filename'] ?? $doc['filename']);
+        $docLabel = (string) ($docMeta['display_label'] ?? ($doc['label'] ?: $doc['filename']));
         $ackHtml = '';
         if ($docMeta && !empty($docMeta['needs_ack'])) {
             $ackHtml = '<form method="post" class="d-inline ms-1">
@@ -360,10 +310,10 @@ if (!empty($documents)) {
         $documentsHtml .= '<div class="d-flex align-items-center mb-3 flex-wrap gap-2">
             <div class="w-100">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h6 class="mb-0 text-sm">' . htmlspecialchars($doc['label'] ?: $doc['filename']) . $newBadge . '</h6>
+                    <h6 class="mb-0 text-sm">' . htmlspecialchars($docLabel) . $newBadge . '</h6>
                     <div>
-                        <a href="' . htmlspecialchars($filepath) . '" target="_blank" class="btn btn-sm btn-outline-primary cdoc-touch-btn">View</a>
-                        <a href="' . htmlspecialchars($filepath) . '" download class="btn btn-sm btn-primary cdoc-touch-btn">Download</a>
+                        <a href="' . htmlspecialchars($viewUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary cdoc-touch-btn">View</a>
+                        <a href="' . htmlspecialchars($downloadUrl) . '" download="' . htmlspecialchars($downloadName) . '" class="btn btn-sm btn-primary cdoc-touch-btn">Download PDF</a>
                         ' . $ackHtml . '
                     </div>
                 </div>
@@ -398,9 +348,6 @@ if (!empty($appointments)) {
         <p class="text-sm text-muted mb-0 mt-3">No appointments scheduled.</p>
     </div>';
 }
-
-// Build events HTML using the new CaseEvents class
-$eventsHtml = CaseEvents::renderEventsTimeline($case_id);
 
 $caseNumber = 'C-' . str_pad($case['id'], 4, '0', STR_PAD_LEFT);
 $lawyerNames = $case['lawyer_names'] ?: 'Unassigned';
@@ -460,7 +407,7 @@ $html = <<<'HTML'
             border-left: 4px solid #8392ab;
             box-shadow: 0 1px 4px rgba(0,0,0,.04);
         }
-        .cc-comment-item--client .cc-comment-item-inner { border-left-color: #11cdef; }
+        .cc-comment-item--client .cc-comment-item-inner { border-left-color: #8898aa; }
         .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
         .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
         .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
@@ -552,20 +499,17 @@ $html = <<<'HTML'
             <div class="row">
                 <!-- Case Timeline & Services -->
                 <div class="col-lg-8 mb-4">
-                    <!-- Case Stages Timeline -->
-                    <div class="card mb-4">
-                        <div class="card-header pb-0">
-                            <h6>Case Progress</h6>
-                            <p class="text-xs text-muted mb-0 mt-1">Intake → Active → Hearing → Settlement → Closed</p>
+                    <!-- Case activity -->
+                    <div class="card mb-4 ccv-activity-panel">
+                        <div class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <h6 class="mb-0 ccv-activity-panel__title">Case Activity</h6>
+                                <p class="text-xs mb-0 mt-1 ccv-activity-panel__subtitle">Updates on documents, appointments, payments, and case changes</p>
+                            </div>
+                            <span class="badge bg-gradient-primary">{ACTIVITY_COUNT}</span>
                         </div>
-                        <div class="card-body">
-                            {PROGRESS_STEPPER}
-                            <details class="cp-stage-details mt-4">
-                                <summary class="text-sm font-weight-bold text-primary" style="cursor:pointer;">View detailed stage timeline</summary>
-                                <div class="timeline timeline-one-side mt-3">
-                                    {STAGES_HTML}
-                                </div>
-                            </details>
+                        <div class="card-body ccv-activity-feed">
+                            {ACTIVITY_HTML}
                         </div>
                     </div>
 
@@ -671,8 +615,8 @@ $html = str_replace('{EXPECTED_COMPLETION}', $case['expected_completion'] ? date
 $html = str_replace('{ESTIMATED_FEES}', number_format($case['estimated_fees'], 2), $html);
 $html = str_replace('{LAST_UPDATED}', date('M d, Y', strtotime($case['updated_at'])), $html);
 $html = str_replace('{SERVICES_HTML}', $servicesHtml, $html);
-$html = str_replace('{PROGRESS_STEPPER}', $progressStepperHtml, $html);
-$html = str_replace('{STAGES_HTML}', $stagesHtml, $html);
+$html = str_replace('{ACTIVITY_HTML}', $activityHtml, $html);
+$html = str_replace('{ACTIVITY_COUNT}', (string) count($caseEvents), $html);
 $html = str_replace('{COMMENTS_HTML}', $commentsHtml, $html);
 $html = str_replace('{COMMENT_FORM_HTML}', $commentFormHtml, $html);
 $html = str_replace('{COMMENTS_COUNT}', (string) count($comments), $html);

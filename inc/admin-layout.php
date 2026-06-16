@@ -451,7 +451,7 @@ function legalpro_comment_role_badge(string $commentType): string
 {
     $key = strtolower(trim($commentType));
     $map = [
-        'client' => ['label' => 'Client', 'class' => 'lp-pill--status-progress'],
+        'client' => ['label' => 'Client', 'class' => 'lp-pill--status-default'],
         'lawyer' => ['label' => 'Lawyer', 'class' => 'lp-pill--status-active'],
         'admin' => ['label' => 'Admin', 'class' => 'lp-pill--status-pending'],
         'staff' => ['label' => 'Staff', 'class' => 'lp-pill--status-closed'],

@@ -55,11 +55,13 @@ if (empty($documents)) {
     </div>';
 } else {
     foreach ($documents as $doc) {
-        $label = htmlspecialchars($doc['label'] ?: $doc['filename']);
+        $label = htmlspecialchars((string) ($doc['display_label'] ?? ($doc['label'] ?: $doc['filename'])));
         $caseTitle = htmlspecialchars($doc['case_title']);
         $uploaded = date('M j, Y', strtotime((string) $doc['uploaded_at']));
         $by = htmlspecialchars((string) ($doc['uploaded_by'] ?: 'Unknown'));
-        $filepath = htmlspecialchars('../' . ltrim((string) $doc['filepath'], '/'));
+        $viewUrl = htmlspecialchars((string) ($doc['view_url'] ?? '../' . ltrim((string) $doc['filepath'], '/')));
+        $downloadUrl = htmlspecialchars((string) ($doc['download_url'] ?? $doc['view_url'] ?? '../' . ltrim((string) $doc['filepath'], '/')));
+        $downloadName = htmlspecialchars((string) ($doc['download_filename'] ?? $doc['filename']));
         $newBadge = !empty($doc['is_new']) ? '<span class="cdoc-new-badge">New</span>' : '';
         $ackBtn = '';
         if (!empty($doc['needs_ack'])) {
@@ -88,8 +90,8 @@ if (empty($documents)) {
                 <div class="cdoc-row__meta">' . $caseTitle . ' · ' . $by . ' · ' . $uploaded . '</div>
             </div>
             <div class="cdoc-row__actions">
-                <a href="' . $filepath . '" target="_blank" rel="noopener" class="btn btn-sm btn-primary cdoc-touch-btn">View</a>
-                <a href="' . $filepath . '" download class="btn btn-sm btn-outline-primary cdoc-touch-btn">Download</a>
+                <a href="' . $viewUrl . '" target="_blank" rel="noopener" class="btn btn-sm btn-primary cdoc-touch-btn">View</a>
+                <a href="' . $downloadUrl . '" download="' . $downloadName . '" class="btn btn-sm btn-outline-primary cdoc-touch-btn">Download PDF</a>
                 ' . $ackBtn . '
             </div>
         </article>';
