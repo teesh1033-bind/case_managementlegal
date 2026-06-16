@@ -161,6 +161,58 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
     nav.classList.add("d-flex", "align-items-center", "justify-content-between", "flex-wrap", "gap-2", "w-100");
+
+    var isLawyerPortal = document.body.classList.contains("legalpro-lawyer-portal");
+    var navCollapse = nav.querySelector("#navbar") || nav.querySelector(".navbar-collapse");
+    if (isLawyerPortal && navCollapse && !navCollapse.querySelector(".legalpro-navbar-search")) {
+        var params = new URLSearchParams(window.location.search);
+        var searchForm = document.createElement("form");
+        searchForm.className = "ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search";
+        searchForm.method = "get";
+        searchForm.action = window.location.pathname.split("/").pop() || "";
+        searchForm.setAttribute("role", "search");
+        searchForm.innerHTML = ""
+            + "<div class=\"input-group\">"
+            + "<span class=\"input-group-text text-body\"><i class=\"fas fa-search\" aria-hidden=\"true\"></i></span>"
+            + "<input type=\"search\" name=\"q\" class=\"form-control\" placeholder=\"Search...\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"Search\">"
+            + "</div>";
+
+        var searchInput = searchForm.querySelector("input[name=\"q\"]");
+        if (searchInput) {
+            searchInput.value = (params.get("q") || "").trim();
+        }
+
+        var navList = navCollapse.querySelector(".navbar-nav");
+        if (navList && navList.parentNode === navCollapse) {
+            navCollapse.insertBefore(searchForm, navList);
+        } else {
+            navCollapse.prepend(searchForm);
+        }
+
+        var searchRows = Array.prototype.slice.call(document.querySelectorAll("[data-search]"));
+        function applyLawyerSearch(term) {
+            if (!searchRows.length) {
+                return;
+            }
+            var q = String(term || "").trim().toLowerCase();
+            searchRows.forEach(function (row) {
+                if (!q) {
+                    row.style.display = "";
+                    return;
+                }
+                var hay = (row.getAttribute("data-search") || row.textContent || "").toLowerCase();
+                row.style.display = hay.indexOf(q) !== -1 ? "" : "none";
+            });
+        }
+
+        if (searchInput) {
+            applyLawyerSearch(searchInput.value);
+            searchInput.addEventListener("input", function () {
+                applyLawyerSearch(searchInput.value);
+            });
+        }
+    }
+
     if (!nav.querySelector(".legalpro-navbar-actions")) {
         nav.appendChild(actions);
     }
