@@ -438,8 +438,8 @@ if (empty($appointments)) {
         $rowClass = $appointment['status'] === 'rejected' ? 'table-danger' : ($isToday && $appointment['status'] === 'accepted' ? 'table-info' : '');
 
         $appointmentsTable .= '
-        <tr class="' . $rowClass . '">
-            <td>
+        <tr id="apt-' . (int) $appointment['id'] . '" class="' . $rowClass . '">
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="lawyer-appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconApptRow . '</div>
                     <div>
@@ -448,19 +448,112 @@ if (empty($appointments)) {
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="align-middle">
                 <h6 class="mb-0 text-sm">' . htmlspecialchars($appointment['first_name'] . ' ' . $appointment['last_name']) . '</h6>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointment['email']) . '</p>
             </td>
-            <td class="text-center">
+            <td class="align-middle text-center">
                 <span class="text-sm font-weight-bold">' . htmlspecialchars($appointmentDate) . '</span>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointmentTime) . '</p>
             </td>
-            <td>' . htmlspecialchars($appointment['notes'] ?: 'No notes') . '</td>
-            <td class="text-center">' . $statusBadge . '</td>
-            <td class="text-center align-middle lawyer-appointment-case-cell">' . buildLawyerAppointmentCaseLink($appointment) . '</td>
-            <td class="text-end align-middle lawyer-appointment-actions-cell">' . buildLawyerAppointmentActions($appointment) . '</td>
+            <td class="align-middle">' . htmlspecialchars($appointment['notes'] ?: 'No notes') . '</td>
+            <td class="align-middle text-center">' . $statusBadge . '</td>
+            <td class="align-middle text-center lawyer-appointment-case-cell">' . buildLawyerAppointmentCaseLink($appointment) . '</td>
+            <td class="align-middle text-end lp-table-actions lawyer-appointment-actions-cell">' . buildLawyerAppointmentActions($appointment) . '</td>
         </tr>';
+    }
+}
+
+// Calendar events for FullCalendar hub
+$appointmentCalendarEvents = [];
+foreach ($appointments as $row) {
+    if (empty($row['starts_at'])) {
+        continue;
+    }
+
+    $status = strtolower((string) ($row['status'] ?? 'pending'));
+    if ($status === 'approved') {
+        $status = 'accepted';
+    }
+    $caseTitle = $row['case_title'] ?: 'Appointment';
+    $clientName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+    $clientEmail = trim((string) ($row['email'] ?? ''));
+    $notes = trim((string) ($row['notes'] ?? ''));
+    $startsLabel = date('M j, Y g:i A', strtotime($row['starts_at']));
+
+    $appointmentCalendarEvents[] = [
+        'id' => (string) $row['id'],
+        'title' => $caseTitle,
+        'start' => $row['starts_at'],
+        'end' => !empty($row['ends_at']) ? $row['ends_at'] : null,
+        'backgroundColor' => 'transparent',
+        'borderColor' => 'transparent',
+        'textColor' => '#344767',
+        'extendedProps' => [
+            'client' => $clientName !== '' ? $clientName : 'Client',
+            'clientEmail' => $clientEmail,
+            'notes' => $notes,
+            'status' => $status,
+            'statusLabel' => ucfirst($status),
+            'appointmentId' => (int) $row['id'],
+            'startsLabel' => $startsLabel,
+            'searchHay' => strtolower(implode(' ', array_filter([
+                $caseTitle,
+                $clientName,
+                $clientEmail,
+                $status,
+                $notes,
+                $startsLabel,
+                date('Y-m-d', strtotime($row['starts_at'])),
+                date('m/d/Y', strtotime($row['starts_at'])),
+                (string) ($row['case_id'] ?? ''),
+                (string) $row['id'],
+            ]))),
+        ],
+    ];
+}
+
+$appointmentCalendarEventsJson = json_encode(
+    $appointmentCalendarEvents,
+    JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+);
+
+$upcomingAppointmentsCalendarHtml = '';
+$upcomingForCalendar = array_values(array_filter($appointments, function ($row) {
+    if (empty($row['starts_at']) || strtotime($row['starts_at']) < time()) {
+        return false;
+    }
+    $status = strtolower((string) ($row['status'] ?? 'pending'));
+
+    return $status !== 'rejected';
+}));
+if (empty($upcomingForCalendar)) {
+    $upcomingAppointmentsCalendarHtml = '<div class="dashboard-upcoming-empty">'
+        . $iconApptEmpty
+        . '<span>No upcoming appointments</span></div>';
+} else {
+    usort($upcomingForCalendar, function ($a, $b) {
+        return strtotime($a['starts_at']) <=> strtotime($b['starts_at']);
+    });
+    foreach (array_slice($upcomingForCalendar, 0, 8) as $row) {
+        $status = strtolower((string) ($row['status'] ?? 'pending'));
+        if ($status === 'approved') {
+            $status = 'accepted';
+        }
+        $caseTitle = $row['case_title'] ?: 'Appointment';
+        $clientName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+        $clientName = $clientName !== '' ? $clientName : 'Client';
+        $hourLabel = date('g:i A', strtotime($row['starts_at']));
+        $dayLabel = date('M j', strtotime($row['starts_at']));
+
+        $upcomingAppointmentsCalendarHtml .= '
+        <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . '" data-appointment-id="' . (int) $row['id'] . '">
+            <span class="dashboard-upcoming-item__time">' . htmlspecialchars($hourLabel) . '<br><small style="font-weight:500;opacity:.8">' . htmlspecialchars($dayLabel) . '</small></span>
+            <span class="flex-grow-1">
+                <p class="dashboard-upcoming-item__title">' . htmlspecialchars($caseTitle) . '</p>
+                <p class="dashboard-upcoming-item__sub">' . htmlspecialchars($clientName) . '</p>
+            </span>
+        </button>';
     }
 }
 
@@ -484,7 +577,11 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
+        .lawyer-appointments-page {
+            --la-primary: var(--legalpro-theme-primary, #5e72e4);
+        }
         .lawyer-appointment-actions {
             align-items: center;
             display: inline-flex;
@@ -515,6 +612,152 @@ $html = <<<'HTML'
         #create_appointment_time option:disabled {
             color: #adb5bd;
         }
+        .lawyer-appointments-page .dashboard-calendar-hub__head {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .lawyer-appointments-page .la-cal-search-wrap {
+            position: relative;
+            width: 100%;
+        }
+        .lawyer-appointments-page .la-cal-search-wrap--featured {
+            padding: .9rem 1rem 1rem;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+        }
+        .lawyer-appointments-page .la-cal-search-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--la-primary);
+            margin-bottom: .55rem;
+        }
+        .lawyer-appointments-page .la-cal-search-field {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            background: #fff;
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border-radius: 12px;
+            padding: .7rem 1rem;
+            transition: border-color .15s, box-shadow .15s, transform .15s;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
+        }
+        .lawyer-appointments-page .la-cal-search-field:focus-within {
+            border-color: var(--la-primary);
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            transform: translateY(-1px);
+        }
+        .lawyer-appointments-page .la-cal-search-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            color: var(--la-primary);
+            flex-shrink: 0;
+        }
+        .lawyer-appointments-page .la-cal-search-field svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+        }
+        .lawyer-appointments-page .la-cal-search-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            font-family: inherit;
+        }
+        .lawyer-appointments-page .la-cal-search-input::placeholder {
+            color: #64748b;
+            font-weight: 500;
+        }
+        .lawyer-appointments-page .la-cal-search-results {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            z-index: 30;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+            max-height: 320px;
+            overflow-y: auto;
+            padding: .35rem;
+        }
+        .lawyer-appointments-page .la-cal-search-item {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            width: 100%;
+            text-align: left;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            padding: .65rem .75rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .lawyer-appointments-page .la-cal-search-item:hover,
+        .lawyer-appointments-page .la-cal-search-item:focus-visible {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            outline: none;
+        }
+        .lawyer-appointments-page .la-cal-search-item__dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: .45rem;
+            flex-shrink: 0;
+        }
+        .lawyer-appointments-page .la-cal-search-item__dot--pending { background: #fb6340; }
+        .lawyer-appointments-page .la-cal-search-item__dot--accepted { background: #2dce89; }
+        .lawyer-appointments-page .la-cal-search-item__dot--rejected { background: #f5365c; }
+        .lawyer-appointments-page .la-cal-search-item__body { min-width: 0; flex: 1; }
+        .lawyer-appointments-page .la-cal-search-item__title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .lawyer-appointments-page .la-cal-search-item__sub {
+            font-size: 11.5px;
+            color: #64748b;
+            margin: 0;
+        }
+        .lawyer-appointments-page .la-cal-search-empty {
+            padding: 1rem .75rem;
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+        }
+        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-wrap--featured {
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-label { color: #b8c4ff; }
+        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-field,
+        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-results {
+            background: var(--lp-dark-surface-raised, #3d455c);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+        }
+        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-input { color: var(--lp-dark-text, #f8f9fc); }
+        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-item__title { color: var(--lp-dark-text, #f8f9fc); }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-appointments-page">
@@ -570,8 +813,62 @@ $html = <<<'HTML'
                 </div>
             </div>
 
+            <!-- Appointments calendar -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="dashboard-calendar-hub la-calendar-hub">
+                        <div class="dashboard-calendar-hub__head">
+                            <div class="la-calendar-hub__intro">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 w-100">
+                                    <div>
+                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Appointments Calendar</h6>
+                                        <p class="text-sm mb-0 text-muted">Use the search bar below to find appointments quickly, or click a calendar event</p>
+                                        <div class="dashboard-legend-pills">
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-success btn-sm mb-0" onclick="openCreateAppointmentModal()">
+                                        Schedule appointment
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="la-cal-search-wrap la-cal-search-wrap--featured">
+                                <label class="la-cal-search-label" for="laCalSearchInput">Search appointments</label>
+                                <div class="la-cal-search-field">
+                                    <span class="la-cal-search-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                                            <circle cx="11" cy="11" r="7"></circle>
+                                            <path d="M20 20l-3-3"></path>
+                                        </svg>
+                                    </span>
+                                    <input type="search" id="laCalSearchInput" class="la-cal-search-input"
+                                           placeholder="Search by matter, client, date, status…" autocomplete="off">
+                                </div>
+                                <div class="la-cal-search-results" id="laCalSearchResults" hidden></div>
+                            </div>
+                        </div>
+                        <div class="dashboard-calendar-hub__body">
+                            <div class="dashboard-calendar-layout">
+                                <div id="lawyerAppointmentsCalendar"></div>
+                                <aside class="dashboard-upcoming-panel">
+                                    <div class="dashboard-upcoming-panel__title">
+                                        <span>Upcoming</span>
+                                        <a href="#lawyerAppointmentsTable" class="text-xs text-primary font-weight-bold">View list</a>
+                                    </div>
+                                    <div class="dashboard-upcoming-list" id="lawyerUpcomingAppointmentsList">
+                                        {UPCOMING_APPOINTMENTS_CALENDAR}
+                                    </div>
+                                </aside>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Appointments Table -->
-            <div class="row">
+            <div class="row" id="lawyerAppointmentsTable">
                 <div class="col-12">
                     <div class="card mb-4">
                         <div class="card-header pb-0 pt-3">
@@ -725,6 +1022,184 @@ $html = <<<'HTML'
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script>
+        var lawyerAppointmentEvents = {APPOINTMENT_CALENDAR_EVENTS_JSON};
+        var lawyerAppointmentsCalendar = null;
+
+        function escapeHtmlLa(text) {
+            var div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        function appointmentStatusKey(status) {
+            var value = String(status || 'pending').toLowerCase();
+            return value === 'approved' ? 'accepted' : value;
+        }
+
+        function focusLawyerAppointmentRow(id) {
+            var row = document.getElementById('apt-' + id);
+            if (!row) {
+                return;
+            }
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            row.classList.add('table-warning');
+            setTimeout(function() {
+                row.classList.remove('table-warning');
+            }, 2200);
+        }
+
+        function initLawyerAppointmentsCalendar() {
+            var calendarEl = document.getElementById('lawyerAppointmentsCalendar');
+            var upcomingList = document.getElementById('lawyerUpcomingAppointmentsList');
+            if (!calendarEl || typeof FullCalendar === 'undefined') {
+                initLawyerCalendarSearch();
+                return;
+            }
+
+            function renderAppointmentEvent(arg) {
+                var props = arg.event.extendedProps || {};
+                var statusKey = appointmentStatusKey(props.status);
+                var timeText = arg.timeText || '';
+                var title = arg.event.title || 'Appointment';
+                if (title.length > 22) {
+                    title = title.slice(0, 19) + '...';
+                }
+                var wrap = document.createElement('div');
+                wrap.className = 'dashboard-cal-event';
+                wrap.innerHTML =
+                    '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
+                    '<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
+                return { domNodes: [wrap] };
+            }
+
+            if (upcomingList) {
+                upcomingList.addEventListener('click', function(e) {
+                    var btn = e.target.closest('[data-appointment-id]');
+                    if (!btn) {
+                        return;
+                    }
+                    focusLawyerAppointmentRow(parseInt(btn.getAttribute('data-appointment-id'), 10));
+                });
+            }
+
+            lawyerAppointmentsCalendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+                height: 'auto',
+                firstDay: 1,
+                navLinks: true,
+                nowIndicator: true,
+                fixedWeekCount: false,
+                dayMaxEvents: 3,
+                moreLinkClick: 'day',
+                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                dayHeaderFormat: { weekday: 'short' },
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                events: lawyerAppointmentEvents,
+                eventContent: renderAppointmentEvent,
+                eventClick: function(info) {
+                    info.jsEvent.preventDefault();
+                    var props = info.event.extendedProps || {};
+                    focusLawyerAppointmentRow(props.appointmentId || parseInt(info.event.id, 10));
+                },
+                eventDidMount: function(info) {
+                    var props = info.event.extendedProps || {};
+                    var tip = info.event.title;
+                    if (props.client) {
+                        tip += '\nClient: ' + props.client;
+                    }
+                    info.el.setAttribute('title', tip);
+                }
+            });
+            lawyerAppointmentsCalendar.render();
+            initLawyerCalendarSearch();
+        }
+
+        function initLawyerCalendarSearch() {
+            var input = document.getElementById('laCalSearchInput');
+            var resultsEl = document.getElementById('laCalSearchResults');
+            if (!input || !resultsEl) {
+                return;
+            }
+
+            function hideResults() {
+                resultsEl.hidden = true;
+                resultsEl.innerHTML = '';
+            }
+
+            input.addEventListener('input', function() {
+                var q = input.value.trim().toLowerCase();
+                if (!q) {
+                    hideResults();
+                    return;
+                }
+
+                var matches = lawyerAppointmentEvents.filter(function(ev) {
+                    var props = ev.extendedProps || {};
+                    var hay = props.searchHay || ((ev.title || '') + ' ' + (props.client || '')).toLowerCase();
+                    return hay.indexOf(q) !== -1;
+                }).sort(function(a, b) {
+                    return new Date(b.start).getTime() - new Date(a.start).getTime();
+                });
+
+                if (!matches.length) {
+                    resultsEl.innerHTML = '<div class="la-cal-search-empty">No appointments match your search.</div>';
+                    resultsEl.hidden = false;
+                    return;
+                }
+
+                var html = '';
+                matches.slice(0, 12).forEach(function(ev) {
+                    var props = ev.extendedProps || {};
+                    var statusKey = appointmentStatusKey(props.status);
+                    html += '<button type="button" class="la-cal-search-item" data-appointment-id="' + escapeHtmlLa(props.appointmentId || ev.id) + '" data-start="' + escapeHtmlLa(ev.start || '') + '">' +
+                        '<span class="la-cal-search-item__dot la-cal-search-item__dot--' + escapeHtmlLa(statusKey) + '" aria-hidden="true"></span>' +
+                        '<span class="la-cal-search-item__body">' +
+                            '<p class="la-cal-search-item__title">' + escapeHtmlLa(ev.title || 'Appointment') + '</p>' +
+                            '<p class="la-cal-search-item__sub">' + escapeHtmlLa(props.startsLabel || '') + ' · ' + escapeHtmlLa(props.client || 'Client') + ' · ' + escapeHtmlLa(props.statusLabel || props.status || 'Pending') + '</p>' +
+                        '</span>' +
+                    '</button>';
+                });
+                resultsEl.innerHTML = html;
+                resultsEl.hidden = false;
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideResults();
+                    input.blur();
+                }
+            });
+
+            resultsEl.addEventListener('click', function(e) {
+                var btn = e.target.closest('[data-appointment-id]');
+                if (!btn) {
+                    return;
+                }
+                var id = parseInt(btn.getAttribute('data-appointment-id'), 10);
+                var start = btn.getAttribute('data-start');
+                if (lawyerAppointmentsCalendar && start) {
+                    lawyerAppointmentsCalendar.gotoDate(start);
+                }
+                focusLawyerAppointmentRow(id);
+                hideResults();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.la-cal-search-wrap')) {
+                    hideResults();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initLawyerAppointmentsCalendar);
+    </script>
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
@@ -1208,6 +1683,8 @@ $replacements = [
     '{STATUS_PAST}' => '',
     '{TOTAL_APPOINTMENTS}' => count($appointments),
     '{APPOINTMENTS_TABLE}' => $appointmentsTable,
+    '{UPCOMING_APPOINTMENTS_CALENDAR}' => $upcomingAppointmentsCalendarHtml,
+    '{APPOINTMENT_CALENDAR_EVENTS_JSON}' => $appointmentCalendarEventsJson,
     '{ICON_CARD_HEADER}' => $iconCardHeader,
     '{LAWYER_CASE_OPTIONS}' => $lawyerCaseOptions,
 ];

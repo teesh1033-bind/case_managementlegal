@@ -211,6 +211,9 @@ foreach ($court_dates as $date) {
         $displayTitle = $caseNumber . ' · ' . $date['case_title'];
     }
 
+    $hearingTitle = (string) ($date['title'] ?? 'Court date');
+    $courtDateLabel = date('M j, Y g:i A', strtotime((string) $date['court_date']));
+
     $calendar_events[] = [
         'id' => (string) $date['id'],
         'title' => $displayTitle,
@@ -225,9 +228,27 @@ foreach ($court_dates as $date) {
             'client_name' => $date['client_name'] ?? '',
             'case_title' => $date['case_title'] ?? '',
             'court_title' => $date['title'] ?? '',
+            'hearingTitle' => $hearingTitle,
             'created_by_name' => $date['created_by_name'] ?? '',
             'creator_role' => $date['creator_role'] ?? '',
             'case_id' => $caseId,
+            'statusLabel' => ucfirst($status),
+            'courtDateId' => (int) $date['id'],
+            'courtDateLabel' => $courtDateLabel,
+            'searchHay' => strtolower(implode(' ', array_filter([
+                $displayTitle,
+                $date['case_title'] ?? '',
+                $hearingTitle,
+                $date['client_name'] ?? '',
+                $date['location'] ?? '',
+                $date['description'] ?? '',
+                $status,
+                $courtDateLabel,
+                date('Y-m-d', strtotime((string) $date['court_date'])),
+                date('m/d/Y', strtotime((string) $date['court_date'])),
+                $caseNumber,
+                (string) $date['id'],
+            ]))),
         ],
     ];
 }
@@ -283,6 +304,9 @@ if (empty($upcomingCourtDates)) {
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
+        .lawyer-court-tracking-page {
+            --lct-primary: var(--legalpro-theme-primary, #5e72e4);
+        }
         .fc .fc-toolbar.fc-header-toolbar {
             background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
             border-radius: 0.5rem;
@@ -311,6 +335,153 @@ if (empty($upcomingCourtDates)) {
             padding-right: 0.25rem;
             text-align: center;
         }
+        .lawyer-court-tracking-page .dashboard-calendar-hub__head {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-wrap {
+            position: relative;
+            width: 100%;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-wrap--featured {
+            padding: .9rem 1rem 1rem;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+        }
+        .lawyer-court-tracking-page .lct-cal-search-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--lct-primary);
+            margin-bottom: .55rem;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-field {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            background: #fff;
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border-radius: 12px;
+            padding: .7rem 1rem;
+            transition: border-color .15s, box-shadow .15s, transform .15s;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
+        }
+        .lawyer-court-tracking-page .lct-cal-search-field:focus-within {
+            border-color: var(--lct-primary);
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            transform: translateY(-1px);
+        }
+        .lawyer-court-tracking-page .lct-cal-search-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            color: var(--lct-primary);
+            flex-shrink: 0;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-field svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            font-family: inherit;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-input::placeholder {
+            color: #64748b;
+            font-weight: 500;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-results {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            z-index: 30;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+            max-height: 320px;
+            overflow-y: auto;
+            padding: .35rem;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-item {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            width: 100%;
+            text-align: left;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            padding: .65rem .75rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-item:hover,
+        .lawyer-court-tracking-page .lct-cal-search-item:focus-visible {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            outline: none;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-item__dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: .45rem;
+            flex-shrink: 0;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-item__dot--scheduled { background: #5e72e4; }
+        .lawyer-court-tracking-page .lct-cal-search-item__dot--completed { background: #2dce89; }
+        .lawyer-court-tracking-page .lct-cal-search-item__dot--postponed { background: #fb6340; }
+        .lawyer-court-tracking-page .lct-cal-search-item__dot--cancelled { background: #f5365c; }
+        .lawyer-court-tracking-page .lct-cal-search-item__body { min-width: 0; flex: 1; }
+        .lawyer-court-tracking-page .lct-cal-search-item__title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-item__sub {
+            font-size: 11.5px;
+            color: #64748b;
+            margin: 0;
+        }
+        .lawyer-court-tracking-page .lct-cal-search-empty {
+            padding: 1rem .75rem;
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+        }
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-wrap--featured {
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-label { color: #b8c4ff; }
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-field,
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-results {
+            background: var(--lp-dark-surface-raised, #3d455c);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+        }
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-input { color: var(--lp-dark-text, #f8f9fc); }
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-item__title { color: var(--lp-dark-text, #f8f9fc); }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
@@ -383,20 +554,36 @@ if (empty($upcomingCourtDates)) {
                 <div class="col-12">
                     <div class="dashboard-calendar-hub">
                         <div class="dashboard-calendar-hub__head">
-                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                                <div>
-                                    <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
-                                    <p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
-                                    <div class="dashboard-legend-pills">
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
+                            <div class="lct-calendar-hub__intro">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 w-100">
+                                    <div>
+                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
+                                        <p class="text-sm mb-0 text-muted">Use the search bar below to find hearings quickly, or click a calendar event</p>
+                                        <div class="dashboard-legend-pills">
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
+                                        </div>
                                     </div>
+                                    <button class="btn btn-sm bg-gradient-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
+                                        <i class="fas fa-plus me-1"></i>Add Court Date
+                                    </button>
                                 </div>
-                                <button class="btn btn-sm bg-gradient-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
-                                    <i class="fas fa-plus me-1"></i>Add Court Date
-                                </button>
+                            </div>
+                            <div class="lct-cal-search-wrap lct-cal-search-wrap--featured">
+                                <label class="lct-cal-search-label" for="lctCalSearchInput">Search court dates</label>
+                                <div class="lct-cal-search-field">
+                                    <span class="lct-cal-search-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                                            <circle cx="11" cy="11" r="7"></circle>
+                                            <path d="M20 20l-3-3"></path>
+                                        </svg>
+                                    </span>
+                                    <input type="search" id="lctCalSearchInput" class="lct-cal-search-input"
+                                           placeholder="Search by case, client, hearing, location, status…" autocomplete="off">
+                                </div>
+                                <div class="lct-cal-search-results" id="lctCalSearchResults" hidden></div>
                             </div>
                         </div>
                         <div class="dashboard-calendar-hub__body">
@@ -445,19 +632,19 @@ if (empty($upcomingCourtDates)) {
                                         <?php else: ?>
                                         <?php foreach ($court_dates as $date): ?>
                                             <tr>
-                                                <td>
+                                                <td class="align-middle">
                                                     <div class="d-flex align-items-center gap-3 py-1">
                                                         <div class="lawyer-ct-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0"><?php echo $iconCourtRow; ?></div>
                                                         <span class="text-sm font-weight-bold"><?php echo htmlspecialchars($date['case_title']); ?></span>
                                                     </div>
                                                 </td>
-                                                <td><?php echo htmlspecialchars($date['client_name']); ?></td>
-                                                <td><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
-                                                <td><?php echo htmlspecialchars($date['title']); ?></td>
+                                                <td class="align-middle"><?php echo htmlspecialchars($date['client_name']); ?></td>
+                                                <td class="align-middle"><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
+                                                <td class="align-middle"><?php echo htmlspecialchars($date['title']); ?></td>
                                                 <td class="align-middle text-center">
                                                     <?php echo client_court_date_status_badge((string) ($date['status'] ?? '')); ?>
                                                 </td>
-                                                <td class="align-middle">
+                                                <td class="align-middle text-end lp-table-actions">
                                                     <div class="court-actions">
                                                         <button type="button" class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
                                                         <button type="button" class="btn btn-sm btn-dark mb-0" onclick="editCourtDate(<?php echo (int) $date['id']; ?>)" title="Edit">Edit</button>
@@ -639,6 +826,14 @@ if (empty($upcomingCourtDates)) {
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script>
+        var lawyerCourtTrackingCalendar = null;
+
+        function escapeHtmlLct(text) {
+            var div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('courtTrackingCalendar');
             var courtEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
@@ -677,10 +872,11 @@ if (empty($upcomingCourtDates)) {
             }
 
             if (!calendarEl || typeof FullCalendar === 'undefined') {
+                initLctCalendarSearch(courtEvents);
                 return;
             }
 
-            var calendar = new FullCalendar.Calendar(calendarEl, {
+            lawyerCourtTrackingCalendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
                 height: 'auto',
                 firstDay: 1,
@@ -711,8 +907,98 @@ if (empty($upcomingCourtDates)) {
                     info.el.setAttribute('title', tip);
                 }
             });
-            calendar.render();
+            lawyerCourtTrackingCalendar.render();
+            initLctCalendarSearch(courtEvents);
         });
+
+        function initLctCalendarSearch(courtEvents) {
+            var input = document.getElementById('lctCalSearchInput');
+            var resultsEl = document.getElementById('lctCalSearchResults');
+            if (!input || !resultsEl) {
+                return;
+            }
+
+            function courtStatusKey(status) {
+                var value = String(status || 'scheduled').toLowerCase();
+                if (['scheduled', 'completed', 'cancelled', 'postponed'].indexOf(value) === -1) {
+                    return 'scheduled';
+                }
+                return value;
+            }
+
+            function hideResults() {
+                resultsEl.hidden = true;
+                resultsEl.innerHTML = '';
+            }
+
+            input.addEventListener('input', function() {
+                var q = input.value.trim().toLowerCase();
+                if (!q) {
+                    hideResults();
+                    return;
+                }
+
+                var matches = courtEvents.filter(function(ev) {
+                    var props = ev.extendedProps || {};
+                    var hay = props.searchHay || ((ev.title || '') + ' ' + (props.case_title || '')).toLowerCase();
+                    return hay.indexOf(q) !== -1;
+                }).sort(function(a, b) {
+                    return new Date(b.start).getTime() - new Date(a.start).getTime();
+                });
+
+                if (!matches.length) {
+                    resultsEl.innerHTML = '<div class="lct-cal-search-empty">No court dates match your search.</div>';
+                    resultsEl.hidden = false;
+                    return;
+                }
+
+                var html = '';
+                matches.slice(0, 12).forEach(function(ev) {
+                    var props = ev.extendedProps || {};
+                    var statusKey = courtStatusKey(props.status);
+                    var title = ev.title || 'Court date';
+                    var when = props.courtDateLabel || '';
+                    var hearing = props.hearingTitle || '';
+                    var location = props.location ? ' · ' + props.location : '';
+                    html += '<button type="button" class="lct-cal-search-item" data-court-date-id="' + escapeHtmlLct(props.courtDateId || ev.id) + '" data-start="' + escapeHtmlLct(ev.start || '') + '">' +
+                        '<span class="lct-cal-search-item__dot lct-cal-search-item__dot--' + escapeHtmlLct(statusKey) + '" aria-hidden="true"></span>' +
+                        '<span class="lct-cal-search-item__body">' +
+                            '<p class="lct-cal-search-item__title">' + escapeHtmlLct(title) + '</p>' +
+                            '<p class="lct-cal-search-item__sub">' + escapeHtmlLct(when) + (hearing ? ' · ' + escapeHtmlLct(hearing) : '') + escapeHtmlLct(location) + ' · ' + escapeHtmlLct(props.statusLabel || props.status || 'Scheduled') + '</p>' +
+                        '</span>' +
+                    '</button>';
+                });
+                resultsEl.innerHTML = html;
+                resultsEl.hidden = false;
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideResults();
+                    input.blur();
+                }
+            });
+
+            resultsEl.addEventListener('click', function(e) {
+                var btn = e.target.closest('[data-court-date-id]');
+                if (!btn) {
+                    return;
+                }
+                var id = btn.getAttribute('data-court-date-id');
+                var start = btn.getAttribute('data-start');
+                if (lawyerCourtTrackingCalendar && start) {
+                    lawyerCourtTrackingCalendar.gotoDate(start);
+                }
+                viewCourtDate(id);
+                hideResults();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.lct-cal-search-wrap')) {
+                    hideResults();
+                }
+            });
+        }
 
         // View court date details
         function viewCourtDate(id) {
