@@ -819,7 +819,7 @@ if (empty($invoices)) {
             htmlspecialchars($amount),
             '<span class="case-status-pill ' . $pillClass . '">' . htmlspecialchars($status) . '</span>
                 <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm bg-gradient-primary mb-0" target="_blank">
-                    <i class="ni ni-single-copy-04 me-1"></i>View
+                    <i class="ni ni-single-copy-04 me-1"></i>PDF
                 </a>'
         );
     }
@@ -841,7 +841,7 @@ if (empty($payments)) {
             htmlspecialchars($amount),
             htmlspecialchars($method) . ' · ' . htmlspecialchars($date),
             '<a href="payment-receipt.php?id=' . (int)$payment['id'] . '" class="btn btn-sm bg-gradient-success mb-0" target="_blank">
-                <i class="ni ni-single-copy-04 me-1"></i>Receipt
+                <i class="ni ni-single-copy-04 me-1"></i>PDF
             </a>'
         );
     }

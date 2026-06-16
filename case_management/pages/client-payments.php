@@ -177,7 +177,7 @@ if (empty($invoices)) {
                 ' . $statusBadge . '
             </td>
             <td class="align-middle text-center pe-4">
-                <a href="invoice-download.php?id=' . (int) $invoice['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Download</a>
+                <a href="invoice-download.php?id=' . (int) $invoice['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Download PDF</a>
             </td>
         </tr>';
     }
@@ -231,7 +231,7 @@ if (empty($payments)) {
                 <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 7rem;" title="' . htmlspecialchars($ref) . '">' . $refDisp . '</p>
             </td>
             <td class="align-middle text-center pe-4">
-                <a href="payment-receipt.php?id=' . (int) $payment['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Receipt</a>
+                <a href="payment-receipt.php?id=' . (int) $payment['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Download PDF</a>
             </td>
         </tr>';
     }
@@ -302,7 +302,7 @@ if (empty($quotations)) {
                 ' . $statusBadge . '
             </td>
             <td class="align-middle text-center pe-4">
-                <a href="client-quotation-view.php?id=' . (int) $quotation['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">View</a>
+                <a href="client-quotation-view.php?id=' . (int) $quotation['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Download PDF</a>
             </td>
         </tr>';
     }

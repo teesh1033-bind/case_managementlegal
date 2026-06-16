@@ -169,7 +169,7 @@ class CaseEvents {
             'service_added',
             "Added service: {$serviceData['service_name']}",
             null,
-            '$' . number_format($serviceData['price'], 2)
+            formatCurrency((float) $serviceData['price'])
         );
     }
 
@@ -179,7 +179,7 @@ class CaseEvents {
             $changes[] = "Name: '{$oldData['service_name']}' → '{$newData['service_name']}'";
         }
         if ($oldData['price'] != $newData['price']) {
-            $changes[] = "Price: $" . number_format($oldData['price'], 2) . " → $" . number_format($newData['price'], 2);
+            $changes[] = 'Price: ' . formatCurrency((float) $oldData['price']) . ' → ' . formatCurrency((float) $newData['price']);
         }
 
         if (!empty($changes)) {
@@ -198,7 +198,7 @@ class CaseEvents {
             $caseId,
             'service_deleted',
             "Removed service: {$serviceData['service_name']}",
-            '$' . number_format($serviceData['price'], 2),
+            formatCurrency((float) $serviceData['price']),
             null
         );
     }
@@ -212,7 +212,7 @@ class CaseEvents {
             'payment_added',
             "Payment recorded",
             null,
-            '$' . number_format($paymentData['amount'], 2) . " ({$paymentData['method']})"
+            formatCurrency((float) $paymentData['amount']) . " ({$paymentData['method']})"
         );
     }
 

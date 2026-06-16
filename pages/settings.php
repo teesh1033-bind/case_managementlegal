@@ -413,7 +413,7 @@ $html = <<<'HTML'
                                         <select class="form-control" name="currency">
                                             {CURRENCY_OPTIONS}
                                         </select>
-                                        <small class="text-muted">Applies across all monetary values.</small>
+                                        <small class="text-muted">Applies across admin, lawyer, and client portals — invoices, payments, dashboards, and documents.</small>
                                     </div>
                                     <div class="col-md-6 d-flex align-items-end">
                                         <button class="btn btn-dark ms-md-3 mt-3 mt-md-0">Save Currency</button>

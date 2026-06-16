@@ -378,7 +378,7 @@ if (empty($invoices)) {
             <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
                     <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-dark" title="Edit Invoice">Edit</a>
-                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary" title="Download Invoice" target="_blank">Download</a>
+                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary" title="Download invoice PDF" target="_blank">Download PDF</a>
                     <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete">
                         <input type="hidden" name="invoice_id" value="' . (int)$invoice['id'] . '">

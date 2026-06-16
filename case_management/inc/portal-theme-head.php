@@ -8,3 +8,6 @@ if (defined('LEGALPRO_PORTAL_THEME_HEAD')) {
 define('LEGALPRO_PORTAL_THEME_HEAD', true);
 
 renderPortalThemeHead();
+if (function_exists('renderCurrencyHeadScript')) {
+    renderCurrencyHeadScript();
+}

@@ -678,7 +678,7 @@ echo ob_get_clean();
                 tooltip: { mode: 'index', intersect: false,
                     callbacks: {
                         label: function(ctx) {
-                            return ' ' + ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2});
+                            return ' ' + ctx.dataset.label + ': ' + (window.LegalProFormatCurrency ? window.LegalProFormatCurrency(ctx.parsed.y) : ctx.parsed.y);
                         }
                     }
                 }
@@ -687,7 +687,7 @@ echo ob_get_clean();
             scales: {
                 y: { grid: { borderDash: [5,5], color: 'rgba(0,0,0,0.05)' },
                      ticks: { color: '#8392ab', font: { size:11,family:'Montserrat' },
-                              callback: function(v){ return '$'+v.toLocaleString(); } } },
+                              callback: function(v){ return window.LegalProFormatCurrency ? window.LegalProFormatCurrency(v, 0) : v.toLocaleString(); } } },
                 x: { grid: { display: false },
                      ticks: { color: '#8392ab', font: { size:11,family:'Montserrat' } } }
             }

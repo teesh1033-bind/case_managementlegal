@@ -413,7 +413,7 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
                 $clientId,
                 'payment',
                 'Payment recorded',
-                '$' . number_format((float) $payment['amount'], 2) . ' — ' . ($payment['case_title'] ?: 'Account'),
+                formatCurrency((float) $payment['amount']) . ' — ' . ($payment['case_title'] ?: 'Account'),
                 'client-payments.php',
                 'credit-card',
                 'payment',
@@ -693,7 +693,7 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
                 'type' => 'payment',
                 'icon' => 'credit-card',
                 'title' => 'Payment recorded',
-                'subtitle' => '$' . number_format((float) $row['amount'], 2) . ' · ' . ($row['case_title'] ?: 'Account'),
+                'subtitle' => formatCurrency((float) $row['amount']) . ' · ' . ($row['case_title'] ?: 'Account'),
                 'ts' => $ts !== false ? $ts : time(),
                 'url' => 'client-payments.php',
             ];
