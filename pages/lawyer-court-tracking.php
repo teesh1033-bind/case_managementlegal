@@ -445,19 +445,19 @@ if (empty($upcomingCourtDates)) {
                                         <?php else: ?>
                                         <?php foreach ($court_dates as $date): ?>
                                             <tr>
-                                                <td>
+                                                <td class="align-middle">
                                                     <div class="d-flex align-items-center gap-3 py-1">
                                                         <div class="lawyer-ct-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0"><?php echo $iconCourtRow; ?></div>
                                                         <span class="text-sm font-weight-bold"><?php echo htmlspecialchars($date['case_title']); ?></span>
                                                     </div>
                                                 </td>
-                                                <td><?php echo htmlspecialchars($date['client_name']); ?></td>
-                                                <td><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
-                                                <td><?php echo htmlspecialchars($date['title']); ?></td>
+                                                <td class="align-middle"><?php echo htmlspecialchars($date['client_name']); ?></td>
+                                                <td class="align-middle"><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
+                                                <td class="align-middle"><?php echo htmlspecialchars($date['title']); ?></td>
                                                 <td class="align-middle text-center">
                                                     <?php echo client_court_date_status_badge((string) ($date['status'] ?? '')); ?>
                                                 </td>
-                                                <td class="align-middle">
+                                                <td class="align-middle text-end lp-table-actions">
                                                     <div class="court-actions">
                                                         <button type="button" class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
                                                         <button type="button" class="btn btn-sm btn-dark mb-0" onclick="editCourtDate(<?php echo (int) $date['id']; ?>)" title="Edit">Edit</button>

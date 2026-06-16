@@ -100,7 +100,7 @@ if (empty($recentCases)) {
 
         $recentCasesHtml .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3" style="width:2.25rem;height:2.25rem;min-width:2.25rem">' . $iconRowCase . '</div>
                     <div>
@@ -112,10 +112,10 @@ if (empty($recentCases)) {
             <td class="text-center align-middle">
                 <div class="d-flex flex-column gap-1 align-items-center">' . $statusBadge . $priorityBadge . '</div>
             </td>
-            <td class="text-center">
+            <td class="text-center align-middle">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
-            <td class="text-center align-middle">
+            <td class="text-center align-middle lp-table-actions">
                 <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">View</a>
             </td>
         </tr>';

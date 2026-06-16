@@ -439,7 +439,7 @@ if (empty($appointments)) {
 
         $appointmentsTable .= '
         <tr id="apt-' . (int) $appointment['id'] . '" class="' . $rowClass . '">
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="lawyer-appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconApptRow . '</div>
                     <div>
@@ -448,18 +448,18 @@ if (empty($appointments)) {
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="align-middle">
                 <h6 class="mb-0 text-sm">' . htmlspecialchars($appointment['first_name'] . ' ' . $appointment['last_name']) . '</h6>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointment['email']) . '</p>
             </td>
-            <td class="text-center">
+            <td class="align-middle text-center">
                 <span class="text-sm font-weight-bold">' . htmlspecialchars($appointmentDate) . '</span>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointmentTime) . '</p>
             </td>
-            <td>' . htmlspecialchars($appointment['notes'] ?: 'No notes') . '</td>
-            <td class="text-center">' . $statusBadge . '</td>
-            <td class="text-center align-middle lawyer-appointment-case-cell">' . buildLawyerAppointmentCaseLink($appointment) . '</td>
-            <td class="text-end align-middle lawyer-appointment-actions-cell">' . buildLawyerAppointmentActions($appointment) . '</td>
+            <td class="align-middle">' . htmlspecialchars($appointment['notes'] ?: 'No notes') . '</td>
+            <td class="align-middle text-center">' . $statusBadge . '</td>
+            <td class="align-middle text-center lawyer-appointment-case-cell">' . buildLawyerAppointmentCaseLink($appointment) . '</td>
+            <td class="align-middle text-end lp-table-actions lawyer-appointment-actions-cell">' . buildLawyerAppointmentActions($appointment) . '</td>
         </tr>';
     }
 }

@@ -100,8 +100,8 @@ if (empty($cases)) {
             <td class="align-middle text-center">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
-            <td class="align-middle text-end">
-                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary">View Details</a>
+            <td class="align-middle text-end lp-table-actions">
+                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">View Details</a>
             </td>
         </tr>';
     }

@@ -387,8 +387,42 @@ body.lawyer-dashboard-page .legalpro-lawyer-nav .nav-link:hover .legalpro-lawyer
     vertical-align: middle;
 }
 
-.legalpro-lawyer-portal .table.align-items-center tbody td {
+.legalpro-lawyer-portal .table.align-items-center tbody td,
+.legalpro-lawyer-portal .main-content .table tbody td {
     vertical-align: middle !important;
+}
+
+/* Action buttons — vertically centered in table rows (lawyer portal) */
+.legalpro-lawyer-portal .lp-table-actions {
+    text-align: right;
+    white-space: nowrap;
+    width: 1%;
+}
+
+.legalpro-lawyer-portal .lp-table-actions-inner,
+.legalpro-lawyer-portal .court-actions,
+.legalpro-lawyer-portal .lawyer-appointment-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    vertical-align: middle;
+}
+
+.legalpro-lawyer-portal .lp-table-actions .btn,
+.legalpro-lawyer-portal .lp-table-actions-inner .btn,
+.legalpro-lawyer-portal .court-actions .btn {
+    margin-bottom: 0;
+}
+
+/* Card list rows (tasks) — center action column vertically */
+.legalpro-lawyer-portal .lp-row-actions-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 0.5rem;
 }
 
 .legalpro-lawyer-portal .lc-category-cell,

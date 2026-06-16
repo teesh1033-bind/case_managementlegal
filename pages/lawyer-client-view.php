@@ -224,7 +224,7 @@ if (empty($clientDocuments)) {
 
         $documentsHtml .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconDocRow . '</div>
                     <div>
@@ -233,11 +233,11 @@ if (empty($clientDocuments)) {
                     </div>
                 </div>
             </td>
-            <td class="text-center">' . $safeFileType . '</td>
-            <td class="text-center">' . $fileSizeFormatted . '</td>
-            <td class="text-center">' . date('M d, Y', strtotime($document['uploaded_at'])) . '</td>
-            <td class="text-end">
-                ' . $documentActionsHtml . '
+            <td class="align-middle text-center">' . $safeFileType . '</td>
+            <td class="align-middle text-center">' . $fileSizeFormatted . '</td>
+            <td class="align-middle text-center">' . date('M d, Y', strtotime($document['uploaded_at'])) . '</td>
+            <td class="align-middle text-end lp-table-actions">
+                <div class="lp-table-actions-inner">' . $documentActionsHtml . '</div>
             </td>
         </tr>';
     }
@@ -444,7 +444,7 @@ $html = <<<'HTML'
                                 <!-- Documents Tab -->
                                 <div class="tab-pane fade" id="documents" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Document</th>

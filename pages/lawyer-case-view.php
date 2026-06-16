@@ -336,7 +336,7 @@ if (empty($documents)) {
 
         $documentsHtml .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconDocRow . '</div>
                     <div>
@@ -345,10 +345,10 @@ if (empty($documents)) {
                     </div>
                 </div>
             </td>
-            <td class="text-center">' . htmlspecialchars($fileType) . '</td>
-            <td class="text-center">' . $fileSizeFormatted . '</td>
-            <td class="text-end">
-                <div class="d-inline-flex flex-wrap justify-content-end gap-1">' . $actionButtons . '</div>
+            <td class="align-middle text-center">' . htmlspecialchars($fileType) . '</td>
+            <td class="align-middle text-center">' . $fileSizeFormatted . '</td>
+            <td class="align-middle text-end lp-table-actions">
+                <div class="lp-table-actions-inner">' . $actionButtons . '</div>
             </td>
         </tr>';
     }
@@ -565,7 +565,7 @@ $html = <<<'HTML'
                                 <!-- Services Tab -->
                                 <div class="tab-pane fade show active" id="services" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Service</th>
@@ -582,7 +582,7 @@ $html = <<<'HTML'
                                 <!-- Stages Tab -->
                                 <div class="tab-pane fade" id="stages" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Stage #</th>
@@ -603,7 +603,7 @@ $html = <<<'HTML'
                                 <!-- Appointments Tab -->
                                 <div class="tab-pane fade" id="appointments" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Date</th>
@@ -655,7 +655,7 @@ $html = <<<'HTML'
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Document</th>
