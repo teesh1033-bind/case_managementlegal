@@ -219,8 +219,11 @@ function buildWorkingHoursRowHtml(string $day, array $schedule): string
     $timeOptions = buildAvailabilityTimeSelectOptions();
     $startOptions = str_replace('value="' . htmlspecialchars($start, ENT_QUOTES, 'UTF-8') . '"', 'value="' . htmlspecialchars($start, ENT_QUOTES, 'UTF-8') . '" selected', $timeOptions);
     $endOptions = str_replace('value="' . htmlspecialchars($end, ENT_QUOTES, 'UTF-8') . '"', 'value="' . htmlspecialchars($end, ENT_QUOTES, 'UTF-8') . '" selected', $timeOptions);
+    $searchHay = htmlspecialchars(strtolower(
+        $day . ' ' . $label . ' ' . ($enabled ? 'working enabled' : 'off closed') . ' ' . $start . ' ' . $end
+    ), ENT_QUOTES, 'UTF-8');
 
-    return '<tr>
+    return '<tr class="availability-wh-row" data-search="' . $searchHay . '">
         <td class="text-sm font-weight-bold text-capitalize">' . htmlspecialchars($label) . '</td>
         <td class="text-center">
             <label class="wh-day-switch" for="wh_enabled_' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '" aria-label="Working on ' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '">
@@ -464,6 +467,81 @@ $html = <<<'HTML'
             margin-bottom: 0.65rem;
             padding: 0.35rem 0.5rem;
         }
+        body.lawyer-availability-page .legalpro-navbar-search {
+            display: none !important;
+        }
+        .lawyer-availability-page .dashboard-calendar-hub__head {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .lawyer-availability-page .la-avail-search-wrap {
+            position: relative;
+            width: 100%;
+        }
+        .lawyer-availability-page .la-avail-search-wrap--featured {
+            padding: .9rem 1rem 1rem;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+        }
+        .lawyer-availability-page .la-avail-search-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: #5e72e4;
+            margin-bottom: .55rem;
+        }
+        .lawyer-availability-page .la-avail-search-field {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            background: #fff;
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border-radius: 12px;
+            padding: .7rem 1rem;
+            transition: border-color .15s, box-shadow .15s, transform .15s;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
+        }
+        .lawyer-availability-page .la-avail-search-field:focus-within {
+            border-color: #5e72e4;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            transform: translateY(-1px);
+        }
+        .lawyer-availability-page .la-avail-search-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            color: #5e72e4;
+            flex-shrink: 0;
+        }
+        .lawyer-availability-page .la-avail-search-field svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+            flex-shrink: 0;
+        }
+        .lawyer-availability-page .la-avail-search-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            font-family: inherit;
+        }
+        .lawyer-availability-page .la-avail-search-input::placeholder {
+            color: #64748b;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-availability-page">
@@ -482,16 +560,6 @@ $html = <<<'HTML'
                     </ol>
                     <h6 class="font-weight-bolder text-white">Manage My Availability</h6>
                 </nav>
-                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <ul class="navbar-nav justify-content-end">
-                        <!-- <li class="nav-item d-flex align-items-center">
-                            <span class="text-sm text-white">
-                                <i class="fa fa-user me-sm-1"></i>
-                                Lawyer Portal
-                            </span> 
-                        </li> -->
-                    </ul>
-                </div>
             </div>
         </nav>
         <!-- End Navbar -->
@@ -532,21 +600,38 @@ $html = <<<'HTML'
 
             <div class="row">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">Time Slots Within Working Hours</h6>
-                            <p class="text-sm text-muted mb-0">For each date, mark when you are available or unavailable inside your working hours.</p>
-                        </div>
-                        <div class="card-body">
-                            <div class="availability-hero mb-4">
+                    <div class="dashboard-calendar-hub">
+                        <div class="dashboard-calendar-hub__head">
+                            <div class="la-availability-hub__intro">
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                     <div>
-                                        <h6 class="mb-1">Availability Calendar</h6>
-                                        <p class="text-sm text-muted mb-0">Click a day to add a slot, or click an existing slot to edit it. Outside working hours is never bookable.</p>
+                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Availability Calendar</h6>
+                                        <p class="text-sm mb-0 text-muted">Use the search bar below to find days or slots quickly, or click a day to add a slot</p>
+                                        <div class="dashboard-legend-pills mt-2">
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Available</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Unavailable</span>
+                                        </div>
                                     </div>
-                                    <button type="button" class="btn btn-primary mb-0" id="addSlotBtn">Add Time Slot</button>
+                                    <button type="button" class="btn btn-sm bg-gradient-primary mb-0" id="addSlotBtn">
+                                        <i class="fas fa-plus me-1"></i>Add Time Slot
+                                    </button>
                                 </div>
                             </div>
+                            <div class="la-avail-search-wrap la-avail-search-wrap--featured">
+                                <label class="la-avail-search-label" for="laAvailSearchInput">Search availability</label>
+                                <div class="la-avail-search-field">
+                                    <span class="la-avail-search-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                                            <circle cx="11" cy="11" r="7"></circle>
+                                            <path d="M20 20l-3-3"></path>
+                                        </svg>
+                                    </span>
+                                    <input type="search" id="laAvailSearchInput" class="la-avail-search-input"
+                                           placeholder="Search by day, date, time, available, unavailable…" autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dashboard-calendar-hub__body">
                             <div class="availability-week-nav">
                                 <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="prevWeekBtn">Previous Week</button>
                                 <span class="availability-fallback-week-label mb-0" id="weekRangeLabel"></span>
@@ -623,6 +708,38 @@ $html = <<<'HTML'
         var availabilityEvents = {AVAILABILITY_EVENTS_JSON};
         var workingHours = {WORKING_HOURS_JSON};
         var fallbackWeekStartIso = null;
+        var availabilitySearchQuery = '';
+
+        function eventMatchesAvailabilitySearch(event, query) {
+            if (!query) {
+                return true;
+            }
+            var props = event.extendedProps || {};
+            var haystack = [
+                event.title || '',
+                props.day || '',
+                props.slotDate || '',
+                props.startTime || '',
+                props.endTime || '',
+                props.slotType || '',
+                props.isAppointment ? 'appointment unavailable' : ''
+            ].join(' ').toLowerCase();
+            return haystack.indexOf(query) !== -1;
+        }
+
+        function applyAvailabilityPageSearch(query) {
+            var q = String(query || '').trim().toLowerCase();
+            availabilitySearchQuery = q;
+            document.querySelectorAll('.availability-wh-row[data-search]').forEach(function (row) {
+                if (!q) {
+                    row.style.display = '';
+                    return;
+                }
+                var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
+                row.style.display = hay.indexOf(q) !== -1 ? '' : 'none';
+            });
+            renderAvailabilityCalendar();
+        }
 
         function parseIsoDate(iso) {
             var parts = iso.split('-').map(Number);
@@ -832,32 +949,79 @@ $html = <<<'HTML'
             }
 
             var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            var html = '<div class="availability-fallback-calendar">';
-            html += '<div class="availability-fallback-header">';
+            var visibleDays = [];
 
-            dayNames.forEach(function(dayName, dayIndex) {
-                var dayDateIso = addDaysToIso(weekStartIso, dayIndex);
-                var dayDate = parseIsoDate(dayDateIso);
-                var dateLabel = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                html += '<div><span class="availability-fallback-day-name">' + dayName + '</span>';
-                html += '<span class="availability-fallback-day-date">' + dateLabel + '</span></div>';
-            });
-
-            html += '</div><div class="availability-fallback-grid">';
             dayNames.forEach(function(dayName, dayIndex) {
                 var dayDateIso = addDaysToIso(weekStartIso, dayIndex);
                 var dayKey = dayNameFromDate(parseIsoDate(dayDateIso));
-                html += '<div class="availability-fallback-day" data-date="' + dayDateIso + '">';
-                html += '<div class="working-hours-band">Hours: ' + formatWorkingHoursLabel(dayKey) + '</div>';
                 var eventsForDay = availabilityEvents.filter(function(event) {
                     var props = event.extendedProps || {};
                     var eventDate = props.slotDate || (event.start ? event.start.split('T')[0] : '');
                     return eventDate === dayDateIso;
                 });
-                if (eventsForDay.length === 0) {
+                var filteredEventsForDay = eventsForDay.filter(function (event) {
+                    return eventMatchesAvailabilitySearch(event, availabilitySearchQuery);
+                });
+                var dayHaystack = (dayName + ' ' + dayKey + ' ' + dayDateIso).toLowerCase();
+                var dayMatches = !availabilitySearchQuery
+                    || dayHaystack.indexOf(availabilitySearchQuery) !== -1
+                    || filteredEventsForDay.length > 0;
+                if (!dayMatches) {
+                    return;
+                }
+                visibleDays.push({
+                    dayName: dayName,
+                    dayDateIso: dayDateIso,
+                    dayKey: dayKey,
+                    dayHaystack: dayHaystack,
+                    events: filteredEventsForDay
+                });
+            });
+
+            if (availabilitySearchQuery && visibleDays.length === 0) {
+                calendarEl.innerHTML = '<div class="text-center text-muted py-4">No availability matches your search.</div>';
+                return;
+            }
+
+            if (!availabilitySearchQuery) {
+                visibleDays = dayNames.map(function(dayName, dayIndex) {
+                    var dayDateIso = addDaysToIso(weekStartIso, dayIndex);
+                    var dayKey = dayNameFromDate(parseIsoDate(dayDateIso));
+                    var eventsForDay = availabilityEvents.filter(function(event) {
+                        var props = event.extendedProps || {};
+                        var eventDate = props.slotDate || (event.start ? event.start.split('T')[0] : '');
+                        return eventDate === dayDateIso;
+                    });
+                    return {
+                        dayName: dayName,
+                        dayDateIso: dayDateIso,
+                        dayKey: dayKey,
+                        dayHaystack: (dayName + ' ' + dayKey + ' ' + dayDateIso).toLowerCase(),
+                        events: eventsForDay
+                    };
+                });
+            }
+
+            var columnCount = visibleDays.length;
+            var gridStyle = 'grid-template-columns:repeat(' + columnCount + ',minmax(120px,1fr));';
+            var html = '<div class="availability-fallback-calendar">';
+            html += '<div class="availability-fallback-header" style="' + gridStyle + '">';
+
+            visibleDays.forEach(function(day) {
+                var dayDate = parseIsoDate(day.dayDateIso);
+                var dateLabel = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                html += '<div><span class="availability-fallback-day-name">' + day.dayName + '</span>';
+                html += '<span class="availability-fallback-day-date">' + dateLabel + '</span></div>';
+            });
+
+            html += '</div><div class="availability-fallback-grid" style="' + gridStyle + '">';
+            visibleDays.forEach(function(day) {
+                html += '<div class="availability-fallback-day" data-date="' + day.dayDateIso + '" data-search="' + day.dayHaystack + '">';
+                html += '<div class="working-hours-band">Hours: ' + formatWorkingHoursLabel(day.dayKey) + '</div>';
+                if (day.events.length === 0) {
                     html += '<p class="text-sm text-muted mb-0">No hours set</p>';
                 } else {
-                    eventsForDay.forEach(function(event) {
+                    day.events.forEach(function(event) {
                         var props = event.extendedProps || {};
                         var slotId = props.slotId || event.id || '';
                         html += '<div class="availability-fallback-event" style="background-color:' + event.backgroundColor + '"';
@@ -976,7 +1140,14 @@ $html = <<<'HTML'
                 }
             });
 
-            renderAvailabilityCalendar();
+            var searchInput = document.getElementById('laAvailSearchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    applyAvailabilityPageSearch(searchInput.value);
+                });
+            }
+
+            applyAvailabilityPageSearch('');
         });
     </script>
 </body>
