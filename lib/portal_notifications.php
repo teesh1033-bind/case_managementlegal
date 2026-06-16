@@ -316,9 +316,9 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
                 'Outstanding balance',
                 $caseNumber . ' · ' . (string) $row['title'] . ' · ' . $clientName . ' · ' . formatCurrency($balance) . ' due',
                 'payments.php?case_id=' . $caseId,
-                date('Y-m-d H:i:s'),
+                null,
                 'banknote',
-                time()
+                $caseId
             );
         }
     } catch (PDOException $e) {
@@ -326,6 +326,35 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
     }
 
     return legalpro_filter_read_notifications($pdo, legalpro_sort_notifications($items, $limit));
+}
+
+function legalpro_admin_notification_unread_count(?PDO $pdo = null): int
+{
+    if (!$pdo instanceof PDO) {
+        return 0;
+    }
+
+    return count(legalpro_fetch_admin_notifications($pdo, 100));
+}
+
+function legalpro_mark_all_portal_notifications_read(PDO $pdo, string $role, int $userId, array $items): bool
+{
+    if ($userId <= 0 || $role === '' || $items === []) {
+        return false;
+    }
+
+    $ok = true;
+    foreach ($items as $item) {
+        $key = trim((string) ($item['key'] ?? ''));
+        if ($key === '') {
+            continue;
+        }
+        if (!legalpro_mark_notification_read($pdo, $role, $userId, $key)) {
+            $ok = false;
+        }
+    }
+
+    return $ok;
 }
 
 function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit = 20): array

@@ -598,6 +598,5 @@ $html = str_replace('{CHATBOT_AI_STATUS}', $chatbotAiStatusHtml, $html);
 $html = str_replace('{CHATBOT_AI_ENABLED_CHECKED}', $chatbotAiEnabledChecked, $html);
 $html = str_replace('{OPENAI_KEY_PLACEHOLDER}', htmlspecialchars($openaiKeyPlaceholder), $html);
 $html = str_replace('{OPENAI_MODEL_OPTIONS}', $openaiModelOptionsHtml, $html);
-echo $html;
 echo legalpro_apply_copyright_line($html);
 ?>

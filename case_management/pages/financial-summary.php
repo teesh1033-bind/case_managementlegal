@@ -81,6 +81,7 @@ try {
             c.category,
             c.priority,
             COALESCE(c.estimated_fees, 0) AS estimated_fees,
+            COALESCE(inv.invoiced_total, 0) AS invoiced_total,
             CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
             COUNT(p.id) AS payment_count,
             COALESCE(SUM(p.amount), 0) AS paid_total,
@@ -89,7 +90,13 @@ try {
         FROM cases c
         LEFT JOIN clients cl ON cl.id = c.client_id
         LEFT JOIN payments p ON p.case_id = c.id
-        GROUP BY c.id, c.title, c.status, c.category, c.priority, c.estimated_fees, cl.first_name, cl.last_name
+        LEFT JOIN (
+            SELECT case_id, COALESCE(SUM(amount), 0) AS invoiced_total
+            FROM invoices
+            WHERE LOWER(COALESCE(status, '')) NOT IN ('cancelled', 'void')
+            GROUP BY case_id
+        ) inv ON inv.case_id = c.id
+        GROUP BY c.id, c.title, c.status, c.category, c.priority, c.estimated_fees, inv.invoiced_total, cl.first_name, cl.last_name
         ORDER BY c.created_at DESC
     ");
     $cases = $stmt->fetchAll();
@@ -112,23 +119,25 @@ foreach ($cases as $case) {
     $caseId = (int)$case['id'];
     $caseNumber = 'C-' . str_pad($caseId, 4, '0', STR_PAD_LEFT);
     $estimated = isset($case['estimated_fees']) ? (float)$case['estimated_fees'] : 0;
+    $invoiced = isset($case['invoiced_total']) ? (float)$case['invoiced_total'] : 0;
+    $totalDue = legalpro_case_fee_due($estimated, $invoiced);
     $paid = isset($case['paid_total']) ? (float)$case['paid_total'] : 0;
-    $balance = max($estimated - $paid, 0);
-    $status = isset($case['status']) && $case['status'] ? $case['status'] : 'open';
+    $balance = max($totalDue - $paid, 0);
+    $caseStatus = isset($case['status']) && $case['status'] ? $case['status'] : 'open';
     $clientName = isset($case['client_name']) && $case['client_name'] ? $case['client_name'] : 'Unknown Client';
     $paymentCount = isset($case['payment_count']) ? (int)$case['payment_count'] : 0;
     $lastPayment = isset($case['last_payment']) && $case['last_payment'] ? $case['last_payment'] : '—';
     $category = isset($case['category']) && $case['category'] ? $case['category'] : 'General';
 
-    $totalFees += $estimated;
+    $totalFees += $totalDue;
     $totalPaid += $paid;
     $totalBalance += $balance;
-    if ($balance <= 0.01 && $estimated > 0) {
+    if ($paid >= $totalDue - 0.01 && ($totalDue > 0.01 || $paid > 0.01)) {
         $casesFullyPaid++;
     }
 
-    $percent = $estimated > 0 ? min(100, round(($paid / $estimated) * 100)) : 0;
-    $statusBadge = legalpro_case_status_badge($status);
+    $percent = $totalDue > 0 ? min(100, round(($paid / $totalDue) * 100)) : ($paid > 0 ? 100 : 0);
+    $statusBadge = legalpro_case_payment_status_badge($totalDue, $paid);
 
     $caseRows .= '
         <tr>
@@ -138,7 +147,7 @@ foreach ($cases as $case) {
                     <small class="text-muted">' . htmlspecialchars($clientName) . ' · ' . htmlspecialchars(ucfirst($category)) . '</small>
                 </div>
             </td>
-            <td class="text-center">' . formatCurrency($estimated) . '</td>
+            <td class="text-center">' . formatCurrency($totalDue) . '</td>
             <td class="text-center text-success fw-bold">' . formatCurrency($paid) . '</td>
             <td class="text-center text-warning fw-bold">' . formatCurrency($balance) . '</td>
         <td class="text-center">
@@ -161,10 +170,11 @@ foreach ($cases as $case) {
         'case_number' => $caseNumber,
         'title' => $case['title'],
         'client' => $clientName,
-        'estimated' => formatCurrency($estimated),
+        'estimated' => formatCurrency($totalDue),
         'paid' => formatCurrency($paid),
         'balance' => formatCurrency($balance),
-        'status' => ucfirst($status),
+        'status' => legalpro_case_payment_status_label($totalDue, $paid),
+        'case_status' => ucfirst($caseStatus),
         'category' => $category,
         'priority' => isset($case['priority']) ? $case['priority'] : '',
         'last_payment' => $lastPayment,
@@ -369,7 +379,7 @@ $html = <<<'HTML'
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Collected</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Remaining</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Progress</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Payment</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Payments</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Last Payment</th>
                                     <th></th>
@@ -458,8 +468,10 @@ HTML;
 
 $casesWithBalance = count(array_filter($cases, function($case) {
     $estimated = isset($case['estimated_fees']) ? (float)$case['estimated_fees'] : 0;
+    $invoiced = isset($case['invoiced_total']) ? (float)$case['invoiced_total'] : 0;
+    $totalDue = legalpro_case_fee_due($estimated, $invoiced);
     $paid = isset($case['paid_total']) ? (float)$case['paid_total'] : 0;
-    return $estimated - $paid > 0.01;
+    return $totalDue - $paid > 0.01;
 }));
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);

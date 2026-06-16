@@ -633,7 +633,7 @@ if (empty($upcomingCourtDates)) {
                                         <?php foreach ($court_dates as $date): ?>
                                             <tr>
                                                 <td class="align-middle">
-                                                    <div class="d-flex align-items-center gap-3 py-1">
+                                                    <div class="d-flex align-items-center gap-3">
                                                         <div class="lawyer-ct-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0"><?php echo $iconCourtRow; ?></div>
                                                         <span class="text-sm font-weight-bold"><?php echo htmlspecialchars($date['case_title']); ?></span>
                                                     </div>

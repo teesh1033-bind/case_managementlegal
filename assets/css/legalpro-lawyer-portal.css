@@ -416,6 +416,13 @@ body.lawyer-dashboard-page .legalpro-lawyer-nav .nav-link:hover .legalpro-lawyer
     margin-bottom: 0;
 }
 
+.legalpro-lawyer-portal .court-actions form,
+.legalpro-lawyer-portal .lp-table-actions-inner form {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+}
+
 /* Card list rows (tasks) — center action column vertically */
 .legalpro-lawyer-portal .lp-row-actions-col {
     display: flex;

@@ -263,7 +263,7 @@ if (empty($lawyers)) {
 
         $lawyersTable .= '
         <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
                         <i class="ni ni-single-02 text-white text-xs opacity-10"></i>
@@ -274,22 +274,22 @@ if (empty($lawyers)) {
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="align-middle">
                 <p class="text-sm mb-0">' . htmlspecialchars($lawyer['specialization'] ?: 'Not specified') . '</p>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($lawyer['experience_years']) . ' years experience</p>
             </td>
-            <td class="text-center">' . $statusBadge . '</td>
-            <td class="text-center">
+            <td class="align-middle text-center">' . $statusBadge . '</td>
+            <td class="align-middle text-center">
                 <span class="text-sm font-weight-bold">' . $activeCases . '</span>
                 <p class="text-xs text-muted mb-0">active cases</p>
             </td>
-            <td class="text-end">
-                <div class="d-flex gap-1 justify-content-end">
-                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-dark">Edit</a>
-                    <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete ' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '? This action cannot be undone.\');">
+            <td class="align-middle text-end">
+                <div class="legalpro-admin-list-row__actions">
+                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>
+                    <form method="post" onsubmit="return confirm(\'Are you sure you want to delete ' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete_lawyer">
                         <input type="hidden" name="lawyer_id" value="' . (int)$lawyer['id'] . '">
-                        <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+                        <button class="btn btn-sm btn-danger mb-0" type="submit">Delete</button>
                     </form>
                 </div>
             </td>

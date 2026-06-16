@@ -171,7 +171,7 @@ if (empty($appointments)) {
 
         $appointmentsRows .= '
         <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td class="ps-3">
+            <td class="align-middle ps-3">
                 <div class="d-flex align-items-center">
                     <div class="icon icon-shape icon-sm bg-gradient-info shadow text-center border-radius-md me-2">
                         <i class="ni ni-folder-17 text-white text-xs opacity-10"></i>
@@ -182,16 +182,16 @@ if (empty($appointments)) {
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="align-middle">
                 <p class="text-sm font-weight-bold mb-0">' . htmlspecialchars($lawyerName) . '</p>
                 <p class="text-xs text-muted mb-0">Lawyer</p>
             </td>
-            <td class="text-center">
+            <td class="align-middle text-center">
                 <p class="text-sm font-weight-bold mb-0">' . htmlspecialchars($startsAt) . '</p>
             </td>
-            <td class="text-center">' . $statusBadge . '</td>
-            <td class="text-end pe-3">
-                <div class="d-flex gap-1 justify-content-end">
+            <td class="align-middle text-center">' . $statusBadge . '</td>
+            <td class="align-middle text-end pe-3">
+                <div class="legalpro-admin-list-row__actions">
                     ' . $editActionHtml . '
                     <a href="javascript:void(0)" class="btn btn-sm btn-danger mb-0" onclick="deleteAppointment(' . (int)$appointment['id'] . ', \'' . addslashes($caseDisplay) . '\'); return false;">Delete</a>
                 </div>
@@ -233,6 +233,13 @@ foreach ($appointments as $row) {
     $clientName = trim(($row['client_first_name'] ?? '') . ' ' . ($row['client_last_name'] ?? ''));
     $lawyerName = trim((string) ($row['lawyer_name'] ?? ''));
 
+    $startsLabel = !empty($row['starts_at'])
+        ? date('M j, Y · g:i A', strtotime($row['starts_at']))
+        : 'Date TBD';
+    $searchHay = strtolower(
+        $caseDisplay . ' ' . $clientName . ' ' . $lawyerName . ' ' . $startsLabel . ' ' . $status
+    );
+
     $appointmentCalendarEvents[] = [
         'id' => (string) $row['id'],
         'title' => $caseDisplay,
@@ -249,6 +256,8 @@ foreach ($appointments as $row) {
             'statusLabel' => ucfirst($status === 'approved' ? 'accepted' : $status),
             'appointmentId' => (int) $row['id'],
             'caseDisplay' => $caseDisplay,
+            'startsLabel' => $startsLabel,
+            'searchHay' => $searchHay,
         ],
     ];
 }
@@ -315,7 +324,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=27" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
 	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
 	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
 	<?php legalpro_icons_asset_links(); ?>
@@ -340,20 +349,23 @@ $html = <<<'HTML'
 				<div class="col-12">
 					<div class="dashboard-calendar-hub">
 						<div class="dashboard-calendar-hub__head">
-							<div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-								<div>
-									<h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Appointments Calendar</h6>
-									<p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
-									<div class="dashboard-legend-pills">
-										<span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
-										<span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
-										<span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
+							<div class="admin-calendar-hub__intro">
+								<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 w-100">
+									<div>
+										<h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Appointments Calendar</h6>
+										<p class="text-sm mb-0 text-muted">Use the search bar below to find appointments quickly, or click a calendar event</p>
+										<div class="dashboard-legend-pills">
+											<span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
+											<span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
+											<span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
+										</div>
 									</div>
+									<a href="new_appointment.php" class="btn btn-sm bg-gradient-primary mb-0 appointments-schedule-btn">
+										<i class="ni ni-fat-add appointments-schedule-btn__icon me-1"></i> Schedule Appointment
+									</a>
 								</div>
-								<a href="new_appointment.php" class="btn btn-sm bg-gradient-primary mb-0 appointments-schedule-btn">
-									<i class="ni ni-fat-add appointments-schedule-btn__icon me-1"></i> Schedule Appointment
-								</a>
 							</div>
+							{APPOINTMENTS_CAL_SEARCH}
 						</div>
 						<div class="dashboard-calendar-hub__body">
 							<div class="dashboard-calendar-layout">
@@ -605,6 +617,103 @@ $html = <<<'HTML'
 				}
 			});
 			calendar.render();
+
+			function escapeHtmlAdmin(str) {
+				return String(str)
+					.replace(/&/g, '&amp;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/"/g, '&quot;');
+			}
+
+			(function initAdminAppointmentsCalendarSearch(cal) {
+				var input = document.getElementById('aaCalSearchInput');
+				var resultsEl = document.getElementById('aaCalSearchResults');
+				if (!input || !resultsEl) {
+					return;
+				}
+
+				function hideResults() {
+					resultsEl.hidden = true;
+					resultsEl.innerHTML = '';
+				}
+
+				input.addEventListener('input', function () {
+					var q = input.value.trim().toLowerCase();
+					if (!q) {
+						hideResults();
+						return;
+					}
+
+					var matches = appointmentEvents.filter(function (ev) {
+						var props = ev.extendedProps || {};
+						var hay = props.searchHay || ((ev.title || '') + ' ' + (props.client || '')).toLowerCase();
+						return hay.indexOf(q) !== -1;
+					}).sort(function (a, b) {
+						return new Date(b.start).getTime() - new Date(a.start).getTime();
+					});
+
+					if (!matches.length) {
+						resultsEl.innerHTML = '<div class="admin-cal-search-empty">No appointments match your search.</div>';
+						resultsEl.hidden = false;
+						return;
+					}
+
+					var html = '';
+					matches.slice(0, 12).forEach(function (ev) {
+						var props = ev.extendedProps || {};
+						var statusKey = appointmentStatusKey(props.status);
+						html += '<button type="button" class="admin-cal-search-item" data-appointment-id="' + escapeHtmlAdmin(props.appointmentId || ev.id) + '" data-start="' + escapeHtmlAdmin(ev.start || '') + '">' +
+							'<span class="admin-cal-search-item__dot admin-cal-search-item__dot--' + escapeHtmlAdmin(statusKey) + '" aria-hidden="true"></span>' +
+							'<span class="admin-cal-search-item__body">' +
+								'<p class="admin-cal-search-item__title">' + escapeHtmlAdmin(ev.title || 'Appointment') + '</p>' +
+								'<p class="admin-cal-search-item__sub">' + escapeHtmlAdmin(props.startsLabel || '') + ' · ' + escapeHtmlAdmin(props.client || 'Client') + ' · ' + escapeHtmlAdmin(props.statusLabel || props.status || 'Pending') + '</p>' +
+							'</span>' +
+						'</button>';
+					});
+					resultsEl.innerHTML = html;
+					resultsEl.hidden = false;
+				});
+
+				input.addEventListener('keydown', function (e) {
+					if (e.key === 'Escape') {
+						hideResults();
+						input.blur();
+					}
+				});
+
+				resultsEl.addEventListener('click', function (e) {
+					var btn = e.target.closest('[data-appointment-id]');
+					if (!btn) {
+						return;
+					}
+					var id = btn.getAttribute('data-appointment-id');
+					var start = btn.getAttribute('data-start');
+					if (cal && start) {
+						cal.gotoDate(start);
+					}
+					var match = appointmentEvents.find(function (item) {
+						return String(item.id) === String(id);
+					});
+					if (match) {
+						openAppointmentModal({
+							id: match.id,
+							title: match.title,
+							start: match.start,
+							end: match.end,
+							extendedProps: match.extendedProps
+						});
+					}
+					document.getElementById('appointmentsTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+					hideResults();
+				});
+
+				document.addEventListener('click', function (e) {
+					if (!e.target.closest('.admin-cal-search-wrap')) {
+						hideResults();
+					}
+				});
+			})(calendar);
 		});
 	</script>
 	{APPOINTMENTS_SEARCH_SCRIPT}
@@ -612,7 +721,17 @@ $html = <<<'HTML'
 </html>
 HTML;
 
-$appointmentsSearchHtml = legalpro_render_admin_list_search('appointmentsSearchInput', 'Search appointments...');
+$appointmentsCalSearchHtml = legalpro_render_admin_featured_cal_search(
+    'aaCalSearchInput',
+    'aaCalSearchResults',
+    'Search appointments',
+    'Search by case, client, lawyer, date, or status…'
+);
+$appointmentsSearchHtml = legalpro_render_admin_featured_list_search(
+    'appointmentsSearchInput',
+    'Search appointment list',
+    'Filter the table below by case, client, lawyer, or status…'
+);
 $appointmentsSearchScript = legalpro_admin_list_search_script('appointmentsSearchInput', 'appointmentsTableBody', 'appointmentsFilterEmpty');
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
@@ -621,6 +740,7 @@ $html = str_replace('{APPOINTMENTS_SUBTITLE}', htmlspecialchars($appointmentsSub
 $html = str_replace('{APPOINTMENT_ROWS}', $appointmentsRows, $html);
 $html = str_replace('{UPCOMING_APPOINTMENTS_CALENDAR}', $upcomingAppointmentsCalendarHtml, $html);
 $html = str_replace('{APPOINTMENT_CALENDAR_EVENTS_JSON}', $appointmentCalendarEventsJson, $html);
+$html = str_replace('{APPOINTMENTS_CAL_SEARCH}', $appointmentsCalSearchHtml, $html);
 $html = str_replace('{APPOINTMENTS_SEARCH}', $appointmentsSearchHtml, $html);
 $html = str_replace('{APPOINTMENTS_SEARCH_SCRIPT}', $appointmentsSearchScript, $html);
 

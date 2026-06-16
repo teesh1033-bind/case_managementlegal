@@ -8,15 +8,7 @@ require_once __DIR__ . '/../lib/portal_notifications.php';
 
 function legalpro_admin_notification_count(?PDO $pdo = null): int
 {
-    if ($pdo === null) {
-        return 0;
-    }
-
-    try {
-        return (int) $pdo->query("SELECT COUNT(*) FROM appointments WHERE LOWER(COALESCE(status, 'pending')) = 'pending'")->fetchColumn();
-    } catch (PDOException $e) {
-        return 0;
-    }
+    return legalpro_admin_notification_unread_count($pdo);
 }
 
 function legalpro_admin_display_name(): string
@@ -90,7 +82,8 @@ function legalpro_render_portal_header_utilities(
     string $profileUrl = '',
     string $extraMenuHtml = '',
     bool $notifPanelMode = false,
-    ?int $notifBadgeCount = null
+    ?int $notifBadgeCount = null,
+    bool $adminNotifApiMode = false
 ): string {
     $initials = legalpro_portal_initials($displayName);
     $notifCount = $notifBadgeCount ?? count($notifications);
@@ -107,6 +100,12 @@ function legalpro_render_portal_header_utilities(
             . '<button type="button" class="legalpro-header-notif" id="clientNotifBell" title="Notifications" aria-expanded="false" aria-controls="clientNotifPanel">'
             . legalpro_icon('bell') . $notifBadge . '</button>'
             . legalpro_render_client_notification_dropdown()
+            . '</div>';
+    } elseif ($adminNotifApiMode) {
+        $notifControl = '<div class="legalpro-header-notif-wrap" data-admin-notif-api="1">'
+            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="Notifications">'
+            . legalpro_icon('bell') . $notifBadge . '</button>'
+            . legalpro_render_admin_notification_dropdown()
             . '</div>';
     } else {
         $notifControl = '<div class="legalpro-header-notif-wrap">'
@@ -288,6 +287,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 closeNotifPanel();
             } else {
                 openNotifPanel();
+                notifRoot.dispatchEvent(new CustomEvent("legalpro:notif-open"));
             }
         });
         notifPanel.addEventListener("click", function (e) {
@@ -322,17 +322,43 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
 {
-    $notifications = $pdo instanceof PDO ? legalpro_fetch_admin_notifications($pdo) : [];
+    $unreadCount = $pdo instanceof PDO ? legalpro_admin_notification_unread_count($pdo) : 0;
 
     return legalpro_render_portal_header_utilities(
         legalpro_admin_display_name(),
         'Administrator',
-        $notifications,
-        'appointments.php',
+        [],
+        'dashboard.php',
         'admin-logout.php',
         'profile.php',
-        '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>'
+        '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
+        false,
+        $unreadCount,
+        true
     );
+}
+
+function legalpro_render_admin_notification_dropdown(): string
+{
+    return '<div class="legalpro-notif-panel legalpro-admin-notif-dropdown" id="legalproNotifPanel" role="menu" aria-label="Notifications">'
+        . '<div class="legalpro-notif-panel__head">'
+        . '<h6 class="legalpro-notif-panel__title">Notifications</h6>'
+        . '<button type="button" class="btn btn-link btn-sm p-0 text-primary legalpro-admin-notif-dropdown__mark-all" id="adminNotifMarkAll">Mark all read</button>'
+        . '</div>'
+        . '<div class="legalpro-notif-panel__body" id="adminNotifList">'
+        . '<div class="text-muted text-sm p-3">Loading…</div>'
+        . '</div>'
+        . '<div class="legalpro-notif-panel__foot">'
+        . '<a href="dashboard.php" class="legalpro-notif-panel__view-all">View dashboard</a>'
+        . '</div>'
+        . '</div>'
+        . '<template id="adminNotifEmptyTpl">'
+        . '<div class="legalpro-notif-panel__empty">'
+        . legalpro_icon('bell', 'legalpro-notif-panel__empty-icon')
+        . '<p>No new notifications</p>'
+        . '<span>You are all caught up.</span>'
+        . '</div>'
+        . '</template>';
 }
 
 function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
@@ -581,6 +607,40 @@ function legalpro_lawyer_active_status_badge(bool $isActive): string
     return '<span class="lp-pill lp-pill--status-closed">Inactive</span>';
 }
 
+function legalpro_case_fee_due(float $estimatedFees, float $invoicedTotal): float
+{
+    return max($estimatedFees, $invoicedTotal);
+}
+
+function legalpro_case_payment_status_label(float $totalDue, float $paid): string
+{
+    if ($totalDue <= 0.01 && $paid <= 0.01) {
+        return 'No fees';
+    }
+    if ($paid >= $totalDue - 0.01) {
+        return 'Paid';
+    }
+    if ($paid > 0.01) {
+        return 'Partial';
+    }
+
+    return 'Outstanding';
+}
+
+function legalpro_case_payment_status_badge(float $totalDue, float $paid): string
+{
+    $label = legalpro_case_payment_status_label($totalDue, $paid);
+    $map = [
+        'No fees' => 'lp-pill--status-default',
+        'Paid' => 'lp-pill--status-active',
+        'Partial' => 'lp-pill--status-progress',
+        'Outstanding' => 'lp-pill--status-pending',
+    ];
+    $class = $map[$label] ?? 'lp-pill--status-default';
+
+    return '<span class="lp-pill ' . $class . '">' . htmlspecialchars($label) . '</span>';
+}
+
 function legalpro_invoice_status_badge(string $status): string
 {
     $key = strtolower(trim($status));
@@ -820,4 +880,48 @@ function legalpro_admin_list_search_script(
         . '}'
         . 'if(searchInput){searchInput.addEventListener("input",applyAdminListSearch);}'
         . '})();</script>';
+}
+
+function legalpro_admin_featured_search_svg(): string
+{
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true">'
+        . '<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3-3"></path></svg>';
+}
+
+function legalpro_render_admin_featured_cal_search(
+    string $inputId,
+    string $resultsId,
+    string $label,
+    string $placeholder
+): string {
+    return '<div class="admin-cal-search-wrap admin-cal-search-wrap--featured">'
+        . '<label class="admin-cal-search-label" for="' . htmlspecialchars($inputId, ENT_QUOTES, 'UTF-8') . '">'
+        . htmlspecialchars($label) . '</label>'
+        . '<div class="admin-cal-search-field">'
+        . '<span class="admin-cal-search-icon" aria-hidden="true">' . legalpro_admin_featured_search_svg() . '</span>'
+        . '<input type="search" id="' . htmlspecialchars($inputId, ENT_QUOTES, 'UTF-8') . '" class="admin-cal-search-input"'
+        . ' placeholder="' . htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8') . '" autocomplete="off"'
+        . ' aria-label="' . htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8') . '">'
+        . '</div>'
+        . '<div class="admin-cal-search-results" id="' . htmlspecialchars($resultsId, ENT_QUOTES, 'UTF-8') . '" hidden></div>'
+        . '</div>';
+}
+
+function legalpro_render_admin_featured_list_search(
+    string $inputId,
+    string $label,
+    string $placeholder
+): string {
+    return '<div class="px-3 pt-3 pb-2">'
+        . '<div class="admin-cal-search-wrap admin-cal-search-wrap--featured admin-cal-search-wrap--list">'
+        . '<label class="admin-cal-search-label" for="' . htmlspecialchars($inputId, ENT_QUOTES, 'UTF-8') . '">'
+        . htmlspecialchars($label) . '</label>'
+        . '<div class="admin-cal-search-field">'
+        . '<span class="admin-cal-search-icon" aria-hidden="true">' . legalpro_admin_featured_search_svg() . '</span>'
+        . '<input type="search" id="' . htmlspecialchars($inputId, ENT_QUOTES, 'UTF-8') . '" class="admin-cal-search-input"'
+        . ' placeholder="' . htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8') . '" autocomplete="off"'
+        . ' aria-label="' . htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8') . '">'
+        . '</div>'
+        . '</div>'
+        . '</div>';
 }
