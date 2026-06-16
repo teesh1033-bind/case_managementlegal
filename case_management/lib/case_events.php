@@ -452,13 +452,13 @@ class CaseEvents {
             'service_added' => 'bg-gradient-primary',
             'service_updated' => 'bg-gradient-warning',
             'service_deleted' => 'bg-gradient-danger',
-            'payment_added' => 'bg-gradient-success',
+            'payment_added' => 'bg-gradient-warning',
             'document_uploaded' => 'bg-gradient-primary',
             'document_deleted' => 'bg-gradient-danger',
             'comment_added' => 'bg-gradient-secondary',
             'lawyer_assigned' => 'bg-gradient-success',
             'lawyer_unassigned' => 'bg-gradient-warning',
-            'appointment_created' => 'bg-gradient-info',
+            'appointment_created' => 'bg-gradient-primary',
             'appointment_updated' => 'bg-gradient-warning'
         ];
 
@@ -475,13 +475,13 @@ class CaseEvents {
             'service_added' => 'primary',
             'service_updated' => 'warning',
             'service_deleted' => 'danger',
-            'payment_added' => 'success',
+            'payment_added' => 'warning',
             'document_uploaded' => 'primary',
             'document_deleted' => 'danger',
             'comment_added' => 'secondary',
             'lawyer_assigned' => 'success',
             'lawyer_unassigned' => 'warning',
-            'appointment_created' => 'info',
+            'appointment_created' => 'primary',
             'appointment_updated' => 'warning'
         ];
 

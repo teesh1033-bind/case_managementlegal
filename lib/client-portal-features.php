@@ -117,6 +117,159 @@ function legalpro_client_count_new_documents(?PDO $pdo, int $clientId): int
     }
 }
 
+function legalpro_client_document_file_urls(array $doc): array
+{
+    $filepath = '../' . ltrim((string) ($doc['filepath'] ?? ''), '/');
+    $filename = (string) ($doc['filename'] ?? 'document');
+    $label = (string) ($doc['label'] ?: $filename);
+
+    return [
+        'view_url' => $filepath,
+        'download_url' => $filepath,
+        'download_filename' => $filename,
+        'display_label' => $label,
+        'is_finance_pdf' => false,
+    ];
+}
+
+function legalpro_client_normalize_finance_reference(string $value): string
+{
+    return strtoupper(preg_replace('/[^A-Z0-9]/', '', $value));
+}
+
+function legalpro_client_lookup_invoice_for_document(
+    PDO $pdo,
+    int $clientId,
+    int $caseId,
+    string $invoiceReference
+): ?array {
+    $normalized = legalpro_client_normalize_finance_reference($invoiceReference);
+    if ($normalized === '') {
+        return null;
+    }
+
+    $stmt = $pdo->prepare('SELECT id, invoice_number, case_id FROM invoices WHERE client_id = ?');
+    $stmt->execute([$clientId]);
+    $best = null;
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $invoice) {
+        if (legalpro_client_normalize_finance_reference((string) $invoice['invoice_number']) !== $normalized) {
+            continue;
+        }
+        if ($caseId > 0 && (int) $invoice['case_id'] === $caseId) {
+            return $invoice;
+        }
+        if ($best === null) {
+            $best = $invoice;
+        }
+    }
+
+    return $best;
+}
+
+/**
+ * Map legacy uploaded invoice/receipt/quotation HTML files to live PDF endpoints.
+ */
+function legalpro_client_resolve_finance_document_urls(?PDO $pdo, int $clientId, array $doc): array
+{
+    $defaults = legalpro_client_document_file_urls($doc);
+    if ($pdo === null || $clientId <= 0) {
+        return $defaults;
+    }
+
+    $filename = (string) ($doc['filename'] ?? '');
+    $label = (string) ($doc['label'] ?? '');
+    $caseId = (int) ($doc['case_id'] ?? 0);
+    $probe = $filename . ' ' . $label;
+
+    if (preg_match('/invoice[_\s-]+([a-z0-9\-]+)(?:\.html?)?/i', $probe, $m)) {
+        $invoiceNumber = $m[1];
+        try {
+            $invoice = legalpro_client_lookup_invoice_for_document($pdo, $clientId, $caseId, $invoiceNumber);
+            if ($invoice) {
+                $number = (string) ($invoice['invoice_number'] ?: $invoiceNumber);
+                $safe = preg_replace('/[^A-Za-z0-9_\-]/', '', $number) ?: 'invoice';
+
+                return [
+                    'view_url' => 'invoice-download.php?id=' . (int) $invoice['id'] . '&view=1',
+                    'download_url' => 'invoice-download.php?id=' . (int) $invoice['id'],
+                    'download_filename' => 'invoice-' . $safe . '.pdf',
+                    'display_label' => preg_replace('/\.html?$/i', '.pdf', $label) ?: ('Invoice ' . $number),
+                    'is_finance_pdf' => true,
+                ];
+            }
+        } catch (PDOException $e) {
+            // Keep static file fallback.
+        }
+    }
+
+    if (preg_match('/(?:receipt|payment)[_\s-]+(?:rc[_\s-]*)?(\d+)/i', $probe, $m)) {
+        $paymentId = (int) $m[1];
+        if ($paymentId > 0) {
+            try {
+                $stmt = $pdo->prepare('SELECT id FROM payments WHERE id = ? AND client_id = ? LIMIT 1');
+                $stmt->execute([$paymentId, $clientId]);
+                $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($payment) {
+                    $safe = 'RC-' . str_pad((string) $paymentId, 6, '0', STR_PAD_LEFT);
+
+                    return [
+                        'view_url' => 'payment-receipt.php?id=' . $paymentId . '&view=1',
+                        'download_url' => 'payment-receipt.php?id=' . $paymentId,
+                        'download_filename' => 'receipt-' . $safe . '.pdf',
+                        'display_label' => preg_replace('/\.html?$/i', '.pdf', $label) ?: ('Receipt ' . $safe),
+                        'is_finance_pdf' => true,
+                    ];
+                }
+            } catch (PDOException $e) {
+                // Keep static file fallback.
+            }
+        }
+    }
+
+    if (preg_match('/quotation[_\s-]+([a-z0-9\-]+)/i', $probe, $m)) {
+        $quoteNumber = $m[1];
+        $normalizedQuote = legalpro_client_normalize_finance_reference($quoteNumber);
+        try {
+            $stmt = $pdo->prepare('
+                SELECT q.id, q.quotation_number, q.case_id
+                FROM case_quotations q
+                INNER JOIN cases c ON c.id = q.case_id
+                WHERE c.client_id = ?
+            ');
+            $stmt->execute([$clientId]);
+            $best = null;
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $quote) {
+                if (legalpro_client_normalize_finance_reference((string) $quote['quotation_number']) !== $normalizedQuote) {
+                    continue;
+                }
+                if ($caseId > 0 && (int) $quote['case_id'] === $caseId) {
+                    $best = $quote;
+                    break;
+                }
+                if ($best === null) {
+                    $best = $quote;
+                }
+            }
+            if ($best) {
+                $number = (string) ($best['quotation_number'] ?: $quoteNumber);
+                $safe = preg_replace('/[^A-Za-z0-9_\-]/', '', $number) ?: 'quotation';
+
+                return [
+                    'view_url' => 'client-quotation-view.php?id=' . (int) $best['id'] . '&view=1',
+                    'download_url' => 'client-quotation-view.php?id=' . (int) $best['id'],
+                    'download_filename' => 'quotation-' . $safe . '.pdf',
+                    'display_label' => preg_replace('/\.html?$/i', '.pdf', $label) ?: ('Quotation ' . $number),
+                    'is_finance_pdf' => true,
+                ];
+            }
+        } catch (PDOException $e) {
+            // Keep static file fallback.
+        }
+    }
+
+    return $defaults;
+}
+
 function legalpro_client_get_documents(?PDO $pdo, int $clientId, ?int $caseId = null, string $search = ''): array
 {
     if ($pdo === null || $clientId <= 0) {
@@ -169,6 +322,7 @@ function legalpro_client_get_documents(?PDO $pdo, int $clientId, ?int $caseId = 
             $row['is_acknowledged'] = in_array((int) $row['id'], $ackIds, true);
             $row['needs_ack'] = !$row['is_acknowledged']
                 && stripos((string) ($row['uploaded_by'] ?? ''), 'client') === false;
+            $row = array_merge($row, legalpro_client_resolve_finance_document_urls($pdo, $clientId, $row));
         }
         unset($row);
 
@@ -811,81 +965,6 @@ function legalpro_client_render_activity_feed_html(array $items): string
     }
     $html .= '</div>';
 
-    return $html;
-}
-
-function legalpro_client_case_progress_phase(string $status, array $stages = [], bool $hasCourtDates = false): array
-{
-    $phases = [
-        ['key' => 'intake', 'label' => 'Intake'],
-        ['key' => 'active', 'label' => 'Active'],
-        ['key' => 'hearing', 'label' => 'Hearing'],
-        ['key' => 'settlement', 'label' => 'Settlement'],
-        ['key' => 'closed', 'label' => 'Closed'],
-    ];
-
-    $statusNorm = strtolower(str_replace([' ', '-'], '_', trim($status)));
-    $currentIndex = 1;
-
-    if (in_array($statusNorm, ['closed', 'complete', 'completed'], true)) {
-        $currentIndex = 4;
-    } elseif ($statusNorm === 'pending' || $statusNorm === 'intake') {
-        $currentIndex = 0;
-    } elseif (in_array($statusNorm, ['settlement', 'settled', 'resolved'], true)) {
-        $currentIndex = 3;
-    } elseif ($hasCourtDates) {
-        $currentIndex = 2;
-    } elseif (in_array($statusNorm, ['open', 'active', 'in_progress', 'under_review'], true)) {
-        $currentIndex = 1;
-    }
-
-    foreach ($stages as $stage) {
-        $title = strtolower((string) ($stage['title'] ?? ''));
-        if (strpos($title, 'settlement') !== false || strpos($title, 'settle') !== false) {
-            if (!empty($stage['actual_end_date']) || !empty($stage['start_date'])) {
-                $currentIndex = max($currentIndex, 3);
-            }
-        }
-        if (strpos($title, 'hearing') !== false || strpos($title, 'court') !== false) {
-            if (!empty($stage['start_date'])) {
-                $currentIndex = max($currentIndex, 2);
-            }
-        }
-        if (strpos($title, 'intake') !== false || strpos($title, 'onboard') !== false) {
-            if (!empty($stage['actual_end_date'])) {
-                $currentIndex = max($currentIndex, 1);
-            }
-        }
-    }
-
-    foreach ($phases as $i => &$phase) {
-        if ($i < $currentIndex) {
-            $phase['state'] = 'done';
-        } elseif ($i === $currentIndex) {
-            $phase['state'] = 'current';
-        } else {
-            $phase['state'] = 'upcoming';
-        }
-    }
-    unset($phase);
-
-    return $phases;
-}
-
-function legalpro_client_render_case_progress_stepper(array $phases): string
-{
-    $html = '<div class="cp-case-stepper" role="list" aria-label="Case progress">';
-    $count = count($phases);
-    foreach ($phases as $i => $phase) {
-        $state = htmlspecialchars((string) ($phase['state'] ?? 'upcoming'));
-        $label = htmlspecialchars((string) ($phase['label'] ?? ''));
-        $connector = $i < $count - 1 ? '<span class="cp-case-stepper__line" aria-hidden="true"></span>' : '';
-        $html .= '<div class="cp-case-stepper__step cp-case-stepper__step--' . $state . '" role="listitem">
-            <span class="cp-case-stepper__dot" aria-hidden="true"></span>
-            <span class="cp-case-stepper__label">' . $label . '</span>
-        </div>' . $connector;
-    }
-    $html .= '</div>';
     return $html;
 }
 

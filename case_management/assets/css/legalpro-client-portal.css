@@ -273,6 +273,34 @@ body.client-documents-page .main-content .card:not([class*="-hero"]) {
     box-shadow: none;
 }
 
+/* ── Case activity panel (client case view) ─────────────────────────────── */
+.legalpro-client-portal .ccv-activity-panel .ccv-activity-panel__title {
+    color: var(--legalpro-theme-primary, #5e72e4);
+    font-weight: 800;
+}
+.legalpro-client-portal .ccv-activity-panel .ccv-activity-panel__subtitle {
+    color: #64748b;
+}
+.legalpro-client-portal .ccv-activity-feed .timeline-content h6 {
+    color: #344767 !important;
+}
+.legalpro-client-portal .ccv-activity-feed .text-muted,
+.legalpro-client-portal .ccv-activity-feed .timeline-content .text-xs {
+    color: #64748b !important;
+}
+.legalpro-client-portal .ccv-activity-feed .text-danger {
+    color: #f5365c !important;
+}
+.legalpro-client-portal .ccv-activity-feed .text-success {
+    color: #2dce89 !important;
+}
+.legalpro-client-portal .ccv-activity-feed .timeline-step i[class*="text-"] {
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
+}
+.legalpro-client-portal .ccv-activity-feed > .text-center.text-muted p {
+    color: #94a3b8 !important;
+}
+
 /* —— Client portal search bars (navbar + search page) —— */
 body.legalpro-client-portal .navbar-main .legalpro-navbar-search .input-group,
 body.legalpro-client-portal .search-hero-field {
@@ -502,42 +530,6 @@ body.legalpro-dark-mode.legalpro-client-portal.client-court-tracking-page .cct-e
 .cp-activity-empty { text-align: center; padding: 2rem 1rem; }
 .cp-activity-empty__title { font-weight: 700; color: #64748b; margin: 0 0 .25rem; }
 .cp-activity-empty__sub { font-size: .8rem; color: #94a3b8; margin: 0; }
-
-/* ── Case progress stepper ─────────────────────────────────────────────── */
-.cp-case-stepper {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    gap: 0; padding: .5rem 0 1rem; overflow-x: auto;
-}
-.cp-case-stepper__step {
-    display: flex; flex-direction: column; align-items: center;
-    flex: 1; min-width: 4.5rem; text-align: center; position: relative;
-}
-.cp-case-stepper__dot {
-    width: 1.35rem; height: 1.35rem; border-radius: 50%;
-    border: 3px solid #cbd5e1; background: #fff;
-    margin-bottom: .45rem; position: relative; z-index: 1;
-}
-.cp-case-stepper__step--done .cp-case-stepper__dot {
-    border-color: #2dce89; background: #2dce89;
-    box-shadow: inset 0 0 0 3px #fff;
-}
-.cp-case-stepper__step--current .cp-case-stepper__dot {
-    border-color: var(--legalpro-theme-primary, #5e72e4);
-    background: var(--legalpro-theme-primary, #5e72e4);
-    box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
-}
-.cp-case-stepper__label { font-size: .68rem; font-weight: 700; color: #64748b; line-height: 1.2; }
-.cp-case-stepper__step--current .cp-case-stepper__label { color: var(--legalpro-theme-primary, #5e72e4); }
-.cp-case-stepper__step--done .cp-case-stepper__label { color: #1e9e6a; }
-.cp-case-stepper__line {
-    flex: 1; height: 3px; background: #e2e8f0;
-    margin-top: .65rem; min-width: .5rem;
-}
-.cp-case-stepper__step--done + .cp-case-stepper__line,
-.cp-case-stepper__line:has(+ .cp-case-stepper__step--done),
-.cp-case-stepper__line:has(+ .cp-case-stepper__step--current) {
-    background: linear-gradient(90deg, #2dce89, var(--legalpro-theme-primary, #5e72e4));
-}
 
 /* ── Document center ───────────────────────────────────────────────────── */
 .cdoc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }

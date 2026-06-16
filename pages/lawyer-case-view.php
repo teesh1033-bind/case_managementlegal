@@ -398,7 +398,7 @@ $html = <<<'HTML'
             width: 100%;
             max-width: 100%;
         }
-        .lawyer-case-comments .cc-comment-item--client .cc-comment-item-inner { border-left-color: #11cdef; }
+        .lawyer-case-comments .cc-comment-item--client .cc-comment-item-inner { border-left-color: #8898aa; }
         .lawyer-case-comments .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
         .lawyer-case-comments .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
         .lawyer-case-comments .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
@@ -751,7 +751,7 @@ HTML;
 $commentRoleBadge = static function (string $type): string {
     switch ($type) {
         case 'client':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-info">Client</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Client</span>';
         case 'lawyer':
             return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
         case 'admin':

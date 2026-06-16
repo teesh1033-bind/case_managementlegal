@@ -79,7 +79,7 @@ try {
 $commentRoleBadge = static function (string $type): string {
     switch ($type) {
         case 'client':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-info">Client</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Client</span>';
         case 'lawyer':
             return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
         case 'admin':
@@ -285,7 +285,7 @@ $html = <<<'HTML'
             border-left: 4px solid #8392ab;
             box-shadow: 0 1px 4px rgba(0,0,0,.04);
         }
-        .lawyer-client-comments-feed .cc-comment-item--client .cc-comment-item-inner { border-left-color: #11cdef; }
+        .lawyer-client-comments-feed .cc-comment-item--client .cc-comment-item-inner { border-left-color: #8898aa; }
         .lawyer-client-comments-feed .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
         .lawyer-client-comments-feed .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
         .lawyer-client-comments-feed .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
