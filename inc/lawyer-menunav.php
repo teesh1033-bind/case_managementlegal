@@ -38,6 +38,9 @@ $companyName = $companyBranding['name'];
 $companyLogoUrl = $companyBranding['logo_url'];
 
 global $pdo;
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    require_once __DIR__ . '/db.php';
+}
 $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
     legalpro_render_lawyer_header_utilities(isset($pdo) ? $pdo : null)
 );

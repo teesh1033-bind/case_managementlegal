@@ -50,17 +50,7 @@ function legalpro_lawyer_notification_count(?PDO $pdo = null, ?int $lawyerId = n
         return 0;
     }
 
-    try {
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) FROM appointments
-            WHERE lawyer_id = ? AND LOWER(COALESCE(status, 'pending')) = 'pending'
-        ");
-        $stmt->execute([$lawyerId]);
-
-        return (int) $stmt->fetchColumn();
-    } catch (PDOException $e) {
-        return 0;
-    }
+    return count(legalpro_fetch_lawyer_notifications($pdo, $lawyerId));
 }
 
 function legalpro_client_notification_count(?PDO $pdo = null, ?int $clientId = null): int

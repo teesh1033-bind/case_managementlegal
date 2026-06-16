@@ -247,20 +247,20 @@ $iconCommentEmpty = legalpro_icon('message-circle');
 $servicesHtml = '';
 $totalFees = 0;
 if (empty($services)) {
-    $servicesHtml = '<tr><td colspan="3" class="text-center text-muted py-3">No services added yet</td></tr>';
+    $servicesHtml = '<tr><td colspan="2" class="text-center text-muted py-3">No services added yet</td></tr>';
 } else {
     foreach ($services as $service) {
         $servicesHtml .= '
         <tr>
             <td>' . htmlspecialchars($service['service_name']) . '</td>
-            <td class="text-end">Rs' . number_format($service['price'], 2) . '</td>
+            <td class="text-end">' . formatCurrency($service['price']) . '</td>
         </tr>';
         $totalFees += $service['price'];
     }
     $servicesHtml .= '
     <tr class="table-active">
         <td><strong>Total Estimated Fees</strong></td>
-        <td class="text-end"><strong>Rs' . number_format($totalFees, 2) . '</strong></td>
+        <td class="text-end"><strong>' . formatCurrency($totalFees) . '</strong></td>
     </tr>';
 }
 

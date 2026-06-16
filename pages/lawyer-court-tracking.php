@@ -311,6 +311,13 @@ if (empty($upcomingCourtDates)) {
             padding-right: 0.25rem;
             text-align: center;
         }
+        .calendar-search-wrap {
+            width: 100%;
+            margin-top: 0.65rem;
+        }
+        .calendar-search-input {
+            max-width: 380px;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
@@ -397,6 +404,15 @@ if (empty($upcomingCourtDates)) {
                                 <button class="btn btn-sm bg-gradient-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
                                     <i class="fas fa-plus me-1"></i>Add Court Date
                                 </button>
+                            </div>
+                            <div class="calendar-search-wrap">
+                                <input
+                                    type="text"
+                                    id="calendarSearchInput"
+                                    class="form-control calendar-search-input"
+                                    placeholder="Search in calendar events..."
+                                    aria-label="Search calendar events"
+                                >
                             </div>
                         </div>
                         <div class="dashboard-calendar-hub__body">
@@ -641,7 +657,9 @@ if (empty($upcomingCourtDates)) {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('courtTrackingCalendar');
+            var calendarSearchInput = document.getElementById('calendarSearchInput');
             var courtEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
+            var rawCourtDates = <?php echo json_encode($court_dates, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 
             function courtStatusKey(status) {
                 var value = String(status || 'scheduled').toLowerCase();
@@ -680,6 +698,64 @@ if (empty($upcomingCourtDates)) {
                 return;
             }
 
+            function eventMatchesSearch(eventObj, searchTerm) {
+                if (!searchTerm) {
+                    return true;
+                }
+                var props = eventObj.extendedProps || {};
+                var haystack = [
+                    eventObj.title || '',
+                    props.case_title || '',
+                    props.court_title || '',
+                    props.client_name || '',
+                    props.location || '',
+                    props.description || '',
+                    props.status || ''
+                ].join(' ').toLowerCase();
+                return haystack.indexOf(searchTerm) !== -1;
+            }
+
+            function updateUpcomingList(searchTerm) {
+                if (!upcomingList) {
+                    return;
+                }
+                var items = upcomingList.querySelectorAll('.dashboard-upcoming-item');
+                var visibleCount = 0;
+                items.forEach(function(item) {
+                    var id = item.getAttribute('data-court-date-id');
+                    var row = rawCourtDates.find(function(r) { return String(r.id) === String(id); });
+                    if (!row) {
+                        item.style.display = searchTerm ? 'none' : '';
+                        return;
+                    }
+                    var haystack = [
+                        row.case_title || '',
+                        row.title || '',
+                        row.client_name || '',
+                        row.location || '',
+                        row.description || '',
+                        row.status || ''
+                    ].join(' ').toLowerCase();
+                    var matches = !searchTerm || haystack.indexOf(searchTerm) !== -1;
+                    item.style.display = matches ? '' : 'none';
+                    if (matches) {
+                        visibleCount += 1;
+                    }
+                });
+
+                var noResult = upcomingList.querySelector('.calendar-no-search-result');
+                if (visibleCount === 0 && items.length > 0 && searchTerm) {
+                    if (!noResult) {
+                        noResult = document.createElement('div');
+                        noResult.className = 'dashboard-upcoming-empty calendar-no-search-result';
+                        noResult.textContent = 'No upcoming court dates match your search';
+                        upcomingList.appendChild(noResult);
+                    }
+                } else if (noResult) {
+                    noResult.remove();
+                }
+            }
+
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
                 height: 'auto',
@@ -712,6 +788,22 @@ if (empty($upcomingCourtDates)) {
                 }
             });
             calendar.render();
+
+            function applyCalendarSearch() {
+                var searchTerm = (calendarSearchInput && calendarSearchInput.value ? calendarSearchInput.value : '').trim().toLowerCase();
+                var filteredEvents = courtEvents.filter(function(evt) {
+                    return eventMatchesSearch(evt, searchTerm);
+                });
+                calendar.removeAllEvents();
+                filteredEvents.forEach(function(evt) {
+                    calendar.addEvent(evt);
+                });
+                updateUpcomingList(searchTerm);
+            }
+
+            if (calendarSearchInput) {
+                calendarSearchInput.addEventListener('input', applyCalendarSearch);
+            }
         });
 
         // View court date details
