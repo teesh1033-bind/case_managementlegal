@@ -900,7 +900,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode .modal-body,'
         . 'body.legalpro-dark-mode .modal-body p,'
-        . 'body.legalpro-dark-mode .modal-body span:not(.badge):not(.lp-pill):not(.ca-status-pill) {'
+        . 'body.legalpro-dark-mode .modal-body span:not(.badge):not(.lp-pill):not(.ca-status-pill):not(.ca-badge) {'
         . 'color: var(--lp-dark-text-secondary) !important;'
         . '}';
 

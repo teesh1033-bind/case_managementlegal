@@ -314,21 +314,7 @@
         }
     }
 
-    function fixClientSidenavLayout() {
-        if (!document.body.classList.contains('legalpro-client-portal')) return;
-        var sidenav = qs('#sidenav-main.legalpro-admin-sidebar');
-        if (!sidenav) return;
-        sidenav.style.overflow = 'hidden';
-        var navWrap = qs('#sidenav-collapse-main', sidenav);
-        if (navWrap) {
-            navWrap.classList.add('show');
-            navWrap.style.height = 'auto';
-            navWrap.style.maxHeight = 'none';
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
-        fixClientSidenavLayout();
         initClientPageSearch();
         initNotificationDropdown();
         initMoreSheet();

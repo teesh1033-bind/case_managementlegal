@@ -20,8 +20,60 @@ $messageType = '';
 // Get case ID from URL
 $case_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
+// Handle comment deletion (client's own comments on this case only)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_comment_id'])) {
+    $commentId = (int) $_POST['delete_comment_id'];
+    if ($commentId > 0 && $case_id > 0 && $client_user_id) {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT cc.id
+                FROM case_comments cc
+                INNER JOIN cases c ON c.id = cc.case_id
+                WHERE cc.id = ? AND cc.case_id = ? AND c.client_id = ?
+                  AND cc.user_id = ? AND cc.comment_type = 'client'
+            ");
+            $stmt->execute([$commentId, $case_id, $client_id, $client_user_id]);
+            if ($stmt->fetch()) {
+                $del = $pdo->prepare('DELETE FROM case_comments WHERE id = ? AND case_id = ?');
+                $del->execute([$commentId, $case_id]);
+            }
+        } catch (PDOException $e) {
+            // Page reloads without changes on failure.
+        }
+    }
+    header('Location: client-case-view.php?id=' . $case_id . '#case-comments');
+    exit;
+}
+
+// Handle comment edit (client's own comments on this case only)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_comment_id'])) {
+    $commentId = (int) $_POST['edit_comment_id'];
+    $commentText = trim((string) ($_POST['comment'] ?? ''));
+
+    if ($commentId > 0 && $case_id > 0 && $client_user_id && $commentText !== '') {
+        try {
+            $stmt = $pdo->prepare("
+                SELECT cc.id
+                FROM case_comments cc
+                INNER JOIN cases c ON c.id = cc.case_id
+                WHERE cc.id = ? AND cc.case_id = ? AND c.client_id = ?
+                  AND cc.user_id = ? AND cc.comment_type = 'client'
+            ");
+            $stmt->execute([$commentId, $case_id, $client_id, $client_user_id]);
+            if ($stmt->fetch()) {
+                $upd = $pdo->prepare('UPDATE case_comments SET comment = ? WHERE id = ? AND case_id = ?');
+                $upd->execute([$commentText, $commentId, $case_id]);
+            }
+        } catch (PDOException $e) {
+            // Page reloads without changes on failure.
+        }
+    }
+    header('Location: client-case-view.php?id=' . $case_id . '#case-comments');
+    exit;
+}
+
 // Handle comment submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment']) && !isset($_POST['edit_comment_id'])) {
     $comment = trim($_POST['comment']);
 
     if (!empty($comment)) {
@@ -241,8 +293,38 @@ if (!empty($comments)) {
         }
         $timeLabel = date('M j, Y · g:i A', strtotime($comment['created_at']));
         $body = nl2br(htmlspecialchars($comment['comment']));
+        $rawComment = htmlspecialchars((string) $comment['comment'], ENT_QUOTES, 'UTF-8');
         $roleBadge = $commentRoleBadge($type);
         $youBadge = $isCurrentUser ? '<span class="badge badge-sm bg-gradient-primary ms-1">You</span>' : '';
+        $commentId = (int) ($comment['id'] ?? 0);
+        $canManage = $isCurrentUser && $type === 'client' && $commentId > 0;
+
+        if ($canManage) {
+            $headActions = '
+                    <div class="cc-comment-head-actions">
+                        <time class="cc-comment-time" datetime="' . htmlspecialchars(date('c', strtotime($comment['created_at']))) . '">' . htmlspecialchars($timeLabel) . '</time>
+                        <button type="button" class="btn btn-sm btn-outline-primary mb-0 cc-comment-edit-btn" data-comment-id="' . $commentId . '">Edit</button>
+                        <form method="post" class="cc-comment-delete-form" onsubmit="return confirm(\'Delete this comment?\');">
+                            <input type="hidden" name="delete_comment_id" value="' . $commentId . '">
+                            <button type="submit" class="btn btn-sm btn-outline-danger mb-0">Delete</button>
+                        </form>
+                    </div>';
+            $commentBody = '
+                <div class="cc-comment-text cc-comment-view" id="cc-comment-view-' . $commentId . '">' . $body . '</div>
+                <div class="cc-comment-edit-wrap d-none" id="cc-comment-edit-' . $commentId . '">
+                    <form method="post" class="cc-comment-edit-form">
+                        <input type="hidden" name="edit_comment_id" value="' . $commentId . '">
+                        <textarea class="form-control form-control-sm mb-2" name="comment" rows="3" required>' . $rawComment . '</textarea>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-sm btn-outline-secondary mb-0 cc-comment-edit-cancel">Cancel</button>
+                            <button type="submit" class="btn btn-sm bg-gradient-primary mb-0">Save</button>
+                        </div>
+                    </form>
+                </div>';
+        } else {
+            $headActions = '<time class="cc-comment-time" datetime="' . htmlspecialchars(date('c', strtotime($comment['created_at']))) . '">' . htmlspecialchars($timeLabel) . '</time>';
+            $commentBody = '<div class="cc-comment-text">' . $body . '</div>';
+        }
 
         $commentsHtml .= '
         <li class="' . $itemClass . '">
@@ -254,9 +336,9 @@ if (!empty($comments)) {
                         ' . $youBadge . '
                         ' . $roleBadge . '
                     </div>
-                    <time class="cc-comment-time" datetime="' . htmlspecialchars(date('c', strtotime($comment['created_at']))) . '">' . htmlspecialchars($timeLabel) . '</time>
+                    ' . $headActions . '
                 </div>
-                <div class="cc-comment-text">' . $body . '</div>
+                ' . $commentBody . '
             </div>
         </li>';
     }
@@ -454,6 +536,23 @@ $html = <<<'HTML'
             resize: vertical;
             min-height: 6rem;
         }
+        .cc-comment-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .cc-comment-delete-form {
+            display: inline-flex;
+            margin: 0;
+        }
+        .cc-comment-edit-form textarea {
+            border-radius: 0.65rem;
+            resize: vertical;
+            min-height: 4.5rem;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-portal-page{PORTAL_THEME_BODY_CLASS}">
@@ -569,7 +668,7 @@ $html = <<<'HTML'
             </div>
 
             <!-- Case comments -->
-            <div class="row mt-4">
+            <div class="row mt-4" id="case-comments">
                 <div class="col-12">
                     <div class="card cc-comments-panel shadow-sm">
                         <div class="card-header pb-0 pt-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -595,6 +694,29 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.cc-comment-edit-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = btn.getAttribute('data-comment-id');
+                var view = document.getElementById('cc-comment-view-' + id);
+                var edit = document.getElementById('cc-comment-edit-' + id);
+                if (view) view.classList.add('d-none');
+                if (edit) edit.classList.remove('d-none');
+            });
+        });
+        document.querySelectorAll('.cc-comment-edit-cancel').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var wrap = btn.closest('.cc-comment-edit-wrap');
+                if (!wrap) return;
+                var id = wrap.id.replace('cc-comment-edit-', '');
+                wrap.classList.add('d-none');
+                var view = document.getElementById('cc-comment-view-' + id);
+                if (view) view.classList.remove('d-none');
+            });
+        });
+    });
+    </script>
 </body>
 </html>
 HTML;

@@ -106,10 +106,30 @@ if (!defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
     <?php endif; ?>
 </aside>
 
+<script>
+(function () {
+    var body = document.body;
+    if (!body || !body.classList.contains('legalpro-client-portal')) {
+        return;
+    }
+    body.classList.remove('g-sidenav-hidden');
+    try {
+        if (window.localStorage.getItem('legalproClientSidebarCollapsed') === '1') {
+            body.classList.add('legalpro-sidebar-collapsed');
+        } else {
+            body.classList.remove('legalpro-sidebar-collapsed');
+        }
+    } catch (e) {}
+    if (window.innerWidth >= 1200) {
+        body.classList.add('g-sidenav-pinned');
+    }
+})();
+</script>
+
 <?php echo $navbarUtilitiesMount; ?>
 <?php echo legalpro_client_render_bottom_nav($currentPage); ?>
 
-<script src="../assets/js/client-portal.js?v=5"></script>
-<script src="../assets/js/legalpro-sidebar.js?v=2"></script>
+<script src="../assets/js/client-portal.js?v=6"></script>
+<script src="../assets/js/legalpro-sidebar.js?v=4"></script>
 <script src="../assets/js/legalpro-search-clear.js?v=1"></script>
 <?php legalpro_icons_footer_scripts(); ?>
