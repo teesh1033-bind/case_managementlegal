@@ -349,6 +349,9 @@ $html = <<<'HTML'
 		.client-chatbot-page .chat-message-bot .cb-hint {
 			color: #334155;
 		}
+		body.legalpro-dark-mode.client-chatbot-page .chat-message-bot .cb-hint {
+			color: #dbe4ff;
+		}
 		.client-chatbot-page .chat-window { border-color: #e9ecf3; background: #fafbfc; height: min(52vh, 520px); }
 		.cb-mode-badge {
 			display: inline-block; padding: 2px 10px; border-radius: 99px;

@@ -316,27 +316,61 @@ if (!empty($_SESSION['error_message'])) {
 
         .client-court-tracking-page .cct-cal-search-wrap {
             position: relative;
-            width: min(100%, 340px);
+            width: 100%;
             flex-shrink: 0;
+        }
+        .client-court-tracking-page .dashboard-calendar-hub__head {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .client-court-tracking-page .cct-cal-search-wrap--featured {
+            padding: .9rem 1rem 1rem;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+        }
+        .client-court-tracking-page .cct-cal-search-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--cct-primary);
+            margin-bottom: .55rem;
         }
         .client-court-tracking-page .cct-cal-search-field {
             display: flex;
             align-items: center;
-            gap: .55rem;
+            gap: .7rem;
             background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: .5rem .75rem;
-            transition: border-color .15s, box-shadow .15s;
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border-radius: 12px;
+            padding: .7rem 1rem;
+            transition: border-color .15s, box-shadow .15s, transform .15s;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
         }
         .client-court-tracking-page .cct-cal-search-field:focus-within {
             border-color: var(--cct-primary);
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            transform: translateY(-1px);
+        }
+        .client-court-tracking-page .cct-cal-search-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            color: var(--cct-primary);
+            flex-shrink: 0;
         }
         .client-court-tracking-page .cct-cal-search-field svg {
-            width: 16px;
-            height: 16px;
-            color: #94a3b8;
+            width: 18px;
+            height: 18px;
+            color: currentColor;
             flex-shrink: 0;
         }
         .client-court-tracking-page .cct-cal-search-input {
@@ -344,12 +378,14 @@ if (!empty($_SESSION['error_message'])) {
             outline: none;
             background: transparent;
             width: 100%;
-            font-size: 13px;
+            font-size: 15px;
+            font-weight: 600;
             color: #1e293b;
             font-family: inherit;
         }
         .client-court-tracking-page .cct-cal-search-input::placeholder {
-            color: #94a3b8;
+            color: #64748b;
+            font-weight: 500;
         }
         .client-court-tracking-page .cct-cal-search-results {
             position: absolute;
@@ -416,6 +452,61 @@ if (!empty($_SESSION['error_message'])) {
             color: #94a3b8;
             text-align: center;
         }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-wrap--featured {
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-label {
+            color: #b8c4ff;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-icon {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            color: #d4dcff;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-field,
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-results {
+            background: var(--lp-dark-surface-raised, #3d455c);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-field:focus-within {
+            border-color: #9aaeff;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-input {
+            color: var(--lp-dark-text, #f8f9fc);
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-input::placeholder {
+            color: #94a3b8;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-item__title {
+            color: var(--lp-dark-text, #f8f9fc);
+        }
+        body.client-court-tracking-page .navbar-main .legalpro-navbar-search {
+            min-width: min(100%, 340px);
+        }
+        body.client-court-tracking-page .navbar-main .legalpro-navbar-search .input-group {
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.3) !important;
+            background: rgba(255, 255, 255, 0.96) !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+            border-radius: 12px !important;
+        }
+        body.client-court-tracking-page .navbar-main .legalpro-navbar-search .input-group:focus-within {
+            border-color: var(--cct-primary) !important;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.16), 0 4px 16px rgba(15, 23, 42, 0.1) !important;
+        }
+        body.client-court-tracking-page .navbar-main .legalpro-navbar-search .form-control,
+        body.client-court-tracking-page .navbar-main .legalpro-navbar-search input[type="search"].form-control {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+        }
+        body.client-court-tracking-page .navbar-main .legalpro-navbar-search .input-group-text {
+            color: var(--cct-primary) !important;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .navbar-main .legalpro-navbar-search .input-group {
+            background: var(--lp-dark-surface-raised, #3d455c) !important;
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35) !important;
+        }
         .court-date-modal .modal-dialog { max-width: 600px; }
 
         @media (max-width: 640px) {
@@ -471,29 +562,29 @@ if (!empty($_SESSION['error_message'])) {
                 <div class="col-12">
                     <div class="dashboard-calendar-hub">
                         <div class="dashboard-calendar-hub__head">
-                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 w-100">
-                                <div>
-                                    <h6 class="text-capitalize mb-0 font-weight-bold" style="color: var(--cct-primary);">Court Dates Calendar</h6>
-                                    <p class="text-sm mb-0 text-muted">Click an event, search result, or upcoming item for details</p>
-                                    <div class="dashboard-legend-pills">
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
-                                    </div>
+                            <div class="cct-calendar-hub__intro">
+                                <h6 class="text-capitalize mb-0 font-weight-bold" style="color: var(--cct-primary);">Court Dates Calendar</h6>
+                                <p class="text-sm mb-0 text-muted">Use the search bar below to find hearings quickly, or click a calendar event</p>
+                                <div class="dashboard-legend-pills">
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
                                 </div>
-                                <div class="cct-cal-search-wrap">
-                                    <label class="visually-hidden" for="cctCalSearchInput">Search court dates in calendar</label>
-                                    <div class="cct-cal-search-field">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            </div>
+                            <div class="cct-cal-search-wrap cct-cal-search-wrap--featured">
+                                <label class="cct-cal-search-label" for="cctCalSearchInput">Search court dates</label>
+                                <div class="cct-cal-search-field">
+                                    <span class="cct-cal-search-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
                                             <circle cx="11" cy="11" r="7"></circle>
                                             <path d="M20 20l-3-3"></path>
                                         </svg>
-                                        <input type="search" id="cctCalSearchInput" class="cct-cal-search-input"
-                                               placeholder="Search by case, hearing, location…" autocomplete="off">
-                                    </div>
-                                    <div class="cct-cal-search-results" id="cctCalSearchResults" hidden></div>
+                                    </span>
+                                    <input type="search" id="cctCalSearchInput" class="cct-cal-search-input"
+                                           placeholder="Search by case, hearing, location, status…" autocomplete="off">
                                 </div>
+                                <div class="cct-cal-search-results" id="cctCalSearchResults" hidden></div>
                             </div>
                         </div>
                         <div class="dashboard-calendar-hub__body">
