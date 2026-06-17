@@ -1288,12 +1288,12 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'background: #4a5568 !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.badge) {'
+    $css .= 'body.legalpro-dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.badge):not(.legalpro-doc-subnav__link) {'
         . 'color: ' . $primary . ';'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .text-muted a:not(.btn),'
-        . 'body.legalpro-dark-mode .modal-content a:not(.btn):not(.nav-link):not(.dropdown-item) {'
+    $css .= 'body.legalpro-dark-mode .text-muted a:not(.btn):not(.legalpro-doc-subnav__link),'
+        . 'body.legalpro-dark-mode .modal-content a:not(.btn):not(.nav-link):not(.dropdown-item):not(.legalpro-doc-subnav__link) {'
         . 'color: ' . $primary . ' !important;'
         . '}';
 

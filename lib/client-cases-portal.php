@@ -781,7 +781,7 @@ function legalpro_client_case_render(string $pageKey, string $contentHtml, array
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
-    <link href="../assets/css/legalpro-documents-hub.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/legalpro-documents-hub.css?v=3" rel="stylesheet" />
     <link href="../assets/css/legalpro-client-cases-hub.css?v=1" rel="stylesheet" />';
 
     ob_start();

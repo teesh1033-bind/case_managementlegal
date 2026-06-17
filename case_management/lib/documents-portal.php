@@ -777,7 +777,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
     ob_start();
     include dirname(__DIR__) . '/inc/admin-portal-head.php';
     $html .= ob_get_clean();
-    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=2" rel="stylesheet" />'
+    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=3" rel="stylesheet" />'
         . '<style>' . legalpro_documents_shared_styles() . '</style>
 </head>
 <body class="g-sidenav-show g-sidenav-pinned bg-gray-100 legalpro-admin-portal legalpro-documents-page' . $bodyClass . '">
@@ -801,6 +801,10 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
             ' . $contentHtml . '
         </div>
     </main>
+    <script src="../assets/js/core/popper.min.js"></script>
+    <script src="../assets/js/core/bootstrap.min.js"></script>
+    <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     ' . $extraScripts . '
 </body>
 </html>';
