@@ -340,7 +340,6 @@ if (empty($tasks)) {
         $taskDescriptionJs = htmlspecialchars(json_encode((string) $task['description']), ENT_QUOTES, 'UTF-8');
         $taskPriorityJs = htmlspecialchars(json_encode($task['priority']), ENT_QUOTES, 'UTF-8');
         $taskDueDateJs = htmlspecialchars(json_encode((string) $task['due_date']), ENT_QUOTES, 'UTF-8');
-        $taskCommentJs = htmlspecialchars(json_encode((string) ($task['task_comment'] ?? '')), ENT_QUOTES, 'UTF-8');
         $clientName = htmlspecialchars(trim($task['client_first_name'] . ' ' . $task['client_last_name']));
         $caseNumber = 'C-' . str_pad((string) $task['case_id'], 4, '0', STR_PAD_LEFT);
 
@@ -368,7 +367,7 @@ if (empty($tasks)) {
                         <button
                             type="button"
                             class="btn btn-sm lt-task-edit-btn mb-0"
-                            onclick="showEditTaskModal(' . (int) $task['id'] . ', ' . (int) $task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ', ' . $taskCommentJs . ')"
+                            onclick="showEditTaskModal(' . (int) $task['id'] . ', ' . (int) $task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ')"
                         >Edit</button>
                         <form method="POST" action="" class="d-flex align-items-center mb-0">
                             <input type="hidden" name="action" value="update_status">
@@ -476,9 +475,25 @@ $html = <<<'HTML'
         .lawyer-tasks-page #taskModal .modal-header {
             background: linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%);
             color: #fff;
+            border-bottom: none;
+        }
+        .lawyer-tasks-page #taskModal .modal-header .modal-title {
+            color: #fff !important;
         }
         .lawyer-tasks-page #taskModal .modal-header .btn-close {
             filter: invert(1) grayscale(1) brightness(200%);
+            opacity: 1;
+        }
+        .lawyer-tasks-page #taskModal .task-comment-toggle {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 0;
+        }
+        .lawyer-tasks-page #taskModal .task-comment-hint {
+            font-size: 0.75rem;
+            color: #8392ab;
+            margin-top: 0.35rem;
         }
         @media (max-width: 991.98px) {
             .lawyer-tasks-page .lt-task-row__badges {
@@ -632,9 +647,16 @@ $html = <<<'HTML'
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="task_description" id="task_description" rows="3" placeholder="Task description (optional)">{TASK_FORM_DESCRIPTION}</textarea>
                         </div>
-                        <div class="mb-0" id="task_comment_wrap">
-                            <label class="form-label">Comment</label>
-                            <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Add a note for the admin about this task (optional)">{TASK_FORM_COMMENT}</textarea>
+                        <div class="mb-0">
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <label class="form-label mb-0">Comment</label>
+                                <button type="button" class="btn btn-link task-comment-toggle mb-0" id="task_comment_toggle" aria-expanded="false" aria-controls="task_comment_wrap">
+                                    Add a comment
+                                </button>
+                            </div>
+                            <div id="task_comment_wrap" hidden>
+                                <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Your comment">{TASK_FORM_COMMENT}</textarea>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -651,6 +673,17 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
+        function setTaskCommentVisible(show) {
+            var wrap = document.getElementById('task_comment_wrap');
+            var toggle = document.getElementById('task_comment_toggle');
+            if (!wrap || !toggle) {
+                return;
+            }
+            wrap.hidden = !show;
+            toggle.textContent = show ? 'Hide comment' : 'Add a comment';
+            toggle.setAttribute('aria-expanded', show ? 'true' : 'false');
+        }
+
         function showAddTaskModal() {
             document.getElementById('taskModalTitle').textContent = 'Add Task';
             document.getElementById('taskSaveButton').textContent = 'Add Task';
@@ -661,21 +694,30 @@ $html = <<<'HTML'
             document.getElementById('task_priority').value = 'medium';
             document.getElementById('task_due_date').value = '';
             document.getElementById('task_case_id').value = '';
+            setTaskCommentVisible(false);
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 
-        function showEditTaskModal(taskId, caseId, title, description, priority, dueDate, taskComment) {
+        function showEditTaskModal(taskId, caseId, title, description, priority, dueDate) {
             document.getElementById('taskModalTitle').textContent = 'Edit Task';
             document.getElementById('taskSaveButton').textContent = 'Update Task';
             document.getElementById('task_id').value = taskId;
             document.getElementById('task_case_id').value = String(caseId || '');
             document.getElementById('task_title').value = title || '';
             document.getElementById('task_description').value = description || '';
-            document.getElementById('task_comment').value = taskComment || '';
+            document.getElementById('task_comment').value = '';
             document.getElementById('task_priority').value = priority || 'medium';
             document.getElementById('task_due_date').value = dueDate || '';
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
+
+        document.getElementById('task_comment_toggle').addEventListener('click', function () {
+            var wrap = document.getElementById('task_comment_wrap');
+            setTaskCommentVisible(wrap.hidden);
+            if (!wrap.hidden) {
+                document.getElementById('task_comment').focus();
+            }
+        });
 
         {SHOW_TASK_MODAL}
     </script>
@@ -700,7 +742,9 @@ $replacements = [
     '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
     '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
-    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
+    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad
+        ? 'setTimeout(function(){ setTaskCommentVisible(' . ($taskForm['task_comment'] !== '' ? 'true' : 'false') . '); new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);'
+        : '',
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
     '{STATUS_IN_PROGRESS}' => $statusFilter === 'in_progress' ? ' selected' : '',
