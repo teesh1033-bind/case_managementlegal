@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../lib/portal-theme.php';
 
 if (!isset($_SESSION['lawyer_id'])) {
     header('Location: lawyer-login.php');
@@ -36,7 +37,7 @@ $messageHtml = $message !== ''
     . '</div>'
     : '';
 
-$appearanceHtml = renderLawyerPortalThemeSettingsHtml($lawyerId);
+$appearanceHtml = renderLawyerPortalSettingsFullHtml($pdo, $lawyerId);
 
 ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
@@ -75,6 +76,8 @@ $html = <<<'HTML'
             font-size: 0.875rem;
             font-weight: 600;
             margin: 0;
+            background: #fff;
+            color: #1e293b;
         }
         .lawyer-settings-page .settings-theme-mode__option:has(input:checked) {
             border-color: var(--legalpro-theme-primary, #5e72e4);
@@ -82,6 +85,140 @@ $html = <<<'HTML'
         }
         .lawyer-settings-page .settings-theme-mode__option input {
             margin: 0;
+        }
+        body.legalpro-dark-mode.lawyer-settings-page .settings-theme-mode__option {
+            background: var(--lp-dark-input-bg, #2f3547);
+            border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
+            color: var(--lp-dark-text, #f8f9fc);
+        }
+        .lawyer-settings-page .cs-hero {
+            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            border-radius: 18px;
+            padding: 1.75rem 2rem;
+            color: #fff;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        .lawyer-settings-page .cs-hero__kicker {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            opacity: 0.75;
+            margin-bottom: 0.35rem;
+        }
+        .lawyer-settings-page .cs-hero__title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+        }
+        .lawyer-settings-page .cs-hero__sub {
+            font-size: 0.875rem;
+            opacity: 0.85;
+            margin: 0;
+            max-width: 36rem;
+        }
+        .lawyer-settings-page .cs-hero__meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+        .lawyer-settings-page .cs-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem;
+        }
+        .lawyer-settings-page .cs-stat {
+            background: #f8fafc;
+            border: 1px solid #e9ecf3;
+            border-radius: 12px;
+            padding: 0.75rem 0.85rem;
+            text-align: center;
+        }
+        .lawyer-settings-page .cs-stat__num {
+            display: block;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+        .lawyer-settings-page .cs-stat__lbl {
+            display: block;
+            font-size: 0.68rem;
+            color: #94a3b8;
+            margin-top: 0.15rem;
+        }
+        .lawyer-settings-page .cs-quick-links {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+        .lawyer-settings-page .cs-quick-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 0.65rem;
+            border: 1px solid #e9ecf3;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #334155;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .lawyer-settings-page .cs-quick-link:hover {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.06);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.25);
+            color: var(--legalpro-theme-primary, #5e72e4);
+        }
+        .lawyer-settings-page .cs-quick-link__icon {
+            display: inline-flex;
+            color: var(--legalpro-theme-primary, #5e72e4);
+        }
+        .lawyer-settings-page .cs-quick-link__icon .lp-icon svg {
+            width: 1rem;
+            height: 1rem;
+        }
+        .lawyer-settings-page .cs-account-dl {
+            margin: 0;
+        }
+        .lawyer-settings-page .cs-account-dl dt {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            margin-bottom: 0.1rem;
+        }
+        .lawyer-settings-page .cs-account-dl dd {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 0.75rem;
+        }
+        .lawyer-settings-page .cs-tip-list {
+            padding-left: 1.15rem;
+            margin: 0;
+        }
+        .lawyer-settings-page .cs-tip-list li + li {
+            margin-top: 0.35rem;
+        }
+        body.legalpro-dark-mode.lawyer-settings-page .cs-stat {
+            background: var(--lp-dark-surface-raised, #2f3547);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        body.legalpro-dark-mode.lawyer-settings-page .cs-stat__num,
+        body.legalpro-dark-mode.lawyer-settings-page .cs-account-dl dd {
+            color: var(--lp-dark-text, #f8f9fc);
+        }
+        body.legalpro-dark-mode.lawyer-settings-page .cs-quick-link {
+            background: var(--lp-dark-surface-raised, #2f3547);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: var(--lp-dark-text, #f8f9fc);
         }
     </style>
 </head>
@@ -104,12 +241,8 @@ $html = <<<'HTML'
         </nav>
 
         <div class="container-fluid py-4">
-            <div class="row">
-                <div class="col-lg-8 col-xl-6">
-                    {MESSAGE}
-                    {APPEARANCE_HTML}
-                </div>
-            </div>
+            {MESSAGE}
+            {APPEARANCE_HTML}
         </div>
     </main>
 
@@ -117,6 +250,7 @@ $html = <<<'HTML'
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>

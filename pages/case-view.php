@@ -1029,7 +1029,7 @@ $html = <<<'HTML'
                                     <a href="case-edit.php?id={CASE_ID}" class="btn btn-sm btn-dark">
                                         <i class="ni ni-settings me-1"></i>Edit Case
                                     </a>
-                                    <a href="documents.php?case_id={CASE_ID}" class="btn btn-sm btn-outline-primary">
+                                    <a href="document-upload.php?case_id={CASE_ID}" class="btn btn-sm btn-outline-primary">
                                         <i class="ni ni-cloud-upload-96 me-1"></i>Add Document
                                     </a>
                                 </div>

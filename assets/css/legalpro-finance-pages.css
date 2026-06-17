@@ -132,32 +132,114 @@ body.legalpro-finance-page .payments-summary-card .table thead th {
 }
 
 body.legalpro-dark-mode.legalpro-finance-page {
-    background: #0f172a !important;
+    background: var(--lp-dark-bg, #2a3040) !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2);
 }
 
 body.legalpro-dark-mode.legalpro-finance-page .card {
-    background: #1e293b;
-    border-color: rgba(255, 255, 255, 0.08);
+    background: var(--lp-dark-surface, #343b4f);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+    color: var(--lp-dark-text-secondary, #e2e8f2);
 }
 
 body.legalpro-dark-mode.legalpro-finance-page .card-header {
-    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, transparent 100%);
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.14) 0%, transparent 100%);
+    border-bottom-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
 }
 
 body.legalpro-dark-mode.legalpro-finance-page .card-header h6,
 body.legalpro-dark-mode.legalpro-finance-page .fin-hero-title {
-    color: #f1f5f9;
+    color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .card-header p,
+body.legalpro-dark-mode.legalpro-finance-page .card-header .text-muted,
+body.legalpro-dark-mode.legalpro-finance-page .card-body .text-muted,
+body.legalpro-dark-mode.legalpro-finance-page .dashboard-stat-card .text-muted,
+body.legalpro-dark-mode.legalpro-finance-page .dashboard-stat-card p.text-sm {
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .dashboard-stat-card .font-weight-bolder,
+body.legalpro-dark-mode.legalpro-finance-page .dashboard-stat-card h5 {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .dashboard-stat-card .text-uppercase {
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
 }
 
 body.legalpro-dark-mode.legalpro-finance-page .table thead th {
-    background: #0f172a;
-    color: #94a3b8;
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+    background: var(--lp-dark-surface-raised, #3d455c);
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
+    border-bottom-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+    opacity: 1 !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .table tbody td {
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .table tbody td strong,
+body.legalpro-dark-mode.legalpro-finance-page .table tbody td .fw-bold,
+body.legalpro-dark-mode.legalpro-finance-page .table tbody td .fw-semibold {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .table tbody td small,
+body.legalpro-dark-mode.legalpro-finance-page .table tbody td .text-xs {
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
 }
 
 body.legalpro-dark-mode.legalpro-finance-page .table tbody tr:hover {
-    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .text-success {
+    color: #6ee7b7 !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .text-warning {
+    color: #fdba74 !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .fin-hero-sub {
+    opacity: 0.92;
+    color: #fff;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .legalpro-form-panel {
+    background: var(--lp-dark-surface-raised, #3d455c) !important;
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16)) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .form-control,
+body.legalpro-dark-mode.legalpro-finance-page .form-select {
+    background-color: var(--lp-dark-input-bg, #2f3547) !important;
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16)) !important;
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .form-control::placeholder {
+    color: var(--lp-dark-text-subtle, #aeb9cb) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .modal-content {
+    background: var(--lp-dark-surface, #343b4f);
+    color: var(--lp-dark-text-secondary, #e2e8f2);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .modal-title {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .modal-body .text-muted {
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .progress {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Client detail — financial summary */
@@ -203,4 +285,51 @@ body.admin-client-detail-page .client-fin-summary__payments .list-group-item:las
 body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .dashboard-stat-card {
     background: var(--lp-dark-surface) !important;
     border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .card-header h6,
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .font-weight-bolder,
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary h5 {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .text-muted,
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .text-uppercase.text-muted {
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .table thead th {
+    background: var(--lp-dark-surface-raised, #3d455c);
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
+    opacity: 1 !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .table tbody td {
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .table tbody td a.text-dark {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .table tbody td a.text-dark:hover {
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .text-success {
+    color: #6ee7b7 !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .text-warning {
+    color: #fdba74 !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary__payments .list-group-item {
+    background: transparent !important;
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary__payments .fw-semibold,
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary__payments strong {
+    color: var(--lp-dark-text, #f8f9fc) !important;
 }

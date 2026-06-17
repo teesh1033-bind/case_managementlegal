@@ -265,7 +265,7 @@ if (empty($upcomingCourtDates)) {
     <?php legalpro_render_availability_date_picker_assets(); ?>
     <?php legalpro_render_availability_date_picker_styles(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/menunav.php'; ?>
 

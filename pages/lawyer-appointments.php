@@ -234,9 +234,6 @@ if ($message !== '') {
         . '<button type="button" class="btn-close' . $closeClass . '" data-bs-dismiss="alert" aria-label="Close"></button></div>';
 }
 
-// Get filter parameters
-$statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
-
 // Build query
 $query = "
     SELECT a.*, c.title as case_title, c.id as case_id,
@@ -248,18 +245,6 @@ $query = "
 ";
 
 $params = [$lawyerId];
-
-if ($statusFilter !== 'all') {
-    if ($statusFilter === 'pending') {
-        $query .= " AND a.status = 'pending'";
-    } elseif ($statusFilter === 'accepted') {
-        $query .= " AND a.status = 'accepted'";
-    } elseif ($statusFilter === 'rejected') {
-        $query .= " AND a.status = 'rejected'";
-    } elseif ($statusFilter === 'upcoming') {
-        $query .= " AND a.starts_at >= NOW() AND a.status = 'accepted'";
-    }
-}
 
 $query .= " ORDER BY a.created_at DESC";
 
@@ -425,7 +410,7 @@ if (empty($appointments)) {
     $appointmentsTable = '<tr><td colspan="7" class="border-0"><div class="text-center py-5 px-4">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconApptEmpty . '</div>
         <h5 class="font-weight-bolder mt-3 mb-2">No appointments found</h5>
-        <p class="text-sm text-muted mb-0">Try adjusting your filters.</p>
+        <p class="text-sm text-muted mb-0">No appointments found yet.</p>
     </div></td></tr>';
 } else {
     foreach ($appointments as $appointment) {
@@ -780,38 +765,6 @@ $html = <<<'HTML'
 
         <div class="container-fluid py-4">
             {MESSAGE}
-
-            <!-- Filters -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <form method="GET" class="row align-items-end">
-                                <div class="col-md-4">
-                                    <label class="form-label">Status Filter</label>
-                                    <select class="form-select" name="status">
-                                        <option value="all"{STATUS_ALL}>All Appointments</option>
-                                        <option value="pending"{STATUS_PENDING}>Pending</option>
-                                        <option value="accepted"{STATUS_ACCEPTED}>Accepted</option>
-                                        <option value="rejected"{STATUS_REJECTED}>Rejected</option>
-                                        <option value="upcoming"{STATUS_UPCOMING}>Upcoming</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label d-block invisible">Filter</label>
-                                    <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
-                                </div>
-                                <div class="col-md-5 text-end">
-                                    <button type="button" class="btn btn-success btn-sm mb-2" onclick="openCreateAppointmentModal()">
-                                        Schedule appointment
-                                    </button>
-                                    <p class="text-sm text-muted mb-0">Total: {TOTAL_APPOINTMENTS} appointments</p>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Appointments calendar -->
             <div class="row mb-4">
@@ -1674,14 +1627,8 @@ $replacements = [
     '{LAWYER_AVAILABILITY_BY_DATE_JSON}' => json_encode($rescheduleAvailabilityByDate, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP),
     '{LAWYER_HAS_SCHEDULE_JSON}' => $rescheduleHasSchedule ? 'true' : 'false',
     '{NAVIGATION}' => $navHtml,
-    '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
-    '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
-    '{STATUS_ACCEPTED}' => $statusFilter === 'accepted' ? ' selected' : '',
-    '{STATUS_REJECTED}' => $statusFilter === 'rejected' ? ' selected' : '',
-    '{STATUS_UPCOMING}' => $statusFilter === 'upcoming' ? ' selected' : '',
     '{STATUS_TODAY}' => '',
     '{STATUS_PAST}' => '',
-    '{TOTAL_APPOINTMENTS}' => count($appointments),
     '{APPOINTMENTS_TABLE}' => $appointmentsTable,
     '{UPCOMING_APPOINTMENTS_CALENDAR}' => $upcomingAppointmentsCalendarHtml,
     '{APPOINTMENT_CALENDAR_EVENTS_JSON}' => $appointmentCalendarEventsJson,

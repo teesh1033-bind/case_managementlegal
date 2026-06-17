@@ -86,6 +86,89 @@ function saveClientEmailDigest(int $clientId, string $digest): array
     return ['ok' => true];
 }
 
+function legalpro_client_settings_snapshot(?PDO $pdo, int $clientId): array
+{
+    $empty = [
+        'display_name' => '',
+        'email' => '',
+        'phone' => '',
+        'member_since' => '',
+        'total_cases' => 0,
+        'open_cases' => 0,
+        'unread_notifications' => 0,
+        'new_documents' => 0,
+        'upcoming_appointments' => 0,
+        'outstanding_balance' => 0.0,
+        'theme_mode' => 'light',
+        'locale' => 'en',
+        'email_digest' => 'none',
+    ];
+
+    if ($pdo === null || $clientId <= 0) {
+        return $empty;
+    }
+
+    $snapshot = $empty;
+
+    try {
+        $stmt = $pdo->prepare('SELECT first_name, last_name, email, phone, created_at FROM clients WHERE id = ? LIMIT 1');
+        $stmt->execute([$clientId]);
+        $client = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($client) {
+            $snapshot['display_name'] = trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''));
+            $snapshot['email'] = (string) ($client['email'] ?? '');
+            $snapshot['phone'] = (string) ($client['phone'] ?? '');
+            if (!empty($client['created_at'])) {
+                $snapshot['member_since'] = date('M j, Y', strtotime($client['created_at']));
+            }
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT
+                COUNT(*) AS total_cases,
+                SUM(CASE WHEN LOWER(status) NOT IN ('closed', 'resolved') THEN 1 ELSE 0 END) AS open_cases
+            FROM cases
+            WHERE client_id = ?
+        ");
+        $stmt->execute([$clientId]);
+        $caseRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $snapshot['total_cases'] = (int) ($caseRow['total_cases'] ?? 0);
+        $snapshot['open_cases'] = (int) ($caseRow['open_cases'] ?? 0);
+
+        $stmt = $pdo->prepare("
+            SELECT COUNT(DISTINCT a.id)
+            FROM appointments a
+            WHERE a.client_id = ? AND a.starts_at > NOW()
+              AND LOWER(COALESCE(a.status, '')) IN ('accepted', 'pending')
+        ");
+        $stmt->execute([$clientId]);
+        $snapshot['upcoming_appointments'] = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(i.amount - COALESCE(paid.paid_amount, 0)), 0) AS outstanding
+            FROM invoices i
+            LEFT JOIN (
+                SELECT invoice_id, SUM(amount) AS paid_amount
+                FROM payments
+                GROUP BY invoice_id
+            ) paid ON paid.invoice_id = i.id
+            WHERE i.client_id = ?
+        ");
+        $stmt->execute([$clientId]);
+        $snapshot['outstanding_balance'] = max(0.0, (float) $stmt->fetchColumn());
+    } catch (PDOException $e) {
+        error_log('client settings snapshot: ' . $e->getMessage());
+    }
+
+    $snapshot['unread_notifications'] = legalpro_client_notification_count_unread($pdo, $clientId);
+    $snapshot['new_documents'] = legalpro_client_count_new_documents($pdo, $clientId);
+    $snapshot['theme_mode'] = function_exists('getClientPortalThemeMode') ? getClientPortalThemeMode($clientId) : 'light';
+    $snapshot['locale'] = function_exists('getClientPortalLocale') ? getClientPortalLocale($clientId) : 'en';
+    $snapshot['email_digest'] = getClientEmailDigest($clientId);
+
+    return $snapshot;
+}
+
 function legalpro_client_count_new_documents(?PDO $pdo, int $clientId): int
 {
     if ($pdo === null || $clientId <= 0) {

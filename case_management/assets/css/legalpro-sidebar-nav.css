@@ -1,590 +1,231 @@
 /**
- * Unified sidebar menunav — same sizing as inc/menunav.php (admin reference).
- * Used by admin, lawyer, and client (#sidenav-main.legalpro-admin-sidebar).
+ * Left sidebar — overrides Argon/Bootstrap conflicts; works with portal-shell.css.
  */
-#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs {
+
+/* Kill Argon sidenav behavior on our aside */
+#sidenav-main.lp-sidebar,
+#sidenav-main.lp-sidebar.navbar-vertical {
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
+    height: 100vh !important;
     max-height: 100vh !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    transform: none !important;
 }
 
-/* Argon sets height: calc(100vh - 360px) — clips Settings / bottom nav items */
-#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-collapse,
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav-wrap,
-#sidenav-main.legalpro-admin-sidebar .navbar-collapse.legalpro-sidebar-nav-wrap {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
+#sidenav-main.lp-sidebar .navbar-collapse,
+#sidenav-main.lp-sidebar .collapse {
+    display: block !important;
+    visibility: visible !important;
     height: auto !important;
     max-height: none !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0.75rem 0.65rem !important;
-    -webkit-overflow-scrolling: touch;
 }
 
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer {
-    flex-shrink: 0;
-    padding: 0.35rem 0.65rem 0.85rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    margin-top: auto;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.75rem !important;
-    padding: 0.7rem 1rem !important;
-    margin: 0 !important;
-    width: 100% !important;
-    border-radius: 12px !important;
-    font-size: 0.9rem !important;
-    font-weight: 600 !important;
-    color: rgba(255, 255, 255, 0.72) !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #fff !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link.active {
-    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
-    color: #fff !important;
-    box-shadow: 0 8px 18px rgba(94, 114, 228, 0.35) !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .legalpro-sidebar-nav__label {
-    display: none !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav,
-#sidenav-main.legalpro-admin-sidebar .navbar-nav.legalpro-sidebar-nav {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0;
-    margin: 0;
-}
-
-#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-nav > .nav-item {
-    width: 100% !important;
-    margin-top: 0 !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .legalpro-sidebar-nav .nav-link,
-#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-nav > .nav-item > .nav-link {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.75rem !important;
-    padding: 0.7rem 1rem !important;
-    padding-top: 0.7rem !important;
-    padding-bottom: 0.7rem !important;
-    margin: 0.12rem 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    border-radius: 12px !important;
-    font-size: 0.9rem !important;
-    font-weight: 600 !important;
-    color: rgba(255, 255, 255, 0.72) !important;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-link:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #fff !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-link.active {
-    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
-    color: #fff !important;
-    box-shadow: 0 8px 18px rgba(94, 114, 228, 0.35) !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__icon {
-    width: 2rem !important;
-    height: 2rem !important;
-    min-width: 2rem !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0 !important;
-    font-size: 1rem !important;
-    background: transparent !important;
-    opacity: 0.95;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__icon i {
-    color: inherit !important;
-    opacity: 1 !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label,
-#sidenav-main.legalpro-admin-sidebar .nav-link-text {
-    flex: 1;
-    min-width: 0;
-    font-size: 0.9rem !important;
-    font-weight: 600 !important;
-}
-
-/* Collapsed sidebar — icon-only rail (lawyer, client, admin) */
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-brand {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0.85rem 0.25rem 0.75rem;
-    gap: 0.45rem;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-brand__link {
-    flex: 0 0 auto;
-    justify-content: center;
-    align-items: center;
-    width: auto;
-    min-width: 0;
-    overflow: hidden;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-brand__text,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-brand__name,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-brand__role,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .nav-link-text {
-    display: none !important;
-    width: 0 !important;
-    max-width: 0 !important;
-    overflow: hidden !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    flex: 0 0 0 !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-brand__logo {
-    width: 40px;
-    height: 40px;
-    margin: 0 auto;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-collapse {
-    align-self: center;
-    margin: 0 auto;
-    transform: rotate(180deg);
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-close {
-    display: none !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav-wrap {
-    padding: 0.5rem 0.25rem !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .navbar-nav.legalpro-sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100% !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-nav > .nav-item {
-    width: 100% !important;
-    display: flex;
-    justify-content: center;
-    margin-top: 0 !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-link,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .legalpro-sidebar-nav .nav-link,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-nav > .nav-item > .nav-link,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs .navbar-nav .nav-link {
-    justify-content: center !important;
-    align-items: center !important;
-    padding: 0.65rem 0 !important;
-    margin: 0.18rem auto !important;
-    width: 2.75rem !important;
-    min-width: 2.75rem !important;
-    max-width: 2.75rem !important;
-    gap: 0 !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer {
-    display: flex;
-    justify-content: center;
-    padding-left: 0.25rem !important;
-    padding-right: 0.25rem !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link {
-    justify-content: center !important;
-    width: 2.75rem !important;
-    min-width: 2.75rem !important;
-    max-width: 2.75rem !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__icon {
-    margin: 0 !important;
-}
-
-/* —— Sidebar shell width (beats Argon width:100% on .navbar-vertical) —— */
-#sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs,
-#sidenav-main.legalpro-admin-sidebar.navbar-vertical.fixed-start {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    bottom: 0 !important;
-    height: 100vh !important;
-    width: var(--lp-portal-sidebar-width, var(--lp-admin-sidebar-width, 270px)) !important;
-    max-width: var(--lp-portal-sidebar-width, var(--lp-admin-sidebar-width, 270px)) !important;
-    min-width: 0 !important;
-    z-index: 1040 !important;
-    transform: none !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar.navbar-vertical.navbar-expand-xs,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar.navbar-vertical.fixed-start {
-    width: var(--lp-portal-sidebar-collapsed, var(--lp-admin-sidebar-collapsed, 88px)) !important;
-    max-width: var(--lp-portal-sidebar-collapsed, var(--lp-admin-sidebar-collapsed, 88px)) !important;
-}
-
-/* Main content sits beside the sidebar, not underneath it */
-body.g-sidenav-show .main-content,
-body.legalpro-admin-portal .main-content,
-body.legalpro-lawyer-portal .main-content,
-body.legalpro-client-portal .main-content,
-body.legalpro-dashboard-page .main-content {
-    margin-left: var(--lp-portal-sidebar-width, var(--lp-admin-sidebar-width, 270px)) !important;
-    width: calc(100% - var(--lp-portal-sidebar-width, var(--lp-admin-sidebar-width, 270px))) !important;
-    max-width: none !important;
-}
-
-body.legalpro-sidebar-collapsed.g-sidenav-show .main-content,
-body.legalpro-admin-portal.legalpro-sidebar-collapsed .main-content,
-body.legalpro-lawyer-portal.legalpro-sidebar-collapsed .main-content,
-body.legalpro-client-portal.legalpro-sidebar-collapsed .main-content {
-    margin-left: var(--lp-portal-sidebar-collapsed, var(--lp-admin-sidebar-collapsed, 88px)) !important;
-    width: calc(100% - var(--lp-portal-sidebar-collapsed, var(--lp-admin-sidebar-collapsed, 88px))) !important;
-}
-
-@media (max-width: 1199.98px) {
-    body.g-sidenav-show .main-content,
-    body.legalpro-admin-portal .main-content,
-    body.legalpro-lawyer-portal .main-content,
-    body.legalpro-client-portal .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
-}
-
-body.g-sidenav-hidden #sidenav-main.legalpro-admin-sidebar,
-body.g-sidenav-show #sidenav-main.legalpro-admin-sidebar {
-    transform: none !important;
-}
-
-body.g-sidenav-hidden #sidenav-main.legalpro-admin-sidebar .nav-link-text,
-body.g-sidenav-hidden #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label {
-    opacity: 1 !important;
-    width: auto !important;
-    max-width: none !important;
-    visibility: visible !important;
-    display: inline !important;
-}
-
-body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .nav-link-text,
-body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label,
-body.legalpro-lawyer-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .nav-link-text,
-body.legalpro-lawyer-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label,
-body.legalpro-client-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .nav-link-text,
-body.legalpro-client-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label {
-    display: inline !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    width: auto !important;
-    max-width: none !important;
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-}
-
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .nav-link-text,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label {
-    opacity: 0 !important;
-    width: 0 !important;
-    max-width: 0 !important;
-    visibility: hidden !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-item {
-    width: 100% !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-link {
-    justify-content: flex-start !important;
-    text-align: left !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar.ps,
-#sidenav-main.legalpro-admin-sidebar.ps--active-y {
+#sidenav-main.lp-sidebar.ps,
+#sidenav-main.lp-sidebar.ps--active-y {
     overflow: hidden !important;
 }
 
-#sidenav-main.legalpro-admin-sidebar .ps__rail-y,
-#sidenav-main.legalpro-admin-sidebar .ps__thumb-y {
+#sidenav-main.lp-sidebar .ps__rail-y,
+#sidenav-main.lp-sidebar .ps__thumb-y {
     display: none !important;
 }
 
-/* Admin compact sidebar — smaller items + scrollable nav area */
-#sidenav-main.legalpro-admin-sidebar--compact {
-    display: flex !important;
-    flex-direction: column !important;
-    width: var(--lp-admin-sidebar-width, 260px) !important;
-    max-width: var(--lp-admin-sidebar-width, 260px) !important;
-}
-
-body.legalpro-admin-portal #sidenav-main.legalpro-admin-sidebar--compact.navbar-vertical.navbar-expand-xs,
-body.legalpro-admin-portal #sidenav-main.legalpro-admin-sidebar--compact.navbar-vertical.fixed-start {
-    width: var(--lp-admin-sidebar-width, 260px) !important;
-    max-width: var(--lp-admin-sidebar-width, 260px) !important;
-}
-
-body.legalpro-admin-portal.g-sidenav-show .main-content,
-body.legalpro-admin-portal .main-content,
-body.legalpro-dashboard-page .main-content {
-    margin-left: var(--lp-admin-sidebar-width, 260px) !important;
-    width: calc(100% - var(--lp-admin-sidebar-width, 260px)) !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand {
-    flex: 0 0 auto !important;
-    padding: 0.75rem 0.7rem 0.55rem !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand__logo {
-    width: 34px !important;
-    height: 34px !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand__name {
-    font-size: 0.84rem !important;
-    line-height: 1.15 !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand__role {
-    font-size: 0.58rem !important;
-    margin-top: 0.1rem !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav-wrap {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding: 0.25rem 0.45rem 0.55rem !important;
-    -webkit-overflow-scrolling: touch;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav .nav-link,
-#sidenav-main.legalpro-admin-sidebar--compact.navbar-vertical.navbar-expand-xs .navbar-nav > .nav-item > .nav-link {
-    padding: 0.5rem 0.65rem !important;
-    margin: 0.06rem 0 !important;
-    gap: 0.65rem !important;
-    font-size: 1rem !important;
-    line-height: 1.25 !important;
-    border-radius: 10px !important;
-    min-height: 0 !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav .nav-link.active {
-    box-shadow: 0 4px 10px rgba(94, 114, 228, 0.22) !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav__icon {
-    width: 2rem !important;
-    height: 2rem !important;
-    min-width: 2rem !important;
-    font-size: 1rem !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav__icon .lp-icon svg {
-    width: 1.15rem !important;
-    height: 1.15rem !important;
-}
-
-#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav__label,
-#sidenav-main.legalpro-admin-sidebar--compact .nav-link-text {
-    font-size: 1rem !important;
-    line-height: 1.25 !important;
-    font-weight: 600 !important;
-}
-
-body.legalpro-admin-portal.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav .nav-link {
-    padding: 0.45rem 0 !important;
-    width: 2.35rem !important;
-    min-width: 2.35rem !important;
-    max-width: 2.35rem !important;
-}
-
-body.legalpro-admin-portal.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar--compact.navbar-vertical.navbar-expand-xs,
-body.legalpro-admin-portal.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar--compact.navbar-vertical.fixed-start {
-    width: var(--lp-admin-sidebar-collapsed, 80px) !important;
-    max-width: var(--lp-admin-sidebar-collapsed, 80px) !important;
-}
-
-body.legalpro-admin-portal.legalpro-sidebar-collapsed .main-content {
-    margin-left: var(--lp-admin-sidebar-collapsed, 80px) !important;
-    width: calc(100% - var(--lp-admin-sidebar-collapsed, 80px)) !important;
-}
-
-/* Admin: never use Argon mini-rail (icons stuck on the right, labels hidden) */
-@media (min-width: 1200px) {
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed).g-sidenav-hidden #sidenav-main.legalpro-admin-sidebar.navbar-vertical,
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed).g-sidenav-show #sidenav-main.legalpro-admin-sidebar.navbar-vertical {
-        max-width: var(--lp-admin-sidebar-width, 260px) !important;
-        width: var(--lp-admin-sidebar-width, 260px) !important;
-    }
-
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed).g-sidenav-hidden #sidenav-main.legalpro-admin-sidebar .nav-link-text,
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed).g-sidenav-hidden #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav__label {
-        opacity: 1 !important;
-        width: auto !important;
-        max-width: none !important;
-        visibility: visible !important;
-        display: inline !important;
-    }
-
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .navbar-nav,
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav {
-        align-items: stretch !important;
-        justify-content: flex-start !important;
-        width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
-
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .navbar-nav > .nav-item,
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-item {
-        width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
-
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .navbar-nav .nav-link,
-    body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav .nav-link {
-        justify-content: flex-start !important;
-        text-align: left !important;
-        width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        padding-left: 0.55rem !important;
-        padding-right: 0.55rem !important;
-    }
-}
-
-/* Admin collapsed — hide expanded Bootstrap nav; icon rail handles navigation */
-body.legalpro-admin-portal.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav-wrap--expanded,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-nav-wrap--expanded {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    max-height: 0 !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-/* —— Admin collapsed icon rail (separate from Bootstrap collapse — always visible when collapsed) —— */
-#sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-collapsed-rail {
-    display: none;
+/* Scrollable nav body */
+.lp-sidebar__scroll {
     flex: 1 1 auto;
     min-height: 0;
-    max-height: calc(100vh - 5.75rem);
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 0.2rem 0.1rem 0.55rem;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.08rem;
+    padding: 0.75rem 0.65rem;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-body.legalpro-admin-portal.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-collapsed-rail,
-body.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-collapsed-rail {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+.lp-sidebar__scroll::-webkit-scrollbar {
+    width: 5px;
 }
 
-body.legalpro-admin-portal:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-collapsed-rail,
-body:not(.legalpro-sidebar-collapsed) #sidenav-main.legalpro-admin-sidebar .legalpro-sidebar-collapsed-rail {
-    display: none !important;
+.lp-sidebar__scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
 }
 
-.legalpro-sidebar-collapsed-rail__link {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+/* Brand controls */
+.lp-sidebar__collapse-btn,
+.lp-sidebar__close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
     flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
-    min-width: 2.5rem;
-    min-height: 2.5rem;
-    border-radius: 10px;
-    color: rgba(255, 255, 255, 0.88) !important;
-    text-decoration: none !important;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
-.legalpro-sidebar-collapsed-rail__link:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: #fff !important;
+.lp-sidebar__collapse-btn:hover,
+.lp-sidebar__close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
 }
 
-.legalpro-sidebar-collapsed-rail__link.active {
-    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
-    color: #fff !important;
-    box-shadow: 0 4px 10px rgba(94, 114, 228, 0.28);
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .lp-sidebar__collapse-btn .lp-icon svg {
+    transform: rotate(180deg);
 }
 
-.legalpro-sidebar-collapsed-rail__icon {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 2rem;
-    height: 2rem;
-    line-height: 1;
+/* Section labels (optional) */
+.lp-sidebar__section {
+    list-style: none;
+    padding: 0.85rem 1rem 0.35rem;
+    margin: 0;
 }
 
-.legalpro-sidebar-collapsed-rail__icon .lp-icon,
-.legalpro-sidebar-collapsed-rail__icon .lp-icon svg {
-    display: block !important;
-    width: 1.15rem !important;
-    height: 1.15rem !important;
-    stroke: currentColor !important;
+.lp-sidebar__section span {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
 }
 
-body.legalpro-admin-portal.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand {
-    padding: 0.65rem 0.2rem 0.45rem !important;
+/* Admin compact width */
+#sidenav-main.legalpro-admin-sidebar--compact {
+    --lp-portal-sidebar-width: 248px;
 }
 
-body.legalpro-admin-portal.legalpro-sidebar-collapsed #sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand__logo {
-    width: 34px !important;
-    height: 34px !important;
+#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand {
+    padding: 1rem 0.85rem 0.85rem;
+}
+
+#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand__logo {
+    width: 34px;
+    height: 34px;
+}
+
+#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand__name {
+    font-size: 0.88rem;
+}
+
+#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav .nav-link {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.85rem;
+}
+
+#sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-nav__icon {
+    width: 1.75rem;
+    height: 1.75rem;
+}
+
+/* Collapsed icon rail (all portals) */
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar {
+    width: var(--lp-portal-sidebar-collapsed) !important;
+    max-width: var(--lp-portal-sidebar-collapsed) !important;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-brand {
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0.5rem 0.75rem;
+    gap: 0.5rem;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-brand__link {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-brand__text,
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-nav__label,
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .nav-link-text {
+    display: none !important;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-brand__logo {
+    width: 36px;
+    height: 36px;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .lp-sidebar__scroll {
+    padding: 0.5rem 0.35rem;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-nav .nav-link {
+    justify-content: center;
+    padding: 0.65rem 0.5rem;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-nav__icon {
+    margin: 0;
+}
+
+body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-footer .nav-link {
+    justify-content: center;
+    padding: 0.65rem 0.5rem;
+}
+
+/* Admin collapsed main content offset */
+body.legalpro-admin-portal.legalpro-sidebar-collapsed .main-content,
+body.legalpro-sidebar-collapsed.legalpro-admin-portal .main-content {
+    margin-left: var(--lp-portal-sidebar-collapsed) !important;
+    width: calc(100% - var(--lp-portal-sidebar-collapsed)) !important;
+}
+
+body.legalpro-admin-portal.legalpro-sidebar-collapsed .navbar-main,
+body.legalpro-admin-portal.legalpro-sidebar-collapsed #navbarBlur {
+    margin-left: var(--lp-portal-sidebar-collapsed) !important;
+    width: calc(100% - var(--lp-portal-sidebar-collapsed)) !important;
+}
+
+/* Admin scrollbar styling (matches prior nav-wrap behavior) */
+body.legalpro-admin-portal #sidenav-main.lp-sidebar .lp-sidebar__scroll {
+    scrollbar-width: none;
+}
+
+body.legalpro-admin-portal #sidenav-main.lp-sidebar .lp-sidebar__scroll::-webkit-scrollbar {
+    display: none;
+}
+
+@media (max-width: 1199.98px) {
+    #sidenav-main.lp-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        z-index: 1050;
+    }
+
+    body.g-sidenav-pinned #sidenav-main.lp-sidebar,
+    body.nav-open #sidenav-main.lp-sidebar {
+        transform: translateX(0);
+    }
+
+    body.g-sidenav-pinned::before,
+    body.nav-open::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.45);
+        z-index: 1045;
+    }
+
+    body.legalpro-admin-portal .main-content,
+    body.legalpro-client-portal .main-content,
+    body.legalpro-lawyer-portal .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    body.legalpro-admin-portal .navbar-main,
+    body.legalpro-admin-portal #navbarBlur {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
 }

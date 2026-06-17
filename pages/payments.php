@@ -576,7 +576,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/legalpro-finance-pages.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
     <style>
         .payments-summary-card .card-header {
             padding: 1.25rem 1.5rem 0.75rem;

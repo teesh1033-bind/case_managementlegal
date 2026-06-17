@@ -1,8 +1,8 @@
 <?php
-// inc/lawyer-menunav.php — Lawyer portal sidebar + header utilities (same shell as menunav.php)
+// inc/lawyer-menunav.php — Lawyer portal sidebar + header utilities
 
 require_once __DIR__ . '/admin-layout.php';
-require_once __DIR__ . '/legalpro-icons.php';
+require_once __DIR__ . '/../lib/portal-sidebar.php';
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
@@ -15,22 +15,23 @@ $lawyerMenuItems = [
     ['title' => 'Court Tracking', 'url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'id' => 'lawyer-court-tracking'],
     ['title' => 'My Availability', 'url' => 'lawyer-availability.php', 'icon' => 'clock', 'id' => 'lawyer-availability'],
     ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
-    ['title' => 'Settings', 'url' => 'lawyer-settings.php', 'icon' => 'settings', 'id' => 'lawyer-settings'],
 ];
 
-function lawyerNavIsActive($itemId, $currentPage)
-{
-    if ($itemId === 'lawyer-cases' && in_array($currentPage, ['lawyer-cases', 'lawyer-case-view'], true)) {
-        return true;
-    }
-    if ($itemId === 'lawyer-clients' && in_array($currentPage, ['lawyer-clients', 'lawyer-client-view'], true)) {
-        return true;
-    }
-    if ($itemId === 'chatbot' && $currentPage === 'chatbot') {
-        return true;
-    }
+if (!function_exists('lawyerNavIsActive')) {
+    function lawyerNavIsActive($itemId, $currentPage)
+    {
+        if ($itemId === 'lawyer-cases' && in_array($currentPage, ['lawyer-cases', 'lawyer-case-view'], true)) {
+            return true;
+        }
+        if ($itemId === 'lawyer-clients' && in_array($currentPage, ['lawyer-clients', 'lawyer-client-view'], true)) {
+            return true;
+        }
+        if ($itemId === 'chatbot' && $currentPage === 'chatbot') {
+            return true;
+        }
 
-    return $itemId === $currentPage;
+        return $itemId === $currentPage;
+    }
 }
 
 $companyBranding = getCompanyBranding();
@@ -54,69 +55,18 @@ if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
 }
 ?>
 
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs fixed-start legalpro-admin-sidebar" id="sidenav-main">
-    <div class="legalpro-sidebar-brand">
-        <a href="lawyer-dashboard.php" class="legalpro-sidebar-brand__link">
-            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="42" height="42" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
-            <span class="legalpro-sidebar-brand__text">
-                <span class="legalpro-sidebar-brand__name"><?php echo htmlspecialchars($companyName); ?></span>
-                <span class="legalpro-sidebar-brand__role">LAWYER</span>
-            </span>
-        </a>
-        <button type="button" class="legalpro-sidebar-collapse btn btn-link p-0 d-none d-xl-inline-flex" id="legalproSidebarCollapse" aria-label="Collapse sidebar">
-            <?php echo legalpro_icon('chevron-left'); ?>
-        </button>
-        <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
-    </div>
-
-    <div class="collapse show navbar-collapse w-100 legalpro-sidebar-nav-wrap" id="sidenav-collapse-main">
-        <ul class="navbar-nav legalpro-sidebar-nav">
-            <?php foreach ($lawyerMenuItems as $item): ?>
-                <?php $active = lawyerNavIsActive($item['id'], $currentPage); ?>
-                <li class="nav-item">
-                    <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>">
-                        <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
-                        <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
-                    </a>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-</aside>
-
-<script>
-(function () {
-    var body = document.body;
-    if (!body) {
-        return;
-    }
-    body.classList.remove('g-sidenav-hidden');
-    body.classList.add('g-sidenav-pinned');
-})();
-</script>
+<?php
+echo legalpro_render_portal_sidebar([
+    'portal' => 'lawyer',
+    'home_url' => 'lawyer-dashboard.php',
+    'role_label' => 'LAWYER',
+    'company_name' => $companyName,
+    'logo_url' => $companyLogoUrl,
+    'current_page' => $currentPage,
+    'items' => $lawyerMenuItems,
+    'is_active' => 'lawyerNavIsActive',
+]);
+?>
 
 <?php echo $navbarUtilitiesMount; ?>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var body = document.body;
-    var collapseBtn = document.getElementById('legalproSidebarCollapse');
-    var navWrap = document.getElementById('sidenav-collapse-main');
-
-    body.classList.remove('g-sidenav-hidden');
-    body.classList.add('g-sidenav-pinned');
-
-    if (navWrap) {
-        navWrap.classList.add('show');
-    }
-
-    if (collapseBtn) {
-        collapseBtn.addEventListener('click', function() {
-            body.classList.toggle('legalpro-sidebar-collapsed');
-            body.classList.remove('g-sidenav-hidden');
-            body.classList.add('g-sidenav-pinned');
-        });
-    }
-});
-</script>
 <?php legalpro_icons_footer_scripts(); ?>

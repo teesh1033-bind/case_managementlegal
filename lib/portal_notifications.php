@@ -106,6 +106,25 @@ function legalpro_filter_read_notifications(PDO $pdo, array $items): array
     }));
 }
 
+function legalpro_notification_unread_hint(): string
+{
+    if (function_exists('client_t')) {
+        $hint = client_t('notifications.unread_hint');
+        if ($hint !== 'notifications.unread_hint') {
+            return $hint;
+        }
+    }
+
+    return 'New — not yet seen';
+}
+
+function legalpro_notification_unread_caption_html(): string
+{
+    return '<span class="legalpro-notif-item__hover-caption" role="tooltip">'
+        . htmlspecialchars(legalpro_notification_unread_hint(), ENT_QUOTES, 'UTF-8')
+        . '</span>';
+}
+
 function legalpro_notification_sanitize_redirect(string $url): string
 {
     $url = trim($url);
@@ -651,8 +670,10 @@ function legalpro_render_notification_panel(array $items, string $viewAllUrl): s
             $clickUrl = $notifKey !== ''
                 ? legalpro_notification_click_url($notifKey, $destinationUrl)
                 : $destinationUrl;
-            $bodyHtml .= '<a href="' . htmlspecialchars($clickUrl, ENT_QUOTES, 'UTF-8') . '" class="legalpro-notif-item"'
+            $unreadHint = legalpro_notification_unread_hint();
+            $bodyHtml .= '<a href="' . htmlspecialchars($clickUrl, ENT_QUOTES, 'UTF-8') . '" class="legalpro-notif-item is-unread"'
                 . ($notifKey !== '' ? ' data-notif-key="' . htmlspecialchars($notifKey, ENT_QUOTES, 'UTF-8') . '"' : '')
+                . ' title="' . htmlspecialchars($unreadHint, ENT_QUOTES, 'UTF-8') . '"'
                 . '>'
                 . '<span class="legalpro-notif-item__icon legalpro-notif-item__icon--' . htmlspecialchars((string) ($item['type'] ?? 'default'), ENT_QUOTES, 'UTF-8') . '">'
                 . legalpro_icon($icon)
@@ -662,6 +683,7 @@ function legalpro_render_notification_panel(array $items, string $viewAllUrl): s
                 . '<span class="legalpro-notif-item__message">' . htmlspecialchars((string) $item['message']) . '</span>'
                 . '<span class="legalpro-notif-item__time">' . htmlspecialchars((string) ($item['time'] ?? '')) . '</span>'
                 . '</span>'
+                . legalpro_notification_unread_caption_html()
                 . '</a>';
         }
     }

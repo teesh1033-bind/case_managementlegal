@@ -298,7 +298,9 @@ function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
 
 function legalpro_render_admin_notification_dropdown(): string
 {
-    return '<div class="legalpro-notif-panel legalpro-admin-notif-dropdown" id="legalproNotifPanel" role="menu" aria-label="Notifications">'
+    $unreadHint = htmlspecialchars(legalpro_notification_unread_hint(), ENT_QUOTES, 'UTF-8');
+
+    return '<div class="legalpro-notif-panel legalpro-admin-notif-dropdown" id="legalproNotifPanel" role="menu" aria-label="Notifications" data-unread-hint="' . $unreadHint . '">'
         . '<div class="legalpro-notif-panel__head">'
         . '<h6 class="legalpro-notif-panel__title">Notifications</h6>'
         . '<button type="button" class="btn btn-link btn-sm p-0 text-primary legalpro-admin-notif-dropdown__mark-all" id="adminNotifMarkAll">Mark all read</button>'
@@ -369,8 +371,13 @@ function legalpro_render_client_notification_dropdown(): string
     $empty = function_exists('client_t') ? client_t('notifications.empty') : 'No notifications yet';
     $showMore = function_exists('client_t') ? client_t('notifications.show_more') : 'Show more';
     $showLess = function_exists('client_t') ? client_t('notifications.show_less') : 'Show less';
+    $unreadHint = htmlspecialchars(
+        function_exists('client_t') ? client_t('notifications.unread_hint') : legalpro_notification_unread_hint(),
+        ENT_QUOTES,
+        'UTF-8'
+    );
 
-    return '<div class="legalpro-notif-panel legalpro-client-notif-dropdown" id="clientNotifPanel" role="menu" aria-label="' . htmlspecialchars($title) . '">'
+    return '<div class="legalpro-notif-panel legalpro-client-notif-dropdown" id="clientNotifPanel" role="menu" aria-label="' . htmlspecialchars($title) . '" data-unread-hint="' . $unreadHint . '">'
         . '<div class="legalpro-notif-panel__head">'
         . '<h6 class="legalpro-notif-panel__title">' . htmlspecialchars($title) . '</h6>'
         . '<button type="button" class="btn btn-link btn-sm p-0 text-primary legalpro-client-notif-dropdown__mark-all" id="clientNotifMarkAll">'

@@ -258,7 +258,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/legalpro-finance-pages.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -366,7 +366,7 @@ $html = <<<'HTML'
                     </div>
                     <div class="mt-3 mt-md-0">
                         <a href="payments.php" class="btn btn-sm btn-dark me-2">Record Payment</a>
-                        <a href="documents.php" class="btn btn-sm btn-dark">Generate Invoice</a>
+                        <a href="document-generate.php" class="btn btn-sm btn-dark">Generate Document</a>
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">

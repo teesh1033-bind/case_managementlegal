@@ -1,0 +1,22 @@
+/**
+ * Client case hub — overview, activity, services, appointments, documents, comments.
+ */
+.legalpro-case-context-bar h5 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.legalpro-case-page-content .card {
+    border: 1px solid #e9ecf3;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+body.legalpro-dark-mode.legalpro-client-cases-hub .legalpro-case-context-bar h5 {
+    color: var(--lp-dark-text, #f1f5f9);
+}
+
+body.legalpro-dark-mode.legalpro-client-cases-hub .legalpro-case-page-content .card {
+    background: var(--lp-dark-surface, #1e293b);
+    border-color: rgba(255, 255, 255, 0.08);
+}

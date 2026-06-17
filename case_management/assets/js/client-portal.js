@@ -34,15 +34,29 @@
             .replace(/"/g, '&quot;');
     }
 
+    function getUnreadHint() {
+        var panel = qs('#clientNotifPanel');
+        return (panel && panel.getAttribute('data-unread-hint')) || 'New — not yet seen';
+    }
+
     function buildNotifItem(n) {
         var unread = n.is_read ? '' : ' is-unread';
         var href = n.link_url || '#';
-        return '<a href="' + href + '" class="legalpro-notif-item' + unread + '" data-notif-id="' + n.id + '">'
+        var hint = '';
+        var caption = '';
+        if (!n.is_read) {
+            hint = escapeHtml(getUnreadHint());
+            caption = '<span class="legalpro-notif-item__hover-caption" role="tooltip">' + hint + '</span>';
+        }
+        return '<a href="' + href + '" class="legalpro-notif-item' + unread + '" data-notif-id="' + n.id + '"'
+            + (hint ? ' title="' + hint + '"' : '')
+            + '>'
             + '<span class="legalpro-notif-item__body">'
             + '<span class="legalpro-notif-item__title">' + escapeHtml(n.title) + '</span>'
             + '<span class="legalpro-notif-item__message">' + escapeHtml(n.body || '') + '</span>'
             + '<span class="legalpro-notif-item__time">' + escapeHtml(n.time_label || n.time_ago || '') + '</span>'
             + '</span>'
+            + caption
             + '</a>';
     }
 

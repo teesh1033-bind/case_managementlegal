@@ -1,145 +1,149 @@
 (function () {
     'use strict';
-    var COLLAPSE_KEY = 'legalproClientSidebarCollapsed';
 
-    function isClientPortal() {
-        return document.body && document.body.classList.contains('legalpro-client-portal');
+    var DESKTOP_MIN = 1200;
+
+    function portalType() {
+        var aside = document.getElementById('sidenav-main');
+        if (aside && aside.getAttribute('data-lp-portal')) {
+            return aside.getAttribute('data-lp-portal');
+        }
+        var body = document.body;
+        if (!body) {
+            return 'admin';
+        }
+        if (body.classList.contains('legalpro-client-portal')) {
+            return 'client';
+        }
+        if (body.classList.contains('legalpro-lawyer-portal')) {
+            return 'lawyer';
+        }
+        return 'admin';
     }
 
-    function ensureDesktopPinned() {
-        var body = document.body;
-        if (!body || !isClientPortal()) {
+    function storageKey() {
+        var keys = {
+            admin: 'legalproAdminSidebarCollapsed',
+            client: 'legalproClientSidebarCollapsed',
+            lawyer: 'legalproLawyerSidebarCollapsed'
+        };
+        return keys[portalType()] || 'legalproSidebarCollapsed';
+    }
+
+    function bodyEl() {
+        return document.body;
+    }
+
+    function asideEl() {
+        return document.getElementById('sidenav-main');
+    }
+
+    function stripPerfectScrollbar() {
+        var aside = asideEl();
+        if (!aside) {
             return;
         }
+        aside.classList.remove('ps', 'ps--active-y', 'bg-white');
+        aside.style.overflow = 'hidden';
+        aside.querySelectorAll('.ps__rail-y, .ps__thumb-y').forEach(function (node) {
+            node.remove();
+        });
+    }
 
+    function applyStoredCollapse() {
+        var body = bodyEl();
+        if (!body) {
+            return;
+        }
+        try {
+            if (window.localStorage.getItem(storageKey()) === '1') {
+                body.classList.add('legalpro-sidebar-collapsed');
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    function ensureLayoutClasses() {
+        var body = bodyEl();
+        if (!body) {
+            return;
+        }
         body.classList.remove('g-sidenav-hidden');
-        if (window.innerWidth >= 1200) {
+        body.classList.add('g-sidenav-show');
+        if (window.innerWidth >= DESKTOP_MIN) {
             body.classList.add('g-sidenav-pinned');
             body.classList.remove('nav-open');
         }
     }
 
-    function fixClientSidenavLayout() {
-        if (!isClientPortal()) {
-            return;
-        }
-
-        var body = document.body;
-        var sidenav = document.getElementById('sidenav-main');
-        var navWrap = document.getElementById('sidenav-collapse-main');
-
-        ensureDesktopPinned();
-
-        if (sidenav) {
-            sidenav.classList.remove('ps', 'ps--active-y');
-            sidenav.style.overflow = 'hidden';
-            sidenav.querySelectorAll('.ps__rail-y, .ps__thumb-y').forEach(function (node) {
-                node.remove();
-            });
-        }
-
-        if (!navWrap) {
-            return;
-        }
-
-        navWrap.classList.add('show');
-        navWrap.style.removeProperty('display');
-
-        if (body.classList.contains('legalpro-sidebar-collapsed')) {
-            navWrap.style.removeProperty('height');
-            navWrap.style.removeProperty('max-height');
-            navWrap.style.removeProperty('min-height');
-            navWrap.style.removeProperty('overflow-y');
-            return;
-        }
-
-        navWrap.style.height = 'auto';
-        navWrap.style.maxHeight = 'none';
-        navWrap.style.minHeight = '0';
-        navWrap.style.overflowY = 'auto';
-    }
-
-    function updateCollapseButton(collapsed) {
+    function updateCollapseButton() {
         var btn = document.getElementById('legalproSidebarCollapse');
-        if (!btn) {
+        var body = bodyEl();
+        if (!btn || !body) {
             return;
         }
+        var collapsed = body.classList.contains('legalpro-sidebar-collapsed');
         btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
         btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
     }
 
-    function getStoredCollapsed() {
+    function persistCollapse(collapsed) {
         try {
-            return window.localStorage.getItem(COLLAPSE_KEY) === '1';
+            window.localStorage.setItem(storageKey(), collapsed ? '1' : '0');
         } catch (e) {
-            return false;
+            // ignore
         }
     }
 
-    function setStoredCollapsed(collapsed) {
-        try {
-            window.localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
-        } catch (e) {
-            // ignore storage errors (private mode / blocked storage)
-        }
-    }
-
-    function applyStoredCollapsedState() {
-        var body = document.body;
-        if (!body || !isClientPortal()) {
+    function bindCollapse() {
+        var btn = document.getElementById('legalproSidebarCollapse');
+        var body = bodyEl();
+        if (!btn || !body || btn.dataset.lpBound === '1') {
             return;
         }
-
-        if (getStoredCollapsed()) {
-            body.classList.add('legalpro-sidebar-collapsed');
-        } else {
-            body.classList.remove('legalpro-sidebar-collapsed');
-        }
-    }
-
-    function initCollapseToggle() {
-        var body = document.body;
-        if (!body || !isClientPortal()) {
-            return;
-        }
-
-        var collapseBtn = document.getElementById('legalproSidebarCollapse');
-        if (!collapseBtn || collapseBtn.dataset.lpSidebarBound === '1') {
-            return;
-        }
-        collapseBtn.dataset.lpSidebarBound = '1';
-
-        updateCollapseButton(body.classList.contains('legalpro-sidebar-collapsed'));
-
-        collapseBtn.addEventListener('click', function (e) {
+        btn.dataset.lpBound = '1';
+        btn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
-
-            body.classList.toggle('legalpro-sidebar-collapsed');
-            setStoredCollapsed(body.classList.contains('legalpro-sidebar-collapsed'));
-            ensureDesktopPinned();
-            updateCollapseButton(body.classList.contains('legalpro-sidebar-collapsed'));
-            fixClientSidenavLayout();
+            var collapsed = body.classList.toggle('legalpro-sidebar-collapsed');
+            persistCollapse(collapsed);
+            ensureLayoutClasses();
+            updateCollapseButton();
         });
     }
 
-    function initMobileDrawerToggle() {
-        if (!isClientPortal()) {
+    function bindMobileClose() {
+        var closeBtn = document.getElementById('iconSidenav');
+        var body = bodyEl();
+        if (!closeBtn || !body || closeBtn.dataset.lpBound === '1') {
+            return;
+        }
+        closeBtn.dataset.lpBound = '1';
+        closeBtn.addEventListener('click', function (e) {
+            if (window.innerWidth >= DESKTOP_MIN) {
+                return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            body.classList.remove('g-sidenav-pinned', 'nav-open');
+        });
+    }
+
+    function bindMobileOpen() {
+        var body = bodyEl();
+        if (!body) {
             return;
         }
 
-        var body = document.body;
-
-        function toggleMobileDrawer(e) {
-            if (window.innerWidth >= 1200) {
+        function toggleDrawer(e) {
+            if (window.innerWidth >= DESKTOP_MIN) {
                 return;
             }
-
             e.preventDefault();
             e.stopImmediatePropagation();
-
-            var isOpen = body.classList.contains('g-sidenav-pinned') || body.classList.contains('nav-open');
-            if (isOpen) {
+            var open = body.classList.contains('g-sidenav-pinned') || body.classList.contains('nav-open');
+            if (open) {
                 body.classList.remove('g-sidenav-pinned', 'nav-open');
             } else {
                 body.classList.add('g-sidenav-pinned', 'nav-open');
@@ -148,29 +152,42 @@
 
         ['iconNavbarSidenav', 'iconSidenav'].forEach(function (id) {
             var el = document.getElementById(id);
-            if (!el || el.dataset.lpMobileDrawerBound === '1') {
+            if (!el || el.dataset.lpDrawerBound === '1') {
                 return;
             }
-            el.dataset.lpMobileDrawerBound = '1';
-            el.addEventListener('click', toggleMobileDrawer, true);
+            if (id === 'iconSidenav' && el.classList.contains('lp-sidebar__close-btn')) {
+                return;
+            }
+            el.dataset.lpDrawerBound = '1';
+            el.addEventListener('click', toggleDrawer, true);
         });
     }
 
-    function init() {
-        if (!isClientPortal()) {
-            return;
+    function blockArgonSidenav() {
+        if (typeof window.navbarColorOnResize === 'function') {
+            window.navbarColorOnResize = function () {};
         }
-        applyStoredCollapsedState();
-        ensureDesktopPinned();
-        fixClientSidenavLayout();
-        initCollapseToggle();
-        initMobileDrawerToggle();
+        if (typeof window.toggleSidenav === 'function') {
+            window.toggleSidenav = function () {};
+        }
+    }
+
+    function init() {
+        applyStoredCollapse();
+        stripPerfectScrollbar();
+        ensureLayoutClasses();
+        updateCollapseButton();
+        bindCollapse();
+        bindMobileClose();
+        bindMobileOpen();
+        blockArgonSidenav();
     }
 
     document.addEventListener('DOMContentLoaded', init);
-    window.addEventListener('load', fixClientSidenavLayout);
-    window.addEventListener('resize', function () {
-        ensureDesktopPinned();
-        fixClientSidenavLayout();
+    window.addEventListener('load', function () {
+        stripPerfectScrollbar();
+        ensureLayoutClasses();
+        updateCollapseButton();
     });
+    window.addEventListener('resize', ensureLayoutClasses);
 })();

@@ -379,7 +379,7 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 	<link href="../assets/css/legalpro-admin-portal.css?v=25" rel="stylesheet" />
 	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
-	<link href="../assets/css/legalpro-finance-pages.css?v=2" rel="stylesheet" />
+	<link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-client-detail-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>

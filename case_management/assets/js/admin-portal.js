@@ -28,11 +28,17 @@
         }
     }
 
+    function getUnreadHint() {
+        var panel = qs('#legalproNotifPanel');
+        return (panel && panel.getAttribute('data-unread-hint')) || 'New — not yet seen';
+    }
+
     function buildNotifItem(n) {
         var href = n.link_url || n.url || '#';
         var type = escapeHtml(n.type || 'default');
         var icon = escapeHtml(n.icon || 'bell');
-        return '<a href="' + escapeHtml(href) + '" class="legalpro-notif-item" data-notif-key="' + escapeHtml(n.key || '') + '">'
+        var hint = escapeHtml(getUnreadHint());
+        return '<a href="' + escapeHtml(href) + '" class="legalpro-notif-item is-unread" data-notif-key="' + escapeHtml(n.key || '') + '" title="' + hint + '">'
             + '<span class="legalpro-notif-item__icon legalpro-notif-item__icon--' + type + '">'
             + '<i data-lucide="' + icon + '" class="lp-icon" aria-hidden="true"></i>'
             + '</span>'
@@ -41,6 +47,7 @@
             + '<span class="legalpro-notif-item__message">' + escapeHtml(n.message || '') + '</span>'
             + '<span class="legalpro-notif-item__time">' + escapeHtml(n.time || '') + '</span>'
             + '</span>'
+            + '<span class="legalpro-notif-item__hover-caption" role="tooltip">' + hint + '</span>'
             + '</a>';
     }
 

@@ -305,7 +305,7 @@ $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCate
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page<?php echo legalpro_portal_theme_body_class(); ?>">
 <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 
 <?php

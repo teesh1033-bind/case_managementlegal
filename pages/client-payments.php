@@ -382,12 +382,10 @@ $html = <<<'HTML'
         .cp-stat-pill .lbl { font-size: 11px; opacity: .75; margin-top: 2px; }
 
         .cp-layout {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 1.25rem;
-            align-items: start;
         }
-        @media (max-width: 991px) { .cp-layout { grid-template-columns: 1fr; } }
 
         .cp-panel {
             background: #fff;

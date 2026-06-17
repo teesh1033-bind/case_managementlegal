@@ -671,6 +671,7 @@ body.legalpro-dark-mode.legalpro-client-portal.client-court-tracking-page .cct-e
 }
 
 .legalpro-client-notif-dropdown .legalpro-notif-item.is-unread {
+    position: relative;
     background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.06);
     border-left: 3px solid var(--legalpro-theme-primary, #5e72e4);
 }
