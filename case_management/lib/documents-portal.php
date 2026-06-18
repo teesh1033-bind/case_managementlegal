@@ -277,6 +277,58 @@ function legalpro_documents_portal_handle_post(PDO $pdo, string $returnPageKey, 
                 $state['messageType'] = 'success';
             }
         }
+    } elseif ($formType === 'delete_document') {
+        $documentId = isset($_POST['document_id']) ? (int) $_POST['document_id'] : 0;
+        $caseId = isset($_POST['case_id']) ? (int) $_POST['case_id'] : 0;
+
+        if ($documentId <= 0 || $caseId <= 0) {
+            $state['message'] = 'Invalid document.';
+            $state['messageType'] = 'danger';
+        } else {
+            $result = legalpro_admin_delete_document($pdo, $documentId, $caseId);
+            if (!empty($result['success'])) {
+                legalpro_documents_portal_redirect($returnPageKey, $result['message'] ?? 'Document removed successfully.');
+            }
+            $state['message'] = $result['message'] ?? 'Unable to remove document.';
+            $state['messageType'] = 'danger';
+        }
+    }
+}
+
+function legalpro_admin_delete_document(PDO $pdo, int $documentId, int $caseId): array
+{
+    try {
+        $stmt = $pdo->prepare('
+            SELECT id, filepath, filename, label
+            FROM documents
+            WHERE id = ? AND case_id = ?
+        ');
+        $stmt->execute([$documentId, $caseId]);
+        $doc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$doc) {
+            return ['success' => false, 'message' => 'Document not found.'];
+        }
+
+        $del = $pdo->prepare('DELETE FROM documents WHERE id = ? AND case_id = ?');
+        $del->execute([$documentId, $caseId]);
+
+        $relativePath = ltrim((string) ($doc['filepath'] ?? ''), '/\\');
+        if ($relativePath !== '') {
+            $fsPath = dirname(__DIR__) . '/' . $relativePath;
+            if (is_file($fsPath)) {
+                @unlink($fsPath);
+            }
+        }
+
+        CaseEvents::trackDocumentDeleted($caseId, [
+            'filename' => (string) ($doc['filename'] ?? basename($relativePath)),
+            'label' => (string) ($doc['label'] ?? ''),
+        ]);
+
+        return ['success' => true, 'message' => 'Document removed successfully.'];
+    } catch (PDOException $e) {
+        return ['success' => false, 'message' => 'Unable to remove document: ' . $e->getMessage()];
     }
 }
 
@@ -424,12 +476,11 @@ function legalpro_documents_portal_build_fragments(array &$state): void
             } else {
                 foreach ($docs as $doc) {
                     $displayName = !empty($doc['label']) ? $doc['label'] : $doc['filename'];
-                    $downloadUrl = !empty($doc['filepath']) ? '../' . ltrim($doc['filepath'], '/') : '#';
                     $uploadedAt = !empty($doc['uploaded_at']) ? date('M j, Y g:i A', strtotime($doc['uploaded_at'])) : '';
                     $uploadedBy = !empty($doc['uploaded_by']) ? $doc['uploaded_by'] : 'System';
 
                     $docList .= '
-                    <div class="document-item d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <div class="document-item doc-case-document-item d-flex justify-content-between align-items-center p-3 border-bottom">
                         <div class="d-flex align-items-center">
                             ' . legalpro_document_file_icon_wrap($doc['filename']) . '
                             <div>
@@ -437,10 +488,7 @@ function legalpro_documents_portal_build_fragments(array &$state): void
                                 <p class="text-xs text-muted mb-0">Uploaded ' . htmlspecialchars($uploadedAt) . ' by ' . htmlspecialchars($uploadedBy) . '</p>
                             </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            <a class="btn btn-sm btn-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" rel="noopener">View</a>
-                            <a class="btn btn-sm btn-success" href="' . htmlspecialchars($downloadUrl) . '" download>Download</a>
-                        </div>
+                        ' . legalpro_documents_document_row_actions_html($doc, $caseId, true) . '
                     </div>';
                 }
             }
@@ -527,6 +575,32 @@ function legalpro_documents_portal_build_fragments(array &$state): void
     }
     $state['casesWithDocs'] = $casesWithDocs;
     $state['recentCount'] = count($recentDocuments);
+}
+
+function legalpro_documents_document_row_actions_html(array $doc, int $caseId, bool $allowDelete = false): string
+{
+    $downloadUrl = !empty($doc['filepath']) ? '../' . ltrim((string) $doc['filepath'], '/') : '#';
+    $html = '<div class="d-flex gap-2 flex-wrap justify-content-end">'
+        . '<a class="btn btn-sm btn-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" rel="noopener">View</a>'
+        . '<a class="btn btn-sm btn-success" href="' . htmlspecialchars($downloadUrl) . '" download>Download</a>';
+
+    if ($allowDelete) {
+        $documentId = (int) ($doc['id'] ?? 0);
+        $displayName = !empty($doc['label']) ? (string) $doc['label'] : (string) ($doc['filename'] ?? 'this document');
+        $confirmMessage = 'Remove "' . $displayName . '"? This cannot be undone.';
+        $html .= '<form method="POST" class="d-inline doc-delete-form">'
+            . '<input type="hidden" name="form_type" value="delete_document">'
+            . '<input type="hidden" name="document_id" value="' . $documentId . '">'
+            . '<input type="hidden" name="case_id" value="' . $caseId . '">'
+            . '<button type="button" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 doc-delete-btn"'
+            . ' data-confirm-message="' . htmlspecialchars($confirmMessage, ENT_QUOTES, 'UTF-8') . '">'
+            . legalpro_icon('trash-2')
+            . '<span>Remove</span>'
+            . '</button>'
+            . '</form>';
+    }
+
+    return $html . '</div>';
 }
 
 function legalpro_documents_message_html(array $state): string
@@ -679,14 +753,32 @@ function legalpro_documents_shared_styles(): string
         .case-item:hover { background-color: #f8f9fa !important; transition: background-color 0.2s ease; }
         body.legalpro-dark-mode .case-item:hover { background-color: var(--lp-dark-surface-hover, #464f68) !important; }
         .document-item { gap: 0.75rem; }
-        .document-item:hover { background-color: #f8f9fa !important; transition: background-color 0.2s ease; }
-        body.legalpro-dark-mode .document-item:hover { background-color: var(--lp-dark-surface-hover, #464f68) !important; }
+        .recent-document-item:hover { background-color: #f8f9fa !important; transition: background-color 0.2s ease; }
+        body.legalpro-dark-mode .recent-document-item:hover { background-color: var(--lp-dark-surface-hover, #464f68) !important; }
+        #documentsAccordion .doc-case-document-item { transition: background-color 0.15s ease; border-bottom-color: #eef1f6 !important; }
+        #documentsAccordion .doc-case-document-item:hover { background-color: rgba(94, 114, 228, 0.07) !important; }
+        body.legalpro-dark-mode #documentsAccordion .doc-case-document-item { border-bottom-color: var(--lp-dark-border, #3d4660) !important; }
+        body.legalpro-dark-mode #documentsAccordion .doc-case-document-item:hover { background-color: rgba(255, 255, 255, 0.05) !important; }
         .document-item > .d-flex.align-items-center:first-child { flex: 1 1 auto; min-width: 0; }
         .document-item > .d-flex.align-items-center:first-child > div:last-child { min-width: 0; overflow: hidden; }
         .document-item h6, .document-item p.text-xs { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .document-item > .d-flex.gap-2 { flex: 0 0 auto; flex-shrink: 0; flex-wrap: nowrap; }
         .document-item .btn { white-space: nowrap; }
         .document-item .document-item-icon.dashboard-stat-icon-wrap { width: 2.5rem; height: 2.5rem; min-width: 2.5rem; }
+        .document-item .document-item-icon.dashboard-stat-icon-wrap .lp-icon svg { width: 1.15rem; height: 1.15rem; }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--dark { background: rgba(255, 255, 255, 0.1) !important; }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--dark .lp-icon svg { stroke: #cbd5e1 !important; }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--primary .lp-icon svg { stroke: #a8b8ff !important; }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--danger .lp-icon svg { stroke: #ff8fa3 !important; }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--success .lp-icon svg { stroke: #6ee7b7 !important; }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg { stroke: #67e8f9 !important; }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--warning .lp-icon svg { stroke: #fdba74 !important; }
+        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--dark { background: rgba(94, 114, 228, 0.12) !important; }
+        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--dark .lp-icon svg { stroke: #5e72e4 !important; }
+        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info { background: rgba(17, 205, 239, 0.12) !important; }
+        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg { stroke: #11cdef !important; }
+        body.legalpro-dark-mode #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg { stroke: #67e8f9 !important; }
+        body.legalpro-dark-mode .accordion-body .text-center .document-item-icon.dashboard-stat-icon-wrap--primary .lp-icon svg { stroke: #a8b8ff !important; }
         .doc-case-accordion-btn { align-items: flex-start; }
         .doc-case-accordion-meta { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; padding-right: 1.5rem; }
         .doc-case-accordion-title { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
@@ -703,6 +795,37 @@ function legalpro_documents_shared_styles(): string
         body.legalpro-dark-mode .legalpro-doc-hub-card { border-color: var(--lp-dark-border); }
         body.legalpro-dark-mode .legalpro-doc-hub-card h6 { color: var(--lp-dark-text) !important; }
 CSS;
+}
+
+function legalpro_documents_browse_script(): string
+{
+    return <<<'JS'
+        document.addEventListener('DOMContentLoaded', function() {
+            var accordion = document.getElementById('documentsAccordion');
+            if (accordion && typeof legalproInitIcons === 'function') {
+                legalproInitIcons(accordion);
+                accordion.addEventListener('shown.bs.collapse', function(e) {
+                    legalproInitIcons(e.target);
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                var btn = e.target.closest('.doc-delete-btn');
+                if (!btn) {
+                    return;
+                }
+                e.preventDefault();
+                var form = btn.closest('form');
+                if (!form) {
+                    return;
+                }
+                var msg = btn.getAttribute('data-confirm-message') || 'Remove this document? This cannot be undone.';
+                if (window.confirm(msg)) {
+                    form.submit();
+                }
+            });
+        });
+JS;
 }
 
 function legalpro_documents_upload_script(): string
@@ -777,7 +900,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
     ob_start();
     include dirname(__DIR__) . '/inc/admin-portal-head.php';
     $html .= ob_get_clean();
-    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=3" rel="stylesheet" />'
+    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=4" rel="stylesheet" />'
         . '<style>' . legalpro_documents_shared_styles() . '</style>
 </head>
 <body class="g-sidenav-show g-sidenav-pinned bg-gray-100 legalpro-admin-portal legalpro-documents-page' . $bodyClass . '">
