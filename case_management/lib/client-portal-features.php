@@ -1014,12 +1014,14 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
 
 function legalpro_client_render_activity_feed_html(array $items): string
 {
+    require_once __DIR__ . '/../inc/legalpro-icons.php';
+
     if (empty($items)) {
-        return '<div class="cp-activity-empty">
-            <div class="cp-activity-empty__icon" aria-hidden="true">📋</div>
-            <p class="cp-activity-empty__title">No recent activity</p>
-            <p class="cp-activity-empty__sub">Updates from your cases, documents, and appointments will appear here.</p>
-        </div>';
+        return '<div class="cp-activity-empty">'
+            . '<div class="cd-empty-icon">' . legalpro_icon('inbox') . '</div>'
+            . '<p class="cp-activity-empty__title">No recent activity</p>'
+            . '<p class="cp-activity-empty__sub">Updates from your cases, documents, and appointments will appear here.</p>'
+            . '</div>';
     }
 
     $html = '<div class="cp-activity-feed">';

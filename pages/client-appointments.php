@@ -195,6 +195,25 @@ foreach ($appointments as $_apt) {
     if (($_apt['status'] ?? '') === 'accepted' && !empty($_apt['starts_at']) && strtotime($_apt['starts_at']) > time())  $apptUpcoming++;
 }
 
+require_once __DIR__ . '/../lib/client-portal-page-ui.php';
+
+$heroHtml = client_portal_render_hero([
+    'kicker' => 'Calendar',
+    'title' => 'My appointments',
+    'subtitle' => 'Track meetings with your legal team and request new sessions below.',
+    'show_date' => true,
+    'aria_label' => 'Appointments overview',
+    'stats' => [
+        ['num' => (string) $apptTotal, 'lbl' => 'Total'],
+        ['num' => (string) $apptPending, 'lbl' => 'Pending'],
+        ['num' => (string) $apptUpcoming, 'lbl' => 'Upcoming'],
+    ],
+    'actions' => [
+        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+    ],
+]);
+
 // ── Available lawyers ─────────────────────────────────────────────────────────
 $availableLawyers = [];
 try {
@@ -447,6 +466,7 @@ ob_start(); ?>
     <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
     <?php
     require_once __DIR__ . '/../inc/availability-date-picker.php';
     legalpro_render_availability_date_picker_assets();
@@ -477,49 +497,6 @@ ob_start(); ?>
             --ca-field-muted: var(--lp-dark-text-subtle, #9aa8bc);
             --ca-time-available-color: #6ee7b7;
         }
-
-        /* ── Hero ───────────────────────────────────────────────────── */
-        .ca-hero-card {
-            background: var(--ca-gradient);
-            border-radius: 20px;
-            padding: 2rem 2.5rem;
-            color: #fff;
-            margin-bottom: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .ca-hero-card::before {
-            content: '';
-            position: absolute;
-            top: -50px; right: -50px;
-            width: 180px; height: 180px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.08);
-        }
-        .ca-hero-card::after {
-            content: '';
-            position: absolute;
-            bottom: -70px; left: 60px;
-            width: 140px; height: 140px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.06);
-        }
-        .ca-hero-kicker {
-            font-size: 11px; font-weight: 600;
-            letter-spacing: .12em; text-transform: uppercase;
-            opacity: .75; margin-bottom: .35rem;
-        }
-        .ca-hero-title { font-size: 22px; font-weight: 800; margin-bottom: .3rem; }
-        .ca-hero-sub   { font-size: 13px; opacity: .75; margin-bottom: 1.5rem; }
-        .ca-hero-pills { display: flex; gap: .85rem; flex-wrap: wrap; position: relative; z-index: 1; }
-        .ca-stat-pill {
-            background: rgba(255,255,255,.15);
-            border: 1px solid rgba(255,255,255,.2);
-            border-radius: 12px;
-            padding: .6rem 1.1rem;
-        }
-        .ca-stat-pill .num { font-size: 20px; font-weight: 700; line-height: 1; }
-        .ca-stat-pill .lbl { font-size: 11px; opacity: .75; margin-top: 2px; }
 
         /* ── Layout ─────────────────────────────────────────────────── */
         .ca-layout {
@@ -1242,29 +1219,11 @@ ob_start(); ?>
         <?= $clientPageNavbar ?>
 
         <div class="container-fluid py-4">
+            <div class="cp-page">
 
             <?= $messageHtml ?>
 
-            <!-- Hero -------------------------------------------------------->
-            <div class="ca-hero-card">
-                <p class="ca-hero-kicker">Calendar</p>
-                <h4 class="ca-hero-title">My appointments</h4>
-                <p class="ca-hero-sub">Track meetings with your legal team and request new sessions below.</p>
-                <div class="ca-hero-pills">
-                    <div class="ca-stat-pill">
-                        <div class="num"><?= $apptTotal ?></div>
-                        <div class="lbl">Total</div>
-                    </div>
-                    <div class="ca-stat-pill">
-                        <div class="num"><?= $apptPending ?></div>
-                        <div class="lbl">Pending</div>
-                    </div>
-                    <div class="ca-stat-pill">
-                        <div class="num"><?= $apptUpcoming ?></div>
-                        <div class="lbl">Upcoming</div>
-                    </div>
-                </div>
-            </div>
+            <?= $heroHtml ?>
 
             <!-- Calendar hub (same as admin appointments) ----------------->
             <div class="dashboard-calendar-hub ca-calendar-hub">
@@ -1399,6 +1358,7 @@ ob_start(); ?>
                 </div>
 
             </div><!-- /ca-layout -->
+            </div><!-- /cp-page -->
         </div><!-- /container -->
     </main>
 
@@ -1857,8 +1817,8 @@ ob_start(); ?>
                 '<div style="display:flex;flex-direction:column;gap:1rem">' +
                     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem">' +
                         '<div>' +
-                            '<p class="ca-apt-detail-label">Matter</p>' +
-                            '<p class="ca-apt-detail-matter">' + escapeHtml(d.case_title) + '</p>' +
+                            '<p style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin:0 0 3px">Matter</p>' +
+                            '<p style="font-size:15px;font-weight:700;color:#1e293b;margin:0">' + escapeHtml(d.case_title) + '</p>' +
                         '</div>' +
                         '<span class="ca-badge ' + escapeHtml(d.status_pill || 'b-muted') + '">' +
                             '<span class="ca-badge-dot"></span>' + escapeHtml(d.status_label) +
@@ -1871,10 +1831,10 @@ ob_start(); ?>
                         '<div class="ca-detail-field"><p class="lbl">Ends</p><p class="val">' + escapeHtml(d.ends_at || '—') + '</p></div>' +
                     '</div>' +
                     '<div>' +
-                        '<p class="ca-apt-detail-label">Notes</p>' +
+                        '<p style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin:0 0 4px">Notes</p>' +
                         (d.notes
-                            ? '<p class="ca-apt-detail-value">' + escapeHtml(d.notes) + '</p>'
-                            : '<p class="ca-apt-detail-value ca-apt-detail-value--empty">No notes provided.</p>') +
+                            ? '<p style="font-size:13px;color:#1e293b;margin:0">' + escapeHtml(d.notes) + '</p>'
+                            : '<p style="font-size:13px;color:#94a3b8;margin:0">No notes provided.</p>') +
                     '</div>' +
                 '</div>';
         })

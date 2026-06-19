@@ -4,7 +4,7 @@ require_once __DIR__ . '/../inc/db.php';
 
 // Check if client is logged in
 if (!isset($_SESSION['client_id'])) {
-    header('Location: client-login.php');
+    header('Location: login.php');
     exit;
 }
 
@@ -13,6 +13,8 @@ $clientName = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'
 
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
+require_once __DIR__ . '/../lib/client-portal-page-ui.php';
+require_once __DIR__ . '/../inc/legalpro-icons.php';
 $iconCourtRow = legalpro_icon('landmark');
 $iconCourtEmpty = legalpro_icon('calendar');
 
@@ -162,6 +164,24 @@ foreach ($court_dates as $_cd) {
     }
 }
 
+$heroHtml = client_portal_render_hero([
+    'kicker' => 'Docket',
+    'title' => 'Hearings & appearances',
+    'subtitle' => 'Use the calendar for a month view, search for hearings, or scan the list below. Click an event or search result for full information.',
+    'show_date' => true,
+    'aria_label' => 'Court tracking overview',
+    'stats' => [
+        ['num' => (string) $ctTotal, 'lbl' => 'Total'],
+        ['num' => (string) $ctUpcoming, 'lbl' => 'Upcoming'],
+        ['num' => (string) $ctScheduled, 'lbl' => 'Scheduled'],
+        ['num' => (string) $ctCompleted, 'lbl' => 'Completed'],
+    ],
+    'actions' => [
+        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+    ],
+]);
+
 $courtTableError = '';
 if (!empty($_SESSION['error_message'])) {
     $courtTableError = (string) $_SESSION['error_message'];
@@ -187,63 +207,18 @@ if (!empty($_SESSION['error_message'])) {
     include __DIR__ . '/../inc/client-portal-head.php';
     include __DIR__ . '/../inc/client-court-tracking-calendar-css.php';
     ?>
+    <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body.client-court-tracking-page {
-            background: #f0f2f8;
             --cct-primary: var(--legalpro-theme-primary, #5e72e4);
             --cct-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
             --cct-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
             --cct-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
-            --cct-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
             --cct-r: 16px;
             --cct-shadow: 0 2px 12px rgba(0,0,0,0.07);
         }
 
-        .cct-hero-card {
-            background: var(--cct-gradient);
-            border-radius: 20px;
-            padding: 2rem 2.5rem;
-            color: #fff;
-            margin-bottom: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .cct-hero-card::before {
-            content: '';
-            position: absolute;
-            top: -60px; right: -60px;
-            width: 200px; height: 200px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.08);
-        }
-        .cct-hero-kicker {
-            font-size: 11px; font-weight: 600;
-            letter-spacing: .12em; text-transform: uppercase;
-            opacity: .75; margin-bottom: .35rem;
-        }
-        .cct-hero-title { font-size: 22px; font-weight: 800; margin-bottom: .3rem; }
-        .cct-hero-sub { font-size: 13px; opacity: .8; margin-bottom: 1.5rem; max-width: 36rem; }
-        .cct-hero-stats { display: flex; gap: .85rem; flex-wrap: wrap; position: relative; z-index: 1; }
-        .cct-stat-pill {
-            background: rgba(255,255,255,.15);
-            border: 1px solid rgba(255,255,255,.2);
-            border-radius: 12px;
-            padding: .6rem 1.1rem;
-            backdrop-filter: blur(10px);
-            min-width: 5rem;
-            text-align: center;
-        }
-        .cct-stat-pill .num { font-size: 20px; font-weight: 700; line-height: 1; }
-        .cct-stat-pill .lbl { font-size: 11px; opacity: .75; margin-top: 2px; }
-
-        .client-court-tracking-page .dashboard-calendar-hub {
-            border-radius: var(--cct-r);
-            border: 1px solid #e9ecf3;
-            box-shadow: var(--cct-shadow);
-            overflow: hidden;
-            margin-bottom: 1.5rem;
-        }
         .client-court-tracking-page .cct-panel {
             background: #fff;
             border-radius: var(--cct-r);
@@ -527,6 +502,7 @@ if (!empty($_SESSION['error_message'])) {
         ?>
 
         <div class="container-fluid py-4">
+            <div class="cp-page">
             <?php if ($courtTableError !== ''): ?>
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
                 <?php echo htmlspecialchars($courtTableError); ?>
@@ -534,29 +510,7 @@ if (!empty($_SESSION['error_message'])) {
             </div>
             <?php endif; ?>
 
-            <div class="cct-hero-card">
-                <p class="cct-hero-kicker">Docket</p>
-                <h4 class="cct-hero-title">Hearings &amp; appearances</h4>
-                <p class="cct-hero-sub">Use the calendar for a month view, search for hearings, or scan the list below. Click an event or search result for full information.</p>
-                <div class="cct-hero-stats">
-                    <div class="cct-stat-pill">
-                        <div class="num"><?php echo (int) $ctTotal; ?></div>
-                        <div class="lbl">Total</div>
-                    </div>
-                    <div class="cct-stat-pill">
-                        <div class="num"><?php echo (int) $ctUpcoming; ?></div>
-                        <div class="lbl">Upcoming</div>
-                    </div>
-                    <div class="cct-stat-pill">
-                        <div class="num"><?php echo (int) $ctScheduled; ?></div>
-                        <div class="lbl">Scheduled</div>
-                    </div>
-                    <div class="cct-stat-pill">
-                        <div class="num"><?php echo (int) $ctCompleted; ?></div>
-                        <div class="lbl">Completed</div>
-                    </div>
-                </div>
-            </div>
+            <?php echo $heroHtml; ?>
 
             <div class="row mb-4">
                 <div class="col-12">
@@ -683,6 +637,7 @@ if (!empty($_SESSION['error_message'])) {
                         </table>
                     </div>
                 <?php endif; ?>
+            </div>
             </div>
         </div>
     </main>

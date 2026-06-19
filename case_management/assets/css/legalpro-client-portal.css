@@ -498,7 +498,11 @@ body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-card .cb-hero-sub,
 body.legalpro-client-portal:not(.legalpro-dark-mode) .cb-hero-card .cb-hero-meta,
 body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] h4,
 body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] p,
-body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] strong {
+body.legalpro-client-portal:not(.legalpro-dark-mode) [class*="-hero-card"] strong,
+body.legalpro-client-portal:not(.legalpro-dark-mode).client-settings-page .cs-hero__title,
+body.legalpro-client-portal:not(.legalpro-dark-mode).client-settings-page .cs-hero__kicker,
+body.legalpro-client-portal:not(.legalpro-dark-mode).client-settings-page .cs-hero__sub,
+body.legalpro-client-portal:not(.legalpro-dark-mode).client-settings-page .cs-hero__meta {
     color: #fff !important;
 }
 

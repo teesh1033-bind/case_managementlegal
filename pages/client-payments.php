@@ -309,6 +309,27 @@ if (empty($quotations)) {
 }
 
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
+require_once __DIR__ . '/../lib/client-portal-page-ui.php';
+
+$heroHtml = client_portal_render_hero([
+    'kicker' => 'Billing',
+    'title' => 'Your financial snapshot',
+    'subtitle' => 'Review issued invoices, quotations, what you have paid, and any balance still due. Contact your firm if you need a payment plan or receipt.',
+    'meta' => $invoiceCount . ' invoices · ' . $quotationCount . ' quotations · ' . $paymentCount . ' payments recorded',
+    'show_date' => true,
+    'aria_label' => 'Payments overview',
+    'stats' => [
+        ['num' => formatCurrency($totalInvoiced), 'lbl' => 'Invoiced'],
+        ['num' => formatCurrency($totalPaid), 'lbl' => 'Paid'],
+        ['num' => formatCurrency($totalOutstanding), 'lbl' => 'Outstanding'],
+        ['num' => (string) $overdueInvoiceCount, 'lbl' => 'Overdue'],
+    ],
+    'actions' => [
+        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+    ],
+]);
+
 $clientPageNavbar = legalpro_render_client_page_navbar(
     'Payments & invoices',
     'Payments',
@@ -331,175 +352,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        body.client-payments-page {
-            background: #f0f2f8;
-            --cp-pay-primary: var(--legalpro-theme-primary, #5e72e4);
-            --cp-pay-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
-            --cp-pay-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
-            --cp-pay-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
-            --cp-pay-r: 16px;
-            --cp-pay-shadow: 0 2px 12px rgba(0,0,0,0.07);
-        }
-
-        .cp-hero-card {
-            background: var(--cp-pay-gradient);
-            border-radius: 20px;
-            padding: 2rem 2.5rem;
-            color: #fff;
-            margin-bottom: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .cp-hero-card::before {
-            content: '';
-            position: absolute;
-            top: -50px; right: -50px;
-            width: 180px; height: 180px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.08);
-        }
-        .cp-hero-kicker {
-            font-size: 11px; font-weight: 600;
-            letter-spacing: .12em; text-transform: uppercase;
-            opacity: .75; margin-bottom: .35rem;
-        }
-        .cp-hero-title { font-size: 22px; font-weight: 800; margin-bottom: .3rem; }
-        .cp-hero-sub { font-size: 13px; opacity: .8; margin-bottom: .5rem; max-width: 32rem; }
-        .cp-hero-meta { font-size: 12px; opacity: .7; margin-bottom: 1.25rem; }
-        .cp-hero-stats { display: flex; gap: .85rem; flex-wrap: wrap; position: relative; z-index: 1; }
-        .cp-stat-pill {
-            background: rgba(255,255,255,.15);
-            border: 1px solid rgba(255,255,255,.2);
-            border-radius: 12px;
-            padding: .6rem 1.1rem;
-            backdrop-filter: blur(10px);
-            min-width: 5.5rem;
-            text-align: center;
-        }
-        .cp-stat-pill .num { font-size: 18px; font-weight: 700; line-height: 1.1; }
-        .cp-stat-pill .lbl { font-size: 11px; opacity: .75; margin-top: 2px; }
-
-        .cp-layout {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .cp-panel {
-            background: #fff;
-            border-radius: var(--cp-pay-r);
-            border: 1px solid #e9ecf3;
-            box-shadow: var(--cp-pay-shadow);
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-        .cp-panel-hdr {
-            padding: 1.1rem 1.5rem;
-            border-bottom: 1px solid #f1f5f9;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: .75rem;
-            flex-wrap: wrap;
-        }
-        .cp-panel-hdr h5 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0; }
-        .cp-panel-hdr p { font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
-        .cp-count {
-            background: var(--cp-pay-primary-soft);
-            color: var(--cp-pay-primary);
-            font-size: 11px; font-weight: 700;
-            padding: .2rem .65rem; border-radius: 99px;
-        }
-        .cp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .cp-table thead th {
-            background: #f8fafc; color: #94a3b8;
-            font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-            padding: .7rem 1rem; border-bottom: 1px solid #f1f5f9; white-space: nowrap;
-        }
-        .cp-table thead th:first-child { padding-left: 1.5rem; }
-        .cp-table tbody tr { border-bottom: 1px solid #f8fafc; transition: background .1s; }
-        .cp-table tbody tr:hover { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04); }
-        .cp-table tbody td { padding: .85rem 1rem; vertical-align: middle; }
-        .cp-table tbody td:first-child { padding-left: 1.5rem; }
-
-        .cp-row-icon {
-            width: 36px; height: 36px; border-radius: 10px;
-            background: var(--cp-pay-primary-soft); color: var(--cp-pay-primary);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
-        .cp-row-icon--success {
-            background: rgba(45, 206, 137, 0.12);
-            color: #1e9e6a;
-        }
-        .cp-row-icon .lp-icon svg { stroke: currentColor; }
-
-        .cp-empty {
-            padding: 3.5rem 1.5rem; text-align: center;
-        }
-        .cp-empty-icon {
-            width: 52px; height: 52px; border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 1rem;
-        }
-        .cp-empty-icon--primary { background: var(--cp-pay-primary-soft); color: var(--cp-pay-primary); }
-        .cp-empty-icon--success { background: rgba(45, 206, 137, 0.12); color: #1e9e6a; }
-        .cp-empty h5 { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: .35rem; }
-        .cp-empty p { font-size: 13px; color: #94a3b8; max-width: 22rem; margin: 0 auto; }
-
-        .btn-cp-link {
-            padding: .35rem .9rem; border-radius: 8px;
-            border: 1.5px solid var(--cp-pay-primary); color: var(--cp-pay-primary);
-            font-size: 12px; font-weight: 600; background: none;
-            text-decoration: none; display: inline-block;
-            transition: background .15s, color .15s;
-        }
-        .btn-cp-link:hover { background: var(--cp-pay-primary); color: #fff; }
-        .btn-cp-download {
-            padding: .3rem .65rem;
-            font-size: 11px;
-            white-space: nowrap;
-        }
-
-        .client-payments-page .ca-status-pill {
-            font-size: .68rem;
-            padding: 3px 10px;
-        }
-        .client-payments-page .ca-status-pill--scheduled {
-            background: var(--cp-pay-primary-soft);
-            color: var(--cp-pay-primary);
-        }
-        .client-payments-page .min-width-0 { min-width: 0; }
-
-        @media (max-width: 640px) {
-            .cp-hero-card { padding: 1.5rem; }
-        }
-
-        body.legalpro-dark-mode.client-payments-page {
-            background: #0f172a;
-        }
-        body.legalpro-dark-mode.client-payments-page .cp-panel {
-            background: #1e293b;
-            border-color: rgba(255, 255, 255, 0.08);
-        }
-        body.legalpro-dark-mode.client-payments-page .cp-panel-hdr {
-            border-bottom-color: rgba(255, 255, 255, 0.08);
-        }
-        body.legalpro-dark-mode.client-payments-page .cp-panel-hdr h5,
-        body.legalpro-dark-mode.client-payments-page .cp-empty h5 {
-            color: #f1f5f9;
-        }
-        body.legalpro-dark-mode.client-payments-page .cp-table thead th {
-            background: #0f172a;
-            color: #94a3b8;
-            border-bottom-color: rgba(255, 255, 255, 0.08);
-        }
-        body.legalpro-dark-mode.client-payments-page .cp-table tbody tr:hover {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
-        }
-    </style>
+    <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-payments-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
@@ -507,32 +360,10 @@ $html = <<<'HTML'
     <main class="main-content position-relative border-radius-lg">
         {CLIENT_NAVBAR}
         <div class="container-fluid py-4">
+            <div class="cp-page">
             {MESSAGE}
 
-            <div class="cp-hero-card">
-                <p class="cp-hero-kicker">Billing</p>
-                <h4 class="cp-hero-title">Your financial snapshot</h4>
-                <p class="cp-hero-sub">Review issued invoices, quotations, what you have paid, and any balance still due. Contact your firm if you need a payment plan or receipt.</p>
-                <p class="cp-hero-meta">{INVOICE_COUNT} invoices · {QUOTATION_COUNT} quotations · {PAYMENT_COUNT} payments recorded</p>
-                <div class="cp-hero-stats">
-                    <div class="cp-stat-pill">
-                        <div class="num">{TOTAL_INVOICED}</div>
-                        <div class="lbl">Invoiced</div>
-                    </div>
-                    <div class="cp-stat-pill">
-                        <div class="num">{TOTAL_PAID}</div>
-                        <div class="lbl">Paid</div>
-                    </div>
-                    <div class="cp-stat-pill">
-                        <div class="num">{TOTAL_OUTSTANDING}</div>
-                        <div class="lbl">Outstanding</div>
-                    </div>
-                    <div class="cp-stat-pill">
-                        <div class="num">{OVERDUE_COUNT}</div>
-                        <div class="lbl">Overdue</div>
-                    </div>
-                </div>
-            </div>
+            {HERO}
 
             <div class="cp-layout">
                 <div class="cp-panel">
@@ -626,6 +457,7 @@ $html = <<<'HTML'
                     </table>
                 </div>
             </div>
+            </div>
         </div>
     </main>
 
@@ -671,6 +503,7 @@ HTML;
 
 // Replace placeholders
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{HERO}', $heroHtml, $html);
 $html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
 $html = str_replace('{CLIENT_NAME}', htmlspecialchars($client_name), $html);
 $html = str_replace('{TOTAL_INVOICED}', formatCurrency($totalInvoiced), $html);

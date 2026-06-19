@@ -4,6 +4,8 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/client-portal-features.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
+require_once __DIR__ . '/../lib/client-portal-page-ui.php';
+require_once __DIR__ . '/../inc/legalpro-icons.php';
 
 if (!isset($_SESSION['client_id'])) {
     header('Location: login.php');
@@ -40,6 +42,9 @@ try {
     $clientCases = [];
 }
 
+$docCount = count($documents);
+$caseCount = count($clientCases);
+
 $caseOptions = '<option value="">All cases</option>';
 foreach ($clientCases as $c) {
     $sel = $filterCaseId === (int) $c['id'] ? ' selected' : '';
@@ -49,7 +54,7 @@ foreach ($clientCases as $c) {
 $rowsHtml = '';
 if (empty($documents)) {
     $rowsHtml = '<div class="cdoc-empty">
-        <div class="cdoc-empty__icon" aria-hidden="true">📁</div>
+        <div class="cdoc-empty__icon" aria-hidden="true">' . legalpro_icon('folder-open') . '</div>
         <p class="cdoc-empty__title">No documents found</p>
         <p class="cdoc-empty__sub">Files shared by your legal team will appear here.</p>
     </div>';
@@ -75,6 +80,9 @@ if (empty($documents)) {
             $ackBtn = '<span class="cdoc-ack-done">✓ Acknowledged</span>';
         }
 
+        $filename = (string) ($doc['filename'] ?? 'document');
+        $iconHtml = legalpro_document_file_icon_wrap($filename, 'cdoc-row__icon');
+
         $docHay = strtolower(implode(' ', [
             $doc['label'] ?? '',
             $doc['filename'] ?? '',
@@ -83,15 +91,15 @@ if (empty($documents)) {
             $uploaded,
         ]));
 
-        $rowsHtml .= '<article class="cdoc-row" data-search="' . htmlspecialchars($docHay, ENT_QUOTES, 'UTF-8') . '">
-            <div class="cdoc-row__icon" aria-hidden="true">📄</div>
-            <div class="cdoc-row__body">
+        $rowsHtml .= '<article class="cdoc-row" data-search="' . htmlspecialchars($docHay, ENT_QUOTES, 'UTF-8') . '">'
+            . $iconHtml
+            . '<div class="cdoc-row__body">
                 <div class="cdoc-row__title">' . $label . ' ' . $newBadge . '</div>
                 <div class="cdoc-row__meta">' . $caseTitle . ' · ' . $by . ' · ' . $uploaded . '</div>
             </div>
             <div class="cdoc-row__actions">
                 <a href="' . $viewUrl . '" target="_blank" rel="noopener" class="btn btn-sm btn-primary cdoc-touch-btn">View</a>
-                <a href="' . $downloadUrl . '" download="' . $downloadName . '" class="btn btn-sm btn-outline-primary cdoc-touch-btn">Download PDF</a>
+                <a href="' . $downloadUrl . '" download="' . $downloadName . '" class="btn btn-sm btn-outline-primary cdoc-touch-btn">Download</a>
                 ' . $ackBtn . '
             </div>
         </article>';
@@ -112,9 +120,34 @@ $messageHtml = $message !== ''
         . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>'
     : '';
 
-$newBanner = $newCount > 0
-    ? '<span class="cdoc-header-badge">' . (int) $newCount . ' new since last visit</span>'
-    : '';
+$heroMeta = $newCount > 0
+    ? (int) $newCount . ' new since your last visit'
+    : $docCount . ' files across your matters';
+
+$heroHtml = client_portal_render_hero([
+    'kicker' => 'Client portal',
+    'title' => $pageTitle,
+    'subtitle' => 'Contracts, court filings, and receipts shared by your legal team.',
+    'meta' => $heroMeta,
+    'show_date' => true,
+    'aria_label' => 'Document center overview',
+    'stats' => [
+        ['num' => $docCount, 'lbl' => 'Documents'],
+        ['num' => $newCount, 'lbl' => 'New'],
+        ['num' => $caseCount, 'lbl' => 'Cases'],
+    ],
+    'actions' => [
+        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+    ],
+]);
+
+$panelHeaderHtml = client_portal_render_panel_header([
+    'title' => 'Shared files',
+    'subtitle' => 'View or download documents for your matters.',
+    'icon' => 'folder-open',
+    'badge' => $docCount . ' total',
+]);
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -126,6 +159,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <link href="../assets/css/client-portal-pages.css?v=3" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-documents-page{PORTAL_THEME_BODY_CLASS}">
 <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
@@ -133,38 +167,31 @@ $html = <<<'HTML'
 <main class="main-content position-relative border-radius-lg">
     {CLIENT_NAVBAR}
     <div class="container-fluid py-4 px-4">
+        <div class="cp-page">
         {MESSAGE}
-        <div class="cdoc-header">
-            <div>
-                <h5 class="cdoc-header__title">{PAGE_TITLE}</h5>
-                <p class="cdoc-header__sub">Contracts, court filings, and receipts in one place</p>
-            </div>
-            {NEW_BANNER}
+        {HERO}
+        <div class="cp-filters-card">
+            <form method="get" class="cp-filters-grid">
+                <div class="cp-filter-field">
+                    <label class="form-label" for="cdoc-case-filter">Filter by case</label>
+                    <select id="cdoc-case-filter" name="case_id" class="form-select cp-field cp-filter-select" onchange="this.form.submit()">
+                        {CASE_OPTIONS}
+                    </select>
+                </div>
+                <div class="cp-filter-field">
+                    <label class="form-label" for="cdoc-search-input">Search</label>
+                    <input type="search" id="cdoc-search-input" name="q" value="{SEARCH_Q}" class="form-control cp-field" placeholder="Search by filename or case…">
+                </div>
+                <div class="cp-filter-field cp-filter-field--action">
+                    <label class="form-label" for="cdoc-search-submit">Apply</label>
+                    <button type="submit" id="cdoc-search-submit" class="btn btn-primary w-100 cp-filter-submit">Search</button>
+                </div>
+            </form>
         </div>
-        <div class="cdoc-filters card mb-4">
-            <div class="card-body">
-                <form method="get" class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label text-sm font-weight-bold">Filter by case</label>
-                        <select name="case_id" class="form-select cdoc-field" onchange="this.form.submit()">
-                            {CASE_OPTIONS}
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label text-sm font-weight-bold">Search</label>
-                        <input type="search" name="q" value="{SEARCH_Q}" class="form-control cdoc-field" placeholder="Search by filename or case…">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label text-sm font-weight-bold" for="cdoc-search-submit">Apply</label>
-                        <button type="submit" id="cdoc-search-submit" class="btn btn-primary w-100 cdoc-touch-btn cdoc-search-btn">Search</button>
-                    </div>
-                </form>
-            </div>
+        <div class="cp-panel">
+            {PANEL_HEADER}
+            <div>{DOCUMENT_ROWS}</div>
         </div>
-        <div class="cdoc-list card">
-            <div class="card-body p-0">
-                {DOCUMENT_ROWS}
-            </div>
         </div>
     </div>
 </main>
@@ -178,7 +205,8 @@ HTML;
 $html = str_replace('{PAGE_TITLE}', htmlspecialchars($pageTitle), $html);
 $html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
-$html = str_replace('{NEW_BANNER}', $newBanner, $html);
+$html = str_replace('{HERO}', $heroHtml, $html);
+$html = str_replace('{PANEL_HEADER}', $panelHeaderHtml, $html);
 $html = str_replace('{CASE_OPTIONS}', $caseOptions, $html);
 $html = str_replace('{SEARCH_Q}', htmlspecialchars($searchQ), $html);
 $html = str_replace('{DOCUMENT_ROWS}', $rowsHtml, $html);

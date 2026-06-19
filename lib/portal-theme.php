@@ -470,6 +470,10 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
         }
     }
 
+    if (!function_exists('client_portal_render_hero')) {
+        require_once __DIR__ . '/client-portal-page-ui.php';
+    }
+
     if (!function_exists('getCompanyBranding')) {
         $brandingPath = __DIR__ . '/branding.php';
         if (is_file($brandingPath)) {
@@ -561,104 +565,130 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
         . $stat((string) (int) ($snapshot['upcoming_appointments'] ?? 0), $t('settings.stat_upcoming_appts', 'Upcoming'))
         . $stat($outstandingLabel, $t('settings.stat_outstanding', 'Outstanding'));
 
+    $heroHtml = client_portal_render_hero([
+        'kicker' => $t('settings.title', 'Settings'),
+        'title' => $t('settings.hero_title', 'Personalize your portal'),
+        'subtitle' => $t('settings.hero_sub', 'Manage appearance, notifications, and shortcuts for your client account.'),
+        'meta' => $t('settings.member_since', 'Member since') . ' ' . $memberSince
+            . ' · ' . $t('settings.current_digest', 'Email digest') . ': ' . $currentDigestLabel,
+        'show_date' => true,
+        'aria_label' => $t('settings.title', 'Settings'),
+        'stats' => [
+            ['num' => (string) (int) ($snapshot['total_cases'] ?? 0), 'lbl' => $t('settings.stat_cases', 'Cases')],
+            ['num' => (string) (int) ($snapshot['open_cases'] ?? 0), 'lbl' => $t('settings.stat_open_cases', 'Active')],
+            ['num' => (string) (int) ($snapshot['new_documents'] ?? 0), 'lbl' => $t('settings.stat_new_docs', 'New docs')],
+            ['num' => $outstandingLabel, 'lbl' => $t('settings.stat_outstanding', 'Outstanding')],
+        ],
+        'actions' => [
+            ['url' => 'client-profile.php', 'label' => $t('settings.edit_profile', 'Edit profile'), 'primary' => true, 'icon' => 'user'],
+            ['url' => 'client-dashboard.php', 'label' => $t('nav.dashboard', 'Dashboard'), 'icon' => 'layout-dashboard'],
+        ],
+    ]);
+
+    $appearanceBody = '
+        <p class="text-sm text-muted mb-4">' . htmlspecialchars($t('settings.appearance_help', 'Choose light or dark mode and your preferred language.')) . '</p>
+        <div class="mb-4">
+            <label class="form-label d-block mb-2">' . htmlspecialchars($t('settings.theme_mode', 'Theme mode')) . '</label>
+            <div class="settings-theme-mode">
+                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars($t('settings.light', 'Light')) . '</label>
+                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars($t('settings.dark', 'Dark')) . '</label>
+            </div>
+        </div>
+        <div class="mb-0">
+            <label class="form-label d-block mb-2" for="client_locale">' . htmlspecialchars($t('settings.language_label', 'Display language')) . '</label>
+            <select class="form-select" name="locale" id="client_locale" required>' . $localeOptions . '</select>
+            <p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($t('settings.language_help', 'Updates navigation labels and settings across the client portal.')) . '</p>
+        </div>';
+
+    $notificationsBody = '
+        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.')) . '</p>
+        <label class="form-label d-block mb-2" for="client_email_digest">' . htmlspecialchars($t('settings.email_digest', 'Email digest')) . '</label>
+        <select class="form-select" name="email_digest" id="client_email_digest">
+            <option value="none"' . ($currentDigest === 'none' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_none', 'Off')) . '</option>
+            <option value="daily"' . ($currentDigest === 'daily' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_daily', 'Daily')) . '</option>
+            <option value="weekly"' . ($currentDigest === 'weekly' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_weekly', 'Weekly')) . '</option>
+        </select>
+        <ul class="cs-tip-list mt-3 mb-0">
+            <li>' . htmlspecialchars($t('settings.digest_tip_1', 'Daily digests are sent each morning with the previous day\'s activity.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.digest_tip_2', 'Weekly digests arrive Monday with a summary of the past week.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.digest_tip_3', 'In-portal alerts in the bell menu are always available regardless of digest setting.')) . '</li>
+        </ul>';
+
+    $privacyBody = '
+        <ul class="cs-tip-list mb-3">
+            <li>' . htmlspecialchars($t('settings.privacy_tip_1', 'Never share your portal password with anyone, including firm staff.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.privacy_tip_2', 'Sign out when using a shared or public device.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.privacy_tip_3', 'Update your contact details on your profile so your firm can reach you.')) . '</li>
+        </ul>
+        <a href="client-profile.php" class="btn btn-outline-primary btn-sm mb-0">' . htmlspecialchars($t('settings.manage_profile', 'Manage profile & password')) . '</a>';
+
+    $accountBody = '
+        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.account_help', 'Basic details tied to your client portal login.')) . '</p>
+        <dl class="cs-account-dl mb-3">
+            <dt>' . htmlspecialchars($t('settings.account_name', 'Name')) . '</dt><dd>' . $displayName . '</dd>
+            <dt>' . htmlspecialchars($t('settings.account_email', 'Email')) . '</dt><dd>' . $email . '</dd>
+            <dt>' . htmlspecialchars($t('settings.account_phone', 'Phone')) . '</dt><dd>' . $phone . '</dd>
+            <dt>' . htmlspecialchars($t('settings.member_since', 'Member since')) . '</dt><dd>' . $memberSince . '</dd>
+        </dl>
+        <a href="client-profile.php" class="btn btn-outline-primary btn-sm mb-0 w-100">' . htmlspecialchars($t('settings.edit_profile', 'Edit profile')) . '</a>';
+
+    $overviewBody = '<div class="cs-stats-grid">' . $statsHtml . '</div>';
+
+    $quickLinksBody = '
+        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.quick_links_help', 'Jump to common areas of your client portal.')) . '</p>
+        <div class="cs-quick-links">' . $quickLinksHtml . '</div>';
+
+    $firmBody = '<h6 class="mb-2">' . $firmName . '</h6>' . $firmDetailsHtml;
+
     return '
-    <div class="cs-hero mb-4">
-        <div class="cs-hero__body">
-            <p class="cs-hero__kicker">' . htmlspecialchars($t('settings.title', 'Settings')) . '</p>
-            <h4 class="cs-hero__title">' . htmlspecialchars($t('settings.hero_title', 'Personalize your portal')) . '</h4>
-            <p class="cs-hero__sub">' . htmlspecialchars($t('settings.hero_sub', 'Manage appearance, notifications, and shortcuts for your client account.')) . '</p>
-        </div>
-        <div class="cs-hero__meta">
-            <span>' . htmlspecialchars($t('settings.member_since', 'Member since')) . ' ' . $memberSince . '</span>
-            <span>' . htmlspecialchars($t('settings.current_digest', 'Email digest')) . ': ' . $currentDigestLabel . '</span>
-        </div>
-    </div>
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <form method="post" class="client-settings-form">
-                <input type="hidden" name="action" value="save_preferences">
-                <div class="card mb-4">
-                    <div class="card-header pb-0"><h6>' . htmlspecialchars($t('settings.appearance', 'Appearance & language')) . '</h6></div>
-                    <div class="card-body">
-                        <p class="text-sm text-muted mb-4">' . htmlspecialchars($t('settings.appearance_help', 'Choose light or dark mode and your preferred language.')) . '</p>
-                        <div class="mb-4">
-                            <label class="form-control-label d-block mb-2">' . htmlspecialchars($t('settings.theme_mode', 'Theme mode')) . '</label>
-                            <div class="settings-theme-mode">
-                                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars($t('settings.light', 'Light')) . '</label>
-                                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars($t('settings.dark', 'Dark')) . '</label>
-                            </div>
-                        </div>
-                        <div class="mb-0">
-                            <label class="form-control-label d-block mb-2" for="client_locale">' . htmlspecialchars($t('settings.language_label', 'Display language')) . '</label>
-                            <select class="form-select" name="locale" id="client_locale" required>' . $localeOptions . '</select>
-                            <p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($t('settings.language_help', 'Updates navigation labels and settings across the client portal.')) . '</p>
-                        </div>
+    <div class="cp-page">
+        ' . $heroHtml . '
+        <div class="cp-account-layout">
+            <div class="cp-panel-stack">
+                <form method="post" class="client-settings-form cp-panel-stack">
+                    <input type="hidden" name="action" value="save_preferences">
+                    ' . client_portal_render_panel([
+                        'title' => $t('settings.appearance', 'Appearance & language'),
+                        'subtitle' => $t('settings.appearance_help', 'Choose light or dark mode and your preferred language.'),
+                        'icon' => 'palette',
+                    ], $appearanceBody) . '
+                    ' . client_portal_render_panel([
+                        'title' => $t('settings.notifications_section', 'Email notifications'),
+                        'subtitle' => $t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.'),
+                        'icon' => 'bell',
+                        'panel_id' => 'email-digest',
+                    ], $notificationsBody) . '
+                    <div class="cp-form-actions">
+                        <button type="submit" class="btn btn-primary">' . htmlspecialchars($t('settings.save_preferences', 'Save preferences')) . '</button>
                     </div>
-                </div>
-                <div class="card mb-4" id="email-digest">
-                    <div class="card-header pb-0"><h6>' . htmlspecialchars($t('settings.notifications_section', 'Email notifications')) . '</h6></div>
-                    <div class="card-body">
-                        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.')) . '</p>
-                        <label class="form-control-label d-block mb-2" for="client_email_digest">' . htmlspecialchars($t('settings.email_digest', 'Email digest')) . '</label>
-                        <select class="form-select" name="email_digest" id="client_email_digest">
-                            <option value="none"' . ($currentDigest === 'none' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_none', 'Off')) . '</option>
-                            <option value="daily"' . ($currentDigest === 'daily' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_daily', 'Daily')) . '</option>
-                            <option value="weekly"' . ($currentDigest === 'weekly' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_weekly', 'Weekly')) . '</option>
-                        </select>
-                        <ul class="cs-tip-list text-sm text-muted mt-3 mb-0">
-                            <li>' . htmlspecialchars($t('settings.digest_tip_1', 'Daily digests are sent each morning with the previous day\'s activity.')) . '</li>
-                            <li>' . htmlspecialchars($t('settings.digest_tip_2', 'Weekly digests arrive Monday with a summary of the past week.')) . '</li>
-                            <li>' . htmlspecialchars($t('settings.digest_tip_3', 'In-portal alerts in the bell menu are always available regardless of digest setting.')) . '</li>
-                        </ul>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary mb-4">' . htmlspecialchars($t('settings.save_preferences', 'Save preferences')) . '</button>
-            </form>
-            <div class="card">
-                <div class="card-header pb-0"><h6>' . htmlspecialchars($t('settings.privacy_security', 'Privacy & security')) . '</h6></div>
-                <div class="card-body">
-                    <ul class="cs-tip-list text-sm text-muted mb-3">
-                        <li>' . htmlspecialchars($t('settings.privacy_tip_1', 'Never share your portal password with anyone, including firm staff.')) . '</li>
-                        <li>' . htmlspecialchars($t('settings.privacy_tip_2', 'Sign out when using a shared or public device.')) . '</li>
-                        <li>' . htmlspecialchars($t('settings.privacy_tip_3', 'Update your contact details on your profile so your firm can reach you.')) . '</li>
-                    </ul>
-                    <a href="client-profile.php" class="btn btn-outline-primary btn-sm mb-0">' . htmlspecialchars($t('settings.manage_profile', 'Manage profile & password')) . '</a>
-                </div>
+                </form>
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.privacy_security', 'Privacy & security'),
+                    'subtitle' => $t('settings.privacy_tip_1', 'Never share your portal password with anyone, including firm staff.'),
+                    'icon' => 'shield',
+                ], $privacyBody) . '
             </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card mb-4">
-                <div class="card-header pb-0"><h6>' . htmlspecialchars($t('settings.account', 'Your account')) . '</h6></div>
-                <div class="card-body">
-                    <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.account_help', 'Basic details tied to your client portal login.')) . '</p>
-                    <dl class="cs-account-dl mb-3">
-                        <dt>' . htmlspecialchars($t('settings.account_name', 'Name')) . '</dt><dd>' . $displayName . '</dd>
-                        <dt>' . htmlspecialchars($t('settings.account_email', 'Email')) . '</dt><dd>' . $email . '</dd>
-                        <dt>' . htmlspecialchars($t('settings.account_phone', 'Phone')) . '</dt><dd>' . $phone . '</dd>
-                        <dt>' . htmlspecialchars($t('settings.member_since', 'Member since')) . '</dt><dd>' . $memberSince . '</dd>
-                    </dl>
-                    <a href="client-profile.php" class="btn btn-outline-primary btn-sm mb-0 w-100">' . htmlspecialchars($t('settings.edit_profile', 'Edit profile')) . '</a>
-                </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-header pb-0"><h6>' . htmlspecialchars($t('settings.portal_overview', 'Portal overview')) . '</h6></div>
-                <div class="card-body">
-                    <div class="cs-stats-grid">' . $statsHtml . '</div>
-                </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-header pb-0"><h6>' . htmlspecialchars($t('settings.quick_links', 'Quick links')) . '</h6></div>
-                <div class="card-body">
-                    <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.quick_links_help', 'Jump to common areas of your client portal.')) . '</p>
-                    <div class="cs-quick-links">' . $quickLinksHtml . '</div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header pb-0"><h6>' . htmlspecialchars($t('settings.your_firm', 'Your firm')) . '</h6></div>
-                <div class="card-body">
-                    <h6 class="mb-2">' . $firmName . '</h6>
-                    ' . $firmDetailsHtml . '
-                </div>
+            <div class="cp-panel-stack">
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.account', 'Your account'),
+                    'subtitle' => $t('settings.account_help', 'Basic details tied to your client portal login.'),
+                    'icon' => 'user',
+                ], $accountBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.portal_overview', 'Portal overview'),
+                    'subtitle' => $t('settings.quick_links_help', 'Jump to common areas of your client portal.'),
+                    'icon' => 'layout-grid',
+                ], $overviewBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.quick_links', 'Quick links'),
+                    'subtitle' => $t('settings.quick_links_help', 'Jump to common areas of your client portal.'),
+                    'icon' => 'link',
+                ], $quickLinksBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.your_firm', 'Your firm'),
+                    'subtitle' => $t('settings.firm_default', 'Contact your legal team for office hours and support.'),
+                    'icon' => 'building-2',
+                ], $firmBody) . '
             </div>
         </div>
     </div>';

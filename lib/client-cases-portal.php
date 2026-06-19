@@ -5,6 +5,7 @@ require_once __DIR__ . '/client-portal-features.php';
 require_once dirname(__DIR__) . '/inc/admin-layout.php';
 require_once dirname(__DIR__) . '/inc/client-portal-navbar.php';
 require_once dirname(__DIR__) . '/inc/legalpro-icons.php';
+require_once __DIR__ . '/client-portal-page-ui.php';
 
 function legalpro_client_case_nav(): array
 {
@@ -350,26 +351,65 @@ function legalpro_client_case_message_html(array $state): string
 
 function legalpro_client_case_context_bar_html(array $state): string
 {
+    return '';
+}
+
+function legalpro_client_case_hero_html(array $state, array $page): string
+{
     $case = $state['case'] ?? null;
     if (!$case) {
         return '';
     }
 
-    $caseNumber = htmlspecialchars((string) ($state['case_number'] ?? ''));
-    $title = htmlspecialchars((string) ($case['title'] ?? ''));
-    $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
-    $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+    $caseNumber = (string) ($state['case_number'] ?? '');
+    $caseId = (int) ($state['case_id'] ?? 0);
+    $statusLabel = ucwords(str_replace('_', ' ', (string) ($case['status'] ?? 'Unknown')));
+    $priorityLabel = ucfirst((string) ($case['priority'] ?? 'Normal'));
 
-    return '
-    <div class="legalpro-case-context-bar card mb-3">
-        <div class="card-body py-3 px-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div class="min-width-0">
-                <a href="client-cases.php" class="legalpro-case-context-bar__back text-sm">← My cases</a>
-                <h5 class="mb-1 mt-1">' . $caseNumber . ' · ' . $title . '</h5>
-                <div class="d-flex gap-2 flex-wrap">' . $statusBadge . $priorityBadge . '</div>
-            </div>
-        </div>
-    </div>';
+    return client_portal_render_hero([
+        'kicker' => 'Case ' . $caseNumber,
+        'title' => (string) ($case['title'] ?? 'Case details'),
+        'subtitle' => (string) ($page['subtitle'] ?? ''),
+        'meta' => $statusLabel . ' · ' . $priorityLabel . ' priority',
+        'show_date' => true,
+        'aria_label' => 'Case ' . $caseNumber,
+        'stats' => [
+            ['num' => (string) count($state['documents'] ?? []), 'lbl' => 'Documents'],
+            ['num' => (string) count($state['appointments'] ?? []), 'lbl' => 'Appointments'],
+            ['num' => (string) count($state['comments'] ?? []), 'lbl' => 'Comments'],
+            ['num' => (string) count($state['services'] ?? []), 'lbl' => 'Services'],
+        ],
+        'actions' => [
+            ['url' => 'client-cases.php', 'label' => 'All cases', 'icon' => 'briefcase'],
+            ['url' => 'client-documents.php?case_id=' . $caseId, 'label' => 'Documents', 'primary' => true, 'icon' => 'folder-open'],
+        ],
+    ]);
+}
+
+function legalpro_client_case_panel_html(array $opts, string $bodyHtml): string
+{
+    $idAttr = !empty($opts['panel_id'])
+        ? ' id="' . htmlspecialchars((string) $opts['panel_id']) . '"'
+        : '';
+
+    return '<section class="cp-panel ccv-panel"' . $idAttr . '>'
+        . client_portal_render_panel_header($opts)
+        . '<div class="ccv-panel-body">' . $bodyHtml . '</div>'
+        . '</section>';
+}
+
+function legalpro_client_case_detail_item(string $label, string $value, string $icon = ''): string
+{
+    $iconHtml = $icon !== ''
+        ? '<span class="ccv-detail-item__icon">' . legalpro_icon($icon) . '</span>'
+        : '';
+
+    return '<div class="ccv-detail-item">'
+        . $iconHtml
+        . '<div class="ccv-detail-item__copy">'
+        . '<span class="ccv-detail-item__lbl">' . htmlspecialchars($label) . '</span>'
+        . '<span class="ccv-detail-item__val">' . $value . '</span>'
+        . '</div></div>';
 }
 
 function legalpro_client_case_comment_role_badge(string $type): string
@@ -392,26 +432,44 @@ function legalpro_client_case_overview_html(array $state): string
 {
     $case = $state['case'];
     $lawyerNames = htmlspecialchars($case['lawyer_names'] ?: 'Unassigned');
-    $categoryBadge = '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars((string) ($case['category'] ?? '')) . '</span>';
+    $category = htmlspecialchars((string) ($case['category'] ?? 'General'));
+    $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
+    $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+    $description = htmlspecialchars($case['description'] ?: 'No description provided for this matter yet.');
 
-    return '
-    <div class="card">
-        <div class="card-body">
-            <p class="text-muted mb-3">' . htmlspecialchars($case['description'] ?: 'No description provided.') . '</p>
-            <div class="d-flex gap-2 mb-3 flex-wrap">' . $categoryBadge . '</div>
-            <div class="row">
-                <div class="col-md-6">
-                    <p class="text-sm mb-1"><strong>Lawyer(s):</strong> ' . $lawyerNames . '</p>
-                    <p class="text-sm mb-1"><strong>Start Date:</strong> ' . ($case['start_date'] ? date('M d, Y', strtotime($case['start_date'])) : 'Not set') . '</p>
-                    <p class="text-sm mb-1"><strong>Expected Completion:</strong> ' . ($case['expected_completion'] ? date('M d, Y', strtotime($case['expected_completion'])) : 'Not set') . '</p>
-                </div>
-                <div class="col-md-6">
-                    <p class="text-sm mb-1"><strong>Estimated Fees:</strong> $' . number_format((float) $case['estimated_fees'], 2) . '</p>
-                    <p class="text-sm mb-1"><strong>Last Updated:</strong> ' . date('M d, Y', strtotime($case['updated_at'])) . '</p>
-                </div>
-            </div>
-        </div>
-    </div>';
+    $body = '
+        <p class="ccv-overview-desc">' . $description . '</p>
+        <div class="ccv-overview-badges">' . $statusBadge . $priorityBadge
+        . '<span class="cat-pill" style="background:#f1f5f9;color:#475569">' . $category . '</span></div>
+        <div class="ccv-detail-grid">'
+        . legalpro_client_case_detail_item('Lawyer(s)', $lawyerNames, 'user')
+        . legalpro_client_case_detail_item(
+            'Start date',
+            $case['start_date'] ? htmlspecialchars(date('M j, Y', strtotime($case['start_date']))) : 'Not set',
+            'calendar'
+        )
+        . legalpro_client_case_detail_item(
+            'Expected completion',
+            $case['expected_completion'] ? htmlspecialchars(date('M j, Y', strtotime($case['expected_completion']))) : 'Not set',
+            'calendar-clock'
+        )
+        . legalpro_client_case_detail_item(
+            'Estimated fees',
+            '$' . number_format((float) $case['estimated_fees'], 2),
+            'credit-card'
+        )
+        . legalpro_client_case_detail_item(
+            'Last updated',
+            htmlspecialchars(date('M j, Y', strtotime($case['updated_at']))),
+            'clock'
+        )
+        . '</div>';
+
+    return legalpro_client_case_panel_html([
+        'title' => 'Case overview',
+        'subtitle' => 'Summary, counsel, dates, and fees for this matter.',
+        'icon' => 'briefcase',
+    ], $body);
 }
 
 function legalpro_client_case_activity_html(array $state): string
@@ -419,17 +477,12 @@ function legalpro_client_case_activity_html(array $state): string
     $activityHtml = CaseEvents::renderEventsTimeline((int) $state['case_id']);
     $count = count($state['caseEvents'] ?? []);
 
-    return '
-    <div class="card ccv-activity-panel">
-        <div class="card-header pb-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div>
-                <h6 class="mb-0 ccv-activity-panel__title">Case Activity</h6>
-                <p class="text-xs mb-0 mt-1 ccv-activity-panel__subtitle">Updates on documents, appointments, payments, and case changes</p>
-            </div>
-            <span class="badge bg-gradient-primary">' . $count . '</span>
-        </div>
-        <div class="card-body ccv-activity-feed">' . $activityHtml . '</div>
-    </div>';
+    return legalpro_client_case_panel_html([
+        'title' => 'Case activity',
+        'subtitle' => 'Updates on documents, appointments, payments, and case changes.',
+        'icon' => 'activity',
+        'badge' => (string) $count,
+    ], '<div class="ccv-activity-feed">' . $activityHtml . '</div>');
 }
 
 function legalpro_client_case_services_html(array $state): string
@@ -462,17 +515,19 @@ function legalpro_client_case_services_html(array $state): string
             </div>
         </li>';
     } else {
-        $servicesHtml = '<div class="text-center py-4">
-            <div class="ccv-service-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconServiceEmpty . '</div>
-            <p class="text-sm text-muted mb-0 mt-3">No services defined yet.</p>
+        $servicesHtml = '<div class="cp-empty">
+            <div class="cp-empty-icon cp-empty-icon--primary">' . $iconServiceEmpty . '</div>
+            <h5>No services yet</h5>
+            <p>Fee line items for this matter will appear here when your firm adds them.</p>
         </div>';
     }
 
-    return '
-    <div class="card">
-        <div class="card-header pb-0"><h6>Services & Fees</h6></div>
-        <div class="card-body"><ul class="list-group list-group-flush">' . $servicesHtml . '</ul></div>
-    </div>';
+    return legalpro_client_case_panel_html([
+        'title' => 'Services & fees',
+        'subtitle' => 'Line items and total fees for this matter.',
+        'icon' => 'receipt',
+        'badge' => count($services) . ' item' . (count($services) === 1 ? '' : 's'),
+    ], '<ul class="list-group list-group-flush ccv-service-list">' . $servicesHtml . '</ul>');
 }
 
 function legalpro_client_case_appointments_html(array $state): string
@@ -498,17 +553,20 @@ function legalpro_client_case_appointments_html(array $state): string
             </div>';
         }
     } else {
-        $html = '<div class="text-center py-4">
-            <div class="ccv-appt-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconApptEmpty . '</div>
-            <p class="text-sm text-muted mb-0 mt-3">No appointments scheduled.</p>
+        $html = '<div class="cp-empty">
+            <div class="cp-empty-icon cp-empty-icon--primary">' . $iconApptEmpty . '</div>
+            <h5>No appointments scheduled</h5>
+            <p>Meetings with your legal team for this case will show up here.</p>
+            <a href="client-appointments.php" class="btn-cp-link">Book appointment</a>
         </div>';
     }
 
-    return '
-    <div class="card">
-        <div class="card-header pb-0"><h6>Appointments</h6></div>
-        <div class="card-body">' . $html . '</div>
-    </div>';
+    return legalpro_client_case_panel_html([
+        'title' => 'Appointments',
+        'subtitle' => 'Scheduled meetings with your legal team.',
+        'icon' => 'calendar-clock',
+        'badge' => count($appointments) . ' total',
+    ], $html);
 }
 
 function legalpro_client_case_documents_html(array $state): string
@@ -536,43 +594,50 @@ function legalpro_client_case_documents_html(array $state): string
                 $ackHtml = '<span class="text-xs text-success ms-1">✓ Acknowledged</span>';
             }
             $newBadge = ($docMeta && !empty($docMeta['is_new'])) ? ' <span class="cdoc-new-badge">New</span>' : '';
-            $listHtml .= '<div class="d-flex align-items-center mb-3 flex-wrap gap-2">
-                <div class="w-100">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($docLabel) . $newBadge . '</h6>
-                        <div>
-                            <a href="' . htmlspecialchars($viewUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary cdoc-touch-btn">View</a>
-                            <a href="' . htmlspecialchars($downloadUrl) . '" download="' . htmlspecialchars($downloadName) . '" class="btn btn-sm btn-primary cdoc-touch-btn">Download PDF</a>
-                            ' . $ackHtml . '
-                        </div>
-                    </div>
-                    <p class="text-xs text-secondary mb-0">Uploaded by ' . htmlspecialchars($doc['uploaded_by']) . ' on ' . date('M d, Y', strtotime($doc['uploaded_at'])) . '</p>
+            $filename = (string) ($doc['filename'] ?? 'document');
+            $iconWrap = legalpro_document_file_icon_wrap($filename, 'ccv-doc-icon');
+            $listHtml .= '<article class="cdoc-row ccv-doc-row">
+                ' . $iconWrap . '
+                <div class="cdoc-row__body">
+                    <div class="cdoc-row__title">' . htmlspecialchars($docLabel) . $newBadge . '</div>
+                    <div class="cdoc-row__meta">Uploaded by ' . htmlspecialchars($doc['uploaded_by']) . ' · ' . date('M j, Y', strtotime($doc['uploaded_at'])) . '</div>
                 </div>
-            </div>';
+                <div class="cdoc-row__actions">
+                    <a href="' . htmlspecialchars($viewUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary cdoc-touch-btn">View</a>
+                    <a href="' . htmlspecialchars($downloadUrl) . '" download="' . htmlspecialchars($downloadName) . '" class="btn btn-sm btn-primary cdoc-touch-btn">Download</a>
+                    ' . $ackHtml . '
+                </div>
+            </article>';
         }
     } else {
-        $listHtml = '<p class="text-muted text-sm mb-0">No documents uploaded yet. <a href="client-documents.php">View all documents</a></p>';
+        $listHtml = '<div class="cp-empty">
+            <div class="cp-empty-icon cp-empty-icon--primary">' . legalpro_icon('folder-open') . '</div>
+            <h5>No documents yet</h5>
+            <p>Files shared for this case will appear here. You can also upload documents below.</p>
+            <a href="client-documents.php?case_id=' . $caseId . '" class="btn-cp-link">View all documents</a>
+        </div>';
     }
 
-    return '
-    <div class="card mb-4">
-        <div class="card-header pb-0"><h6>Documents</h6></div>
-        <div class="card-body">' . $listHtml . '</div>
-    </div>
-    <div class="card">
-        <div class="card-header pb-0"><h6>Upload Document</h6></div>
-        <div class="card-body">
-            <form method="POST" action="client-case-documents.php?id=' . $caseId . '" enctype="multipart/form-data">
-                <div class="form-group mb-2">
-                    <input type="text" class="form-control form-control-sm" name="file_label" placeholder="Document description (optional)">
+    $uploadHtml = '
+        <div class="ccv-upload-block">
+            <h6 class="ccv-upload-block__title">Upload a document</h6>
+            <form method="POST" action="client-case-documents.php?id=' . $caseId . '" enctype="multipart/form-data" class="ccv-upload-form">
+                <div class="mb-2">
+                    <input type="text" class="form-control cp-field" name="file_label" placeholder="Document description (optional)">
                 </div>
-                <div class="form-group mb-2">
-                    <input type="file" class="form-control form-control-sm" name="file" required>
+                <div class="mb-3">
+                    <input type="file" class="form-control cp-field" name="file" required>
                 </div>
-                <button type="submit" class="btn btn-success btn-sm">Upload File</button>
+                <button type="submit" class="btn btn-primary btn-sm">Upload file</button>
             </form>
-        </div>
-    </div>';
+        </div>';
+
+    return legalpro_client_case_panel_html([
+        'title' => 'Documents',
+        'subtitle' => 'View, download, acknowledge, and upload files for this case.',
+        'icon' => 'folder-open',
+        'badge' => count($documents) . ' total',
+    ], $listHtml . $uploadHtml);
 }
 
 function legalpro_client_case_comments_html(array $state): string
@@ -646,12 +711,10 @@ function legalpro_client_case_comments_html(array $state): string
         $commentsHtml .= '</ul>';
     } else {
         $commentsHtml = '
-        <div class="cc-comments-empty text-center py-5 mb-0">
-            <div class="cc-comments-empty-icon icon icon-shape icon-lg bg-gradient-light shadow-sm mx-auto border-radius-lg d-flex align-items-center justify-content-center">
-                <i class="ni ni-chat-round text-primary text-lg opacity-10" aria-hidden="true"></i>
-            </div>
-            <h6 class="font-weight-bolder mt-4 mb-2">No comments yet</h6>
-            <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Add a comment below to communicate with your legal team about this case.</p>
+        <div class="cp-empty">
+            <div class="cp-empty-icon cp-empty-icon--primary">' . legalpro_icon('message-square') . '</div>
+            <h5>No comments yet</h5>
+            <p>Add a comment below to communicate with your legal team about this case.</p>
         </div>';
     }
 
@@ -664,17 +727,13 @@ function legalpro_client_case_comments_html(array $state): string
         </div>
     </form>';
 
-    return '
-    <div class="card cc-comments-panel shadow-sm" id="case-comments">
-        <div class="card-header pb-0 pt-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div>
-                <h6 class="mb-0">Case comments</h6>
-                <p class="text-xs text-muted mb-0 mt-1">Notes and updates from you and your legal team</p>
-            </div>
-            <span class="badge bg-gradient-primary">' . count($comments) . '</span>
-        </div>
-        <div class="card-body">' . $commentsHtml . $commentFormHtml . '</div>
-    </div>';
+    return legalpro_client_case_panel_html([
+        'title' => 'Case comments',
+        'subtitle' => 'Notes and updates from you and your legal team.',
+        'icon' => 'message-square',
+        'badge' => count($comments) . ' total',
+        'panel_id' => 'case-comments',
+    ], $commentsHtml . $commentFormHtml);
 }
 
 function legalpro_client_case_shared_styles(): string
@@ -750,7 +809,7 @@ function legalpro_client_case_render(string $pageKey, string $contentHtml, array
     $caseNumber = htmlspecialchars((string) ($state['case_number'] ?? ''));
     $bodyClass = function_exists('legalpro_portal_theme_body_class') ? legalpro_portal_theme_body_class() : '';
     $messageHtml = legalpro_client_case_message_html($state);
-    $contextBar = legalpro_client_case_context_bar_html($state);
+    $heroHtml = legalpro_client_case_hero_html($state, $page);
     $subnavHtml = legalpro_client_case_subnav_html($caseId, $pageKey);
 
     $clientPageNavbar = legalpro_render_client_page_navbar(
@@ -782,7 +841,9 @@ function legalpro_client_case_render(string $pageKey, string $contentHtml, array
     <link href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <link href="../assets/css/legalpro-documents-hub.css?v=3" rel="stylesheet" />
-    <link href="../assets/css/legalpro-client-cases-hub.css?v=1" rel="stylesheet" />';
+    <link href="../assets/css/client-portal-pages.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/client-cases.css?v=3" rel="stylesheet" />
+    <link href="../assets/css/legalpro-client-cases-hub.css?v=2" rel="stylesheet" />';
 
     ob_start();
     include dirname(__DIR__) . '/inc/client-portal-head.php';
@@ -791,7 +852,7 @@ function legalpro_client_case_render(string $pageKey, string $contentHtml, array
     $html .= '
     <style>' . legalpro_client_case_shared_styles() . '</style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-portal-page legalpro-client-cases-hub' . $bodyClass . '">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-cases-page legalpro-client-cases-hub' . $bodyClass . '">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>';
 
     ob_start();
@@ -801,15 +862,13 @@ function legalpro_client_case_render(string $pageKey, string $contentHtml, array
     $html .= '
     <main class="main-content position-relative border-radius-lg">
         ' . $clientPageNavbar . '
-        <div class="container-fluid py-4">
+        <div class="container-fluid py-4 px-4">
+            <div class="cp-page">
             ' . $messageHtml . '
-            ' . $contextBar . '
-            <div class="legalpro-case-page-head mb-2">
-                <h5 class="mb-1">' . htmlspecialchars($page['heading']) . '</h5>
-                <p class="text-sm text-muted mb-0">' . htmlspecialchars($page['subtitle']) . '</p>
-            </div>
+            ' . $heroHtml . '
             ' . $subnavHtml . '
-            <div class="legalpro-case-page-content">' . $contentHtml . '</div>
+            <div class="legalpro-case-page-content ccv-page-content">' . $contentHtml . '</div>
+            </div>
         </div>
     </main>
     <script src="../assets/js/core/popper.min.js"></script>
