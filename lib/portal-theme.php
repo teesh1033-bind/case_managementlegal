@@ -3034,9 +3034,13 @@ function getPortalThemeCalendarDarkCss(): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-col-header-cell-cushion,'
-        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number,'
-        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar-title {'
+        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number {'
         . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title {'
+        . 'color: #fff !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-day-today {'
@@ -3323,24 +3327,27 @@ function renderPortalThemeCss(): string
         . '}';
 
     $css .= $fcToolbarBtn . ' {'
-        . 'background-color: ' . $primary . ' !important;'
-        . 'background-image: ' . $gradient310 . ' !important;'
-        . 'border-color: ' . $primary . ' !important;'
+        . 'background-color: rgba(255, 255, 255, 0.22) !important;'
+        . 'background-image: none !important;'
+        . 'border: 1.5px solid rgba(255, 255, 255, 0.92) !important;'
         . 'color: #fff !important;'
+        . 'font-weight: 700 !important;'
+        . 'text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22) !important;'
         . '}';
 
     $css .= $fcToolbarBtnHover . ' {'
-        . 'background-color: ' . $primaryDark . ' !important;'
+        . 'background-color: rgba(255, 255, 255, 0.38) !important;'
         . 'background-image: none !important;'
-        . 'border-color: ' . $primaryDark . ' !important;'
+        . 'border-color: #fff !important;'
         . 'color: #fff !important;'
         . '}';
 
     $css .= $fcToolbarBtnActive . ' {'
-        . 'background-color: ' . $primaryDark . ' !important;'
+        . 'background-color: #fff !important;'
         . 'background-image: none !important;'
         . 'border-color: #fff !important;'
-        . 'color: #fff !important;'
+        . 'color: ' . $primary . ' !important;'
+        . 'text-shadow: none !important;'
         . '}';
 
     $css .= '.fc .fc-toolbar.fc-header-toolbar .fc-icon,'

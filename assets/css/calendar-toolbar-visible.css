@@ -1,0 +1,195 @@
+/**
+ * FullCalendar header toolbar — high contrast on all portals (admin, lawyer, client).
+ * Buttons use frosted white panels so they stay readable on the gradient bar.
+ */
+
+.fc .fc-toolbar.fc-header-toolbar,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar {
+    background-color: var(--legalpro-theme-primary, #5e72e4) !important;
+    background-image: var(
+        --legalpro-theme-gradient-310,
+        linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)
+    ) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.2) !important;
+    border-radius: 0.65rem !important;
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 1rem !important;
+    gap: 0.5rem !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,
+#dashboardCalendar .fc .fc-toolbar-title,
+#courtTrackingCalendar .fc .fc-toolbar-title,
+#appointmentsCalendar .fc .fc-toolbar-title,
+#clientAppointmentsCalendar .fc .fc-toolbar-title,
+#lawyerAppointmentsCalendar .fc .fc-toolbar-title {
+    color: #fff !important;
+    font-weight: 800 !important;
+    font-size: 1.15rem !important;
+    letter-spacing: 0.02em !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button {
+    background-color: rgba(255, 255, 255, 0.22) !important;
+    background-image: none !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.92) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22) !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+.fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
+.fc .fc-toolbar.fc-header-toolbar .fc-button:active,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:active,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:active,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:active,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:active,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:active {
+    background-color: rgba(255, 255, 255, 0.38) !important;
+    background-image: none !important;
+    border-color: #fff !important;
+    color: #fff !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled):active,
+.fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled).fc-button-active,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled):active,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled).fc-button-active,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled):active,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled).fc-button-active,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled):active,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled).fc-button-active,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled):active,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled).fc-button-active,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled):active,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active {
+    background-color: #fff !important;
+    background-image: none !important;
+    border-color: #fff !important;
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
+    text-shadow: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button-primary:disabled,
+.fc .fc-toolbar.fc-header-toolbar .fc-button:disabled,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:disabled,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:disabled,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:disabled,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:disabled,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:disabled {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    color: rgba(255, 255, 255, 0.75) !important;
+    opacity: 1 !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-icon,
+.fc .fc-toolbar.fc-header-toolbar .fc-icon-chevron-left,
+.fc .fc-toolbar.fc-header-toolbar .fc-icon-chevron-right,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-icon,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-icon,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-icon,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-icon,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-icon {
+    color: #fff !important;
+}
+
+.fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon,
+#dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon,
+#courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon,
+#appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon,
+#clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon,
+#lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon {
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
+}
+
+/* Dark mode — keep gradient bar + white controls readable */
+body.legalpro-dark-mode .fc .fc-toolbar.fc-header-toolbar,
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar,
+body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar,
+body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar,
+body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45) !important;
+}
+
+body.legalpro-dark-mode .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar-title,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar-title,
+body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar-title,
+body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar-title,
+body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar-title {
+    color: #fff !important;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55) !important;
+}
+
+body.legalpro-dark-mode .fc .fc-toolbar.fc-header-toolbar .fc-button,
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button,
+body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button,
+body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button,
+body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button {
+    background-color: rgba(0, 0, 0, 0.28) !important;
+    border-color: rgba(255, 255, 255, 0.82) !important;
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+body.legalpro-dark-mode .fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
+body.legalpro-dark-mode .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
+body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    border-color: #fff !important;
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
+body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active {
+    background-color: #fff !important;
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
+}

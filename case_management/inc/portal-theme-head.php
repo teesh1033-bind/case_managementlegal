@@ -19,3 +19,4 @@ renderPortalThemeHead();
 if (function_exists('renderCurrencyHeadScript')) {
     renderCurrencyHeadScript();
 }
+echo '<link href="../assets/css/calendar-toolbar-visible.css?v=1" rel="stylesheet" />' . "\n";

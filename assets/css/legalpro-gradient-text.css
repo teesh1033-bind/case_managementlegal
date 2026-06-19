@@ -84,6 +84,8 @@
 /* FullCalendar — gradient toolbar + white month title (May 2026, etc.) */
 .fc .fc-toolbar.fc-header-toolbar {
     background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.2);
     border-radius: 0.5rem;
     padding: 0.65rem 1rem;
     margin-bottom: 1rem !important;
@@ -112,24 +114,28 @@
 
 .fc .fc-toolbar-title {
     color: #fff !important;
+    font-weight: 800 !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
-/* Prev/next, Today, Month/Week/List — white on purple */
+/* Prev/next, Today, Month/Week/List — frosted buttons on gradient bar */
 .fc .fc-toolbar.fc-header-toolbar .fc-button {
-    background-color: #5e72e4 !important;
-    background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%) !important;
-    border-color: #5e72e4 !important;
+    background-color: rgba(255, 255, 255, 0.22) !important;
+    background-image: none !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.92) !important;
     color: #fff !important;
-    box-shadow: none !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14) !important;
     opacity: 1 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
 }
 
 .fc .fc-toolbar.fc-header-toolbar .fc-button:hover,
 .fc .fc-toolbar.fc-header-toolbar .fc-button:focus,
 .fc .fc-toolbar.fc-header-toolbar .fc-button:active {
-    background-color: #324cdd !important;
+    background-color: rgba(255, 255, 255, 0.38) !important;
     background-image: none !important;
-    border-color: #324cdd !important;
+    border-color: #fff !important;
     color: #fff !important;
     box-shadow: none !important;
 }
@@ -137,10 +143,11 @@
 .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled).fc-button-active,
 .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:not(:disabled):active,
 .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active {
-    background-color: #324cdd !important;
+    background-color: #fff !important;
     background-image: none !important;
     border-color: #fff !important;
-    color: #fff !important;
+    color: #5e72e4 !important;
+    text-shadow: none;
 }
 
 .fc .fc-toolbar.fc-header-toolbar .fc-button-primary:disabled,
