@@ -84,7 +84,7 @@ if (empty($cases)) {
                     </div>
                 </div>
             </td>
-            <td class="align-middle">
+            <td class="align-middle text-center lc-col-category">
                 <div class="lc-category-cell">' . $categoryPill . '</div>
             </td>
             <td class="align-middle">
@@ -198,7 +198,7 @@ $html = <<<'HTML'
                                     <thead>
                                         <tr>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case Details</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Category</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 lc-col-category">Category</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>

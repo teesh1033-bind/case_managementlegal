@@ -439,6 +439,20 @@ body.lawyer-dashboard-page .legalpro-lawyer-nav .nav-link:hover .legalpro-lawyer
     min-height: 2.5rem;
 }
 
+.legalpro-lawyer-portal .lc-category-cell {
+    justify-content: center;
+}
+
+body.lawyer-cases-page .lc-col-category {
+    width: 7.5rem;
+    min-width: 7.5rem;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    white-space: nowrap;
+}
+
 .legalpro-lawyer-portal .lc-table-pill-cell {
     justify-content: center;
 }
