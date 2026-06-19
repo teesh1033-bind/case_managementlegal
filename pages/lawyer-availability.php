@@ -23,33 +23,9 @@ try {
     }
 }
 
-$workingHours = getLawyerWorkingHours($pdo, $lawyerId);
-
 // Handle time slot management
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['save_working_hours'])) {
-        $postedDays = [];
-        foreach ($daysOfWeek as $day) {
-            $postedDays[$day] = [
-                'enabled' => isset($_POST['wh_enabled'][$day]),
-                'start' => isset($_POST['wh_start'][$day]) ? trim((string) $_POST['wh_start'][$day]) : '09:00',
-                'end' => isset($_POST['wh_end'][$day]) ? trim((string) $_POST['wh_end'][$day]) : '17:00',
-            ];
-        }
-
-        try {
-            saveLawyerWorkingHours($pdo, $lawyerId, $postedDays);
-            $workingHours = getLawyerWorkingHours($pdo, $lawyerId);
-            $message = 'Working hours saved successfully!';
-            $messageType = 'success';
-        } catch (InvalidArgumentException $e) {
-            $message = $e->getMessage();
-            $messageType = 'danger';
-        } catch (PDOException $e) {
-            $message = 'Error saving working hours: ' . $e->getMessage();
-            $messageType = 'danger';
-        }
-    } elseif (isset($_POST['save_slot']) || isset($_POST['add_slot'])) {
+    if (isset($_POST['save_slot']) || isset($_POST['add_slot'])) {
         $slotId = isset($_POST['slot_id']) ? (int)$_POST['slot_id'] : 0;
         $slotDate = isset($_POST['slot_date']) ? trim($_POST['slot_date']) : '';
         $startTime = isset($_POST['start_time']) ? $_POST['start_time'] : '';
@@ -63,14 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'danger';
         } elseif (strtotime($startTime) >= strtotime($endTime)) {
             $message = 'End time must be after start time.';
-            $messageType = 'danger';
-        } elseif (!isSlotWithinWorkingHours($workingHours, $dayOfWeek, $startTime, $endTime)) {
-            $daySchedule = $workingHours[$dayOfWeek] ?? null;
-            if (!$daySchedule || empty($daySchedule['enabled'])) {
-                $message = 'You are not working on this day. Enable the day in your working hours first.';
-            } else {
-                $message = 'Time slots must stay within your working hours for this day.';
-            }
             $messageType = 'danger';
         } else {
             try {
@@ -210,41 +178,7 @@ function buildAvailabilityTimeSelectOptions(string $minTime = '06:00', string $m
     return $html;
 }
 
-function buildWorkingHoursRowHtml(string $day, array $schedule): string
-{
-    $label = ucfirst($day);
-    $enabled = !empty($schedule['enabled']);
-    $start = substr((string) ($schedule['start'] ?? '09:00:00'), 0, 5);
-    $end = substr((string) ($schedule['end'] ?? '17:00:00'), 0, 5);
-    $timeOptions = buildAvailabilityTimeSelectOptions();
-    $startOptions = str_replace('value="' . htmlspecialchars($start, ENT_QUOTES, 'UTF-8') . '"', 'value="' . htmlspecialchars($start, ENT_QUOTES, 'UTF-8') . '" selected', $timeOptions);
-    $endOptions = str_replace('value="' . htmlspecialchars($end, ENT_QUOTES, 'UTF-8') . '"', 'value="' . htmlspecialchars($end, ENT_QUOTES, 'UTF-8') . '" selected', $timeOptions);
-    $searchHay = htmlspecialchars(strtolower(
-        $day . ' ' . $label . ' ' . ($enabled ? 'working enabled' : 'off closed') . ' ' . $start . ' ' . $end
-    ), ENT_QUOTES, 'UTF-8');
-
-    return '<tr class="availability-wh-row" data-search="' . $searchHay . '">
-        <td class="text-sm font-weight-bold text-capitalize">' . htmlspecialchars($label) . '</td>
-        <td class="text-center">
-            <label class="wh-day-switch" for="wh_enabled_' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '" aria-label="Working on ' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '">
-                <input class="wh-day-toggle" type="checkbox" name="wh_enabled[' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . ']" id="wh_enabled_' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '" value="1"' . ($enabled ? ' checked' : '') . '>
-                <span class="wh-day-switch__track" aria-hidden="true"></span>
-            </label>
-        </td>
-        <td>
-            <select class="form-control form-select wh-start-select" name="wh_start[' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . ']" data-day="' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '">' . $startOptions . '</select>
-        </td>
-        <td>
-            <select class="form-control form-select wh-end-select" name="wh_end[' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . ']" data-day="' . htmlspecialchars($day, ENT_QUOTES, 'UTF-8') . '">' . $endOptions . '</select>
-        </td>
-    </tr>';
-}
-
 $availabilityTimeOptions = buildAvailabilityTimeSelectOptions();
-$workingHoursRowsHtml = '';
-foreach ($daysOfWeek as $day) {
-    $workingHoursRowsHtml .= buildWorkingHoursRowHtml($day, $workingHours[$day] ?? getDefaultWorkingHoursSchedule()[$day]);
-}
 
 ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
@@ -408,65 +342,6 @@ $html = <<<'HTML'
         .availability-fallback-event-delete:hover {
             background: rgba(255, 255, 255, 0.45);
         }
-        .working-hours-table th,
-        .working-hours-table td {
-            vertical-align: middle;
-        }
-        .wh-day-switch {
-            align-items: center;
-            cursor: pointer;
-            display: inline-flex;
-            margin: 0;
-            position: relative;
-        }
-        .wh-day-switch input {
-            height: 0;
-            opacity: 0;
-            position: absolute;
-            width: 0;
-        }
-        .wh-day-switch__track {
-            background: #cbd5e1;
-            border-radius: 999px;
-            display: inline-block;
-            height: 24px;
-            position: relative;
-            transition: background-color 0.2s ease;
-            width: 44px;
-        }
-        .wh-day-switch__track::after {
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
-            content: '';
-            height: 18px;
-            left: 3px;
-            position: absolute;
-            top: 3px;
-            transition: transform 0.2s ease;
-            width: 18px;
-        }
-        .wh-day-switch input:checked + .wh-day-switch__track {
-            background-color: var(--legalpro-theme-primary, #11cdef);
-            background-image: var(--legalpro-theme-gradient-310, linear-gradient(310deg, #11cdef 0%, #1171ef 100%));
-        }
-        .wh-day-switch input:checked + .wh-day-switch__track::after {
-            transform: translateX(20px);
-        }
-        .wh-day-switch input:focus-visible + .wh-day-switch__track {
-            outline: 2px solid rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.45);
-            outline-offset: 2px;
-        }
-        .working-hours-band {
-            background: #eef2ff;
-            border: 1px dashed #5e72e4;
-            border-radius: 0.5rem;
-            color: #344767;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 0.65rem;
-            padding: 0.35rem 0.5rem;
-        }
         body.lawyer-availability-page .legalpro-navbar-search {
             display: none !important;
         }
@@ -566,38 +441,6 @@ $html = <<<'HTML'
         <div class="container-fluid py-4">
             {$message}
 
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">Normal Working Hours</h6>
-                            <p class="text-sm text-muted mb-0">Set your standard schedule (for example 9:00 AM to 5:00 PM). Time slots must stay inside these hours.</p>
-                        </div>
-                        <div class="card-body">
-                            <form method="POST" action="">
-                                <input type="hidden" name="save_working_hours" value="1">
-                                <div class="table-responsive">
-                                    <table class="table align-items-center mb-3 working-hours-table">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Day</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Working</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">From</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">To</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {WORKING_HOURS_ROWS}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <button type="submit" class="btn btn-primary mb-0">Save Working Hours</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="row">
                 <div class="col-12">
                     <div class="dashboard-calendar-hub">
@@ -681,7 +524,7 @@ $html = <<<'HTML'
                                 <option value="available">Available for appointments</option>
                                 <option value="unavailable">Unavailable / break</option>
                             </select>
-                            <small class="text-muted d-block mt-2">By default, your full working hours are open for booking. Use <strong>Unavailable</strong> for breaks, or <strong>Available</strong> to open only part of the day.</small>
+                            <small class="text-muted d-block mt-2">Use <strong>Available</strong> to open a time range for appointments, or <strong>Unavailable</strong> for breaks and blocked time.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -707,7 +550,6 @@ $html = <<<'HTML'
 <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
         var availabilityEvents = {AVAILABILITY_EVENTS_JSON};
-        var workingHours = {WORKING_HOURS_JSON};
         var fallbackWeekStartIso = null;
         var availabilitySearchQuery = '';
 
@@ -729,16 +571,7 @@ $html = <<<'HTML'
         }
 
         function applyAvailabilityPageSearch(query) {
-            var q = String(query || '').trim().toLowerCase();
-            availabilitySearchQuery = q;
-            document.querySelectorAll('.availability-wh-row[data-search]').forEach(function (row) {
-                if (!q) {
-                    row.style.display = '';
-                    return;
-                }
-                var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
-                row.style.display = hay.indexOf(q) !== -1 ? '' : 'none';
-            });
+            availabilitySearchQuery = String(query || '').trim().toLowerCase();
             renderAvailabilityCalendar();
         }
 
@@ -850,59 +683,6 @@ $html = <<<'HTML'
             }
         }
 
-        function getWorkingHoursForDayName(dayName) {
-            if (!dayName) {
-                return null;
-            }
-            return workingHours[dayName] || null;
-        }
-
-        function formatWorkingHoursLabel(dayName) {
-            var schedule = getWorkingHoursForDayName(dayName);
-            if (!schedule || !schedule.enabled) {
-                return 'Day off';
-            }
-            var start = (schedule.start || '09:00:00').slice(0, 5);
-            var end = (schedule.end || '17:00:00').slice(0, 5);
-            return formatAvailabilityTimeLabel(start) + ' - ' + formatAvailabilityTimeLabel(end);
-        }
-
-        function applyWorkingHoursToSlotTimeSelects(dayName) {
-            var schedule = getWorkingHoursForDayName(dayName);
-            var startSelect = document.getElementById('start_time');
-            var endSelect = document.getElementById('end_time');
-            if (!startSelect || !endSelect) {
-                return;
-            }
-
-            var whStart = '06:00';
-            var whEnd = '22:00';
-            var enabled = true;
-            if (schedule) {
-                enabled = !!schedule.enabled;
-                whStart = (schedule.start || '09:00:00').slice(0, 5);
-                whEnd = (schedule.end || '17:00:00').slice(0, 5);
-            }
-
-            [startSelect, endSelect].forEach(function(selectEl) {
-                selectEl.querySelectorAll('option').forEach(function(option) {
-                    if (!option.value) {
-                        option.disabled = false;
-                        return;
-                    }
-                    option.disabled = !enabled || option.value < whStart || option.value > whEnd;
-                });
-            });
-
-            if (!enabled) {
-                startSelect.value = '';
-                endSelect.value = '';
-                return;
-            }
-
-            refreshAvailabilityEndTimeOptions(endSelect.value || '');
-        }
-
         function openAvailabilityModal(day, slotId, slotDate, startTime, endTime, slotType) {
             document.getElementById('availabilityModalTitle').textContent = slotId ? 'Edit Time Slot' : 'Add Time Slot';
             document.getElementById('availabilitySaveButton').textContent = slotId ? 'Update Slot' : 'Save Slot';
@@ -912,7 +692,6 @@ $html = <<<'HTML'
             document.getElementById('day_of_week').value = resolvedDay;
             var startSelect = document.getElementById('start_time');
             var endSelect = document.getElementById('end_time');
-            applyWorkingHoursToSlotTimeSelects(resolvedDay);
             ensureAvailabilityTimeOption(startSelect, startTime || '');
             ensureAvailabilityTimeOption(endSelect, endTime || '');
             startSelect.value = startTime || '';
@@ -1018,9 +797,8 @@ $html = <<<'HTML'
             html += '</div><div class="availability-fallback-grid" style="' + gridStyle + '">';
             visibleDays.forEach(function(day) {
                 html += '<div class="availability-fallback-day" data-date="' + day.dayDateIso + '" data-search="' + day.dayHaystack + '">';
-                html += '<div class="working-hours-band">Hours: ' + formatWorkingHoursLabel(day.dayKey) + '</div>';
                 if (day.events.length === 0) {
-                    html += '<p class="text-sm text-muted mb-0">No hours set</p>';
+                    html += '<p class="text-sm text-muted mb-0">No slots set</p>';
                 } else {
                     day.events.forEach(function(event) {
                         var props = event.extendedProps || {};
@@ -1055,43 +833,10 @@ $html = <<<'HTML'
             if (slotDateInput) {
                 slotDateInput.addEventListener('change', function() {
                     if (this.value) {
-                        var day = dayNameFromDate(parseIsoDate(this.value));
-                        document.getElementById('day_of_week').value = day;
-                        applyWorkingHoursToSlotTimeSelects(day);
+                        document.getElementById('day_of_week').value = dayNameFromDate(parseIsoDate(this.value));
                     }
                 });
             }
-
-            document.querySelectorAll('.wh-start-select, .wh-end-select').forEach(function(selectEl) {
-                selectEl.addEventListener('change', function() {
-                    var day = this.getAttribute('data-day');
-                    var row = this.closest('tr');
-                    if (!row || !day) {
-                        return;
-                    }
-                    var startSelect = row.querySelector('.wh-start-select');
-                    var endSelect = row.querySelector('.wh-end-select');
-                    if (!startSelect || !endSelect) {
-                        return;
-                    }
-                    endSelect.querySelectorAll('option').forEach(function(option) {
-                        if (!option.value) {
-                            option.disabled = false;
-                            return;
-                        }
-                        option.disabled = startSelect.value !== '' && option.value <= startSelect.value;
-                    });
-                    if (!endSelect.value || endSelect.options[endSelect.selectedIndex].disabled) {
-                        var firstValid = '';
-                        endSelect.querySelectorAll('option').forEach(function(option) {
-                            if (!option.disabled && option.value && firstValid === '') {
-                                firstValid = option.value;
-                            }
-                        });
-                        endSelect.value = firstValid;
-                    }
-                });
-            });
 
             document.getElementById('prevWeekBtn').addEventListener('click', function() {
                 shiftFallbackWeek(-1);
@@ -1161,8 +906,6 @@ $html = str_replace('{$message}', $messageHtml, $html);
 $html = str_replace('{NAVIGATION}', $navHtml, $html);
 $html = str_replace('{$lawyerName}', htmlspecialchars($lawyerName), $html);
 $html = str_replace('{AVAILABILITY_EVENTS_JSON}', json_encode($availabilityEvents), $html);
-$html = str_replace('{WORKING_HOURS_JSON}', json_encode($workingHours), $html);
-$html = str_replace('{WORKING_HOURS_ROWS}', $workingHoursRowsHtml, $html);
 $html = str_replace('{AVAILABILITY_TIME_OPTIONS}', $availabilityTimeOptions, $html);
 
 echo $html;
