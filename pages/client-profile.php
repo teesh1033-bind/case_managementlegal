@@ -3,6 +3,8 @@ session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/password-validation.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
+require_once __DIR__ . '/../lib/client-portal-page-ui.php';
+require_once __DIR__ . '/../inc/legalpro-icons.php';
 
 if (!isset($_SESSION['client_id'])) {
     header('Location: login.php');
@@ -150,9 +152,103 @@ $messageHtml = $message !== ''
     . '</div>'
     : '';
 
+$usernameDisplay = $profile['username'] !== '' ? $profile['username'] : 'N/A';
+$displayName = trim($clientName) !== '' ? $clientName : 'Client';
+
+$heroHtml = client_portal_render_hero([
+    'kicker' => 'Account',
+    'title' => 'My profile',
+    'subtitle' => 'Update your contact details and keep your portal password secure.',
+    'meta' => 'Signed in as ' . $displayName,
+    'show_date' => true,
+    'aria_label' => 'My profile',
+    'stats' => [
+        ['num' => $profile['email'] !== '' ? '✓' : '—', 'lbl' => 'Email'],
+        ['num' => $profile['phone'] !== '' ? '✓' : '—', 'lbl' => 'Phone'],
+        ['num' => $profile['address'] !== '' ? '✓' : '—', 'lbl' => 'Address'],
+    ],
+    'actions' => [
+        ['url' => 'client-settings.php', 'label' => 'Settings', 'icon' => 'settings'],
+        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
+    ],
+]);
+
+$profileFormBody = '
+    <form method="post">
+        <input type="hidden" name="action" value="update_profile">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">First name</label>
+                <input class="form-control" type="text" name="first_name" value="' . htmlspecialchars($profile['first_name']) . '" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Last name</label>
+                <input class="form-control" type="text" name="last_name" value="' . htmlspecialchars($profile['last_name']) . '" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" name="email" value="' . htmlspecialchars($profile['email']) . '">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Phone</label>
+                <input class="form-control" type="text" name="phone" value="' . htmlspecialchars($profile['phone']) . '">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Address</label>
+                <textarea class="form-control" rows="3" name="address">' . htmlspecialchars($profile['address']) . '</textarea>
+            </div>
+        </div>
+        <div class="cp-form-actions">
+            <button type="submit" class="btn btn-primary">Save profile</button>
+        </div>
+    </form>';
+
+$securityFormBody = '
+    <div class="cp-profile-username">' . legalpro_icon('user') . '<span>Username: ' . htmlspecialchars($usernameDisplay) . '</span></div>
+    <form method="post">
+        <input type="hidden" name="action" value="change_password">
+        <div class="mb-3">
+            <label class="form-label">Current password</label>
+            <input class="form-control" type="password" name="current_password" required autocomplete="current-password">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">New password</label>
+            <input class="form-control' . $createPasswordInvalidClass . '" type="password" name="new_password" required autocomplete="new-password" minlength="8" maxlength="128">
+            ' . $createPasswordErrorHtml . '
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Confirm new password</label>
+            <input class="form-control' . $createConfirmInvalidClass . '" type="password" name="confirm_password" required autocomplete="new-password" minlength="8" maxlength="128">
+            ' . $createConfirmErrorHtml . '
+        </div>
+        <ul class="cp-help-list mb-3">
+            <li>At least 8 characters</li>
+            <li>One uppercase and one lowercase letter</li>
+        </ul>
+        <div class="cp-form-actions">
+            <button type="submit" class="btn btn-dark">Change password</button>
+        </div>
+    </form>';
+
+$profilePanelHtml = client_portal_render_panel([
+    'title' => 'Personal information',
+    'subtitle' => 'Keep your contact details up to date for your legal team.',
+    'icon' => 'contact',
+], $profileFormBody);
+
+$securityPanelHtml = client_portal_render_panel([
+    'title' => 'Security',
+    'subtitle' => 'Update your portal password.',
+    'icon' => 'lock',
+], $securityFormBody);
+
 $clientPageNavbar = legalpro_render_client_page_navbar('My Profile', 'Profile', '', [
     'include_search' => false,
 ]);
+
+ob_start();
+include __DIR__ . '/../inc/client-portal-head.php';
+$clientPortalHead = ob_get_clean();
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -167,7 +263,9 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-    <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
+    {CLIENT_PORTAL_HEAD}
+    <link href="../assets/css/client-portal-pages.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/client-account-pages.css?v=1" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-profile-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
@@ -176,83 +274,13 @@ $html = <<<'HTML'
     <main class="main-content position-relative border-radius-lg">
         {CLIENT_NAVBAR}
 
-        <div class="container-fluid py-4">
-            {MESSAGE}
-            <div class="row">
-                <div class="col-lg-7 mb-4">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <h6 class="mb-0">Personal information</h6>
-                        </div>
-                        <div class="card-body">
-                            <form method="post">
-                                <input type="hidden" name="action" value="update_profile">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label class="form-control-label">First name</label>
-                                            <input class="form-control" type="text" name="first_name" value="{FIRST_NAME}" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label class="form-control-label">Last name</label>
-                                            <input class="form-control" type="text" name="last_name" value="{LAST_NAME}" required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label class="form-control-label">Email</label>
-                                            <input class="form-control" type="email" name="email" value="{EMAIL}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label class="form-control-label">Phone</label>
-                                            <input class="form-control" type="text" name="phone" value="{PHONE}">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-control-label">Address</label>
-                                    <textarea class="form-control" rows="3" name="address">{ADDRESS}</textarea>
-                                </div>
-                                <button class="btn bg-gradient-primary mb-0">Save profile</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-5 mb-4">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <h6 class="mb-0">Security</h6>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-sm text-muted mb-2">Username: <strong>{USERNAME}</strong></p>
-                            <hr class="horizontal dark mt-0">
-                            <form method="post">
-                                <input type="hidden" name="action" value="change_password">
-                                <div class="form-group">
-                                    <label class="form-control-label">Current password</label>
-                                    <input class="form-control" type="password" name="current_password" required autocomplete="current-password">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-control-label">New password</label>
-                                    <input class="form-control{NEW_PASSWORD_INVALID_CLASS}" type="password" name="new_password" required autocomplete="new-password" minlength="8" maxlength="128">
-                                    {NEW_PASSWORD_ERROR}
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-control-label">Confirm new password</label>
-                                    <input class="form-control{CONFIRM_PASSWORD_INVALID_CLASS}" type="password" name="confirm_password" required autocomplete="new-password" minlength="8" maxlength="128">
-                                    {CONFIRM_PASSWORD_ERROR}
-                                </div>
-                                <div class="text-xs text-muted mb-3">Password rules: at least 8 chars, one uppercase and one lowercase letter.</div>
-                                <button class="btn btn-dark mb-0">Change password</button>
-                            </form>
-                        </div>
-                    </div>
+        <div class="container-fluid py-4 px-4">
+            <div class="cp-page">
+                {MESSAGE}
+                {HERO}
+                <div class="cp-profile-layout">
+                    {PROFILE_PANEL}
+                    {SECURITY_PANEL}
                 </div>
             </div>
         </div>
@@ -263,23 +291,17 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
-<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
 HTML;
 
+$html = str_replace('{CLIENT_PORTAL_HEAD}', $clientPortalHead, $html);
 $html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
-$html = str_replace('{FIRST_NAME}', htmlspecialchars($profile['first_name']), $html);
-$html = str_replace('{LAST_NAME}', htmlspecialchars($profile['last_name']), $html);
-$html = str_replace('{EMAIL}', htmlspecialchars($profile['email']), $html);
-$html = str_replace('{PHONE}', htmlspecialchars($profile['phone']), $html);
-$html = str_replace('{ADDRESS}', htmlspecialchars($profile['address']), $html);
-$html = str_replace('{USERNAME}', htmlspecialchars($profile['username'] !== '' ? $profile['username'] : 'N/A'), $html);
-$html = str_replace('{NEW_PASSWORD_INVALID_CLASS}', $createPasswordInvalidClass, $html);
-$html = str_replace('{CONFIRM_PASSWORD_INVALID_CLASS}', $createConfirmInvalidClass, $html);
-$html = str_replace('{NEW_PASSWORD_ERROR}', $createPasswordErrorHtml, $html);
-$html = str_replace('{CONFIRM_PASSWORD_ERROR}', $createConfirmErrorHtml, $html);
+$html = str_replace('{HERO}', $heroHtml, $html);
+$html = str_replace('{PROFILE_PANEL}', $profilePanelHtml, $html);
+$html = str_replace('{SECURITY_PANEL}', $securityPanelHtml, $html);
 
 require_once __DIR__ . '/../inc/client-sidebar.php';
 $html = inject_client_sidebar($html);
