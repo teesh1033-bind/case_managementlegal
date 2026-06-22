@@ -115,7 +115,7 @@
     border-radius: 1rem;
     background: #fff;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
@@ -888,7 +888,7 @@ body.legalpro-dark-mode .dashboard-calendar-hub {
     background: var(--lp-dark-surface) !important;
     border: 1px solid var(--lp-dark-border) !important;
     border-radius: 1rem !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;
 }
 
@@ -977,6 +977,32 @@ body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary {
 
 body.legalpro-dark-mode .dashboard-cal-event__dot {
     opacity: 0.95;
+}
+
+/* FullCalendar "+N more" popover — keep above calendar containers (avoid overflow clipping) */
+.dashboard-calendar-hub__body,
+#dashboardCalendar,
+#courtTrackingCalendar,
+#appointmentsCalendar,
+#lawyerAppointmentsCalendar,
+#clientAppointmentsCalendar {
+    overflow: visible !important;
+}
+
+.fc-more-popover,
+.fc-popover {
+    z-index: 1090 !important;
+}
+
+.fc-popover .dashboard-cal-event__text,
+.fc-popover .fc-event,
+.fc-more-popover .dashboard-cal-event__text,
+.fc-more-popover .fc-event {
+    color: #344767 !important;
+}
+
+.fc-popover-title {
+    color: #344767;
 }
 
 /* FullCalendar "+N more" popover — dark mode keeps readable text (popover is outside calendar hub) */

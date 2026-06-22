@@ -115,7 +115,7 @@
     border-radius: 1rem;
     background: #fff;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
@@ -794,7 +794,7 @@ body.legalpro-dark-mode .dashboard-calendar-hub {
     background: var(--lp-dark-surface) !important;
     border: 1px solid var(--lp-dark-border) !important;
     border-radius: 1rem !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     box-shadow: 0 4px 20px rgba(15, 20, 35, 0.16) !important;
 }
 
@@ -942,7 +942,32 @@ body.legalpro-dark-mode .availability-fallback-event:hover {
     filter: brightness(1.1);
 }
 
-<<<<<<< HEAD
+/* FullCalendar "+N more" popover — keep above calendar containers (avoid overflow clipping) */
+.dashboard-calendar-hub__body,
+#dashboardCalendar,
+#courtTrackingCalendar,
+#appointmentsCalendar,
+#lawyerAppointmentsCalendar,
+#clientAppointmentsCalendar {
+    overflow: visible !important;
+}
+
+.fc-more-popover,
+.fc-popover {
+    z-index: 1090 !important;
+}
+
+.fc-popover .dashboard-cal-event__text,
+.fc-popover .fc-event,
+.fc-more-popover .dashboard-cal-event__text,
+.fc-more-popover .fc-event {
+    color: #344767 !important;
+}
+
+.fc-popover-title {
+    color: #344767;
+}
+
 /* FullCalendar "+N more" popover — dark mode keeps readable text (popover is outside calendar hub) */
 body.legalpro-dark-mode .fc-more-popover,
 body.legalpro-dark-mode .fc-popover {
@@ -997,7 +1022,80 @@ body.legalpro-dark-mode .fc-popover .fc-daygrid-event:hover .dashboard-cal-event
 body.legalpro-dark-mode .fc-more-popover .fc-daygrid-event:hover .dashboard-cal-event__text {
     color: var(--lp-dark-text) !important;
 }
-=======
+
+/* Day cell event picker (multiple appointments on one date) */
+.legalpro-cal-day-picker {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.65rem;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    max-width: min(20rem, calc(100vw - 1.5rem));
+    min-width: 14rem;
+    padding: 0.5rem;
+    position: fixed;
+    z-index: 1080;
+}
+
+.legalpro-cal-day-picker__head {
+    color: #67748e;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.35rem 0.5rem 0.5rem;
+    text-transform: uppercase;
+}
+
+.legalpro-cal-day-picker__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.legalpro-cal-day-picker__item {
+    align-items: flex-start;
+    background: transparent;
+    border: 0;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    display: flex;
+    gap: 0.65rem;
+    padding: 0.55rem 0.5rem;
+    text-align: left;
+    width: 100%;
+}
+
+.legalpro-cal-day-picker__item:hover {
+    background: rgba(94, 114, 228, 0.08);
+}
+
+.legalpro-cal-day-picker__time {
+    color: #5e72e4;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    min-width: 2.75rem;
+}
+
+.legalpro-cal-day-picker__title {
+    color: #344767;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+body.legalpro-dark-mode .legalpro-cal-day-picker {
+    background: var(--lp-dark-surface) !important;
+    border-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode .legalpro-cal-day-picker__head {
+    color: var(--lp-dark-text-muted) !important;
+}
+
+body.legalpro-dark-mode .legalpro-cal-day-picker__title {
+    color: var(--lp-dark-text) !important;
+}
+
 /* Court date — view details modal (all portals) */
 .legalpro-court-detail-modal {
     max-width: 560px;
@@ -1259,4 +1357,3 @@ body.legalpro-dark-mode .legalpro-court-detail__footer {
 body.legalpro-dark-mode .legalpro-court-detail__notes--empty .legalpro-court-detail__notes-text {
     color: var(--lp-dark-text-muted) !important;
 }
->>>>>>> a16ef36d67d25b0507f30aa54630c12fcfd9225e

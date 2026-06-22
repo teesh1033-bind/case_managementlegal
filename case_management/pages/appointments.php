@@ -323,13 +323,8 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-<<<<<<< HEAD
-	<link href="../assets/css/legalpro-admin-portal.css?v=32" rel="stylesheet" />
-	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
-=======
-	<link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
-	<link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
->>>>>>> 185062efd2497903d22b626414de52e2c22ea8db
+	<link href="../assets/css/legalpro-admin-portal.css?v=33" rel="stylesheet" />
+	<link href="../assets/css/dashboard-enhancements.css?v=16" rel="stylesheet" />
 	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
 	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
 	<?php legalpro_icons_asset_links(); ?>
@@ -594,7 +589,7 @@ $html = <<<'HTML'
 				nowIndicator: true,
 				fixedWeekCount: false,
 				dayMaxEvents: 3,
-				moreLinkClick: 'day',
+				moreLinkClick: 'popover',
 				buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
 				eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
 				dayHeaderFormat: { weekday: 'short' },

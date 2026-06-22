@@ -13,11 +13,7 @@ require_once __DIR__ . '/legalpro-icons.php';
 <link href="../assets/css/legalpro-portal-shell.css?v=15" rel="stylesheet" />
 <link href="../assets/css/legalpro-lawyer-portal.css?v=23" rel="stylesheet" />
 <link href="../assets/css/legalpro-admin-portal.css?v=30" rel="stylesheet" />
-<<<<<<< HEAD
 <link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
-=======
-<link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
->>>>>>> a16ef36d67d25b0507f30aa54630c12fcfd9225e
 <link href="../assets/css/legalpro-sidebar-nav.css?v=22" rel="stylesheet" />
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>

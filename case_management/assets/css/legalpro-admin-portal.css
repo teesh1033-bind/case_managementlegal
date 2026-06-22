@@ -911,7 +911,7 @@ body.legalpro-admin-portal .dashboard-calendar-hub .lp-card-header-primary {
 body.admin-court-tracking-page .dashboard-calendar-hub,
 body.admin-appointments-page .dashboard-calendar-hub {
     border-radius: var(--lp-admin-card-radius) !important;
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid rgba(0, 0, 0, 0.08);
     background: #fff;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -962,7 +962,7 @@ body.admin-appointments-page .dashboard-upcoming-panel {
 body.admin-court-tracking-page #courtTrackingCalendar,
 body.admin-appointments-page #appointmentsCalendar {
     border-radius: calc(var(--lp-admin-card-radius) - 2px);
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* —— Search portal (admin) —— */

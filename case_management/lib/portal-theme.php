@@ -2971,7 +2971,7 @@ function getPortalThemeCalendarDarkCss(): string
         . 'background: var(--lp-dark-surface) !important;'
         . 'border: 1px solid var(--lp-dark-border) !important;'
         . 'border-radius: 1rem !important;'
-        . 'overflow: hidden !important;'
+        . 'overflow: visible !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.admin-court-tracking-page .dashboard-calendar-hub__head {'
