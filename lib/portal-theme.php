@@ -3089,11 +3089,10 @@ function getPortalThemeCalendarDarkCss(): string
         . 'background: rgba(' . $rgb . ', 0.14) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:hover .dashboard-cal-event,'
-        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:focus .dashboard-cal-event,'
-        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-list-event:hover .dashboard-cal-event {'
-        . 'background: rgba(' . $rgb . ', 0.22) !important;'
-        . 'border-color: rgba(' . $rgb . ', 0.42) !important;'
+    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:hover .dashboard-cal-event__text,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:focus .dashboard-cal-event__text,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-list-event:hover .dashboard-cal-event__text {'
+        . 'color: var(--lp-dark-text) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc .fc-day-today {'

@@ -1,9 +1,8 @@
 (function () {
     'use strict';
 
-    var PREVIEW_LIMIT = 1;
+    var PREVIEW_LIMIT = 5;
     var cachedNotifications = [];
-    var notifExpanded = false;
 
     function qs(sel, root) {
         return (root || document).querySelector(sel);
@@ -60,40 +59,20 @@
             + '</a>';
     }
 
-    function updateShowMoreButton(allItems, expanded) {
-        var foot = qs('#clientNotifFoot');
-        var btn = qs('#clientNotifShowMore');
-        if (!foot || !btn) return;
-
-        if (!allItems || allItems.length <= PREVIEW_LIMIT) {
-            foot.hidden = true;
-            return;
-        }
-
-        foot.hidden = false;
-        btn.textContent = expanded
-            ? (btn.getAttribute('data-show-less') || 'Show less')
-            : (btn.getAttribute('data-show-more') || 'Show more');
-        btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-    }
-
-    function renderNotifications(items, expanded) {
+    function renderNotifications(items) {
         var list = qs('#clientNotifList');
         if (!list) return;
 
         var allItems = items || [];
-        var showAll = expanded || allItems.length <= PREVIEW_LIMIT;
-        var visible = showAll ? allItems : allItems.slice(0, PREVIEW_LIMIT);
+        var visible = allItems.slice(0, PREVIEW_LIMIT);
 
         if (!visible.length) {
             var tpl = qs('#clientNotifEmptyTpl');
             list.innerHTML = tpl ? tpl.innerHTML : '<div class="legalpro-notif-panel__empty"><p>No notifications</p></div>';
-            updateShowMoreButton(allItems, expanded);
             return;
         }
 
         list.innerHTML = visible.map(buildNotifItem).join('');
-        updateShowMoreButton(allItems, expanded);
     }
 
     function loadNotifications() {
@@ -102,7 +81,7 @@
             .then(function (data) {
                 if (!data.ok) return;
                 cachedNotifications = data.notifications || [];
-                renderNotifications(cachedNotifications, notifExpanded);
+                renderNotifications(cachedNotifications);
                 updateNotifBadge(data.unread || 0);
             })
             .catch(function () {});
@@ -135,11 +114,9 @@
 
         function closePanel() {
             panel.classList.remove('show');
-            panel.classList.remove('is-expanded');
             bell.classList.remove('show');
             bell.setAttribute('aria-expanded', 'false');
-            notifExpanded = false;
-            renderNotifications(cachedNotifications, false);
+            renderNotifications(cachedNotifications);
         }
 
         bell.addEventListener('click', function (e) {
@@ -162,16 +139,6 @@
                 });
             }
         });
-
-        var showMore = qs('#clientNotifShowMore');
-        if (showMore) {
-            showMore.addEventListener('click', function (e) {
-                e.preventDefault();
-                notifExpanded = !notifExpanded;
-                panel.classList.toggle('is-expanded', notifExpanded);
-                renderNotifications(cachedNotifications, notifExpanded);
-            });
-        }
 
         var markAll = qs('#clientNotifMarkAll');
         if (markAll) {

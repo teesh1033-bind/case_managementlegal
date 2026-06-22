@@ -382,7 +382,7 @@ $html = <<<'HTML'
 	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
 	<link href="../assets/css/legalpro-finance-pages.css?v=5" rel="stylesheet" />
 =======
-	<link href="../assets/css/dashboard-enhancements.css?v=13" rel="stylesheet" />
+	<link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
 	<link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
 >>>>>>> 185062efd2497903d22b626414de52e2c22ea8db
 </head>

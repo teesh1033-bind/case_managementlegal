@@ -328,7 +328,7 @@ $html = <<<'HTML'
 	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
 =======
 	<link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
-	<link href="../assets/css/dashboard-enhancements.css?v=13" rel="stylesheet" />
+	<link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
 >>>>>>> 185062efd2497903d22b626414de52e2c22ea8db
 	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
 	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>

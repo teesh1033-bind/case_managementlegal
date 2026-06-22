@@ -398,7 +398,7 @@ function legalpro_render_client_header_utilities(?PDO $pdo = null): string
         $displayName,
         $clientLabel,
         $notifications,
-        'client-appointments.php',
+        'client-notifications.php',
         'client-logout.php',
         'client-profile.php',
         '<li><a class="dropdown-item" href="client-settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars($settingsLabel) . '</a></li>',
@@ -412,8 +412,7 @@ function legalpro_render_client_notification_dropdown(): string
     $markAll = function_exists('client_t') ? client_t('notifications.mark_all_read') : 'Mark all read';
     $title = function_exists('client_t') ? client_t('notifications.title') : 'Notifications';
     $empty = function_exists('client_t') ? client_t('notifications.empty') : 'No notifications yet';
-    $showMore = function_exists('client_t') ? client_t('notifications.show_more') : 'Show more';
-    $showLess = function_exists('client_t') ? client_t('notifications.show_less') : 'Show less';
+    $viewAll = function_exists('client_t') ? client_t('notifications.view_all') : 'View all';
     $unreadHint = htmlspecialchars(
         function_exists('client_t') ? client_t('notifications.unread_hint') : legalpro_notification_unread_hint(),
         ENT_QUOTES,
@@ -429,9 +428,8 @@ function legalpro_render_client_notification_dropdown(): string
         . '<div class="legalpro-notif-panel__body" id="clientNotifList">'
         . '<div class="text-muted text-sm p-3">Loading…</div>'
         . '</div>'
-        . '<div class="legalpro-notif-panel__foot legalpro-client-notif-dropdown__foot" id="clientNotifFoot" hidden>'
-        . '<button type="button" class="legalpro-notif-panel__view-all legalpro-client-notif-dropdown__toggle" id="clientNotifShowMore" data-show-more="' . htmlspecialchars($showMore) . '" data-show-less="' . htmlspecialchars($showLess) . '">'
-        . htmlspecialchars($showMore) . '</button>'
+        . '<div class="legalpro-notif-panel__foot">'
+        . '<a href="client-notifications.php" class="legalpro-notif-panel__view-all">' . htmlspecialchars($viewAll) . '</a>'
         . '</div>'
         . '</div>'
         . '<template id="clientNotifEmptyTpl">'

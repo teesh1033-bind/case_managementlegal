@@ -250,7 +250,7 @@ $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCate
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=12" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
 
     <style>
