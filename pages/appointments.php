@@ -324,12 +324,18 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+<<<<<<< HEAD
 	<link href="../assets/css/legalpro-admin-portal.css?v=31" rel="stylesheet" />
 	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
+=======
+	<link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
+	<link href="../assets/css/dashboard-enhancements.css?v=13" rel="stylesheet" />
+>>>>>>> 185062efd2497903d22b626414de52e2c22ea8db
 	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
 	<?php legalpro_icons_asset_links(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-appointments-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-appointments-page<?php echo legalpro_portal_theme_body_class(); ?>">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">

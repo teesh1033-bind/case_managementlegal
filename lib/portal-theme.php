@@ -1641,6 +1641,10 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'vertical-align: middle;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-list-event:hover td {'
+        . 'background: rgba(' . $rgb . ', 0.1) !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode .fc .fc-list-event:hover td {'
         . 'background: var(--lp-dark-surface-hover) !important;'
         . '}';
@@ -2979,11 +2983,22 @@ function getPortalThemeCalendarDarkCss(): string
         . 'background: transparent !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #dashboardCalendar,'
+    $calRoots = 'body.legalpro-dark-mode #dashboardCalendar,'
         . 'body.legalpro-dark-mode #courtTrackingCalendar,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar';
+
+    $css .= $calRoots . ','
         . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar,'
         . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc,'
-        . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc-view-harness {'
+        . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc-view-harness,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc-view-harness,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc-view-harness,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc-view-harness {'
         . 'background: var(--lp-dark-surface) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . 'color: var(--lp-dark-text-secondary) !important;'
@@ -2992,62 +3007,97 @@ function getPortalThemeCalendarDarkCss(): string
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid,'
         . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid,'
-        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard .fc-scrollgrid {'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard .fc-scrollgrid,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-scrollgrid,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-scrollgrid,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-scrollgrid {'
         . 'background: var(--lp-dark-surface) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-col-header-cell,'
-        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day {'
+        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-daygrid-day,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-daygrid-day,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-daygrid-day {'
         . 'background: var(--lp-dark-surface) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-col-header-cell-cushion,'
-        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number {'
+        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-daygrid-day-number {'
         . 'color: var(--lp-dark-text-secondary) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
-        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title {'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title {'
         . 'color: #fff !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-day-today {'
+    $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-day-today,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-today,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-day-today,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-day-today,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-day-today {'
         . 'background: rgba(' . $rgb . ', 0.12) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard td,'
         . 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard th,'
-        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > * {'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > *,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc-theme-standard td,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc-theme-standard th,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc-theme-standard td,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc-theme-standard th,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc-theme-standard td,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc-theme-standard th {'
         . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell {'
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-col-header-cell,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-col-header-cell,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-col-header-cell {'
         . 'background: var(--lp-dark-surface-raised) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell-cushion,'
-        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day-number {'
-        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-col-header-cell-cushion,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-col-header-cell-cushion,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-col-header-cell-cushion {'
+        . 'color: var(--lp-dark-text-muted) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-other .fc-daygrid-day-number {'
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-other .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-day-other .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-day-other .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-day-other .fc-daygrid-day-number {'
         . 'color: var(--lp-dark-text-subtle) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day {'
-        . 'background: var(--lp-dark-surface) !important;'
-        . 'border-color: var(--lp-dark-border) !important;'
+    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-day.lp-cal-day-has-events:hover,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-day.fc-day-has-events:not(.fc-day-today):hover {'
+        . 'background: rgba(' . $rgb . ', 0.14) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-today {'
-        . 'background: rgba(' . $rgb . ', 0.12) !important;'
+    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:hover .dashboard-cal-event,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:focus .dashboard-cal-event,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-list-event:hover .dashboard-cal-event {'
+        . 'background: rgba(' . $rgb . ', 0.22) !important;'
+        . 'border-color: rgba(' . $rgb . ', 0.42) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc .fc-day-today {'
-        . 'background: rgba(255, 255, 255, 0.06) !important;'
+        . 'background: rgba(' . $rgb . ', 0.12) !important;'
         . '}';
 
     return $css;
