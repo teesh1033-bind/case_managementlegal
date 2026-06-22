@@ -510,7 +510,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
         return $value !== $key ? $value : $fallback;
     };
 
-    $currentDigest = function_exists('getClientEmailDigest') ? getClientEmailDigest($clientId) : 'none';
     $displayName = htmlspecialchars(trim((string) ($snapshot['display_name'] ?? '')) ?: 'Client');
     $email = htmlspecialchars(trim((string) ($snapshot['email'] ?? '')) ?: '—');
     $phone = htmlspecialchars(trim((string) ($snapshot['phone'] ?? '')) ?: '—');
@@ -526,13 +525,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
     $outstandingLabel = function_exists('formatCurrency')
         ? formatCurrency($outstanding)
         : '$' . number_format($outstanding, 2);
-
-    $digestLabels = [
-        'none' => $t('settings.digest_none', 'Off'),
-        'daily' => $t('settings.digest_daily', 'Daily'),
-        'weekly' => $t('settings.digest_weekly', 'Weekly'),
-    ];
-    $currentDigestLabel = htmlspecialchars($digestLabels[$currentDigest] ?? $digestLabels['none']);
 
     $quickLinks = [
         ['url' => 'client-profile.php', 'icon' => 'user', 'label' => $t('nav.profile', 'Profile')],
@@ -568,9 +560,8 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
     $heroHtml = client_portal_render_hero([
         'kicker' => $t('settings.title', 'Settings'),
         'title' => $t('settings.hero_title', 'Personalize your portal'),
-        'subtitle' => $t('settings.hero_sub', 'Manage appearance, notifications, and shortcuts for your client account.'),
-        'meta' => $t('settings.member_since', 'Member since') . ' ' . $memberSince
-            . ' · ' . $t('settings.current_digest', 'Email digest') . ': ' . $currentDigestLabel,
+        'subtitle' => $t('settings.hero_sub', 'Manage appearance and shortcuts for your client account.'),
+        'meta' => $t('settings.member_since', 'Member since') . ' ' . $memberSince,
         'show_date' => true,
         'aria_label' => $t('settings.title', 'Settings'),
         'stats' => [
@@ -599,20 +590,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
             <select class="form-select" name="locale" id="client_locale" required>' . $localeOptions . '</select>
             <p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($t('settings.language_help', 'Updates navigation labels and settings across the client portal.')) . '</p>
         </div>';
-
-    $notificationsBody = '
-        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.')) . '</p>
-        <label class="form-label d-block mb-2" for="client_email_digest">' . htmlspecialchars($t('settings.email_digest', 'Email digest')) . '</label>
-        <select class="form-select" name="email_digest" id="client_email_digest">
-            <option value="none"' . ($currentDigest === 'none' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_none', 'Off')) . '</option>
-            <option value="daily"' . ($currentDigest === 'daily' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_daily', 'Daily')) . '</option>
-            <option value="weekly"' . ($currentDigest === 'weekly' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_weekly', 'Weekly')) . '</option>
-        </select>
-        <ul class="cs-tip-list mt-3 mb-0">
-            <li>' . htmlspecialchars($t('settings.digest_tip_1', 'Daily digests are sent each morning with the previous day\'s activity.')) . '</li>
-            <li>' . htmlspecialchars($t('settings.digest_tip_2', 'Weekly digests arrive Monday with a summary of the past week.')) . '</li>
-            <li>' . htmlspecialchars($t('settings.digest_tip_3', 'In-portal alerts in the bell menu are always available regardless of digest setting.')) . '</li>
-        </ul>';
 
     $privacyBody = '
         <ul class="cs-tip-list mb-3">
@@ -652,12 +629,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
                         'subtitle' => $t('settings.appearance_help', 'Choose light or dark mode and your preferred language.'),
                         'icon' => 'palette',
                     ], $appearanceBody) . '
-                    ' . client_portal_render_panel([
-                        'title' => $t('settings.notifications_section', 'Email notifications'),
-                        'subtitle' => $t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.'),
-                        'icon' => 'bell',
-                        'panel_id' => 'email-digest',
-                    ], $notificationsBody) . '
                     <div class="cp-form-actions">
                         <button type="submit" class="btn btn-primary">' . htmlspecialchars($t('settings.save_preferences', 'Save preferences')) . '</button>
                     </div>
