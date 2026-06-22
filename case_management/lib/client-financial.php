@@ -201,20 +201,29 @@ function legalpro_render_client_financial_summary_html(array $summary, int $clie
 
     $paymentRows = '';
     $recentPayments = $summary['recent_payments'] ?? [];
+    $iconPayment = legalpro_icon('banknote');
     if (empty($recentPayments)) {
-        $paymentRows = '<li class="list-group-item text-center text-muted text-sm py-3">No payments recorded yet.</li>';
+        $paymentRows = '<li class="client-fin-payment-item client-fin-payment-item--empty">'
+            . '<p class="text-sm text-muted mb-0">No payments recorded yet.</p></li>';
     } else {
         foreach ($recentPayments as $payment) {
             $payDate = $payment['payment_date'] ?: $payment['created_at'];
             $payDateLabel = $payDate ? date('M j, Y', strtotime((string) $payDate)) : '—';
             $caseTitle = !empty($payment['case_title']) ? htmlspecialchars($payment['case_title']) : 'General';
             $method = htmlspecialchars(ucfirst((string) ($payment['method'] ?? 'cash')));
-            $paymentRows .= '<li class="list-group-item px-0 py-2 border-0 border-bottom">'
-                . '<div class="d-flex justify-content-between align-items-start gap-2">'
-                . '<div><p class="text-sm mb-0 fw-semibold">' . formatCurrency((float) $payment['amount']) . '</p>'
-                . '<p class="text-xs text-muted mb-0">' . $caseTitle . ' · ' . $method . '</p></div>'
-                . '<span class="text-xs text-muted">' . htmlspecialchars($payDateLabel) . '</span>'
-                . '</div></li>';
+            $paymentRows .= '<li class="client-fin-payment-item">'
+                . '<div class="client-fin-payment-item__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">' . $iconPayment . '</div>'
+                . '<div class="client-fin-payment-item__body">'
+                . '<div class="client-fin-payment-item__top">'
+                . '<span class="client-fin-payment-item__amount">' . formatCurrency((float) $payment['amount']) . '</span>'
+                . '<span class="client-fin-payment-item__date">' . htmlspecialchars($payDateLabel) . '</span>'
+                . '</div>'
+                . '<div class="client-fin-payment-item__meta">'
+                . '<span class="client-fin-payment-item__case">' . $caseTitle . '</span>'
+                . '<span class="lp-pill lp-pill--status-default">' . $method . '</span>'
+                . '</div>'
+                . '</div>'
+                . '</li>';
         }
     }
 
@@ -269,9 +278,17 @@ function legalpro_render_client_financial_summary_html(array $summary, int $clie
         . '</tr></thead><tbody>' . $caseRows . '</tbody></table></div></div>'
         . '</div>'
         . '<div class="row g-4 mt-1">'
-        . '<div class="col-12"><p class="text-uppercase text-xs fw-bold text-muted mb-2">Recent Payments</p>'
-        . '<ul class="list-group list-group-flush client-fin-summary__payments">' . $paymentRows . '</ul>'
-        . '<p class="text-xs text-muted mt-3 mb-0">Last payment: <strong>' . $lastPayment . '</strong>'
-        . ($casesFullyPaid > 0 ? ' · ' . $casesFullyPaid . ' case' . ($casesFullyPaid === 1 ? '' : 's') . ' fully paid' : '')
-        . '</p></div></div></div></div>';
+        . '<div class="col-12">'
+        . '<div class="client-fin-recent-payments">'
+        . '<div class="client-fin-recent-payments__head">'
+        . '<h6 class="client-fin-recent-payments__title">Recent Payments</h6>'
+        . '</div>'
+        . '<ul class="client-fin-recent-payments__list">' . $paymentRows . '</ul>'
+        . '<div class="client-fin-recent-payments__footer">'
+        . '<span>Last payment</span>'
+        . '<strong>' . $lastPayment . '</strong>'
+        . ($casesFullyPaid > 0 ? '<span class="client-fin-recent-payments__extra">' . $casesFullyPaid . ' case' . ($casesFullyPaid === 1 ? '' : 's') . ' fully paid</span>' : '')
+        . '</div>'
+        . '</div>'
+        . '</div></div></div></div>';
 }

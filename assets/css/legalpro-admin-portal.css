@@ -1746,3 +1746,31 @@ body.legalpro-dark-mode.legalpro-dashboard-page .navbar-main .dashboard-welcome-
 body.legalpro-dark-mode.admin-court-tracking-page .navbar-main .dashboard-welcome-sub {
     color: var(--lp-dark-text-muted, #d4dcea) !important;
 }
+
+/* —— Appointment detail modal (calendar) —— */
+.appointment-modal-notes {
+    background: #f8fafc;
+    font-size: 0.83rem;
+    color: #64748b;
+    min-height: 52px;
+    white-space: pre-wrap;
+}
+
+body.legalpro-dark-mode .appointment-modal-notes {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--lp-dark-text-muted, #c5cedb) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-dark-mode .appointment-modal-edit-btn.bg-gradient-dark {
+    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(94, 114, 228, 0.28) !important;
+}
+
+body.legalpro-dark-mode .appointment-modal-edit-btn.bg-gradient-dark:hover,
+body.legalpro-dark-mode .appointment-modal-edit-btn.bg-gradient-dark:focus {
+    background: linear-gradient(135deg, #6d7fe8 0%, #916fef 100%) !important;
+    color: #fff !important;
+}

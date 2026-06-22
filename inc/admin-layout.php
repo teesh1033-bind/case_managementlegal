@@ -482,7 +482,7 @@ function legalpro_format_case_fee($amount): string
 {
     $value = is_numeric($amount) ? (float) $amount : 0.0;
 
-    return '£ ' . number_format($value, 2);
+    return function_exists('formatCurrency') ? formatCurrency($value) : number_format($value, 2);
 }
 
 function legalpro_case_priority_badge(string $priority): string

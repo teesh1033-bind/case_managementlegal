@@ -42,17 +42,7 @@ function legalpro_lawyer_notification_count(?PDO $pdo = null, ?int $lawyerId = n
         return 0;
     }
 
-    try {
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) FROM appointments
-            WHERE lawyer_id = ? AND LOWER(COALESCE(status, 'pending')) = 'pending'
-        ");
-        $stmt->execute([$lawyerId]);
-
-        return (int) $stmt->fetchColumn();
-    } catch (PDOException $e) {
-        return 0;
-    }
+    return count(legalpro_fetch_lawyer_notifications($pdo, $lawyerId));
 }
 
 function legalpro_client_notification_count(?PDO $pdo = null, ?int $clientId = null): int
@@ -170,6 +160,59 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
     nav.classList.add("d-flex", "align-items-center", "justify-content-between", "flex-wrap", "gap-2", "w-100");
+
+    var isLawyerPortal = document.body.classList.contains("legalpro-lawyer-portal");
+    var navCollapse = nav.querySelector("#navbar") || nav.querySelector(".navbar-collapse");
+    if (isLawyerPortal && navCollapse && !navCollapse.querySelector(".legalpro-navbar-search")) {
+        var params = new URLSearchParams(window.location.search);
+        var searchForm = document.createElement("form");
+        searchForm.className = "ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search";
+        searchForm.method = "get";
+        searchForm.action = window.location.pathname.split("/").pop() || "";
+        searchForm.setAttribute("role", "search");
+        searchForm.innerHTML = ""
+            + "<div class=\"input-group\">"
+            + "<span class=\"input-group-text text-body\"><i class=\"fas fa-search\" aria-hidden=\"true\"></i></span>"
+            + "<input type=\"search\" name=\"q\" id=\"lawyerNavbarSearchInput\" class=\"form-control\" placeholder=\"Search...\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"Search\">"
+            + "<button type=\"button\" class=\"lp-lawyer-search-reset-btn\" data-lawyer-search-reset=\"lawyerNavbarSearchInput\" data-clear-url-param=\"q\" aria-label=\"Reset search\">Reset</button>"
+            + "</div>";
+
+        var searchInput = searchForm.querySelector("input[name=\"q\"]");
+        if (searchInput) {
+            searchInput.value = (params.get("q") || "").trim();
+        }
+
+        var navList = navCollapse.querySelector(".navbar-nav");
+        if (navList && navList.parentNode === navCollapse) {
+            navCollapse.insertBefore(searchForm, navList);
+        } else {
+            navCollapse.prepend(searchForm);
+        }
+
+        var searchRows = Array.prototype.slice.call(document.querySelectorAll("[data-search]"));
+        function applyLawyerSearch(term) {
+            if (!searchRows.length) {
+                return;
+            }
+            var q = String(term || "").trim().toLowerCase();
+            searchRows.forEach(function (row) {
+                if (!q) {
+                    row.style.display = "";
+                    return;
+                }
+                var hay = (row.getAttribute("data-search") || row.textContent || "").toLowerCase();
+                row.style.display = hay.indexOf(q) !== -1 ? "" : "none";
+            });
+        }
+
+        if (searchInput) {
+            applyLawyerSearch(searchInput.value);
+            searchInput.addEventListener("input", function () {
+                applyLawyerSearch(searchInput.value);
+            });
+        }
+    }
+
     if (!nav.querySelector(".legalpro-navbar-actions")) {
         nav.appendChild(actions);
     }
@@ -439,7 +482,7 @@ function legalpro_format_case_fee($amount): string
 {
     $value = is_numeric($amount) ? (float) $amount : 0.0;
 
-    return '£ ' . number_format($value, 2);
+    return function_exists('formatCurrency') ? formatCurrency($value) : number_format($value, 2);
 }
 
 function legalpro_case_priority_badge(string $priority): string

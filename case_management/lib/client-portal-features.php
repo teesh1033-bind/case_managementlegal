@@ -649,7 +649,7 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
                 $clientId,
                 'invoice',
                 'Invoice issued',
-                ($inv['invoice_number'] ?: 'Invoice') . ' — $' . number_format((float) $inv['amount'], 2),
+                ($inv['invoice_number'] ?: 'Invoice') . ' — ' . formatCurrency((float) $inv['amount']),
                 'client-payments.php',
                 'receipt',
                 'invoice',
@@ -914,7 +914,7 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
                 'type' => 'invoice',
                 'icon' => 'receipt',
                 'title' => 'Invoice issued',
-                'subtitle' => ($row['invoice_number'] ?: 'Invoice') . ' — $' . number_format((float) $row['amount'], 2),
+                'subtitle' => ($row['invoice_number'] ?: 'Invoice') . ' — ' . formatCurrency((float) $row['amount']),
                 'ts' => strtotime((string) $row['created_at']),
                 'url' => 'client-payments.php',
             ];

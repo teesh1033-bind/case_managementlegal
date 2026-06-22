@@ -324,7 +324,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=31" rel="stylesheet" />
 	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
 	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
 	<?php legalpro_icons_asset_links(); ?>
@@ -465,9 +465,9 @@ $html = <<<'HTML'
 					</div>
 					<div class="mb-3">
 						<label class="text-xs text-uppercase text-muted">Notes</label>
-						<div id="appointmentModalNotes" class="p-3 rounded" style="background:#f8fafc;font-size:.83rem;color:#64748b;min-height:52px;white-space:pre-wrap;"></div>
+						<div id="appointmentModalNotes" class="appointment-modal-notes p-3 rounded"></div>
 					</div>
-					<a id="appointmentModalEditLink" href="new_appointment.php" class="btn btn-sm bg-gradient-dark w-100 mb-0">Edit appointment</a>
+					<a id="appointmentModalEditLink" href="new_appointment.php" class="btn btn-sm bg-gradient-dark appointment-modal-edit-btn w-100 mb-0">Edit appointment</a>
 				</div>
 			</div>
 		</div>

@@ -629,9 +629,9 @@ echo ob_get_clean();
                 </div>
                 <div class="mb-3">
                     <label>Notes</label>
-                    <div id="modalNotes" class="p-3 rounded" style="background:#f8fafc;font-size:.83rem;color:#64748b;min-height:52px;white-space:pre-wrap;"></div>
+                    <div id="modalNotes" class="appointment-modal-notes p-3 rounded"></div>
                 </div>
-                <a id="modalEditLink" href="appointments.php" class="btn btn-sm bg-gradient-dark w-100 mb-0">Edit appointment</a>
+                <a id="modalEditLink" href="appointments.php" class="btn btn-sm bg-gradient-dark appointment-modal-edit-btn w-100 mb-0">Edit appointment</a>
             </div>
         </div>
     </div>

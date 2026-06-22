@@ -114,6 +114,15 @@ body.lawyer-profile-page:not(.legalpro-dark-mode) .main-content .card,
     background-color: #fff !important;
 }
 
+/* Lawyer settings hero — white text on gradient banner (light mode) */
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cs-hero,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cs-hero__title,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cs-hero__kicker,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cs-hero__sub,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cs-hero__meta {
+    color: #fff !important;
+}
+
 html.legalpro-theme-dark body.legalpro-lawyer-portal .main-content .card,
 html.legalpro-theme-dark body.lawyer-cases-page .main-content .card,
 html.legalpro-theme-dark body.lawyer-tasks-page .main-content .card,

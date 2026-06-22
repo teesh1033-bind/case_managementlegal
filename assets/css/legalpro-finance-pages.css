@@ -287,6 +287,132 @@ body.admin-client-detail-page .client-fin-summary__payments .list-group-item:las
     border-bottom: none !important;
 }
 
+body.admin-client-detail-page .client-fin-recent-payments {
+    background: #f8fafc;
+    border: 1px solid #e9ecf3;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+body.admin-client-detail-page .client-fin-recent-payments__head {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e9ecf3;
+    background: #fff;
+}
+
+body.admin-client-detail-page .client-fin-recent-payments__title {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+body.admin-client-detail-page .client-fin-recent-payments__list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+body.admin-client-detail-page .client-fin-payment-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 0.85rem;
+    background: #fff;
+    border: 1px solid #e9ecf3;
+    border-radius: 12px;
+}
+
+body.admin-client-detail-page .client-fin-payment-item--empty {
+    justify-content: center;
+    padding: 1.25rem;
+}
+
+body.admin-client-detail-page .client-fin-payment-item__icon {
+    flex-shrink: 0;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 10px;
+}
+
+body.admin-client-detail-page .client-fin-payment-item__body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+body.admin-client-detail-page .client-fin-payment-item__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.3rem;
+}
+
+body.admin-client-detail-page .client-fin-payment-item__amount {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+body.admin-client-detail-page .client-fin-payment-item__date {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+body.admin-client-detail-page .client-fin-payment-item__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.55rem;
+}
+
+body.admin-client-detail-page .client-fin-payment-item__case {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+body.admin-client-detail-page .client-fin-payment-item__meta .lp-pill {
+    font-size: 0.68rem;
+    padding: 0.28em 0.65em;
+}
+
+body.admin-client-detail-page .client-fin-recent-payments__footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.65rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e9ecf3;
+    background: #fff;
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+body.admin-client-detail-page .client-fin-recent-payments__footer strong {
+    color: #334155;
+    font-weight: 700;
+}
+
+body.admin-client-detail-page .client-fin-recent-payments__extra {
+    margin-left: auto;
+    color: #16a34a;
+    font-weight: 600;
+}
+
 body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary .dashboard-stat-card {
     background: var(--lp-dark-surface) !important;
     border-color: var(--lp-dark-border) !important;
@@ -337,4 +463,40 @@ body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary__payments .
 body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary__payments .fw-semibold,
 body.legalpro-dark-mode.admin-client-detail-page .client-fin-summary__payments strong {
     color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-recent-payments {
+    background: var(--lp-dark-surface-raised, #3d455c);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-recent-payments__head,
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-recent-payments__footer {
+    background: var(--lp-dark-surface, #343b4f);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-recent-payments__title {
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-payment-item {
+    background: var(--lp-dark-surface, #343b4f);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-payment-item__amount {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-payment-item__case {
+    color: var(--lp-dark-text-muted, #d4dcea) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-recent-payments__footer strong {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.admin-client-detail-page .client-fin-recent-payments__extra {
+    color: #6ee7b7 !important;
 }
