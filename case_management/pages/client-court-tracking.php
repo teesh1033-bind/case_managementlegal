@@ -756,9 +756,27 @@ if (!empty($_SESSION['error_message'])) {
                 },
                 events: courtEvents,
                 eventContent: renderCourtEvent,
+                dateClick: function(info) {
+                    if (window.legalproHandleCalendarDateClick) {
+                        window.legalproHandleCalendarDateClick(info, function(event) {
+                            viewCourtDate(event.id);
+                        });
+                    }
+                },
+                dayCellDidMount: function(info) {
+                    if (window.legalproMountCalendarDayCell) {
+                        window.legalproMountCalendarDayCell(info);
+                    }
+                },
                 eventClick: function(info) {
                     info.jsEvent.preventDefault();
                     viewCourtDate(info.event.id);
+                },
+                eventDidMount: function(info) {
+                    if (window.legalproMountCalendarEventClickable) {
+                        window.legalproMountCalendarEventClickable(info);
+                    }
+                    info.el.setAttribute('title', info.event.title || 'Court date');
                 }
             });
             clientCourtTrackingCalendar.render();

@@ -600,11 +600,26 @@ $html = <<<'HTML'
 				},
 				events: appointmentEvents,
 				eventContent: renderAppointmentEvent,
+				dateClick: function(info) {
+					if (window.legalproHandleCalendarDateClick) {
+						window.legalproHandleCalendarDateClick(info, function(event) {
+							openAppointmentModal(event);
+						});
+					}
+				},
+				dayCellDidMount: function(info) {
+					if (window.legalproMountCalendarDayCell) {
+						window.legalproMountCalendarDayCell(info);
+					}
+				},
 				eventClick: function (info) {
 					info.jsEvent.preventDefault();
 					openAppointmentModal(info.event);
 				},
 				eventDidMount: function (info) {
+					if (window.legalproMountCalendarEventClickable) {
+						window.legalproMountCalendarEventClickable(info);
+					}
 					var props = info.event.extendedProps || {};
 					var tip = info.event.title;
 					if (props.client) {
