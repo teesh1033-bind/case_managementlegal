@@ -463,7 +463,6 @@ ob_start(); ?>
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
