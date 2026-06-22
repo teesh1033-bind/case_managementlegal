@@ -496,14 +496,82 @@
 
 .dashboard-cal-event {
     align-items: center;
+<<<<<<< HEAD
+=======
+    background: rgba(94, 114, 228, 0.07);
+    border: 1px solid rgba(94, 114, 228, 0.14);
+    border-radius: 0.4rem;
+>>>>>>> f0e401d489561e2761fc251b6fd599e2a6cb8ed1
     box-sizing: border-box;
     cursor: pointer;
     display: flex;
     gap: 0.35rem;
+<<<<<<< HEAD
     min-height: 1.65rem;
     min-width: 0;
     padding: 0.28rem 0.45rem;
+=======
+    min-height: 1.55rem;
+    min-width: 0;
+    padding: 0.28rem 0.42rem;
+>>>>>>> f0e401d489561e2761fc251b6fd599e2a6cb8ed1
     width: 100%;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Full-width clickable event rows — admin, lawyer, client calendars */
+.dashboard-calendar-hub .fc-daygrid-event-harness {
+    display: block !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.dashboard-calendar-hub .fc-daygrid-event,
+.dashboard-calendar-hub .fc-daygrid-block-event .fc-event {
+    cursor: pointer !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+.dashboard-calendar-hub .fc-daygrid-event .fc-event-main,
+.dashboard-calendar-hub .fc-daygrid-block-event .fc-event-main {
+    cursor: pointer !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+.dashboard-calendar-hub .fc-daygrid-event:hover .dashboard-cal-event,
+.dashboard-calendar-hub .fc-list-event:hover .dashboard-cal-event {
+    background: rgba(94, 114, 228, 0.14);
+    border-color: rgba(94, 114, 228, 0.28);
+}
+
+.dashboard-calendar-hub .fc-list-event,
+.dashboard-calendar-hub .fc-list-event td {
+    cursor: pointer;
+}
+
+.dashboard-calendar-hub .fc-list-event:hover td {
+    background: rgba(94, 114, 228, 0.06);
+}
+
+.dashboard-calendar-hub .fc-daygrid-day.lp-cal-day-has-events,
+.dashboard-calendar-hub .fc-daygrid-day.lp-cal-day-has-events .fc-daygrid-day-frame {
+    cursor: pointer;
+}
+
+.dashboard-calendar-hub .fc-daygrid-day.lp-cal-day-has-events:hover {
+    background: rgba(94, 114, 228, 0.05);
+}
+
+.dashboard-calendar-hub .fc-daygrid-day-events {
+    margin-bottom: 0.15rem;
+}
+
+.dashboard-calendar-hub .legalpro-cal-event--clickable,
+.dashboard-calendar-hub .legalpro-cal-event--clickable .fc-event-main {
+    pointer-events: auto;
 }
 
 .dashboard-cal-event__dot,
@@ -778,7 +846,31 @@ body.legalpro-dark-mode .dashboard-calendar-hub .fc-event {
     color: var(--lp-dark-text-secondary) !important;
 }
 
+<<<<<<< HEAD
 body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-more-link {
+=======
+body.legalpro-dark-mode .dashboard-calendar-hub .dashboard-cal-event {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:hover .dashboard-cal-event,
+body.legalpro-dark-mode .dashboard-calendar-hub .fc-list-event:hover .dashboard-cal-event {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .fc-list-event:hover td {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-day.lp-cal-day-has-events:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+body.legalpro-dark-mode #dashboardCalendar .fc-daygrid-more-link,
+body.legalpro-dark-mode #courtTrackingCalendar .fc-daygrid-more-link {
+>>>>>>> f0e401d489561e2761fc251b6fd599e2a6cb8ed1
     color: var(--legalpro-theme-primary, #5e72e4) !important;
 }
 

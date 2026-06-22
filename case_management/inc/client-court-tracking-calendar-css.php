@@ -17,4 +17,8 @@ define('LEGALPRO_CLIENT_COURT_TRACKING_CALENDAR_CSS', true);
 ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
 <link href="../assets/css/dashboard-enhancements.css?v=12" rel="stylesheet" />
+<<<<<<< HEAD
+=======
+<link href="../assets/css/calendar-toolbar-visible.css?v=1" rel="stylesheet" />
+>>>>>>> f0e401d489561e2761fc251b6fd599e2a6cb8ed1
 <?php include __DIR__ . '/portal-theme-calendar-dark.php'; ?>

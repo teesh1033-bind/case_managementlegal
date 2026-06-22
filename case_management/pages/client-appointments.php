@@ -1928,12 +1928,28 @@ ob_start(); ?>
                 },
                 events: clientAppointmentEvents,
                 eventContent: renderAppointmentEvent,
+                dateClick: function(info) {
+                    if (window.legalproHandleCalendarDateClick) {
+                        window.legalproHandleCalendarDateClick(info, function(event) {
+                            var props = event.extendedProps || {};
+                            viewAppointmentDetails(props.appointmentId || parseInt(event.id, 10));
+                        });
+                    }
+                },
+                dayCellDidMount: function(info) {
+                    if (window.legalproMountCalendarDayCell) {
+                        window.legalproMountCalendarDayCell(info);
+                    }
+                },
                 eventClick: function(info) {
                     info.jsEvent.preventDefault();
                     var props = info.event.extendedProps || {};
                     viewAppointmentDetails(props.appointmentId || parseInt(info.event.id, 10));
                 },
                 eventDidMount: function(info) {
+                    if (window.legalproMountCalendarEventClickable) {
+                        window.legalproMountCalendarEventClickable(info);
+                    }
                     var props = info.event.extendedProps || {};
                     var tip = info.event.title;
                     if (props.lawyer) {

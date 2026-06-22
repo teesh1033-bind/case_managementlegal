@@ -250,7 +250,7 @@ $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCate
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=12" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
 
     <style>
@@ -801,8 +801,23 @@ document.addEventListener('DOMContentLoaded', function() {
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
         events: events,
         eventContent: renderEvent,
+        dateClick: function(info) {
+            if (window.legalproHandleCalendarDateClick) {
+                window.legalproHandleCalendarDateClick(info, function(event) {
+                    openModal(event);
+                });
+            }
+        },
+        dayCellDidMount: function(info) {
+            if (window.legalproMountCalendarDayCell) {
+                window.legalproMountCalendarDayCell(info);
+            }
+        },
         eventClick: function(info) { info.jsEvent.preventDefault(); openModal(info.event); },
         eventDidMount: function(info) {
+            if (window.legalproMountCalendarEventClickable) {
+                window.legalproMountCalendarEventClickable(info);
+            }
             var p = info.event.extendedProps;
             var tip = info.event.title;
             if (p.client) tip += '\nClient: '+p.client;

@@ -895,11 +895,26 @@ if (empty($upcomingCourtDates)) {
                 },
                 events: courtEvents,
                 eventContent: renderCourtEvent,
+                dateClick: function(info) {
+                    if (window.legalproHandleCalendarDateClick) {
+                        window.legalproHandleCalendarDateClick(info, function(event) {
+                            viewCourtDate(event.id);
+                        });
+                    }
+                },
+                dayCellDidMount: function(info) {
+                    if (window.legalproMountCalendarDayCell) {
+                        window.legalproMountCalendarDayCell(info);
+                    }
+                },
                 eventClick: function(info) {
                     info.jsEvent.preventDefault();
                     viewCourtDate(info.event.id);
                 },
                 eventDidMount: function(info) {
+                    if (window.legalproMountCalendarEventClickable) {
+                        window.legalproMountCalendarEventClickable(info);
+                    }
                     var tip = info.event.title;
                     var p = info.event.extendedProps || {};
                     if (p.client_name) tip += '\nClient: ' + p.client_name;
