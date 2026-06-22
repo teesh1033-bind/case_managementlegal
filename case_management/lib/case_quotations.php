@@ -53,6 +53,11 @@ function ensure_case_quotation_schema(PDO $pdo): void
     }
 }
 
+function case_quotations_default_status(): string
+{
+    return 'sent';
+}
+
 function get_next_quotation_number(PDO $pdo): string
 {
     $maxNum = 0;
@@ -177,7 +182,7 @@ function save_case_quotation(PDO $pdo, int $caseId, array $data, array $items): 
             $caseId,
             (string) ($data['quotation_number'] ?? get_next_quotation_number($pdo)),
             trim((string) ($data['title'] ?? '')) ?: null,
-            (string) ($data['status'] ?? 'draft'),
+            case_quotations_default_status(),
             !empty($data['valid_until']) ? (string) $data['valid_until'] : null,
             trim((string) ($data['notes'] ?? '')) ?: null,
             $subtotal,
@@ -262,6 +267,42 @@ function parse_quotation_line_items_from_post(array $post): array
     return $items;
 }
 
+/**
+ * New quotations get the next sequential number; updates keep the existing number.
+ *
+ * @return array{quotation_number?: string}
+ */
+function quotation_save_number_payload(PDO $pdo, int $editQuotationId): array
+{
+    if ($editQuotationId > 0) {
+        return [];
+    }
+
+    return ['quotation_number' => get_next_quotation_number($pdo)];
+}
+
+function parse_quotation_amount_from_post(array $post): float
+{
+    $amount = (float) ($post['quotation_amount'] ?? 0);
+    if ($amount <= 0) {
+        throw new InvalidArgumentException('Amount is required and must be greater than zero.');
+    }
+
+    return round($amount, 2);
+}
+
+/**
+ * @return array<int, array{description: string, quantity: float, unit_price: float}>
+ */
+function quotation_items_from_amount(float $amount, string $description = 'Legal services'): array
+{
+    return [[
+        'description' => $description,
+        'quantity' => 1,
+        'unit_price' => $amount,
+    ]];
+}
+
 function fetch_quotation_with_case(PDO $pdo, int $quotationId): ?array
 {
     $stmt = $pdo->prepare('
@@ -287,7 +328,6 @@ function fetch_client_quotations(PDO $pdo, int $clientId): array
         FROM case_quotations q
         INNER JOIN cases c ON c.id = q.case_id
         WHERE c.client_id = ?
-          AND q.status <> "draft"
         ORDER BY q.created_at DESC, q.id DESC
     ');
     $stmt->execute([$clientId]);
@@ -330,9 +370,9 @@ function notify_client_about_quotation(PDO $pdo, int $quotationId): void
         return;
     }
 
-    $status = strtolower((string) ($quotation['status'] ?? 'draft'));
+    $status = strtolower((string) ($quotation['status'] ?? 'sent'));
     if ($status === 'draft') {
-        return;
+        $status = 'sent';
     }
 
     $clientId = (int) ($quotation['client_id'] ?? 0);
@@ -360,16 +400,7 @@ function notify_client_about_quotation(PDO $pdo, int $quotationId): void
         $body .= ' · ' . $caseTitle;
     }
 
-    $notificationTitle = 'Quotation update';
-    if ($status === 'sent') {
-        $notificationTitle = 'Quotation received';
-    } elseif ($status === 'accepted') {
-        $notificationTitle = 'Quotation accepted';
-    } elseif ($status === 'rejected') {
-        $notificationTitle = 'Quotation declined';
-    } elseif ($status === 'expired') {
-        $notificationTitle = 'Quotation expired';
-    }
+    $notificationTitle = 'Quotation received';
 
     legalpro_client_create_notification(
         $pdo,
@@ -377,12 +408,21 @@ function notify_client_about_quotation(PDO $pdo, int $quotationId): void
         'quotation',
         $notificationTitle,
         $body,
-        'client-quotation-view.php?id=' . $quotationId,
+        client_quotation_notification_link($quotationId),
         'clipboard-list',
         'quotation',
         $quotationId,
         (string) ($quotation['created_at'] ?? '')
     );
+}
+
+function client_quotation_notification_link(int $quotationId): string
+{
+    if ($quotationId <= 0) {
+        return 'client-payments.php#quotations';
+    }
+
+    return 'client-payments.php?quote=' . $quotationId . '#quotations';
 }
 
 function remove_client_quotation_notifications(PDO $pdo, int $quotationId): void
@@ -396,6 +436,140 @@ function remove_client_quotation_notifications(PDO $pdo, int $quotationId): void
         $stmt->execute([$quotationId]);
     } catch (PDOException $e) {
         error_log('remove quotation notification: ' . $e->getMessage());
+    }
+}
+
+function quotation_can_be_edited(array $quotation): bool
+{
+    return true;
+}
+
+/**
+ * @param array<int, array{description:string, quantity:float, unit_price:float}> $items
+ * @return array{subtotal: float, tax_rate: float, tax_amount: float, total_amount: float, items: array<int, array<string, mixed>>}
+ */
+function normalize_quotation_line_items(array $items, float $taxRate): array
+{
+    $subtotal = 0.0;
+    $normalizedItems = [];
+
+    foreach ($items as $index => $item) {
+        $description = trim((string) ($item['description'] ?? ''));
+        if ($description === '') {
+            continue;
+        }
+
+        $quantity = max(0, (float) ($item['quantity'] ?? 1));
+        if ($quantity <= 0) {
+            $quantity = 1;
+        }
+
+        $unitPrice = max(0, (float) ($item['unit_price'] ?? 0));
+        $lineTotal = round($quantity * $unitPrice, 2);
+        $subtotal += $lineTotal;
+
+        $normalizedItems[] = [
+            'description' => $description,
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice,
+            'line_total' => $lineTotal,
+            'sort_order' => (int) $index,
+        ];
+    }
+
+    if (empty($normalizedItems)) {
+        throw new InvalidArgumentException('Add at least one line item with a description.');
+    }
+
+    $taxRate = max(0, $taxRate);
+    $subtotal = round($subtotal, 2);
+    $taxAmount = round($subtotal * ($taxRate / 100), 2);
+    $totalAmount = round($subtotal + $taxAmount, 2);
+
+    return [
+        'subtotal' => $subtotal,
+        'tax_rate' => $taxRate,
+        'tax_amount' => $taxAmount,
+        'total_amount' => $totalAmount,
+        'items' => $normalizedItems,
+    ];
+}
+
+/**
+ * @param array<int, array{description:string, quantity:float, unit_price:float}> $items
+ */
+function update_case_quotation(PDO $pdo, int $caseId, int $quotationId, array $data, array $items): bool
+{
+    $stmt = $pdo->prepare('SELECT * FROM case_quotations WHERE id = ? AND case_id = ? LIMIT 1');
+    $stmt->execute([$quotationId, $caseId]);
+    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$existing) {
+        return false;
+    }
+
+    if (!quotation_can_be_edited($existing)) {
+        throw new InvalidArgumentException('Only draft or sent quotations can be edited.');
+    }
+
+    $taxRate = max(0, (float) ($data['tax_rate'] ?? 0));
+    $normalized = normalize_quotation_line_items($items, $taxRate);
+    $oldStatus = strtolower(trim((string) ($existing['status'] ?? 'draft')));
+    $newStatus = case_quotations_default_status();
+
+    $pdo->beginTransaction();
+
+    try {
+        $stmt = $pdo->prepare('
+            UPDATE case_quotations
+            SET quotation_number = ?, title = ?, status = ?, valid_until = ?, notes = ?,
+                subtotal = ?, tax_rate = ?, tax_amount = ?, total_amount = ?
+            WHERE id = ? AND case_id = ?
+        ');
+        $stmt->execute([
+            (string) ($data['quotation_number'] ?? $existing['quotation_number']),
+            trim((string) ($data['title'] ?? '')) ?: null,
+            $newStatus,
+            !empty($data['valid_until']) ? (string) $data['valid_until'] : null,
+            trim((string) ($data['notes'] ?? '')) ?: null,
+            $normalized['subtotal'],
+            $normalized['tax_rate'],
+            $normalized['tax_amount'],
+            $normalized['total_amount'],
+            $quotationId,
+            $caseId,
+        ]);
+
+        $pdo->prepare('DELETE FROM case_quotation_items WHERE quotation_id = ?')->execute([$quotationId]);
+
+        $itemStmt = $pdo->prepare('
+            INSERT INTO case_quotation_items (quotation_id, description, quantity, unit_price, line_total, sort_order)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ');
+        foreach ($normalized['items'] as $item) {
+            $itemStmt->execute([
+                $quotationId,
+                $item['description'],
+                $item['quantity'],
+                $item['unit_price'],
+                $item['line_total'],
+                $item['sort_order'],
+            ]);
+        }
+
+        $pdo->commit();
+
+        if ($newStatus !== 'draft' && ($oldStatus === 'draft' || $newStatus !== $oldStatus)) {
+            notify_client_about_quotation($pdo, $quotationId);
+        }
+
+        if ($newStatus !== $oldStatus) {
+            quotation_log_status_event($existing, $newStatus, (string) ($data['updated_by'] ?? 'Admin'));
+        }
+
+        return true;
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
     }
 }
 

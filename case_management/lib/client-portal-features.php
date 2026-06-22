@@ -444,6 +444,31 @@ function legalpro_client_acknowledge_document(?PDO $pdo, int $clientId, int $doc
     }
 }
 
+function legalpro_client_resolve_notification_link(array $notification): string
+{
+    $link = trim((string) ($notification['link_url'] ?? ''));
+    $refType = strtolower(trim((string) ($notification['ref_type'] ?? '')));
+    $refId = (int) ($notification['ref_id'] ?? 0);
+
+    if ($refType === 'quotation' && $refId > 0) {
+        if (function_exists('client_quotation_notification_link')) {
+            return client_quotation_notification_link($refId);
+        }
+
+        return 'client-payments.php?quote=' . $refId . '#quotations';
+    }
+
+    if ($link !== '' && preg_match('#client-quotation-view\.php#i', $link)) {
+        if (preg_match('/[?&]id=(\d+)/', $link, $matches)) {
+            return 'client-payments.php?quote=' . (int) $matches[1] . '#quotations';
+        }
+
+        return 'client-payments.php#quotations';
+    }
+
+    return $link !== '' ? $link : '#';
+}
+
 function legalpro_client_create_notification(
     ?PDO $pdo,
     int $clientId,

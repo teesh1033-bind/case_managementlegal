@@ -252,42 +252,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type'])) {
         }
     } elseif ($formType === 'save_quotation') {
         $activeTab = 'quotations';
-        $quotationNumber = trim((string) ($_POST['quotation_number'] ?? ''));
-        $title = trim((string) ($_POST['quotation_title'] ?? ''));
-        $status = trim((string) ($_POST['quotation_status'] ?? 'draft'));
+        $editQuotationId = isset($_POST['quotation_id']) ? (int) $_POST['quotation_id'] : 0;
         $validUntil = trim((string) ($_POST['quotation_valid_until'] ?? ''));
-        $notes = trim((string) ($_POST['quotation_notes'] ?? ''));
         $taxRate = isset($_POST['quotation_tax_rate']) ? (float) $_POST['quotation_tax_rate'] : 0;
-        $statusOptions = quotation_status_options();
 
-        if ($quotationNumber === '') {
-            $message = 'Quotation number is required.';
-            $messageType = 'danger';
-        } elseif (!isset($statusOptions[$status])) {
-            $message = 'Invalid quotation status selected.';
-            $messageType = 'danger';
-        } else {
-            try {
-                $items = parse_quotation_line_items_from_post($_POST);
-                $quotationId = save_case_quotation($pdo, $caseId, [
-                    'quotation_number' => $quotationNumber,
-                    'title' => $title,
-                    'status' => $status,
-                    'valid_until' => $validUntil,
-                    'notes' => $notes,
-                    'tax_rate' => $taxRate,
-                    'created_by' => 'Admin',
-                ], $items);
+        try {
+            $amount = parse_quotation_amount_from_post($_POST);
+            $items = quotation_items_from_amount($amount);
+            $payload = array_merge([
+                'title' => null,
+                'status' => case_quotations_default_status(),
+                'valid_until' => $validUntil,
+                'notes' => null,
+                'tax_rate' => $taxRate,
+                'created_by' => 'Admin',
+                'updated_by' => 'Admin',
+            ], quotation_save_number_payload($pdo, $editQuotationId));
+
+            if ($editQuotationId > 0) {
+                if (update_case_quotation($pdo, $caseId, $editQuotationId, $payload, $items)) {
+                    $message = 'Quotation updated successfully.';
+                    $messageType = 'success';
+                } else {
+                    $message = 'Quotation not found.';
+                    $messageType = 'danger';
+                }
+            } else {
+                $quotationId = save_case_quotation($pdo, $caseId, $payload, $items);
                 notify_client_about_quotation($pdo, $quotationId);
                 $message = 'Quotation saved successfully.';
                 $messageType = 'success';
-            } catch (InvalidArgumentException $e) {
-                $message = $e->getMessage();
-                $messageType = 'danger';
-            } catch (PDOException $e) {
-                $message = 'Error saving quotation: ' . htmlspecialchars($e->getMessage());
-                $messageType = 'danger';
             }
+        } catch (InvalidArgumentException $e) {
+            $message = $e->getMessage();
+            $messageType = 'danger';
+        } catch (PDOException $e) {
+            $message = 'Error saving quotation: ' . htmlspecialchars($e->getMessage());
+            $messageType = 'danger';
         }
     } elseif ($formType === 'delete_quotation') {
         $activeTab = 'quotations';
@@ -681,7 +682,6 @@ try {
 // Fetch quotations for this case
 $quotations = fetch_case_quotations($pdo, $caseId);
 $nextQuotationNumber = get_next_quotation_number($pdo);
-$quotationStatusOptions = quotation_status_options();
 
 // Fetch documents for this case
 $documents = [];
@@ -849,20 +849,26 @@ if (empty($payments)) {
 }
 
 // Quotations section
+$quotationsForEdit = [];
 $quotationsHtml = '';
 if (empty($quotations)) {
     $quotationsHtml = caseDetailFeedEmpty('clipboard-list', 'No quotations yet. Click Add Quotation to create one.');
 } else {
     $quotationItems = '';
     foreach ($quotations as $quotation) {
+        $quoteId = (int) $quotation['id'];
+        $quotationsForEdit[$quoteId] = [
+            'id' => $quoteId,
+            'quotation_number' => (string) ($quotation['quotation_number'] ?? ''),
+            'amount' => (float) ($quotation['subtotal'] ?? 0),
+            'valid_until' => (string) ($quotation['valid_until'] ?? ''),
+            'tax_rate' => (float) ($quotation['tax_rate'] ?? 0),
+        ];
+
         $quoteNumber = !empty($quotation['quotation_number'])
             ? $quotation['quotation_number']
             : 'QUO-' . str_pad((string) $quotation['id'], 4, '0', STR_PAD_LEFT);
-        $quoteTitle = trim((string) ($quotation['title'] ?? ''));
-        $quoteLabel = $quoteTitle !== '' ? $quoteTitle : 'Quotation';
         $quoteTotal = formatCurrency((float) ($quotation['total_amount'] ?? 0));
-        $quoteStatus = quotation_status_label((string) ($quotation['status'] ?? 'draft'));
-        $quotePillClass = quotation_status_pill_class((string) ($quotation['status'] ?? 'draft'));
         $validUntilText = !empty($quotation['valid_until'])
             ? 'Valid until ' . date('M j, Y', strtotime($quotation['valid_until']))
             : 'No expiry date';
@@ -870,62 +876,32 @@ if (empty($quotations)) {
             ? 'Created ' . date('M j, Y', strtotime($quotation['created_at']))
             : '';
 
-        $lineItems = fetch_quotation_items($pdo, (int) $quotation['id']);
-        $linesPreview = '';
-        if (!empty($lineItems)) {
-            $linesPreview = '<div class="case-quotation-lines mt-2"><table class="table table-sm mb-0"><thead><tr>'
-                . '<th class="text-xxs text-uppercase text-secondary">Item</th>'
-                . '<th class="text-xxs text-uppercase text-secondary text-end">Qty</th>'
-                . '<th class="text-xxs text-uppercase text-secondary text-end">Price</th>'
-                . '<th class="text-xxs text-uppercase text-secondary text-end">Total</th>'
-                . '</tr></thead><tbody>';
-            foreach ($lineItems as $lineItem) {
-                $linesPreview .= '<tr>'
-                    . '<td class="text-sm">' . htmlspecialchars((string) $lineItem['description']) . '</td>'
-                    . '<td class="text-sm text-end">' . htmlspecialchars(rtrim(rtrim(number_format((float) $lineItem['quantity'], 2, '.', ''), '0'), '.')) . '</td>'
-                    . '<td class="text-sm text-end">' . formatCurrency((float) $lineItem['unit_price']) . '</td>'
-                    . '<td class="text-sm text-end">' . formatCurrency((float) $lineItem['line_total']) . '</td>'
-                    . '</tr>';
-            }
-            $linesPreview .= '</tbody></table></div>';
-        }
-
-        $notesBlock = '';
-        if (!empty($quotation['notes'])) {
-            $notesBlock = '<p class="text-xs text-muted mb-0 mt-2">' . nl2br(htmlspecialchars((string) $quotation['notes'])) . '</p>';
-        }
+        $editBtn = '<button type="button" class="btn btn-sm btn-outline-primary mb-0 case-quotation-edit-btn" data-quotation-id="' . $quoteId . '">Edit</button>';
+        $pdfBtn = '<a href="client-quotation-view.php?id=' . $quoteId . '&view=1" class="btn btn-sm btn-outline-info mb-0" target="_blank" rel="noopener">View</a>';
 
         $quotationItems .= '<article class="case-feed-item case-quotation-card flex-wrap align-items-start">'
             . '<div class="case-feed-item__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary d-inline-flex align-items-center justify-content-center">'
             . legalpro_icon('clipboard-list')
             . '</div>'
             . '<div class="case-feed-item__body">'
-            . '<h6 class="case-feed-item__title">' . htmlspecialchars($quoteNumber) . ' · ' . htmlspecialchars($quoteLabel) . '</h6>'
+            . '<h6 class="case-feed-item__title">' . htmlspecialchars($quoteNumber) . '</h6>'
             . '<p class="case-feed-item__subtitle mb-0">' . htmlspecialchars($quoteTotal)
             . ' · ' . htmlspecialchars($validUntilText)
             . ($createdText !== '' ? ' · ' . htmlspecialchars($createdText) : '')
             . '</p>'
-            . $linesPreview
-            . $notesBlock
             . '</div>'
             . '<div class="case-feed-item__aside flex-column align-items-end gap-2">'
-            . '<span class="case-status-pill ' . htmlspecialchars($quotePillClass) . '">' . htmlspecialchars($quoteStatus) . '</span>'
+            . '<div class="d-flex flex-wrap gap-1 justify-content-end">'
+            . $pdfBtn . $editBtn
             . '<form method="POST" action="" onsubmit="return confirm(\'Delete this quotation?\');">'
             . '<input type="hidden" name="form_type" value="delete_quotation">'
-            . '<input type="hidden" name="quotation_id" value="' . (int) $quotation['id'] . '">'
+            . '<input type="hidden" name="quotation_id" value="' . $quoteId . '">'
             . '<button type="submit" class="btn btn-sm btn-outline-danger mb-0">Delete</button>'
             . '</form>'
-            . '</div>'
+            . '</div></div>'
             . '</article>';
     }
     $quotationsHtml = '<div class="case-feed-list">' . $quotationItems . '</div>';
-}
-
-$quotationStatusOptionsHtml = '';
-foreach ($quotationStatusOptions as $statusValue => $statusLabel) {
-    $selected = $statusValue === 'sent' ? ' selected' : '';
-    $quotationStatusOptionsHtml .= '<option value="' . htmlspecialchars($statusValue) . '"' . $selected . '>'
-        . htmlspecialchars($statusLabel) . '</option>';
 }
 
 $caseDetailTabActionsHtml = '<div class="case-detail-tab-actions">'
@@ -997,7 +973,7 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/case-detail-tabs.css?v=6" rel="stylesheet" />
+    <link href="../assets/css/case-detail-tabs.css?v=10" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -1149,84 +1125,34 @@ $html = <<<'HTML'
 
                                     <div class="card case-detail-form-card border-0 mb-4" id="case-quotation-form-card" hidden>
                                         <div class="card-header border-0 d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0">New Quotation</h6>
+                                            <h6 class="mb-0" id="case-quotation-form-title">New Quotation</h6>
                                             <button type="button" class="btn btn-link text-secondary btn-sm mb-0 p-0" id="case-quotation-cancel-btn">Cancel</button>
                                         </div>
                                         <div class="card-body pt-0">
                                             <form method="POST" action="" id="case-quotation-form">
                                                 <input type="hidden" name="form_type" value="save_quotation">
+                                                <input type="hidden" name="quotation_id" id="quotation_id" value="">
                                                 <div class="row g-3">
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <label class="form-label text-sm">Quotation Number</label>
-                                                        <input type="text" class="form-control" name="quotation_number" id="quotation_number" value="{NEXT_QUOTATION_NUMBER}" required>
+                                                        <input type="text" class="form-control bg-light" id="quotation_number_display" value="{NEXT_QUOTATION_NUMBER}" readonly tabindex="-1">
+                                                        <small class="text-muted" id="quotation_number_hint">Assigned automatically when you save.</small>
                                                     </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label text-sm">Title</label>
-                                                        <input type="text" class="form-control" name="quotation_title" placeholder="e.g., Initial legal fees quote">
+                                                    <div class="col-md-3">
+                                                        <label class="form-label text-sm">Amount</label>
+                                                        <input type="number" class="form-control" name="quotation_amount" id="quotation_amount" min="0" step="0.01" required>
                                                     </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label text-sm">Valid Until</label>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label text-sm">Valid</label>
                                                         <input type="date" class="form-control" name="quotation_valid_until" value="{QUOTATION_DEFAULT_VALID_UNTIL}">
                                                     </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label text-sm">Status</label>
-                                                        <select class="form-select" name="quotation_status">
-                                                            {QUOTATION_STATUS_OPTIONS}
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-3">
                                                         <label class="form-label text-sm">Tax Rate (%)</label>
                                                         <input type="number" class="form-control" name="quotation_tax_rate" id="quotation_tax_rate" min="0" step="0.01" value="0">
                                                     </div>
                                                 </div>
 
-                                                <div class="mt-4">
-                                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <h6 class="text-sm mb-0">Line Items</h6>
-                                                        <button type="button" class="btn btn-sm btn-outline-primary mb-0" id="case-quotation-add-line-btn">Add Line</button>
-                                                    </div>
-                                                    <div class="case-detail-table-wrap">
-                                                        <div class="table-responsive">
-                                                            <table class="table align-items-center mb-0 case-quotation-lines-table">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Description</th>
-                                                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end" style="width:7rem;">Qty</th>
-                                                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end" style="width:9rem;">Unit Price</th>
-                                                                        <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end" style="width:9rem;">Line Total</th>
-                                                                        <th style="width:3rem;"></th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody id="case-quotation-lines-body">
-                                                                    <tr class="case-quotation-line-row">
-                                                                        <td><input type="text" class="form-control form-control-sm" name="quotation_item_desc[]" placeholder="Service or item description" required></td>
-                                                                        <td><input type="number" class="form-control form-control-sm text-end case-quotation-qty" name="quotation_item_qty[]" min="0" step="0.01" value="1"></td>
-                                                                        <td><input type="number" class="form-control form-control-sm text-end case-quotation-price" name="quotation_item_price[]" min="0" step="0.01" value="0"></td>
-                                                                        <td class="text-end align-middle"><span class="case-quotation-line-total text-sm font-weight-bold">0.00</span></td>
-                                                                        <td class="text-end align-middle"><button type="button" class="btn btn-link text-danger btn-sm mb-0 p-0 case-quotation-remove-line" hidden aria-label="Remove line">&times;</button></td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row justify-content-end mt-3">
-                                                    <div class="col-md-5">
-                                                        <div class="case-quotation-totals">
-                                                            <div class="d-flex justify-content-between text-sm mb-1"><span>Subtotal</span><strong id="quotation_subtotal_display">0.00</strong></div>
-                                                            <div class="d-flex justify-content-between text-sm mb-1"><span>Tax</span><strong id="quotation_tax_display">0.00</strong></div>
-                                                            <div class="d-flex justify-content-between text-sm border-top pt-2"><span>Total</span><strong id="quotation_total_display">0.00</strong></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="mt-3">
-                                                    <label class="form-label text-sm">Notes</label>
-                                                    <textarea class="form-control" name="quotation_notes" rows="3" placeholder="Terms, scope, or additional notes for the client"></textarea>
-                                                </div>
-
-                                                <button type="submit" class="btn btn-dark btn-sm mt-3 mb-0">Save Quotation</button>
+                                                <button type="submit" class="btn btn-dark btn-sm mt-3 mb-0" id="case-quotation-submit-btn">Save Quotation</button>
                                             </form>
                                         </div>
                                     </div>
@@ -1434,167 +1360,10 @@ if ($activeTab === '' && isset($_GET['tab'])) {
 }
 
 $quotationDefaultValidUntil = date('Y-m-d', strtotime('+30 days'));
+$quotationsEditJson = json_encode($quotationsForEdit, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
 
-$quotationTabScript = <<<'JS'
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var formCard = document.getElementById('case-quotation-form-card');
-    var form = document.getElementById('case-quotation-form');
-    var linesBody = document.getElementById('case-quotation-lines-body');
-    var addBtn = document.getElementById('case-quotation-add-btn');
-    var cancelBtn = document.getElementById('case-quotation-cancel-btn');
-    var addLineBtn = document.getElementById('case-quotation-add-line-btn');
-    var taxRateInput = document.getElementById('quotation_tax_rate');
-
-    function formatMoney(value) {
-        var num = isNaN(value) ? 0 : Number(value);
-        return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function updateQuotationRemoveButtons() {
-        if (!linesBody) {
-            return;
-        }
-        var rows = linesBody.querySelectorAll('.case-quotation-line-row');
-        rows.forEach(function (row, index) {
-            var removeBtn = row.querySelector('.case-quotation-remove-line');
-            if (removeBtn) {
-                removeBtn.hidden = rows.length <= 1;
-            }
-        });
-    }
-
-    function recalculateQuotationTotals() {
-        if (!linesBody) {
-            return;
-        }
-
-        var subtotal = 0;
-        linesBody.querySelectorAll('.case-quotation-line-row').forEach(function (row) {
-            var qtyInput = row.querySelector('.case-quotation-qty');
-            var priceInput = row.querySelector('.case-quotation-price');
-            var totalEl = row.querySelector('.case-quotation-line-total');
-            var qty = parseFloat(qtyInput && qtyInput.value ? qtyInput.value : '0') || 0;
-            var price = parseFloat(priceInput && priceInput.value ? priceInput.value : '0') || 0;
-            var lineTotal = qty * price;
-            subtotal += lineTotal;
-            if (totalEl) {
-                totalEl.textContent = formatMoney(lineTotal);
-            }
-        });
-
-        var taxRate = parseFloat(taxRateInput && taxRateInput.value ? taxRateInput.value : '0') || 0;
-        var taxAmount = subtotal * (taxRate / 100);
-        var total = subtotal + taxAmount;
-
-        var subtotalEl = document.getElementById('quotation_subtotal_display');
-        var taxEl = document.getElementById('quotation_tax_display');
-        var totalEl = document.getElementById('quotation_total_display');
-        if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal);
-        if (taxEl) taxEl.textContent = formatMoney(taxAmount);
-        if (totalEl) totalEl.textContent = formatMoney(total);
-    }
-
-    function bindQuotationLineRow(row) {
-        if (!row) {
-            return;
-        }
-        row.querySelectorAll('.case-quotation-qty, .case-quotation-price').forEach(function (input) {
-            input.addEventListener('input', recalculateQuotationTotals);
-        });
-        var removeBtn = row.querySelector('.case-quotation-remove-line');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', function () {
-                row.remove();
-                updateQuotationRemoveButtons();
-                recalculateQuotationTotals();
-            });
-        }
-    }
-
-    function resetQuotationForm() {
-        if (!form) {
-            return;
-        }
-        form.reset();
-        if (!linesBody) {
-            return;
-        }
-        linesBody.innerHTML = ''
-            + '<tr class="case-quotation-line-row">'
-            + '<td><input type="text" class="form-control form-control-sm" name="quotation_item_desc[]" placeholder="Service or item description" required></td>'
-            + '<td><input type="number" class="form-control form-control-sm text-end case-quotation-qty" name="quotation_item_qty[]" min="0" step="0.01" value="1"></td>'
-            + '<td><input type="number" class="form-control form-control-sm text-end case-quotation-price" name="quotation_item_price[]" min="0" step="0.01" value="0"></td>'
-            + '<td class="text-end align-middle"><span class="case-quotation-line-total text-sm font-weight-bold">0.00</span></td>'
-            + '<td class="text-end align-middle"><button type="button" class="btn btn-link text-danger btn-sm mb-0 p-0 case-quotation-remove-line" hidden aria-label="Remove line">&times;</button></td>'
-            + '</tr>';
-        bindQuotationLineRow(linesBody.querySelector('.case-quotation-line-row'));
-        updateQuotationRemoveButtons();
-        recalculateQuotationTotals();
-    }
-
-    window.showCaseQuotationForm = function () {
-        if (formCard) {
-            formCard.hidden = false;
-        }
-    };
-
-    window.hideCaseQuotationForm = function () {
-        if (formCard) {
-            formCard.hidden = true;
-        }
-        resetQuotationForm();
-    };
-
-    window.focusCaseQuotationForm = function () {
-        window.showCaseQuotationForm();
-        if (formCard) {
-            formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        var firstInput = formCard ? formCard.querySelector('input[name="quotation_title"]') : null;
-        if (firstInput) {
-            firstInput.focus();
-        }
-    };
-
-    if (linesBody) {
-        linesBody.querySelectorAll('.case-quotation-line-row').forEach(bindQuotationLineRow);
-        updateQuotationRemoveButtons();
-        recalculateQuotationTotals();
-    }
-
-    if (addBtn) {
-        addBtn.addEventListener('click', window.focusCaseQuotationForm);
-    }
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', window.hideCaseQuotationForm);
-    }
-    if (taxRateInput) {
-        taxRateInput.addEventListener('input', recalculateQuotationTotals);
-    }
-    if (addLineBtn && linesBody) {
-        addLineBtn.addEventListener('click', function () {
-            var row = document.createElement('tr');
-            row.className = 'case-quotation-line-row';
-            row.innerHTML = ''
-                + '<td><input type="text" class="form-control form-control-sm" name="quotation_item_desc[]" placeholder="Service or item description" required></td>'
-                + '<td><input type="number" class="form-control form-control-sm text-end case-quotation-qty" name="quotation_item_qty[]" min="0" step="0.01" value="1"></td>'
-                + '<td><input type="number" class="form-control form-control-sm text-end case-quotation-price" name="quotation_item_price[]" min="0" step="0.01" value="0"></td>'
-                + '<td class="text-end align-middle"><span class="case-quotation-line-total text-sm font-weight-bold">0.00</span></td>'
-                + '<td class="text-end align-middle"><button type="button" class="btn btn-link text-danger btn-sm mb-0 p-0 case-quotation-remove-line" aria-label="Remove line">&times;</button></td>';
-            linesBody.appendChild(row);
-            bindQuotationLineRow(row);
-            updateQuotationRemoveButtons();
-            recalculateQuotationTotals();
-            var descInput = row.querySelector('input[name="quotation_item_desc[]"]');
-            if (descInput) {
-                descInput.focus();
-            }
-        });
-    }
-});
-</script>
-JS;
+require_once __DIR__ . '/../inc/case-quotations-tab-script.php';
+$quotationTabScript = case_quotations_render_tab_script($quotationsEditJson, $nextQuotationNumber);
 
 $caseDetailTabScript = '<script>document.addEventListener("DOMContentLoaded",function(){var nextStageNumber=' . (int) $nextStageNumber . ';function showCaseSummaryForm(){var card=document.getElementById("case-summary-form-card");if(card){card.hidden=false;}}function hideCaseSummaryForm(){var card=document.getElementById("case-summary-form-card");if(card){card.hidden=true;}resetCaseSummaryForm();}function focusCaseSummaryForm(){showCaseSummaryForm();var card=document.getElementById("case-summary-form-card");var titleInput=document.getElementById("case_summary_stage_title");if(card){card.scrollIntoView({behavior:"smooth",block:"start"});}if(titleInput){titleInput.focus();}}function resetCaseSummaryForm(){var form=document.getElementById("case-summary-form");if(!form){return;}form.reset();document.getElementById("case_summary_stage_id").value="";document.getElementById("case_summary_stage_number").value=String(nextStageNumber);document.getElementById("case-summary-form-title").textContent="Add Summary Entry";document.getElementById("case-summary-submit-btn").textContent="Save Summary Entry";}function fillCaseSummaryForm(stage){if(!stage){return;}document.getElementById("case_summary_stage_id").value=stage.id||"";document.getElementById("case_summary_stage_number").value=stage.stage_number||nextStageNumber;document.getElementById("case_summary_stage_title").value=stage.title||"";document.getElementById("case_summary_stage_description").value=stage.description||"";document.getElementById("case_summary_stage_result").value=stage.result||"";document.getElementById("case_summary_stage_start_date").value=stage.start_date||"";document.getElementById("case_summary_stage_expected_end_date").value=stage.expected_end_date||"";document.getElementById("case_summary_stage_actual_end_date").value=stage.actual_end_date||"";document.getElementById("case-summary-form-title").textContent="Edit Summary Entry";document.getElementById("case-summary-submit-btn").textContent="Update Summary Entry";focusCaseSummaryForm();}function showCaseCommentForm(){var card=document.getElementById("case-comment-form-card");if(card){card.hidden=false;}}function hideCaseCommentForm(){var card=document.getElementById("case-comment-form-card");if(card){card.hidden=true;}var form=document.getElementById("case-comment-form");if(form){form.reset();}}function focusCaseCommentForm(){showCaseCommentForm();var input=document.getElementById("case_comment_text");if(input){input.focus();}}function updateCaseDetailTabActions(tabId){var inv=document.getElementById("case-detail-action-invoices");var pay=document.getElementById("case-detail-action-payments");var stages=document.getElementById("case-detail-action-stages");if(inv){inv.hidden=tabId!=="invoices";}if(pay){pay.hidden=tabId!=="payments";}if(stages){stages.hidden=tabId!=="stages";}if(tabId!=="stages"){hideCaseSummaryForm();}if(tabId!=="comments"){hideCaseCommentForm();}if(tabId!=="quotations"&&typeof window.hideCaseQuotationForm==="function"){window.hideCaseQuotationForm();}}function getActiveCaseDetailTabId(){var active=document.querySelector(".case-detail-tabs .nav-link.active");return active&&active.getAttribute("href")?active.getAttribute("href").slice(1):"appointments";}document.querySelectorAll(".case-detail-tabs a[data-bs-toggle=\'tab\']").forEach(function(link){link.addEventListener("shown.bs.tab",function(e){var tabId=e.target.getAttribute("href").slice(1);updateCaseDetailTabActions(tabId);});});document.querySelectorAll(".case-stage-edit-btn").forEach(function(btn){btn.addEventListener("click",function(){try{fillCaseSummaryForm(JSON.parse(btn.getAttribute("data-stage")||"{}"));}catch(err){}});});var addSummaryBtn=document.getElementById("case-summary-add-btn");if(addSummaryBtn){addSummaryBtn.addEventListener("click",function(){resetCaseSummaryForm();focusCaseSummaryForm();});}var summaryEmpty=document.getElementById("case-summary-empty");if(summaryEmpty){summaryEmpty.addEventListener("click",function(){resetCaseSummaryForm();focusCaseSummaryForm();});summaryEmpty.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();resetCaseSummaryForm();focusCaseSummaryForm();}});}var cancelEditBtn=document.getElementById("case-summary-cancel-edit");if(cancelEditBtn){cancelEditBtn.addEventListener("click",hideCaseSummaryForm);}var addCommentBtn=document.getElementById("case-comment-add-btn");if(addCommentBtn){addCommentBtn.addEventListener("click",focusCaseCommentForm);}var cancelCommentBtn=document.getElementById("case-comment-cancel-btn");if(cancelCommentBtn){cancelCommentBtn.addEventListener("click",hideCaseCommentForm);}var tab=' . json_encode($activeTab) . ';if(!tab&&window.location.hash){tab=window.location.hash.slice(1);}if(tab){var link=document.querySelector(\'.case-detail-tabs a[href="#\'+tab+\'"]\');if(link&&window.bootstrap&&bootstrap.Tab){bootstrap.Tab.getOrCreateInstance(link).show();}}updateCaseDetailTabActions(tab||getActiveCaseDetailTabId());});</script>';
 
@@ -1605,7 +1374,6 @@ $replacements = [
     '{QUOTATION_TAB_SCRIPT}' => $quotationTabScript,
     '{NEXT_QUOTATION_NUMBER}' => htmlspecialchars($nextQuotationNumber),
     '{QUOTATION_DEFAULT_VALID_UNTIL}' => htmlspecialchars($quotationDefaultValidUntil),
-    '{QUOTATION_STATUS_OPTIONS}' => $quotationStatusOptionsHtml,
     '{QUOTATIONS_HTML}' => $quotationsHtml,
     '{QUOTATIONS_COUNT}' => count($quotations),
     '{CASE_ID}' => $caseId,

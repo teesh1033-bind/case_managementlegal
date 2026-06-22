@@ -4,6 +4,8 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
+require_once __DIR__ . '/../lib/case_quotations.php';
+require_once __DIR__ . '/../lib/case_quotations_ui.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -167,6 +169,10 @@ try {
     die('Error loading case: ' . htmlspecialchars($e->getMessage()));
 }
 
+ensure_case_quotation_schema($pdo);
+$quotationsView = case_quotations_build_readonly_view($pdo, $caseId);
+$quotationsPanelHtml = $quotationsView['html'];
+
 // Fetch case services
 $services = [];
 try {
@@ -247,20 +253,20 @@ $iconCommentEmpty = legalpro_icon('message-circle');
 $servicesHtml = '';
 $totalFees = 0;
 if (empty($services)) {
-    $servicesHtml = '<tr><td colspan="3" class="text-center text-muted py-3">No services added yet</td></tr>';
+    $servicesHtml = '<tr><td colspan="2" class="text-center text-muted py-3">No services added yet</td></tr>';
 } else {
     foreach ($services as $service) {
         $servicesHtml .= '
         <tr>
             <td>' . htmlspecialchars($service['service_name']) . '</td>
-            <td class="text-end">Rs' . number_format($service['price'], 2) . '</td>
+            <td class="text-end">' . formatCurrency($service['price']) . '</td>
         </tr>';
         $totalFees += $service['price'];
     }
     $servicesHtml .= '
     <tr class="table-active">
         <td><strong>Total Estimated Fees</strong></td>
-        <td class="text-end"><strong>Rs' . number_format($totalFees, 2) . '</strong></td>
+        <td class="text-end"><strong>' . formatCurrency($totalFees) . '</strong></td>
     </tr>';
 }
 
@@ -336,7 +342,7 @@ if (empty($documents)) {
 
         $documentsHtml .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconDocRow . '</div>
                     <div>
@@ -345,10 +351,10 @@ if (empty($documents)) {
                     </div>
                 </div>
             </td>
-            <td class="text-center">' . htmlspecialchars($fileType) . '</td>
-            <td class="text-center">' . $fileSizeFormatted . '</td>
-            <td class="text-end">
-                <div class="d-inline-flex flex-wrap justify-content-end gap-1">' . $actionButtons . '</div>
+            <td class="align-middle text-center">' . htmlspecialchars($fileType) . '</td>
+            <td class="align-middle text-center">' . $fileSizeFormatted . '</td>
+            <td class="align-middle text-end lp-table-actions">
+                <div class="lp-table-actions-inner">' . $actionButtons . '</div>
             </td>
         </tr>';
     }
@@ -556,6 +562,9 @@ $html = <<<'HTML'
                                     <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#case-documents" type="button" role="tab">Documents</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="quotations-tab" data-bs-toggle="tab" data-bs-target="#quotations" type="button" role="tab">Quotations ({QUOTATION_COUNT})</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">Track of Events</button>
                                 </li>
                             </ul>
@@ -565,7 +574,7 @@ $html = <<<'HTML'
                                 <!-- Services Tab -->
                                 <div class="tab-pane fade show active" id="services" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Service</th>
@@ -582,7 +591,7 @@ $html = <<<'HTML'
                                 <!-- Stages Tab -->
                                 <div class="tab-pane fade" id="stages" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Stage #</th>
@@ -603,7 +612,7 @@ $html = <<<'HTML'
                                 <!-- Appointments Tab -->
                                 <div class="tab-pane fade" id="appointments" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Date</th>
@@ -655,7 +664,7 @@ $html = <<<'HTML'
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Document</th>
@@ -669,6 +678,10 @@ $html = <<<'HTML'
                                             </tbody>
                                         </table>
                                     </div>
+                                </div>
+                                <!-- Quotations Tab -->
+                                <div class="tab-pane fade" id="quotations" role="tabpanel">
+                                    {QUOTATIONS_PANEL}
                                 </div>
                                 <!-- Events Tab -->
                                 <div class="tab-pane fade" id="events" role="tabpanel">
@@ -725,7 +738,7 @@ $html = <<<'HTML'
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         var hash = window.location.hash;
-        if (hash === '#case-documents' || hash === '#lawyer-case-comments') {
+        if (hash === '#case-documents' || hash === '#lawyer-case-comments' || hash === '#quotations') {
             var tabBtn = document.querySelector('[data-bs-target="' + hash + '"]');
             if (tabBtn && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
                 bootstrap.Tab.getOrCreateInstance(tabBtn).show();
@@ -851,6 +864,8 @@ $replacements = [
     '{DOCUMENTS_HTML}' => $documentsHtml,
     '{COMMENTS_HTML}' => $commentsHtml,
     '{EVENTS_HTML}' => $eventsHtml,
+    '{QUOTATIONS_PANEL}' => $quotationsPanelHtml,
+    '{QUOTATION_COUNT}' => (string) $quotationsView['count'],
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

@@ -4,6 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/client-portal-features.php';
+require_once __DIR__ . '/../lib/case_quotations.php';
 
 if (!isset($_SESSION['client_id'])) {
     http_response_code(401);
@@ -44,7 +45,7 @@ switch ($action) {
                 'type' => $n['type'],
                 'title' => $n['title'],
                 'body' => $n['body'],
-                'link_url' => $n['link_url'],
+                'link_url' => legalpro_client_resolve_notification_link($n),
                 'icon' => $n['icon'],
                 'is_read' => (bool) $n['is_read'],
                 'created_at' => $n['created_at'],

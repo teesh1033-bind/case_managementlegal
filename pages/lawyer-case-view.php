@@ -4,6 +4,8 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
+require_once __DIR__ . '/../lib/case_quotations.php';
+require_once __DIR__ . '/../lib/case_quotations_ui.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -166,6 +168,10 @@ try {
 } catch (PDOException $e) {
     die('Error loading case: ' . htmlspecialchars($e->getMessage()));
 }
+
+ensure_case_quotation_schema($pdo);
+$quotationsView = case_quotations_build_readonly_view($pdo, $caseId);
+$quotationsPanelHtml = $quotationsView['html'];
 
 // Fetch case services
 $services = [];
@@ -556,6 +562,9 @@ $html = <<<'HTML'
                                     <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#case-documents" type="button" role="tab">Documents</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="quotations-tab" data-bs-toggle="tab" data-bs-target="#quotations" type="button" role="tab">Quotations ({QUOTATION_COUNT})</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">Track of Events</button>
                                 </li>
                             </ul>
@@ -670,6 +679,10 @@ $html = <<<'HTML'
                                         </table>
                                     </div>
                                 </div>
+                                <!-- Quotations Tab -->
+                                <div class="tab-pane fade" id="quotations" role="tabpanel">
+                                    {QUOTATIONS_PANEL}
+                                </div>
                                 <!-- Events Tab -->
                                 <div class="tab-pane fade" id="events" role="tabpanel">
                                     {EVENTS_HTML}
@@ -725,7 +738,7 @@ $html = <<<'HTML'
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         var hash = window.location.hash;
-        if (hash === '#case-documents' || hash === '#lawyer-case-comments') {
+        if (hash === '#case-documents' || hash === '#lawyer-case-comments' || hash === '#quotations') {
             var tabBtn = document.querySelector('[data-bs-target="' + hash + '"]');
             if (tabBtn && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
                 bootstrap.Tab.getOrCreateInstance(tabBtn).show();
@@ -851,6 +864,8 @@ $replacements = [
     '{DOCUMENTS_HTML}' => $documentsHtml,
     '{COMMENTS_HTML}' => $commentsHtml,
     '{EVENTS_HTML}' => $eventsHtml,
+    '{QUOTATIONS_PANEL}' => $quotationsPanelHtml,
+    '{QUOTATION_COUNT}' => (string) $quotationsView['count'],
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

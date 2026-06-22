@@ -550,3 +550,58 @@ body.legalpro-dark-mode .case-quotation-lines,
 body.legalpro-dark-mode .case-quotation-totals {
     background: rgba(255, 255, 255, 0.04) !important;
 }
+
+body.legalpro-dark-mode.admin-case-view-page #quotations .btn.bg-gradient-dark,
+body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-card .btn-dark {
+    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(94, 114, 228, 0.28) !important;
+}
+
+body.legalpro-dark-mode.admin-case-view-page #quotations .btn.bg-gradient-dark:hover,
+body.legalpro-dark-mode.admin-case-view-page #quotations .btn.bg-gradient-dark:focus,
+body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-card .btn-dark:hover,
+body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-card .btn-dark:focus {
+    background: linear-gradient(135deg, #6d7fe8 0%, #916fef 100%) !important;
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-info {
+    color: #8ee8f7 !important;
+    border-color: rgba(17, 205, 239, 0.55) !important;
+    background-color: rgba(17, 205, 239, 0.1) !important;
+}
+
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-info:hover,
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-info:focus {
+    color: #fff !important;
+    background-color: rgba(17, 205, 239, 0.28) !important;
+    border-color: rgba(17, 205, 239, 0.75) !important;
+}
+
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-primary {
+    color: #e9edf5 !important;
+    border-color: rgba(255, 255, 255, 0.38) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-primary:hover,
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-primary:focus {
+    color: #fff !important;
+    background-color: rgba(94, 114, 228, 0.22) !important;
+    border-color: rgba(94, 114, 228, 0.55) !important;
+}
+
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-danger {
+    color: #f8b4b4 !important;
+    border-color: rgba(245, 54, 92, 0.45) !important;
+    background-color: rgba(245, 54, 92, 0.08) !important;
+}
+
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-danger:hover,
+body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-danger:focus {
+    color: #fff !important;
+    background-color: rgba(245, 54, 92, 0.28) !important;
+    border-color: rgba(245, 54, 92, 0.65) !important;
+}

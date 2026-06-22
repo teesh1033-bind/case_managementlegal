@@ -496,25 +496,19 @@
 
 .dashboard-cal-event {
     align-items: center;
-<<<<<<< HEAD
-=======
     background: rgba(94, 114, 228, 0.07);
     border: 1px solid rgba(94, 114, 228, 0.14);
     border-radius: 0.4rem;
->>>>>>> f0e401d489561e2761fc251b6fd599e2a6cb8ed1
     box-sizing: border-box;
     cursor: pointer;
     display: flex;
     gap: 0.35rem;
-<<<<<<< HEAD
     min-height: 1.65rem;
     min-width: 0;
     padding: 0.28rem 0.45rem;
-=======
     min-height: 1.55rem;
     min-width: 0;
     padding: 0.28rem 0.42rem;
->>>>>>> f0e401d489561e2761fc251b6fd599e2a6cb8ed1
     width: 100%;
     transition: background-color 0.15s ease, border-color 0.15s ease;
 }
@@ -846,9 +840,7 @@ body.legalpro-dark-mode .dashboard-calendar-hub .fc-event {
     color: var(--lp-dark-text-secondary) !important;
 }
 
-<<<<<<< HEAD
 body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-more-link {
-=======
 body.legalpro-dark-mode .dashboard-calendar-hub .dashboard-cal-event {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.12);
@@ -870,7 +862,6 @@ body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-day.lp-cal-day-has-e
 
 body.legalpro-dark-mode #dashboardCalendar .fc-daygrid-more-link,
 body.legalpro-dark-mode #courtTrackingCalendar .fc-daygrid-more-link {
->>>>>>> f0e401d489561e2761fc251b6fd599e2a6cb8ed1
     color: var(--legalpro-theme-primary, #5e72e4) !important;
 }
 

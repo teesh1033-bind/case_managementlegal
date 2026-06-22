@@ -147,9 +147,6 @@ function legalpro_render_quotation_document_html(array $quotation, array $items,
     $firm = legalpro_finance_firm_details();
     $quotationNumber = $quotation['quotation_number'] ?: ('QUO-' . str_pad((string) $quotationId, 4, '0', STR_PAD_LEFT));
     $title = trim((string) ($quotation['title'] ?? '')) ?: 'Quotation';
-    $status = function_exists('quotation_status_label')
-        ? quotation_status_label((string) ($quotation['status'] ?? 'sent'))
-        : ucfirst((string) ($quotation['status'] ?? 'sent'));
     $issuedDate = !empty($quotation['created_at']) ? date('F d, Y', strtotime($quotation['created_at'])) : 'N/A';
     $validUntil = !empty($quotation['valid_until']) ? date('F d, Y', strtotime($quotation['valid_until'])) : 'N/A';
     $notes = trim((string) ($quotation['notes'] ?? ''));
@@ -181,7 +178,6 @@ function legalpro_render_quotation_document_html(array $quotation, array $items,
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">Prepared for</div><div class="fin-doc-grid">'
         . '<div><strong>Client</strong>' . legalpro_finance_h($quotation['client_name'] ?? 'Client') . '</div>'
         . '<div><strong>Case</strong>' . legalpro_finance_h($quotation['case_title'] ?? 'N/A') . '</div>'
-        . '<div><strong>Status</strong>' . legalpro_finance_h($status) . '</div>'
         . '<div><strong>Issued</strong>' . legalpro_finance_h($issuedDate) . '</div>'
         . '<div><strong>Valid until</strong>' . legalpro_finance_h($validUntil) . '</div>'
         . '</div></div>'
