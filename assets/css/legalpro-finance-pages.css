@@ -131,6 +131,11 @@ body.legalpro-finance-page .payments-summary-card .table thead th {
     background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.06);
 }
 
+body.legalpro-finance-page:not(.legalpro-dark-mode) .payments-summary-card .lp-pill {
+    background: rgba(103, 116, 142, 0.14) !important;
+    color: #3d4d63 !important;
+}
+
 body.legalpro-dark-mode.legalpro-finance-page {
     background: var(--lp-dark-bg, #2a3040) !important;
     color: var(--lp-dark-text-secondary, #e2e8f2);

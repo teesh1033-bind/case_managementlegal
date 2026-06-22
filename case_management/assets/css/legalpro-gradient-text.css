@@ -36,8 +36,8 @@
     opacity: 0.85;
 }
 
-/* Argon / Bootstrap gradient utility classes (exclude light & white gradients) */
-[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
+/* Argon / Bootstrap gradient utility classes (exclude light & white gradients; badges use soft pills below) */
+[class*="bg-gradient-"]:not(.badge):not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
     color: #fff !important;
 }
 
@@ -60,10 +60,7 @@
     color: #fff !important;
 }
 
-/* Gradient badges */
-.badge[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
-    color: #fff !important;
-}
+/* Gradient badges — soft pill text colors are defined at the end of this file */
 
 /* Progress bars on gradients */
 .progress-bar[class*="bg-gradient-"]:not([class*="gradient-light"]):not([class*="faded-white"]):not([class*="gradient-white"]) {
@@ -230,9 +227,9 @@
 
 .badge.bg-gradient-secondary:not(.filter),
 .badge.bg-gradient-dark:not(.filter) {
-    background: rgba(103, 116, 142, 0.12) !important;
+    background: rgba(103, 116, 142, 0.14) !important;
     background-image: none !important;
-    color: #67748e !important;
+    color: #525f7f !important;
     border: none !important;
     font-weight: 700 !important;
     border-radius: 999px !important;
