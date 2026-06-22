@@ -189,3 +189,78 @@
 .availability-hero {
     color: #344767;
 }
+
+/* Modern soft status badges — replace heavy gradient fills (excludes theme color swatches) */
+.badge.bg-gradient-primary:not(.filter),
+.badge.bg-gradient-info:not(.filter) {
+    background: rgba(94, 114, 228, 0.14) !important;
+    background-image: none !important;
+    color: #5e72e4 !important;
+    border: none !important;
+    font-weight: 700 !important;
+    border-radius: 999px !important;
+}
+
+.badge.bg-gradient-success:not(.filter) {
+    background: rgba(45, 206, 137, 0.14) !important;
+    background-image: none !important;
+    color: #1aae6f !important;
+    border: none !important;
+    font-weight: 700 !important;
+    border-radius: 999px !important;
+}
+
+.badge.bg-gradient-danger:not(.filter) {
+    background: rgba(245, 54, 92, 0.12) !important;
+    background-image: none !important;
+    color: #d6336c !important;
+    border: none !important;
+    font-weight: 700 !important;
+    border-radius: 999px !important;
+}
+
+.badge.bg-gradient-warning:not(.filter) {
+    background: rgba(251, 140, 0, 0.14) !important;
+    background-image: none !important;
+    color: #c45c00 !important;
+    border: none !important;
+    font-weight: 700 !important;
+    border-radius: 999px !important;
+}
+
+.badge.bg-gradient-secondary:not(.filter),
+.badge.bg-gradient-dark:not(.filter) {
+    background: rgba(103, 116, 142, 0.12) !important;
+    background-image: none !important;
+    color: #67748e !important;
+    border: none !important;
+    font-weight: 700 !important;
+    border-radius: 999px !important;
+}
+
+body.legalpro-dark-mode .badge.bg-gradient-primary:not(.filter),
+body.legalpro-dark-mode .badge.bg-gradient-info:not(.filter) {
+    background: rgba(94, 114, 228, 0.22) !important;
+    color: #a5b4fc !important;
+}
+
+body.legalpro-dark-mode .badge.bg-gradient-success:not(.filter) {
+    background: rgba(45, 206, 137, 0.2) !important;
+    color: #8ce8c0 !important;
+}
+
+body.legalpro-dark-mode .badge.bg-gradient-danger:not(.filter) {
+    background: rgba(245, 54, 92, 0.22) !important;
+    color: #ff9eb5 !important;
+}
+
+body.legalpro-dark-mode .badge.bg-gradient-warning:not(.filter) {
+    background: rgba(251, 140, 0, 0.2) !important;
+    color: #ffc978 !important;
+}
+
+body.legalpro-dark-mode .badge.bg-gradient-secondary:not(.filter),
+body.legalpro-dark-mode .badge.bg-gradient-dark:not(.filter) {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--lp-dark-text-muted, #a0aec0) !important;
+}

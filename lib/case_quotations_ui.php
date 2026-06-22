@@ -198,7 +198,7 @@ function case_quotations_build_readonly_view(PDO $pdo, int $caseId): array
                 . '<td><span class="text-sm">' . htmlspecialchars($validUntilText) . '</span></td>'
                 . '<td class="text-end">'
                 . '<div class="d-flex flex-nowrap gap-1 justify-content-end">'
-                . '<a href="client-quotation-view.php?id=' . $quoteId . '&view=1" class="btn btn-sm btn-outline-secondary mb-0" target="_blank" rel="noopener">View</a>'
+                . '<a href="client-quotation-view.php?id=' . $quoteId . '&view=1" class="btn btn-sm btn-outline-info mb-0" target="_blank" rel="noopener">View</a>'
                 . '<a href="client-quotation-view.php?id=' . $quoteId . '" class="btn btn-sm btn-outline-primary mb-0" target="_blank" rel="noopener">PDF</a>'
                 . '</div>'
                 . '</td></tr>';

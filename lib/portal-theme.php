@@ -2903,8 +2903,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: #fff !important;'
         . '}';
 
-    $css .= $clientDark . ' .btn.bg-gradient-primary,'
-        . $clientDark . ' .badge.bg-gradient-primary {'
+    $css .= $clientDark . ' .btn.bg-gradient-primary {'
         . 'background: var(--lp-dark-surface-raised) !important;'
         . 'background-image: none !important;'
         . 'border: 1px solid var(--lp-dark-border-strong) !important;'
@@ -3160,7 +3159,6 @@ function renderPortalThemeCss(): string
 
     $primarySelectors = '.bg-gradient-primary,'
         . '.btn.bg-gradient-primary,'
-        . '.badge.bg-gradient-primary,'
         . '.lp-card-header-primary,'
         . '.modal-header.bg-gradient-primary,'
         . '.icon-shape.bg-gradient-primary';
@@ -3371,6 +3369,33 @@ function renderPortalThemeCss(): string
     if (isEffectivePortalThemeDark()) {
         $css .= renderPortalThemeDarkCss($primary, $rgb);
     }
+
+    $css .= renderModernSoftBadgeCss($primary);
+
+    return $css;
+}
+
+function renderModernSoftBadgeCss(string $primary): string
+{
+    $primarySoft = portalThemeHexToRgba($primary, 0.14);
+    $primarySoftDark = portalThemeHexToRgba($primary, 0.22);
+    $primaryText = $primary;
+
+    $css = '.badge.bg-gradient-primary:not(.filter),'
+        . '.badge.bg-gradient-info:not(.filter) {'
+        . 'background: ' . $primarySoft . ' !important;'
+        . 'background-image: none !important;'
+        . 'color: ' . $primaryText . ' !important;'
+        . 'border: none !important;'
+        . 'font-weight: 700 !important;'
+        . 'border-radius: 999px !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .badge.bg-gradient-primary:not(.filter),'
+        . 'body.legalpro-dark-mode .badge.bg-gradient-info:not(.filter) {'
+        . 'background: ' . $primarySoftDark . ' !important;'
+        . 'color: ' . portalThemeMixHex($primary, '#ffffff', 0.55) . ' !important;'
+        . '}';
 
     return $css;
 }

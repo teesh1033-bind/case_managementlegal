@@ -618,6 +618,32 @@ body.legalpro-dark-mode.lawyer-case-view-page #caseTabsContent .text-muted {
     color: var(--lp-dark-text-subtle, #8b95ad) !important;
 }
 
+body.legalpro-dark-mode.lawyer-case-view-page #quotations .btn-outline-info {
+    color: #8ee8f7 !important;
+    border-color: rgba(17, 205, 239, 0.55) !important;
+    background-color: rgba(17, 205, 239, 0.1) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #quotations .btn-outline-info:hover,
+body.legalpro-dark-mode.lawyer-case-view-page #quotations .btn-outline-info:focus {
+    color: #fff !important;
+    background-color: rgba(17, 205, 239, 0.28) !important;
+    border-color: rgba(17, 205, 239, 0.75) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #quotations .btn-outline-primary {
+    color: #e9edf5 !important;
+    border-color: rgba(255, 255, 255, 0.38) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+body.legalpro-dark-mode.lawyer-case-view-page #quotations .btn-outline-primary:hover,
+body.legalpro-dark-mode.lawyer-case-view-page #quotations .btn-outline-primary:focus {
+    color: #fff !important;
+    background-color: rgba(94, 114, 228, 0.22) !important;
+    border-color: rgba(94, 114, 228, 0.55) !important;
+}
+
 /* Lawyer client view — dark mode (lawyer portal only) */
 body.legalpro-dark-mode.lawyer-client-view-page .main-content .card .card,
 html.legalpro-theme-dark body.lawyer-client-view-page .main-content .card .card {
