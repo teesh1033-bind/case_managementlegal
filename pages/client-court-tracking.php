@@ -642,42 +642,10 @@ if (!empty($_SESSION['error_message'])) {
         </div>
     </main>
 
-    <!-- View Court Date Modal -->
-    <div class="modal fade" id="viewCourtDateModal" tabindex="-1" aria-labelledby="viewCourtDateModalLabel" aria-hidden="true">
-        <div class="modal-dialog court-date-modal modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-radius-xl shadow-lg overflow-hidden">
-                <div class="modal-header border-bottom">
-                    <h5 class="modal-title font-weight-bolder mb-0" id="viewCourtDateModalLabel">Court date details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <strong>Case:</strong> <span id="view_case_title"></span>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Date & Time:</strong> <span id="view_datetime"></span>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Status:</strong> <span id="view_status" class="ca-status-pill ca-status-pill--muted"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Title:</strong> <span id="view_title"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Description:</strong> <span id="view_description"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Location:</strong> <span id="view_location"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Created by:</strong> <span id="view_created_by"></span> (<span id="view_creator_role"></span>)
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php
+    $courtDateViewShowClient = false;
+    include __DIR__ . '/../inc/court-date-view-modal.php';
+    ?>
 
     <script src="../assets/js/core/jquery.min.js"></script>
     <script src="../assets/js/core/popper.min.js"></script>
@@ -686,6 +654,7 @@ if (!empty($_SESSION['error_message'])) {
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="../assets/js/court-date-view-modal.js?v=2"></script>
     <script>
         var clientCourtTrackingCalendar = null;
 
@@ -885,37 +854,11 @@ if (!empty($_SESSION['error_message'])) {
     </script>
 
     <script>
-        // View court date details
         function viewCourtDate(id) {
-            // Find the event data
             var events = <?php echo json_encode($court_dates); ?>;
             var eventData = events.find(function(e) { return e.id == id; });
-
-            if (eventData) {
-                document.getElementById('view_case_title').textContent = eventData.case_title;
-                document.getElementById('view_datetime').textContent = new Date(eventData.court_date).toLocaleString();
-                var statusLabels = {
-                    scheduled: 'Scheduled',
-                    completed: 'Completed',
-                    cancelled: 'Cancelled',
-                    postponed: 'Postponed'
-                };
-                var statusPills = {
-                    scheduled: 'ca-status-pill ca-status-pill--scheduled',
-                    completed: 'ca-status-pill ca-status-pill--done',
-                    cancelled: 'ca-status-pill ca-status-pill--declined',
-                    postponed: 'ca-status-pill ca-status-pill--pending'
-                };
-                var statusKey = (eventData.status || '').toLowerCase();
-                document.getElementById('view_status').textContent = statusLabels[statusKey] || (statusKey.charAt(0).toUpperCase() + statusKey.slice(1));
-                document.getElementById('view_status').className = statusPills[statusKey] || 'ca-status-pill ca-status-pill--muted';
-                document.getElementById('view_title').textContent = eventData.title;
-                document.getElementById('view_description').textContent = eventData.description || 'No description';
-                document.getElementById('view_location').textContent = eventData.location || 'Not specified';
-                document.getElementById('view_created_by').textContent = eventData.created_by_name || 'Unknown';
-                document.getElementById('view_creator_role').textContent = eventData.creator_role ? eventData.creator_role.charAt(0).toUpperCase() + eventData.creator_role.slice(1) : 'Unknown';
-
-                bootstrap.Modal.getOrCreateInstance(document.getElementById('viewCourtDateModal')).show();
+            if (eventData && typeof legalproOpenCourtDateViewModal === 'function') {
+                legalproOpenCourtDateViewModal(eventData);
             }
         }
     </script>

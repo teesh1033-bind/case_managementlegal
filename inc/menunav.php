@@ -64,7 +64,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 <?php legalpro_icons_head_scripts(); ?>
 <link href="../assets/css/legalpro-portal-shell.css?v=21" rel="stylesheet" />
 <link href="../assets/css/legalpro-admin-portal.css?v=32" rel="stylesheet" />
-<link href="../assets/css/dashboard-enhancements.css?v=13" rel="stylesheet" />
+<link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
 <?php echo legalpro_sidebar_stylesheet_tag(); ?>
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>
