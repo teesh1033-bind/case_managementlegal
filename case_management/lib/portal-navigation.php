@@ -15,7 +15,7 @@ function legalpro_portal_nav_asset_links(): void
     $loaded = true;
     echo '<link href="../assets/css/legalpro-portal-shell.css?v=22" rel="stylesheet" />' . "\n";
     echo '<link href="../assets/css/legalpro-admin-portal.css?v=31" rel="stylesheet" />' . "\n";
-    echo '<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />' . "\n";
+    echo '<link href="../assets/css/dashboard-enhancements.css?v=12" rel="stylesheet" />' . "\n";
     echo '<link href="../assets/css/legalpro-sidebar-nav.css?v=20" rel="stylesheet" />' . "\n";
     echo '<link href="../assets/css/legalpro-modern-nav.css?v=1" rel="stylesheet" />' . "\n";
     if (function_exists('legalpro_icons_asset_links')) {

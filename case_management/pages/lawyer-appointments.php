@@ -976,6 +976,7 @@ $html = <<<'HTML'
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <?php include __DIR__ . '/../inc/fullcalendar-day-click-js.php'; ?>
     <script>
         var lawyerAppointmentEvents = {APPOINTMENT_CALENDAR_EVENTS_JSON};
         var lawyerAppointmentsCalendar = null;
@@ -1071,6 +1072,12 @@ $html = <<<'HTML'
                 }
             });
             lawyerAppointmentsCalendar.render();
+            if (window.LegalProCalendar) {
+                LegalProCalendar.enhance(calendarEl, lawyerAppointmentsCalendar, function(ev) {
+                    var props = ev.extendedProps || {};
+                    focusLawyerAppointmentRow(props.appointmentId || parseInt(ev.id, 10));
+                });
+            }
             initLawyerCalendarSearch();
         }
 
@@ -1157,8 +1164,7 @@ $html = <<<'HTML'
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
-<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
         const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
         const lawyerHasPublishedSchedule = {LAWYER_HAS_SCHEDULE_JSON};

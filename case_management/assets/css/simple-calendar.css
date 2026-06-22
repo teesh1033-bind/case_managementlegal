@@ -58,6 +58,11 @@
 
 .calendar-day.has-events {
     background: #f0f8ff;
+    cursor: pointer;
+}
+
+.calendar-day.has-events:hover {
+    background: #e8f4ff;
 }
 
 .day-number {
