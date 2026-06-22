@@ -137,13 +137,16 @@ $html = <<<'HTML'
                     <div class="card">
                         <div class="card-body p-3">
                             <form method="GET" class="row align-items-end">
-                                <div class="col-md-8">
+                                <div class="col-md-6">
                                     <label class="form-label">Search Clients</label>
                                     <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="Search by name or email">
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label d-block invisible">Search</label>
-                                    <button type="submit" class="btn btn-primary w-100 mb-0">Search</button>
+                                <div class="col-md-4">
+                                    <label class="form-label d-block invisible">Actions</label>
+                                    <div class="lp-lawyer-filter-actions">
+                                        <button type="submit" class="btn btn-primary mb-0">Search</button>
+                                        <a href="lawyer-clients.php" class="btn btn-outline-secondary mb-0">Reset</a>
+                                    </div>
                                 </div>
                                 <div class="col-md-2 text-end">
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_CLIENTS} clients</p>

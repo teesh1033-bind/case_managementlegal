@@ -798,6 +798,7 @@ $html = <<<'HTML'
                                     </span>
                                     <input type="search" id="laCalSearchInput" class="la-cal-search-input"
                                            placeholder="Search by matter, client, date, status…" autocomplete="off">
+                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laCalSearchInput" aria-label="Reset search">Reset</button>
                                 </div>
                                 <div class="la-cal-search-results" id="laCalSearchResults" hidden></div>
                             </div>

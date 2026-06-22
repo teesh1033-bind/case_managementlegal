@@ -471,6 +471,7 @@ $html = <<<'HTML'
                                     </span>
                                     <input type="search" id="laAvailSearchInput" class="la-avail-search-input"
                                            placeholder="Search by day, date, time, available, unavailable…" autocomplete="off">
+                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laAvailSearchInput" aria-label="Reset search">Reset</button>
                                 </div>
                             </div>
                         </div>

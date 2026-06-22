@@ -166,11 +166,14 @@ $html = <<<'HTML'
                                         <option value="closed"{STATUS_CLOSED}>Closed</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label d-block invisible">Filter</label>
-                                    <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
+                                <div class="col-md-3">
+                                    <label class="form-label d-block invisible">Actions</label>
+                                    <div class="lp-lawyer-filter-actions">
+                                        <button type="submit" class="btn btn-primary mb-0">Filter</button>
+                                        <a href="lawyer-cases.php" class="btn btn-outline-secondary mb-0">Reset</a>
+                                    </div>
                                 </div>
-                                <div class="col-md-3 text-end">
+                                <div class="col-md-2 text-end">
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_CASES} cases</p>
                                 </div>
                             </form>

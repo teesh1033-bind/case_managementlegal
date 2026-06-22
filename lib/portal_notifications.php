@@ -430,6 +430,93 @@ function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit
     }
 
     try {
+        require_once __DIR__ . '/task_helpers.php';
+        ensure_task_support_schema($pdo);
+
+        $stmt = $pdo->prepare("
+            SELECT
+                t.id,
+                t.title,
+                t.due_date,
+                t.created_at,
+                c.id AS case_id,
+                c.title AS case_title
+            FROM tasks t
+            INNER JOIN cases c ON c.id = t.case_id
+            WHERE " . lawyer_task_access_sql() . "
+              AND t.due_date IS NOT NULL
+              AND t.due_date < CURDATE()
+              AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('completed', 'cancelled')
+            ORDER BY t.due_date ASC
+            LIMIT 8
+        ");
+        $stmt->execute([$lawyerId, $lawyerId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $taskId = (int) ($row['id'] ?? 0);
+            if ($taskId <= 0) {
+                continue;
+            }
+            $caseId = (int) ($row['case_id'] ?? 0);
+            $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+            $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Case';
+            $taskTitle = trim((string) ($row['title'] ?? '')) ?: 'Task';
+            $dueLabel = date('M j, Y', strtotime((string) $row['due_date']));
+
+            $items[] = legalpro_build_notification_item(
+                'task-overdue:' . $taskId,
+                'task',
+                'Task overdue',
+                $caseNumber . ' · ' . $taskTitle . ' · ' . $caseTitle . ' · Due ' . $dueLabel,
+                'tasks.php?due=overdue',
+                (string) ($row['due_date'] ?? $row['created_at'] ?? ''),
+                'list-checks',
+                (int) strtotime((string) $row['due_date'])
+            );
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT
+                t.id,
+                t.title,
+                t.due_date,
+                t.created_at,
+                c.id AS case_id,
+                c.title AS case_title
+            FROM tasks t
+            INNER JOIN cases c ON c.id = t.case_id
+            WHERE " . lawyer_task_access_sql() . "
+              AND t.due_date = CURDATE()
+              AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('completed', 'cancelled')
+            ORDER BY t.due_date ASC
+            LIMIT 8
+        ");
+        $stmt->execute([$lawyerId, $lawyerId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $taskId = (int) ($row['id'] ?? 0);
+            if ($taskId <= 0) {
+                continue;
+            }
+            $caseId = (int) ($row['case_id'] ?? 0);
+            $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+            $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Case';
+            $taskTitle = trim((string) ($row['title'] ?? '')) ?: 'Task';
+
+            $items[] = legalpro_build_notification_item(
+                'task-due-today:' . $taskId,
+                'task',
+                'Task due today',
+                $caseNumber . ' · ' . $taskTitle . ' · ' . $caseTitle,
+                'tasks.php?due=today',
+                (string) ($row['due_date'] ?? $row['created_at'] ?? ''),
+                'list-checks',
+                (int) strtotime((string) $row['due_date'])
+            );
+        }
+    } catch (PDOException $e) {
+        // ignore
+    }
+
+    try {
         $stmt = $pdo->prepare("
             SELECT
                 t.id,
@@ -457,6 +544,11 @@ function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $taskId = (int) ($row['id'] ?? 0);
             if ($taskId <= 0) {
+                continue;
+            }
+            $dueDate = (string) ($row['due_date'] ?? '');
+            $today = date('Y-m-d');
+            if ($dueDate !== '' && ($dueDate < $today || $dueDate === $today)) {
                 continue;
             }
             $caseId = (int) ($row['case_id'] ?? 0);

@@ -173,7 +173,8 @@ document.addEventListener("DOMContentLoaded", function () {
         searchForm.innerHTML = ""
             + "<div class=\"input-group\">"
             + "<span class=\"input-group-text text-body\"><i class=\"fas fa-search\" aria-hidden=\"true\"></i></span>"
-            + "<input type=\"search\" name=\"q\" class=\"form-control\" placeholder=\"Search...\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"Search\">"
+            + "<input type=\"search\" name=\"q\" id=\"lawyerNavbarSearchInput\" class=\"form-control\" placeholder=\"Search...\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"Search\">"
+            + "<button type=\"button\" class=\"lp-lawyer-search-reset-btn\" data-lawyer-search-reset=\"lawyerNavbarSearchInput\" data-clear-url-param=\"q\" aria-label=\"Reset search\">Reset</button>"
             + "</div>";
 
         var searchInput = searchForm.querySelector("input[name=\"q\"]");
