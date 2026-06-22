@@ -252,7 +252,11 @@ if (empty($upcomingCourtDates)) {
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+<<<<<<< HEAD
     <link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
+=======
+    <link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
+>>>>>>> a16ef36d67d25b0507f30aa54630c12fcfd9225e
     <link href="../assets/css/calendar-toolbar-visible.css?v=2" rel="stylesheet" />
     <link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
     <?php legalpro_icons_asset_links(); ?>
@@ -535,50 +539,17 @@ if (empty($upcomingCourtDates)) {
     </div>
 
     <!-- View Court Date Modal -->
-    <div class="modal fade" id="viewCourtDateModal" tabindex="-1">
-        <div class="modal-dialog court-date-modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Court Date Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <strong>Case:</strong> <span id="view_case_title"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Client:</strong> <span id="view_client_name"></span>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Date & Time:</strong> <span id="view_datetime"></span>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Status:</strong> <span id="view_status" class="lp-pill lp-pill--status-default"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Title:</strong> <span id="view_title"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Description:</strong> <span id="view_description"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Location:</strong> <span id="view_location"></span>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <strong>Created by:</strong> <span id="view_created_by"></span> (<span id="view_creator_role"></span>)
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php
+    $courtDateViewShowClient = true;
+    include __DIR__ . '/../inc/court-date-view-modal.php';
+    ?>
 
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="../assets/js/court-date-view-modal.js?v=2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('courtTrackingCalendar');
@@ -758,33 +729,8 @@ if (empty($upcomingCourtDates)) {
         function viewCourtDate(id) {
             var events = <?php echo json_encode($court_dates, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
             var eventData = events.find(function(e) { return String(e.id) === String(id); });
-
-            if (eventData) {
-                document.getElementById('view_case_title').textContent = eventData.case_title;
-                document.getElementById('view_client_name').textContent = eventData.client_name;
-                document.getElementById('view_datetime').textContent = new Date(eventData.court_date).toLocaleString();
-                var statusLabels = {
-                    scheduled: 'Scheduled',
-                    completed: 'Completed',
-                    cancelled: 'Cancelled',
-                    postponed: 'Postponed'
-                };
-                var statusPills = {
-                    scheduled: 'lp-pill lp-pill--status-progress',
-                    completed: 'lp-pill lp-pill--status-closed',
-                    cancelled: 'lp-pill lp-pill--status-declined',
-                    postponed: 'lp-pill lp-pill--status-pending'
-                };
-                var statusKey = (eventData.status || '').toLowerCase();
-                document.getElementById('view_status').textContent = statusLabels[statusKey] || (statusKey.charAt(0).toUpperCase() + statusKey.slice(1));
-                document.getElementById('view_status').className = statusPills[statusKey] || 'lp-pill lp-pill--status-default';
-                document.getElementById('view_title').textContent = eventData.title;
-                document.getElementById('view_description').textContent = eventData.description || 'No description';
-                document.getElementById('view_location').textContent = eventData.location || 'Not specified';
-                document.getElementById('view_created_by').textContent = eventData.created_by_name || 'Unknown';
-                document.getElementById('view_creator_role').textContent = eventData.creator_role ? eventData.creator_role.charAt(0).toUpperCase() + eventData.creator_role.slice(1) : 'Unknown';
-
-                bootstrap.Modal.getOrCreateInstance(document.getElementById('viewCourtDateModal')).show();
+            if (eventData && typeof legalproOpenCourtDateViewModal === 'function') {
+                legalproOpenCourtDateViewModal(eventData);
             }
         }
 

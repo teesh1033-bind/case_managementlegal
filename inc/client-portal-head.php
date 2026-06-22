@@ -20,7 +20,11 @@ require_once __DIR__ . '/legalpro-icons.php';
 <link href="../assets/css/legalpro-client-portal.css?v=31" rel="stylesheet" />
 
 <?php if (!defined('LEGALPRO_SKIP_DASHBOARD_ENHANCEMENTS')): ?>
+<<<<<<< HEAD
 <link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
+=======
+<link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
+>>>>>>> a16ef36d67d25b0507f30aa54630c12fcfd9225e
 <?php endif; ?>
 
 <link href="../assets/css/legalpro-admin-portal.css?v=30" rel="stylesheet" />

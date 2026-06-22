@@ -16,6 +16,10 @@ if (defined('LEGALPRO_CLIENT_COURT_TRACKING_CALENDAR_CSS')) {
 define('LEGALPRO_CLIENT_COURT_TRACKING_CALENDAR_CSS', true);
 ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
+<<<<<<< HEAD
 <link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
+=======
+<link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
+>>>>>>> a16ef36d67d25b0507f30aa54630c12fcfd9225e
 <link href="../assets/css/calendar-toolbar-visible.css?v=2" rel="stylesheet" />
 <?php include __DIR__ . '/portal-theme-calendar-dark.php'; ?>
