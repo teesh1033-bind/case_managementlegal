@@ -243,6 +243,11 @@ $lawyerWorkingHours       = [];
 $lawyerHasWorkingHours    = [];
 try {
     $lawyerIds = array_map(fn($l) => (int) $l['id'], $availableLawyers);
+    $allActiveLawyerIds = $pdo->query('SELECT id FROM lawyers WHERE is_active = 1')->fetchAll(PDO::FETCH_COLUMN);
+    $lawyerIds = array_values(array_unique(array_merge(
+        $lawyerIds,
+        array_map('intval', $allActiveLawyerIds ?: [])
+    )));
     $maps = loadLawyerAvailabilityForBooking($pdo, $lawyerIds);
     $lawyerAvailabilityByDate = $maps['byDate'];
     $lawyerAvailabilityByDay  = $maps['byDay'];
@@ -463,7 +468,6 @@ ob_start(); ?>
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
@@ -1305,7 +1309,7 @@ ob_start(); ?>
                         <p>Pick counsel, matter, date and time.</p>
                     </div>
                     <div class="ca-book-body">
-                        <form method="POST" action="" onsubmit="return validateForm()">
+                        <form method="POST" action="" onsubmit="return validateFormWrapper(event)">
                             <div class="ca-fld">
                                 <label>Lawyer</label>
                                 <select name="lawyer_id" id="lawyer_id" required onchange="onLawyerChange()">
@@ -1387,6 +1391,7 @@ ob_start(); ?>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <?php legalpro_render_availability_date_picker_script(); ?>
 
+    <script src="../assets/js/appointment-slot-window.js?v=2"></script>
     <script>
     var clientAppointmentEvents = <?= $appointmentCalendarEventsJson ?>;
     var clientAppointmentsCalendar = null;
@@ -1395,6 +1400,7 @@ ob_start(); ?>
     var lawyerHasAvailability    = <?= json_encode($lawyerHasAvailability) ?>;
     var lawyerWorkingHours       = <?= json_encode($lawyerWorkingHours) ?>;
     var lawyerHasWorkingHours    = <?= json_encode($lawyerHasWorkingHours) ?>;
+    var lawyerSlotsCache         = {};
     var selectedTime             = null;
     var aptModalInstance         = null;
     var APPOINTMENT_DURATION_MINUTES = 60;
@@ -1415,14 +1421,16 @@ ob_start(); ?>
         return displayHours + ':' + minutes + ' ' + period;
     }
 
-    function getStandardSlotTimes() {
-        var times = [];
-        for (var t = 8 * 60; t <= 18 * 60; t += 30) {
-            var h = Math.floor(t / 60);
-            var m = t % 60;
-            times.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
-        }
-        return times;
+    function getStandardSlotTimes(lawyerId, dateVal) {
+        var published = lawyerId ? hasSchedule(lawyerId) : false;
+        var dayHours = lawyerId && dateVal ? getWorkingHoursForDate(lawyerId, dateVal) : null;
+        var slots = lawyerId && dateVal && published ? getSlotsForDate(lawyerId, dateVal) : [];
+        return LegalproAppointmentSlots.getStandardSlotTimes(60, {
+            slots: slots,
+            hasPublishedSchedule: published,
+            hasWorkingHours: lawyerId ? hasWorkingHoursConfig(lawyerId) : false,
+            workingHoursDay: dayHours
+        }, 30);
     }
 
     function buildTimeMenuOptions() {
@@ -1431,7 +1439,7 @@ ob_start(); ?>
             return;
         }
         menu.innerHTML = '';
-        getStandardSlotTimes().forEach(function(val) {
+        getStandardSlotTimes(null, null).forEach(function(val) {
             var li = document.createElement('li');
             li.className = 'ca-time-dd-opt';
             li.setAttribute('role', 'option');
@@ -1454,6 +1462,11 @@ ob_start(); ?>
     }
 
     function getSlotsForDate(lawyerId, dateVal) {
+        var cacheKey = String(lawyerId) + '|' + dateVal;
+        if (lawyerSlotsCache[cacheKey]) {
+            return lawyerSlotsCache[cacheKey].slice();
+        }
+
         var byDate = lawyerAvailabilityByDate[lawyerId] || lawyerAvailabilityByDate[String(lawyerId)] || {};
         if (dateHasExplicitSlots(lawyerId, dateVal)) {
             return byDate[dateVal].slice();
@@ -1465,6 +1478,35 @@ ob_start(); ?>
             slots = slots.concat(byDay[dayKey]);
         }
         return slots;
+    }
+
+    function fetchLawyerSlotsForDate(lawyerId, dateVal) {
+        return fetch(
+            'client-lawyer-availability-api.php?lawyer_id=' + encodeURIComponent(lawyerId)
+                + '&date=' + encodeURIComponent(dateVal),
+            { credentials: 'same-origin', headers: { 'Accept': 'application/json' } }
+        )
+        .then(function(response) {
+            return response.json().then(function(body) {
+                if (!response.ok || !body.ok) {
+                    throw new Error((body && body.error) ? body.error : 'Could not load availability');
+                }
+                return body;
+            });
+        })
+        .then(function(data) {
+            var cacheKey = String(lawyerId) + '|' + dateVal;
+            lawyerSlotsCache[cacheKey] = data.slots || [];
+            lawyerHasAvailability[lawyerId] = !!data.hasSchedule;
+            lawyerHasAvailability[String(lawyerId)] = !!data.hasSchedule;
+            lawyerHasWorkingHours[lawyerId] = !!data.hasWorkingHours;
+            lawyerHasWorkingHours[String(lawyerId)] = !!data.hasWorkingHours;
+            if (data.workingHours) {
+                lawyerWorkingHours[lawyerId] = data.workingHours;
+                lawyerWorkingHours[String(lawyerId)] = data.workingHours;
+            }
+            return data.slots || [];
+        });
     }
 
     function getAvailableSlots(lawyerId, dateVal) {
@@ -1539,14 +1581,28 @@ ob_start(); ?>
         return start >= day.start && end <= day.end;
     }
 
+    function isWithinBookableHours(lawyerId, dateVal, timeVal) {
+        if (hasWorkingHoursConfig(lawyerId)) {
+            return isWithinWorkingHours(lawyerId, dateVal, timeVal);
+        }
+        if (hasSchedule(lawyerId)) {
+            return true;
+        }
+        return LegalproAppointmentSlots.isWithinDefaultBusinessHours(
+            getDayOfWeekFromDate(dateVal),
+            timeVal,
+            getDurationMinutes()
+        );
+    }
+
     function isTimeBookable(lawyerId, dateVal, timeVal, allSlots, availableSlots, published) {
-        if (!isWithinWorkingHours(lawyerId, dateVal, timeVal)) {
+        if (!isWithinBookableHours(lawyerId, dateVal, timeVal)) {
             return false;
         }
         if (isPastTime(dateVal, timeVal) || isBlockedByUnavailable(timeVal, allSlots)) {
             return false;
         }
-        if (availableSlots.length > 0) {
+        if (published && availableSlots.length > 0) {
             return isAvailable(timeVal, availableSlots, true);
         }
         if (published && !hasWorkingHoursConfig(lawyerId)) {
@@ -1641,10 +1697,14 @@ ob_start(); ?>
         if (hasWorkingHoursConfig(lawyerId) && (!dayHours || !dayHours.enabled)) {
             return false;
         }
+        if (!hasWorkingHoursConfig(lawyerId) && !published
+            && !LegalproAppointmentSlots.isDefaultBusinessDayEnabled(getDayOfWeekFromDate(dateVal))) {
+            return false;
+        }
         if (published && !availableSlots.length && !hasWorkingHoursConfig(lawyerId)) {
             return false;
         }
-        return getStandardSlotTimes().some(function(t) {
+        return getStandardSlotTimes(lawyerId, dateVal).some(function(t) {
             return isTimeBookable(lawyerId, dateVal, t, allSlots, availableSlots, published);
         });
     }
@@ -1691,6 +1751,7 @@ ob_start(); ?>
 
     function onLawyerChange() {
         resetTimeSelect();
+        lawyerSlotsCache = {};
         var dateInput = document.getElementById('appointment_date');
         if (dateInput && typeof LegalproAvailabilityDatePicker !== 'undefined') {
             LegalproAvailabilityDatePicker.rebuild(dateInput, appointmentDatePickerOptions());
@@ -1722,14 +1783,36 @@ ob_start(); ?>
             showDateAlert('warning', 'This date is not available. Please choose another date.');
             return;
         }
-        var allSlots = getSlotsForDate(lawyerId, dateVal);
+
+        trigger.disabled = true;
+        showDateAlert('info', 'Loading available times…');
+
+        fetchLawyerSlotsForDate(lawyerId, dateVal)
+            .then(function(allSlots) {
+                applyTimeAvailability(lawyerId, dateVal, allSlots);
+            })
+            .catch(function(err) {
+                trigger.disabled = true;
+                showDateAlert('warning', err.message || 'Could not load available times.');
+            });
+    }
+
+    function applyTimeAvailability(lawyerId, dateVal, allSlots) {
+        var trigger = document.getElementById('caTimeTrigger');
         var published = hasSchedule(lawyerId);
-        var availableSlots = getAvailableSlots(lawyerId, dateVal);
+        var availableSlots = (allSlots || []).filter(function(s) { return s.type === 'available'; });
         var dayHours = getWorkingHoursForDate(lawyerId, dateVal);
 
         if (hasWorkingHoursConfig(lawyerId) && (!dayHours || !dayHours.enabled)) {
             trigger.disabled = true;
             showDateAlert('warning', 'This lawyer does not work on the selected day.');
+            return;
+        }
+
+        if (!hasWorkingHoursConfig(lawyerId) && !published
+            && !LegalproAppointmentSlots.isDefaultBusinessDayEnabled(getDayOfWeekFromDate(dateVal))) {
+            trigger.disabled = true;
+            showDateAlert('warning', 'This lawyer is available on weekdays between 9:00 AM and 5:00 PM.');
             return;
         }
 
@@ -1742,7 +1825,7 @@ ob_start(); ?>
         if (hasWorkingHoursConfig(lawyerId)) {
             showDateAlert('info', 'Times are limited to the lawyer\'s working hours.');
         } else if (!published) {
-            showDateAlert('info', 'Standard business hours are open for booking.');
+            showDateAlert('info', 'Standard business hours are 9:00 AM – 5:00 PM on weekdays.');
         } else {
             hideDateAlert();
         }
@@ -1761,7 +1844,9 @@ ob_start(); ?>
             }
         });
         trigger.disabled = !anyAvail;
-        if (!anyAvail) showDateAlert('warning', 'No matching times available. Choose another date.');
+        if (!anyAvail) {
+            showDateAlert('warning', 'No matching times available. Choose another date.');
+        }
     }
 
     function validateForm() {
@@ -1777,14 +1862,30 @@ ob_start(); ?>
             return false;
         }
         if (!timeVal)  { alert('Please select a time slot.'); return false; }
-        var allSlots = getSlotsForDate(lawyerId, dateVal);
-        var published = hasSchedule(lawyerId);
-        var availableSlots = getAvailableSlots(lawyerId, dateVal);
-        if (!isTimeBookable(lawyerId, dateVal, timeVal, allSlots, availableSlots, published)) {
-            alert('Selected time is not available. Please choose another slot.');
-            return false;
-        }
-        return true;
+        return fetchLawyerSlotsForDate(lawyerId, dateVal)
+            .then(function(allSlots) {
+                var published = hasSchedule(lawyerId);
+                var availableSlots = allSlots.filter(function(s) { return s.type === 'available'; });
+                if (!isTimeBookable(lawyerId, dateVal, timeVal, allSlots, availableSlots, published)) {
+                    alert('Selected time is not available. Please choose another slot.');
+                    return false;
+                }
+                return true;
+            })
+            .catch(function() {
+                alert('Could not verify availability. Please try again.');
+                return false;
+            });
+    }
+
+    function validateFormWrapper(event) {
+        event.preventDefault();
+        validateForm().then(function(ok) {
+            if (ok) {
+                event.target.submit();
+            }
+        });
+        return false;
     }
 
     function escapeHtml(t) {

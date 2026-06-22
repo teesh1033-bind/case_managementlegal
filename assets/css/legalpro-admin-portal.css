@@ -1401,6 +1401,19 @@ body.admin-court-tracking-page .ct-row-icon.dashboard-stat-icon-wrap {
     box-shadow: none;
 }
 
+body.admin-appointments-page .appt-row-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 12px;
+    box-shadow: none;
+}
+
+body.admin-appointments-page .appt-row-icon.dashboard-stat-icon-wrap .lp-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
 body.admin-court-tracking-page .dashboard-upcoming-empty .dashboard-stat-icon-wrap {
     width: 2.75rem;
     height: 2.75rem;

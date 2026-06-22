@@ -798,6 +798,7 @@ $html = <<<'HTML'
                                     </span>
                                     <input type="search" id="laCalSearchInput" class="la-cal-search-input"
                                            placeholder="Search by matter, client, date, status…" autocomplete="off">
+                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laCalSearchInput" aria-label="Reset search">Reset</button>
                                 </div>
                                 <div class="la-cal-search-results" id="laCalSearchResults" hidden></div>
                             </div>
@@ -976,7 +977,6 @@ $html = <<<'HTML'
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-    <?php include __DIR__ . '/../inc/fullcalendar-day-click-js.php'; ?>
     <script>
         var lawyerAppointmentEvents = {APPOINTMENT_CALENDAR_EVENTS_JSON};
         var lawyerAppointmentsCalendar = null;
@@ -1057,12 +1057,28 @@ $html = <<<'HTML'
                 },
                 events: lawyerAppointmentEvents,
                 eventContent: renderAppointmentEvent,
+                dateClick: function(info) {
+                    if (window.legalproHandleCalendarDateClick) {
+                        window.legalproHandleCalendarDateClick(info, function(event) {
+                            var props = event.extendedProps || {};
+                            focusLawyerAppointmentRow(props.appointmentId || parseInt(event.id, 10));
+                        });
+                    }
+                },
+                dayCellDidMount: function(info) {
+                    if (window.legalproMountCalendarDayCell) {
+                        window.legalproMountCalendarDayCell(info);
+                    }
+                },
                 eventClick: function(info) {
                     info.jsEvent.preventDefault();
                     var props = info.event.extendedProps || {};
                     focusLawyerAppointmentRow(props.appointmentId || parseInt(info.event.id, 10));
                 },
                 eventDidMount: function(info) {
+                    if (window.legalproMountCalendarEventClickable) {
+                        window.legalproMountCalendarEventClickable(info);
+                    }
                     var props = info.event.extendedProps || {};
                     var tip = info.event.title;
                     if (props.client) {
@@ -1072,12 +1088,6 @@ $html = <<<'HTML'
                 }
             });
             lawyerAppointmentsCalendar.render();
-            if (window.LegalProCalendar) {
-                LegalProCalendar.enhance(calendarEl, lawyerAppointmentsCalendar, function(ev) {
-                    var props = ev.extendedProps || {};
-                    focusLawyerAppointmentRow(props.appointmentId || parseInt(ev.id, 10));
-                });
-            }
             initLawyerCalendarSearch();
         }
 
@@ -1165,12 +1175,11 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/appointment-slot-window.js?v=2"></script>
     <script>
         const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
         const lawyerHasPublishedSchedule = {LAWYER_HAS_SCHEDULE_JSON};
         const NO_AVAILABILITY_ON_DATE_MSG = 'No available times on this date. Choose another date.';
-        const SLOT_DAY_START_MINUTES = 9 * 60;
-        const SLOT_DAY_END_MINUTES = 17 * 60 + 30;
 
         var rescheduleOriginalDate = '';
         var rescheduleOriginalTime = '';
@@ -1211,15 +1220,11 @@ $html = <<<'HTML'
                 return durationInput && parseInt(durationInput.value, 10) === 30 ? 30 : 60;
             }
 
-            function getStandardSlotTimes(durationMinutes) {
-                var times = [];
-                var lastStart = durationMinutes === 30 ? SLOT_DAY_END_MINUTES : SLOT_DAY_END_MINUTES - 30;
-                for (var t = SLOT_DAY_START_MINUTES; t <= lastStart; t += durationMinutes) {
-                    var h = Math.floor(t / 60);
-                    var m = t % 60;
-                    times.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
-                }
-                return times;
+            function getStandardSlotTimes(durationMinutes, dateValue) {
+                return LegalproAppointmentSlots.getStandardSlotTimes(durationMinutes, {
+                    slots: dateValue ? getSlotsForDate(dateValue) : [],
+                    hasPublishedSchedule: lawyerHasPublishedSchedule
+                });
             }
 
             function normalizeRescheduleSelectTime(timeValue) {
@@ -1360,7 +1365,7 @@ $html = <<<'HTML'
                 var hasBookable = false;
 
                 timeSelect.innerHTML = '<option value="">Select time</option>';
-                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                getStandardSlotTimes(durationMinutes, dateValue).forEach(function(slotValue) {
                     var option = document.createElement('option');
                     option.value = slotValue;
                     option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);
@@ -1453,7 +1458,7 @@ $html = <<<'HTML'
                 var hasBookable = false;
 
                 timeSelect.innerHTML = '<option value="">Select time</option>';
-                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                getStandardSlotTimes(durationMinutes, dateValue).forEach(function(slotValue) {
                     var option = document.createElement('option');
                     option.value = slotValue;
                     option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);

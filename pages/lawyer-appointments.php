@@ -1175,12 +1175,11 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/appointment-slot-window.js?v=2"></script>
     <script>
         const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
         const lawyerHasPublishedSchedule = {LAWYER_HAS_SCHEDULE_JSON};
         const NO_AVAILABILITY_ON_DATE_MSG = 'No available times on this date. Choose another date.';
-        const SLOT_DAY_START_MINUTES = 9 * 60;
-        const SLOT_DAY_END_MINUTES = 17 * 60 + 30;
 
         var rescheduleOriginalDate = '';
         var rescheduleOriginalTime = '';
@@ -1221,15 +1220,11 @@ $html = <<<'HTML'
                 return durationInput && parseInt(durationInput.value, 10) === 30 ? 30 : 60;
             }
 
-            function getStandardSlotTimes(durationMinutes) {
-                var times = [];
-                var lastStart = durationMinutes === 30 ? SLOT_DAY_END_MINUTES : SLOT_DAY_END_MINUTES - 30;
-                for (var t = SLOT_DAY_START_MINUTES; t <= lastStart; t += durationMinutes) {
-                    var h = Math.floor(t / 60);
-                    var m = t % 60;
-                    times.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
-                }
-                return times;
+            function getStandardSlotTimes(durationMinutes, dateValue) {
+                return LegalproAppointmentSlots.getStandardSlotTimes(durationMinutes, {
+                    slots: dateValue ? getSlotsForDate(dateValue) : [],
+                    hasPublishedSchedule: lawyerHasPublishedSchedule
+                });
             }
 
             function normalizeRescheduleSelectTime(timeValue) {
@@ -1370,7 +1365,7 @@ $html = <<<'HTML'
                 var hasBookable = false;
 
                 timeSelect.innerHTML = '<option value="">Select time</option>';
-                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                getStandardSlotTimes(durationMinutes, dateValue).forEach(function(slotValue) {
                     var option = document.createElement('option');
                     option.value = slotValue;
                     option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);
@@ -1463,7 +1458,7 @@ $html = <<<'HTML'
                 var hasBookable = false;
 
                 timeSelect.innerHTML = '<option value="">Select time</option>';
-                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                getStandardSlotTimes(durationMinutes, dateValue).forEach(function(slotValue) {
                     var option = document.createElement('option');
                     option.value = slotValue;
                     option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);

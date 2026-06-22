@@ -903,6 +903,38 @@ body.legalpro-dark-mode.client-payments-page .cp-empty h5 {
     color: var(--cpp-text);
 }
 
+body.legalpro-dark-mode.client-documents-page .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+body.legalpro-dark-mode.client-documents-page .cdoc-row__icon.legalpro-doc-icon .lp-icon svg {
+    stroke-width: 2.35;
+}
+
+body.legalpro-dark-mode.client-documents-page .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--info {
+    background: rgba(14, 165, 233, 0.28) !important;
+}
+
+body.legalpro-dark-mode.client-documents-page .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--info .lp-icon svg {
+    stroke: #f0f9ff !important;
+}
+
+body.legalpro-dark-mode.client-documents-page .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--dark .lp-icon svg {
+    stroke: #e0e7ff !important;
+}
+
+body.legalpro-dark-mode.client-documents-page .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--danger .lp-icon svg {
+    stroke: #fecdd3 !important;
+}
+
+body.legalpro-dark-mode.client-documents-page .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--success .lp-icon svg {
+    stroke: #bbf7d0 !important;
+}
+
 body.legalpro-dark-mode.client-court-tracking-page .dashboard-calendar-hub,
 body.legalpro-dark-mode.client-appointments-page .dashboard-calendar-hub {
     border-color: var(--cpp-border);

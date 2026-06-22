@@ -329,7 +329,7 @@ function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
         legalpro_admin_display_name(),
         'Administrator',
         [],
-        'dashboard.php',
+        'admin-notifications.php',
         'admin-logout.php',
         'profile.php',
         '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
@@ -352,7 +352,7 @@ function legalpro_render_admin_notification_dropdown(): string
         . '<div class="text-muted text-sm p-3">Loading…</div>'
         . '</div>'
         . '<div class="legalpro-notif-panel__foot">'
-        . '<a href="dashboard.php" class="legalpro-notif-panel__view-all">View dashboard</a>'
+        . '<a href="admin-notifications.php" class="legalpro-notif-panel__view-all">View all</a>'
         . '</div>'
         . '</div>'
         . '<template id="adminNotifEmptyTpl">'
@@ -376,7 +376,7 @@ function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
         $displayName,
         'Lawyer',
         $notifications,
-        'lawyer-appointments.php',
+        'lawyer-notifications.php',
         'lawyer-logout.php',
         'lawyer-profile.php',
         '<li><a class="dropdown-item" href="lawyer-settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>'
@@ -691,6 +691,9 @@ function legalpro_document_file_icon_meta(string $filename): array
             return ['icon' => 'file-spreadsheet', 'accent' => 'success'];
         case 'txt':
             return ['icon' => 'file-text', 'accent' => 'dark'];
+        case 'html':
+        case 'htm':
+            return ['icon' => 'file-text', 'accent' => 'info'];
         default:
             return ['icon' => 'file', 'accent' => 'dark'];
     }
@@ -700,7 +703,7 @@ function legalpro_document_file_icon_wrap(string $filename, string $extraClass =
 {
     $meta = legalpro_document_file_icon_meta($filename);
     $class = 'dashboard-stat-icon-wrap dashboard-stat-icon-wrap--' . $meta['accent']
-        . ' document-item-icon flex-shrink-0 me-3';
+        . ' document-item-icon legalpro-doc-icon flex-shrink-0 me-3';
     if (trim($extraClass) !== '') {
         $class .= ' ' . trim($extraClass);
     }

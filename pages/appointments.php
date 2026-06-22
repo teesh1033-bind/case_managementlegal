@@ -135,12 +135,13 @@ try {
 }
 
 // Build appointment table rows
+$iconApptRow = legalpro_icon('calendar-clock');
 $appointmentsRows = '';
 if (empty($appointments)) {
     $appointmentsRows = '<tr><td colspan="5" class="text-center py-5">
         <div class="text-center">
-            <i class="ni ni-calendar-grid-58 text-muted" style="font-size: 3rem;"></i>
-            <p class="text-muted mt-3 mb-0">No appointments booked yet.</p>
+            <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary d-inline-flex align-items-center justify-content-center mb-3" style="width:3rem;height:3rem;min-width:3rem;">' . legalpro_icon('calendar-clock') . '</div>
+            <p class="text-muted mt-0 mb-0">No appointments booked yet.</p>
             <p class="text-xs text-muted mb-0">Use the New Appointment page to book your first appointment.</p>
         </div>
     </td></tr>';
@@ -172,10 +173,8 @@ if (empty($appointments)) {
         $appointmentsRows .= '
         <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td class="align-middle ps-3">
-                <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-info shadow text-center border-radius-md me-2">
-                        <i class="ni ni-folder-17 text-white text-xs opacity-10"></i>
-                    </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconApptRow . '</div>
                     <div>
                         <h6 class="text-sm mb-0">' . htmlspecialchars($caseDisplay) . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($clientName) . '</p>
@@ -325,7 +324,7 @@ $html = <<<'HTML'
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 <<<<<<< HEAD
-	<link href="../assets/css/legalpro-admin-portal.css?v=31" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=32" rel="stylesheet" />
 	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
 =======
 	<link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />

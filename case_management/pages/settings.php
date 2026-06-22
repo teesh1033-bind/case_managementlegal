@@ -408,7 +408,7 @@ $html = <<<'HTML'
                             <form method="post" class="mt-3">
                                 <input type="hidden" name="form_type" value="currency">
                                 <div class="form-group">
-                                    <div class="row g-2">
+                                    <div class="row g-2 align-items-end">
                                         <div class="col-md-6">
                                             <label class="form-control-label">Default Currency</label>
                                             <select class="form-control" name="currency">
@@ -416,8 +416,7 @@ $html = <<<'HTML'
                                             </select>
                                         </div>
                                         <div class="col-auto">
-                                            <label class="form-control-label d-block">Save Currency</label>
-                                            <button type="submit" class="btn btn-dark">Save</button>
+                                            <button type="submit" class="btn btn-dark mb-0">Save</button>
                                         </div>
                                     </div>
                                     <small class="text-muted d-block mt-2">Applies across admin, lawyer, and client portals — invoices, payments, dashboards, and documents.</small>

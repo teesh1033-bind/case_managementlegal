@@ -2657,12 +2657,12 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         'dark' => ['bg' => 'rgba(103, 116, 142, 0.16)', 'stroke' => '#c5cede'],
     ];
     foreach ($clientSemanticIconWraps as $tone => $meta) {
-        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ','
+        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ':not(.legalpro-doc-icon),'
             . $clientDark . ' .dashboard-glance-icon-wrap--' . $tone . ' {'
             . 'background: ' . $meta['bg'] . ' !important;'
             . 'color: ' . $meta['stroke'] . ' !important;'
             . '}';
-        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ' .lp-icon svg,'
+        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ':not(.legalpro-doc-icon) .lp-icon svg,'
             . $clientDark . ' .dashboard-glance-icon-wrap--' . $tone . ' .lp-icon svg {'
             . 'stroke: ' . $meta['stroke'] . ' !important;'
             . '}';

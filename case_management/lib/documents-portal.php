@@ -764,21 +764,69 @@ function legalpro_documents_shared_styles(): string
         .document-item h6, .document-item p.text-xs { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .document-item > .d-flex.gap-2 { flex: 0 0 auto; flex-shrink: 0; flex-wrap: nowrap; }
         .document-item .btn { white-space: nowrap; }
-        .document-item .document-item-icon.dashboard-stat-icon-wrap { width: 2.5rem; height: 2.5rem; min-width: 2.5rem; }
-        .document-item .document-item-icon.dashboard-stat-icon-wrap .lp-icon svg { width: 1.15rem; height: 1.15rem; }
-        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--dark { background: rgba(255, 255, 255, 0.1) !important; }
-        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--dark .lp-icon svg { stroke: #cbd5e1 !important; }
-        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--primary .lp-icon svg { stroke: #a8b8ff !important; }
-        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--danger .lp-icon svg { stroke: #ff8fa3 !important; }
-        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--success .lp-icon svg { stroke: #6ee7b7 !important; }
-        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg { stroke: #67e8f9 !important; }
-        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--warning .lp-icon svg { stroke: #fdba74 !important; }
-        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--dark { background: rgba(94, 114, 228, 0.12) !important; }
-        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--dark .lp-icon svg { stroke: #5e72e4 !important; }
-        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info { background: rgba(17, 205, 239, 0.12) !important; }
-        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg { stroke: #11cdef !important; }
-        body.legalpro-dark-mode #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg { stroke: #67e8f9 !important; }
-        body.legalpro-dark-mode .accordion-body .text-center .document-item-icon.dashboard-stat-icon-wrap--primary .lp-icon svg { stroke: #a8b8ff !important; }
+        .document-item .document-item-icon.dashboard-stat-icon-wrap { width: 2.5rem; height: 2.5rem; min-width: 2.5rem; border-radius: 12px; }
+        .document-item .document-item-icon.dashboard-stat-icon-wrap .lp-icon svg { width: 1.2rem; height: 1.2rem; stroke-width: 2.25; }
+        body.legalpro-dark-mode .document-item-icon.legalpro-doc-icon.dashboard-stat-icon-wrap {
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--dark {
+            background: rgba(99, 102, 241, 0.28) !important;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--dark .lp-icon svg {
+            stroke: #e0e7ff !important;
+            stroke-width: 2.35;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--primary {
+            background: rgba(94, 114, 228, 0.28) !important;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--primary .lp-icon svg {
+            stroke: #e0e7ff !important;
+            stroke-width: 2.35;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--danger {
+            background: rgba(245, 54, 92, 0.24) !important;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--danger .lp-icon svg {
+            stroke: #fecdd3 !important;
+            stroke-width: 2.35;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--success {
+            background: rgba(45, 206, 137, 0.22) !important;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--success .lp-icon svg {
+            stroke: #bbf7d0 !important;
+            stroke-width: 2.35;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--info {
+            background: rgba(14, 165, 233, 0.28) !important;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg {
+            stroke: #f0f9ff !important;
+            stroke-width: 2.35;
+        }
+        body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--warning .lp-icon svg {
+            stroke: #fed7aa !important;
+            stroke-width: 2.35;
+        }
+        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--dark {
+            background: rgba(94, 114, 228, 0.22) !important;
+        }
+        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--dark .lp-icon svg {
+            stroke: #c7d2fe !important;
+        }
+        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info {
+            background: rgba(14, 165, 233, 0.24) !important;
+        }
+        #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg {
+            stroke: #e0f2fe !important;
+        }
+        body.legalpro-dark-mode #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--info .lp-icon svg {
+            stroke: #f0f9ff !important;
+        }
+        body.legalpro-dark-mode .accordion-body .text-center .document-item-icon.dashboard-stat-icon-wrap--primary .lp-icon svg {
+            stroke: #e0e7ff !important;
+        }
         .doc-case-accordion-btn { align-items: flex-start; }
         .doc-case-accordion-meta { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; padding-right: 1.5rem; }
         .doc-case-accordion-title { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
@@ -900,7 +948,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
     ob_start();
     include dirname(__DIR__) . '/inc/admin-portal-head.php';
     $html .= ob_get_clean();
-    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=4" rel="stylesheet" />'
+    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />'
         . '<style>' . legalpro_documents_shared_styles() . '</style>
 </head>
 <body class="g-sidenav-show g-sidenav-pinned bg-gray-100 legalpro-admin-portal legalpro-documents-page' . $bodyClass . '">
