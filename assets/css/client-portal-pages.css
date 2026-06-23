@@ -800,8 +800,15 @@ body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
     border-radius: var(--cpp-radius);
     border: 1px solid var(--cpp-border);
     box-shadow: var(--cpp-shadow);
-    overflow: hidden;
+    overflow: visible;
     margin-bottom: 0;
+}
+
+.client-court-tracking-page .dashboard-calendar-hub__body,
+.client-appointments-page .dashboard-calendar-hub__body,
+.client-court-tracking-page #courtTrackingCalendar,
+.client-appointments-page #clientAppointmentsCalendar {
+    overflow: visible !important;
 }
 
 /* ── Status pills (payments reuse appointment styles) ────────────────── */
@@ -938,4 +945,5 @@ body.legalpro-dark-mode.client-documents-page .cdoc-row__icon.legalpro-doc-icon.
 body.legalpro-dark-mode.client-court-tracking-page .dashboard-calendar-hub,
 body.legalpro-dark-mode.client-appointments-page .dashboard-calendar-hub {
     border-color: var(--cpp-border);
+    overflow: visible !important;
 }

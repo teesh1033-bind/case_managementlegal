@@ -207,7 +207,7 @@ if (!empty($_SESSION['error_message'])) {
     include __DIR__ . '/../inc/client-portal-head.php';
     include __DIR__ . '/../inc/client-court-tracking-calendar-css.php';
     ?>
-    <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/client-portal-pages.css?v=5" rel="stylesheet" />
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body.client-court-tracking-page {
@@ -714,7 +714,7 @@ if (!empty($_SESSION['error_message'])) {
                 nowIndicator: true,
                 fixedWeekCount: false,
                 dayMaxEvents: 3,
-                moreLinkClick: 'day',
+                moreLinkClick: 'popover',
                 buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
                 eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 dayHeaderFormat: { weekday: 'short' },

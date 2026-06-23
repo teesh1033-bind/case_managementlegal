@@ -470,7 +470,7 @@ ob_start(); ?>
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-    <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/client-portal-pages.css?v=5" rel="stylesheet" />
     <?php
     require_once __DIR__ . '/../inc/availability-date-picker.php';
     legalpro_render_availability_date_picker_assets();
@@ -2018,7 +2018,7 @@ ob_start(); ?>
                 nowIndicator: true,
                 fixedWeekCount: false,
                 dayMaxEvents: 3,
-                moreLinkClick: 'day',
+                moreLinkClick: 'popover',
                 buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
                 eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
                 dayHeaderFormat: { weekday: 'short' },

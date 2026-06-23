@@ -24,6 +24,34 @@ function legalpro_finance_h($value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Shared PDF/HTML document header with company logo beside company name.
+ */
+function legalpro_render_finance_document_top(string $heading, string $badge = ''): string
+{
+    $firm = legalpro_finance_firm_details();
+    $logoSrc = function_exists('legalpro_company_logo_data_uri') ? legalpro_company_logo_data_uri() : null;
+
+    $logoHtml = '';
+    if ($logoSrc !== null && $logoSrc !== '') {
+        $logoHtml = '<img class="fin-doc-logo" src="' . $logoSrc . '" alt="' . legalpro_finance_h($firm['name']) . ' logo">';
+    }
+
+    $badgeHtml = $badge !== ''
+        ? '<div class="fin-doc-top-actions"><div class="fin-doc-badge">' . legalpro_finance_h($badge) . '</div></div>'
+        : '<div class="fin-doc-top-actions"></div>';
+
+    return '<div class="fin-doc-top">'
+        . '<div class="fin-doc-top-main">'
+        . '<div class="fin-doc-brand-row">' . $logoHtml
+        . '<div class="fin-doc-brand-text"><div class="fin-doc-firm">' . legalpro_finance_h($firm['name']) . '</div></div>'
+        . '</div>'
+        . '<h1>' . legalpro_finance_h($heading) . '</h1>'
+        . '</div>'
+        . $badgeHtml
+        . '</div>';
+}
+
 function legalpro_render_finance_document_page(
     string $title,
     string $bodyHtml,
@@ -52,10 +80,7 @@ function legalpro_render_invoice_document_html(array $invoice, int $invoiceId): 
     $notes = trim((string) ($invoice['notes'] ?? '')) ?: 'Thank you for your business.';
 
     return '<div class="fin-doc">'
-        . '<div class="fin-doc-top">'
-        . '<div><h1>Invoice</h1><div class="fin-doc-firm">' . legalpro_finance_h($firm['name']) . '</div></div>'
-        . '<div class="fin-doc-top-actions"><div class="fin-doc-badge">' . legalpro_finance_h($invoiceNumber) . '</div></div>'
-        . '</div>'
+        . legalpro_render_finance_document_top('Invoice', $invoiceNumber)
         . '<div class="fin-doc-body">'
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">Invoice details</div><div class="fin-doc-grid">'
         . '<div><strong>Issue date</strong>' . legalpro_finance_h($issueDate) . '</div>'
@@ -105,10 +130,7 @@ function legalpro_render_payment_receipt_document_html(array $payment, int $paym
     $balance = max((float) ($payment['estimated_fees'] ?? 0) - $paidToDate, 0);
 
     return '<div class="fin-doc">'
-        . '<div class="fin-doc-top">'
-        . '<div><h1>Payment Receipt</h1><div class="fin-doc-firm">' . legalpro_finance_h($firm['name']) . '</div></div>'
-        . '<div class="fin-doc-top-actions"><div class="fin-doc-badge">' . legalpro_finance_h($receiptNumber) . '</div></div>'
-        . '</div>'
+        . legalpro_render_finance_document_top('Payment Receipt', $receiptNumber)
         . '<div class="fin-doc-body">'
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">Receipt details</div><div class="fin-doc-grid">'
         . '<div><strong>Issued on</strong>' . legalpro_finance_h($issuedDate) . '</div>'
@@ -167,10 +189,7 @@ function legalpro_render_quotation_document_html(array $quotation, array $items,
     }
 
     return '<div class="fin-doc">'
-        . '<div class="fin-doc-top">'
-        . '<div><h1>' . legalpro_finance_h($title) . '</h1><div class="fin-doc-firm">' . legalpro_finance_h($firm['name']) . '</div></div>'
-        . '<div class="fin-doc-top-actions"><div class="fin-doc-badge">' . legalpro_finance_h($quotationNumber) . '</div></div>'
-        . '</div>'
+        . legalpro_render_finance_document_top($title, $quotationNumber)
         . '<div class="fin-doc-body">'
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">From</div><div class="fin-doc-grid">'
         . '<div><strong>' . legalpro_finance_h($firm['name']) . '</strong>' . nl2br(legalpro_finance_h($firm['address'])) . '</div>'

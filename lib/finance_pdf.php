@@ -38,6 +38,10 @@ function legalpro_output_finance_pdf(string $html, string $fileName): void
     $options->set('isRemoteEnabled', false);
     $options->set('isHtml5ParserEnabled', true);
     $options->set('defaultFont', 'DejaVu Sans');
+    $projectRoot = dirname(__DIR__);
+    if (is_dir($projectRoot)) {
+        $options->set('chroot', $projectRoot);
+    }
 
     $dompdf = new Dompdf($options);
     $dompdf->loadHtml($html);

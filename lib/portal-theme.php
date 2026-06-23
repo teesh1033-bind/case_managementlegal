@@ -1918,6 +1918,13 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: ' . $primaryOnDark . ' !important;'
         . '}';
 
+    // Unread hover badge uses --legalpro-theme-primary; client dark mode remaps that to a light accent.
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item__hover-caption {'
+        . 'background: ' . $primary . ' !important;'
+        . 'color: #ffffff !important;'
+        . 'box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode .cc-pill {'
         . 'background: ' . $soft12 . ' !important;'
         . 'color: ' . $primary . ' !important;'

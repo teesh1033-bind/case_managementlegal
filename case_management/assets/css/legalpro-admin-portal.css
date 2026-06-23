@@ -479,6 +479,8 @@ body.legalpro-admin-portal .navbar-main .dashboard-quick-actions + .legalpro-nav
 }
 
 body.legalpro-dark-mode .legalpro-notif-item__hover-caption {
+    background: #5e72e4 !important;
+    color: #fff !important;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
