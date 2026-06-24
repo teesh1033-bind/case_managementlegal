@@ -75,7 +75,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
             'case_title'   => $apt['case_title'] ?: 'Appointment',
             'lawyer_name'  => $apt['lawyer_name'] ?: 'TBD',
             'starts_at'    => date('M j, Y g:i A', $startsAt),
+            'starts_at_raw' => (string) $apt['starts_at'],
             'ends_at'      => $endsAt ? date('M j, Y g:i A', $endsAt) : null,
+            'ends_at_raw'  => !empty($apt['ends_at']) ? (string) $apt['ends_at'] : null,
             'status'       => $apt['status'],
             'status_label' => $meta['label'],
             'status_pill'  => $meta['pill'],
@@ -1367,21 +1369,7 @@ ob_start(); ?>
     </main>
 
     <!-- Details modal -------------------------------------------------------->
-    <div class="modal fade ca-modal" id="aptModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Appointment details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="aptModalBody">
-                    <div class="text-center py-4">
-                        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php include __DIR__ . '/../inc/client-appointment-view-modal.php'; ?>
 
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
@@ -1392,6 +1380,7 @@ ob_start(); ?>
     <?php legalpro_render_availability_date_picker_script(); ?>
 
     <script src="../assets/js/appointment-slot-window.js?v=2"></script>
+    <script src="../assets/js/client-appointment-view-modal.js?v=1"></script>
     <script>
     var clientAppointmentEvents = <?= $appointmentCalendarEventsJson ?>;
     var clientAppointmentsCalendar = null;
@@ -1402,7 +1391,6 @@ ob_start(); ?>
     var lawyerHasWorkingHours    = <?= json_encode($lawyerHasWorkingHours) ?>;
     var lawyerSlotsCache         = {};
     var selectedTime             = null;
-    var aptModalInstance         = null;
     var APPOINTMENT_DURATION_MINUTES = 60;
 
     function getDurationMinutes() {
@@ -1894,15 +1882,7 @@ ob_start(); ?>
         return d.innerHTML;
     }
 
-    function getModal() {
-        if (!aptModalInstance) aptModalInstance = new bootstrap.Modal(document.getElementById('aptModal'));
-        return aptModalInstance;
-    }
-
     function viewAppointmentDetails(id) {
-        var body = document.getElementById('aptModalBody');
-        body.innerHTML = '<div class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary" role="status"></span><p class="text-sm text-muted mt-2 mb-0">Loading…</p></div>';
-        getModal().show();
         fetch('client-appointments.php?ajax=appointment_details&id=' + id, {
             headers: { 'Accept': 'application/json' },
             credentials: 'same-origin'
@@ -1914,33 +1894,12 @@ ob_start(); ?>
             });
         })
         .then(function(d) {
-            body.innerHTML =
-                '<div style="display:flex;flex-direction:column;gap:1rem">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem">' +
-                        '<div>' +
-                            '<p style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin:0 0 3px">Matter</p>' +
-                            '<p style="font-size:15px;font-weight:700;color:#1e293b;margin:0">' + escapeHtml(d.case_title) + '</p>' +
-                        '</div>' +
-                        '<span class="ca-badge ' + escapeHtml(d.status_pill || 'b-muted') + '">' +
-                            '<span class="ca-badge-dot"></span>' + escapeHtml(d.status_label) +
-                        '</span>' +
-                    '</div>' +
-                    '<div class="ca-detail-row">' +
-                        '<div class="ca-detail-field"><p class="lbl">Lawyer</p><p class="val">' + escapeHtml(d.lawyer_name) + '</p></div>' +
-                        '<div class="ca-detail-field"><p class="lbl">Requested</p><p class="val">' + escapeHtml(d.requested_at || '—') + '</p></div>' +
-                        '<div class="ca-detail-field"><p class="lbl">Starts</p><p class="val">' + escapeHtml(d.starts_at) + '</p></div>' +
-                        '<div class="ca-detail-field"><p class="lbl">Ends</p><p class="val">' + escapeHtml(d.ends_at || '—') + '</p></div>' +
-                    '</div>' +
-                    '<div>' +
-                        '<p style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin:0 0 4px">Notes</p>' +
-                        (d.notes
-                            ? '<p style="font-size:13px;color:#1e293b;margin:0">' + escapeHtml(d.notes) + '</p>'
-                            : '<p style="font-size:13px;color:#94a3b8;margin:0">No notes provided.</p>') +
-                    '</div>' +
-                '</div>';
+            if (typeof legalproOpenAppointmentViewModal === 'function') {
+                legalproOpenAppointmentViewModal(d);
+            }
         })
         .catch(function(err) {
-            body.innerHTML = '<div style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:.75rem 1rem;font-size:13px">' + escapeHtml(err.message) + '</div>';
+            window.alert(err.message || 'Could not load appointment');
         });
     }
 

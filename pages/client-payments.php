@@ -183,7 +183,7 @@ if (empty($invoices)) {
                 ' . $statusBadge . '
             </td>
             <td class="align-middle text-center pe-4">
-                <a href="invoice-download.php?id=' . (int) $invoice['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Download PDF</a>
+                <a href="invoice-download.php?id=' . (int) $invoice['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">PDF</a>
             </td>
         </tr>';
     }
@@ -237,7 +237,7 @@ if (empty($payments)) {
                 <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 7rem;" title="' . htmlspecialchars($ref) . '">' . $refDisp . '</p>
             </td>
             <td class="align-middle text-center pe-4">
-                <a href="payment-receipt.php?id=' . (int) $payment['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Download PDF</a>
+                <a href="payment-receipt.php?id=' . (int) $payment['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">PDF</a>
             </td>
         </tr>';
     }
@@ -335,10 +335,22 @@ $heroHtml = client_portal_render_hero([
 
 $clientPageNavbar = legalpro_render_client_page_navbar(
     'Payments & invoices',
-    'Payments',
-    'Search invoices & payments…',
-    legalpro_client_page_search_options('client-payments.php')
+    'Payments'
 );
+
+$paymentsSearchQuery = legalpro_client_page_search_query();
+$paymentsSearchHtml = '<section class="cp-pay-search-wrap cp-pay-search-wrap--featured" aria-label="Search billing">'
+    . '<label class="cp-pay-search-label" for="cpPaymentsSearchInput">Search invoices &amp; payments</label>'
+    . '<div class="cp-pay-search-field">'
+    . '<span class="cp-pay-search-icon" aria-hidden="true">'
+    . '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">'
+    . '<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3-3"></path>'
+    . '</svg></span>'
+    . '<input type="search" id="cpPaymentsSearchInput" class="cp-pay-search-input"'
+    . ' placeholder="Search by invoice, quotation, payment, case, or reference…"'
+    . ' value="' . htmlspecialchars($paymentsSearchQuery, ENT_QUOTES, 'UTF-8') . '"'
+    . ' autocomplete="off" maxlength="200" aria-label="Search invoices, quotations, and payments">'
+    . '</div></section>';
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -355,7 +367,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-    <link href="../assets/css/client-portal-pages.css?v=4" rel="stylesheet" />
+    <link href="../assets/css/client-portal-pages.css?v=5" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-payments-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
@@ -367,6 +379,8 @@ $html = <<<'HTML'
             {MESSAGE}
 
             {HERO}
+
+            {PAYMENTS_SEARCH}
 
             <div class="cp-layout">
                 <div class="cp-panel">
@@ -470,9 +484,16 @@ $html = <<<'HTML'
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
     (function () {
+        function getPaymentsSearchQuery() {
+            var input = document.getElementById('cpPaymentsSearchInput');
+            if (input) {
+                return input.value.trim().toLowerCase();
+            }
+            return (new URLSearchParams(window.location.search).get('q') || '').trim().toLowerCase();
+        }
+
         function applyPaymentsPageSearch() {
-            var params = new URLSearchParams(window.location.search);
-            var q = (params.get('q') || '').trim().toLowerCase();
+            var q = getPaymentsSearchQuery();
             function filterRows(selector, countId, singular, plural) {
                 var rows = document.querySelectorAll(selector);
                 var visible = 0;
@@ -496,6 +517,7 @@ $html = <<<'HTML'
             filterRows('.cp-quotation-row.cp-search-row', 'cpQuotationCount', 'quotation', 'quotations');
             filterRows('.cp-payment-row.cp-search-row', 'cpPaymentCount', 'payment', 'payments');
 
+            var params = new URLSearchParams(window.location.search);
             if (window.location.hash === '#quotations') {
                 var quotationsPanel = document.getElementById('quotations');
                 if (quotationsPanel) {
@@ -512,7 +534,14 @@ $html = <<<'HTML'
                 }
             }
         }
-        document.addEventListener('DOMContentLoaded', applyPaymentsPageSearch);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            applyPaymentsPageSearch();
+            var input = document.getElementById('cpPaymentsSearchInput');
+            if (input) {
+                input.addEventListener('input', applyPaymentsPageSearch);
+            }
+        });
     })();
     </script>
 </body>
@@ -522,6 +551,7 @@ HTML;
 // Replace placeholders
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{HERO}', $heroHtml, $html);
+$html = str_replace('{PAYMENTS_SEARCH}', $paymentsSearchHtml, $html);
 $html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
 $html = str_replace('{CLIENT_NAME}', htmlspecialchars($client_name), $html);
 $html = str_replace('{TOTAL_INVOICED}', formatCurrency($totalInvoiced), $html);

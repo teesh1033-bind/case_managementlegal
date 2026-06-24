@@ -826,6 +826,117 @@ body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
     min-width: 0;
 }
 
+/* ── Payments page — featured search ─────────────────────────────────── */
+.client-payments-page .cp-pay-search-wrap {
+    position: relative;
+    width: 100%;
+    margin-bottom: 1.25rem;
+}
+
+.client-payments-page .cp-pay-search-wrap--featured {
+    padding: 0.9rem 1rem 1rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
+    border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+    box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+}
+
+.client-payments-page .cp-pay-search-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cpp-primary, var(--legalpro-theme-primary, #5e72e4));
+    margin-bottom: 0.55rem;
+}
+
+.client-payments-page .cp-pay-search-field {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: #fff;
+    border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
+}
+
+.client-payments-page .cp-pay-search-field:focus-within {
+    border-color: var(--cpp-primary, var(--legalpro-theme-primary, #5e72e4));
+    box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
+}
+
+.client-payments-page .cp-pay-search-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+    color: var(--cpp-primary, var(--legalpro-theme-primary, #5e72e4));
+    flex-shrink: 0;
+}
+
+.client-payments-page .cp-pay-search-field svg {
+    width: 18px;
+    height: 18px;
+    color: currentColor;
+    flex-shrink: 0;
+}
+
+.client-payments-page .cp-pay-search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    font-family: inherit;
+}
+
+.client-payments-page .cp-pay-search-input::placeholder {
+    color: #64748b;
+    font-weight: 500;
+}
+
+body.legalpro-dark-mode.client-payments-page .cp-pay-search-wrap--featured {
+    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+body.legalpro-dark-mode.client-payments-page .cp-pay-search-label {
+    color: #b8c4ff;
+}
+
+body.legalpro-dark-mode.client-payments-page .cp-pay-search-icon {
+    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+    color: #d4dcff;
+}
+
+body.legalpro-dark-mode.client-payments-page .cp-pay-search-field {
+    background: var(--lp-dark-surface-raised, #3d455c);
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+}
+
+body.legalpro-dark-mode.client-payments-page .cp-pay-search-field:focus-within {
+    border-color: #9aaeff;
+    box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+}
+
+body.legalpro-dark-mode.client-payments-page .cp-pay-search-input {
+    color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode.client-payments-page .cp-pay-search-input::placeholder {
+    color: #94a3b8;
+}
+
 @media (max-width: 640px) {
     .cp-hero-card,
     .cc-hero-card,

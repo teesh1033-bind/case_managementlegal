@@ -1121,8 +1121,10 @@ body.legalpro-dark-mode .legalpro-cal-day-picker__title {
     position: absolute;
     top: 1rem;
     right: 1rem;
+    z-index: 5;
     filter: brightness(0) invert(1);
     opacity: 0.85;
+    pointer-events: auto;
 }
 
 .legalpro-court-detail__close:hover {
@@ -1321,6 +1323,13 @@ body.legalpro-dark-mode .legalpro-cal-day-picker__title {
     border-top: 1px solid #e9edf5;
     gap: 0.5rem;
     padding: 0.85rem 1.35rem 1.15rem;
+    justify-content: flex-end;
+}
+
+.legalpro-court-detail__footer .btn {
+    min-width: 5.5rem;
+    border-radius: 10px;
+    font-weight: 600;
 }
 
 @media (max-width: 575px) {
@@ -1352,6 +1361,18 @@ body.legalpro-dark-mode .legalpro-court-detail__notes-text {
 
 body.legalpro-dark-mode .legalpro-court-detail__footer {
     border-top-color: var(--lp-dark-border) !important;
+}
+
+body.legalpro-dark-mode .legalpro-court-detail__footer .btn-outline-secondary {
+    background: var(--lp-dark-surface-raised, #3d455c);
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
+    color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode .legalpro-court-detail__footer .btn-outline-secondary:hover {
+    background: var(--lp-dark-surface-hover, #464f68);
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.22));
+    color: #fff;
 }
 
 body.legalpro-dark-mode .legalpro-court-detail__notes--empty .legalpro-court-detail__notes-text {
