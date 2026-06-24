@@ -108,39 +108,84 @@ try {
     $clientDocuments = [];
 }
 
+$iconDocRow = legalpro_icon('file-text');
+$iconCommentEmpty = legalpro_icon('message-circle');
+$iconCaseRow = legalpro_icon('briefcase');
+$iconMail = legalpro_icon('mail');
+$iconPhone = legalpro_icon('phone');
+$iconMap = legalpro_icon('map-pin');
+$iconCalendar = legalpro_icon('calendar');
+$iconArrowLeft = legalpro_icon('arrow-left');
+$iconPanelContact = legalpro_icon('user');
+$iconPanelCases = legalpro_icon('briefcase');
+$iconPanelActivity = legalpro_icon('message-circle');
+
+$clientFullName = trim($client['first_name'] . ' ' . $client['last_name']);
+$clientInitials = legalpro_portal_initials($clientFullName, 'CL');
+$documentsCount = count($clientDocuments);
+$commentsCount = count($clientComments);
+$totalCases = count($clientCases);
+$activeCases = count(array_filter($clientCases, static function ($case) {
+    return ($case['status'] ?? '') !== 'closed';
+}));
+
+$contactDetailsHtml = '';
+$contactRows = [
+    ['icon' => $iconMail, 'label' => 'Email', 'value' => $client['email'] ?: 'Not provided'],
+    ['icon' => $iconPhone, 'label' => 'Phone', 'value' => $client['phone'] ?: 'Not provided'],
+    ['icon' => $iconMap, 'label' => 'Address', 'value' => $client['address'] ?: 'Not provided'],
+    ['icon' => $iconCalendar, 'label' => 'Client since', 'value' => date('M d, Y', strtotime($client['created_at']))],
+];
+foreach ($contactRows as $row) {
+    $contactDetailsHtml .= '
+    <div class="lcv-detail-item">
+        <div class="lcv-detail-item__icon">' . $row['icon'] . '</div>
+        <div class="min-width-0">
+            <span class="lcv-detail-item__label">' . htmlspecialchars($row['label']) . '</span>
+            <span class="lcv-detail-item__value">' . htmlspecialchars($row['value']) . '</span>
+        </div>
+    </div>';
+}
+
 // Build cases HTML
 $casesHtml = '';
 if (empty($clientCases)) {
-    $casesHtml = '<p class="text-muted">No cases found for this client.</p>';
+    $casesHtml = '<div class="text-center py-5 px-3">
+        <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseRow . '</div>
+        <h6 class="font-weight-bolder mt-3 mb-2">No cases yet</h6>
+        <p class="text-sm text-muted mb-0">Cases you share with this client will appear here.</p>
+    </div>';
 } else {
-    $casesHtml = '<div class="row">';
+    $casesHtml = '<div class="lcv-case-grid">';
     foreach ($clientCases as $case) {
         $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
         $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
-        $primaryBadge = $case['is_primary'] ? '<span class="ca-status-pill ca-status-pill--pending ms-1">Primary</span>' : '';
+        $primaryBadge = $case['is_primary'] ? '<span class="ca-status-pill ca-status-pill--pending">Primary</span>' : '';
+        $description = trim((string) ($case['description'] ?? ''));
+        if ($description === '') {
+            $description = 'No description provided.';
+        } elseif (strlen($description) > 120) {
+            $description = substr($description, 0, 117) . '...';
+        }
 
         $casesHtml .= '
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h6 class="mb-0">' . htmlspecialchars($case['title']) . '</h6>
-                        <div class="d-flex flex-wrap gap-1 justify-content-end">' . $statusBadge . $priorityBadge . $primaryBadge . '</div>
-                    </div>
-                    <p class="text-sm text-muted mb-2">Case #' . htmlspecialchars($case['id']) . '</p>
-                    <p class="text-sm mb-2">' . htmlspecialchars(substr($case['description'] ?: 'No description', 0, 100)) . '...</p>
-                    <div class="text-end">
-                        <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-outline-primary">View Case</a>
-                    </div>
+        <article class="lcv-case-card">
+            <div class="lcv-case-card__head">
+                <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconCaseRow . '</div>
+                <div class="min-width-0">
+                    <h6 class="lcv-case-card__title">' . htmlspecialchars($case['title']) . '</h6>
+                    <p class="lcv-case-card__id">Case #' . (int) $case['id'] . '</p>
                 </div>
             </div>
-        </div>';
+            <div class="lcv-case-card__badges">' . $statusBadge . $priorityBadge . $primaryBadge . '</div>
+            <p class="lcv-case-card__desc">' . htmlspecialchars($description) . '</p>
+            <div class="lcv-case-card__foot">
+                <a href="lawyer-case-view.php?id=' . (int) $case['id'] . '" class="btn btn-sm btn-primary mb-0">View case</a>
+            </div>
+        </article>';
     }
     $casesHtml .= '</div>';
 }
-
-$iconDocRow = legalpro_icon('file-text');
-$iconCommentEmpty = legalpro_icon('message-circle');
 
 // Build comments feed HTML
 $commentsHtml = '';
@@ -188,7 +233,7 @@ if (empty($clientComments)) {
 // Build documents HTML
 $documentsHtml = '';
 if (empty($clientDocuments)) {
-    $documentsHtml = '<tr><td colspan="4" class="text-center text-muted py-3">No documents uploaded by this client</td></tr>';
+    $documentsHtml = '<tr><td colspan="5" class="text-center text-muted py-5">No documents uploaded for this client\'s cases</td></tr>';
 } else {
     foreach ($clientDocuments as $document) {
         $filePath = isset($document['file_path']) ? trim((string) $document['file_path']) : '';
@@ -263,78 +308,8 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
-    <style>
-        .lawyer-client-comments-feed .cc-comment-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            max-height: min(36rem, 65vh);
-            overflow-y: auto;
-            padding-right: 0.15rem;
-        }
-        .lawyer-client-comments-feed .cc-comment-list::-webkit-scrollbar { width: 6px; }
-        .lawyer-client-comments-feed .cc-comment-list::-webkit-scrollbar-thumb {
-            background: rgba(45, 206, 137, 0.35);
-            border-radius: 999px;
-        }
-        .lawyer-client-comments-feed .cc-comment-item-inner {
-            background: #fff;
-            border: 1px solid rgba(0,0,0,.06);
-            border-radius: 0.75rem;
-            padding: 1rem 1.15rem;
-            border-left: 4px solid #8392ab;
-            box-shadow: 0 1px 4px rgba(0,0,0,.04);
-        }
-        .lawyer-client-comments-feed .cc-comment-item--client .cc-comment-item-inner { border-left-color: #8898aa; }
-        .lawyer-client-comments-feed .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
-        .lawyer-client-comments-feed .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
-        .lawyer-client-comments-feed .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
-        .lawyer-client-comments-feed .cc-comment-head {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 1rem;
-            margin-bottom: 0.65rem;
-            flex-wrap: wrap;
-        }
-        .lawyer-client-comments-feed .cc-comment-head-main {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.35rem;
-            min-width: 0;
-        }
-        .lawyer-client-comments-feed .cc-comment-author {
-            font-size: 0.875rem;
-            font-weight: 700;
-            color: #344767;
-        }
-        .lawyer-client-comments-feed .cc-comment-case {
-            display: inline;
-        }
-        .lawyer-client-comments-feed .cc-comment-time {
-            font-size: 0.75rem;
-            color: #8392ab;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        .lawyer-client-comments-feed .cc-comment-text {
-            font-size: 0.875rem;
-            line-height: 1.6;
-            color: #525f7f;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            margin: 0;
-        }
-        body.lawyer-client-view-page:not(.legalpro-dark-mode) #clientTabs .nav-link,
-        body.lawyer-client-view-page:not(.legalpro-dark-mode) #clientTabs .nav-link:hover,
-        body.lawyer-client-view-page:not(.legalpro-dark-mode) #clientTabs .nav-link:focus,
-        body.lawyer-client-view-page:not(.legalpro-dark-mode) #clientTabs .nav-link.active {
-            color: #344767 !important;
-        }
-    </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-client-view-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-client-view-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -354,112 +329,121 @@ $html = <<<'HTML'
         </nav>
 
         <div class="container-fluid py-4">
-            <!-- Client Overview -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <h5 class="mb-0">Client Information</h5>
+            <div class="card lcv-hero mb-4">
+                <div class="lcv-hero__gradient">
+                    <a href="lawyer-clients.php" class="lcv-back">{ICON_ARROW_LEFT} Back to clients</a>
+                    <div class="lcv-hero__main">
+                        <div class="lcv-avatar" aria-hidden="true">{CLIENT_INITIALS}</div>
+                        <div>
+                            <h1 class="lcv-hero__name">{CLIENT_NAME}</h1>
+                            <p class="lcv-hero__meta">Client since {CLIENT_SINCE}</p>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6 class="text-sm font-weight-bold mb-3">Personal Information</h6>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Full Name:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CLIENT_NAME}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Email:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CLIENT_EMAIL}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Phone:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CLIENT_PHONE}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Address:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CLIENT_ADDRESS}</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6 class="text-sm font-weight-bold mb-3">Case Statistics</h6>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Total Cases:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{TOTAL_CASES}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Active Cases:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{ACTIVE_CASES}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Client Since:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CLIENT_SINCE}</span>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lcv-glance">
+                <div class="lcv-glance__item">
+                    <div>
+                        <div class="lcv-glance__val">{TOTAL_CASES}</div>
+                        <div class="lcv-glance__lbl">Total cases</div>
+                    </div>
+                    <div class="lcv-glance__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_PANEL_CASES}</div>
+                </div>
+                <div class="lcv-glance__item">
+                    <div>
+                        <div class="lcv-glance__val">{ACTIVE_CASES}</div>
+                        <div class="lcv-glance__lbl">Active cases</div>
+                    </div>
+                    <div class="lcv-glance__icon" style="background:rgba(45,206,137,.12);color:#2dce89;">{ICON_PANEL_CASES}</div>
+                </div>
+                <div class="lcv-glance__item">
+                    <div>
+                        <div class="lcv-glance__val">{COMMENTS_COUNT}</div>
+                        <div class="lcv-glance__lbl">Comments</div>
+                    </div>
+                    <div class="lcv-glance__icon" style="background:rgba(17,205,239,.12);color:#11cdef;">{ICON_PANEL_ACTIVITY}</div>
+                </div>
+                <div class="lcv-glance__item">
+                    <div>
+                        <div class="lcv-glance__val">{DOCUMENTS_COUNT}</div>
+                        <div class="lcv-glance__lbl">Documents</div>
+                    </div>
+                    <div class="lcv-glance__icon" style="background:rgba(251,99,64,.12);color:#fb6340;">{ICON_DOC_ROW}</div>
+                </div>
+            </div>
+
+            <div class="card lcv-panel mb-4">
+                <div class="lcv-panel__head">
+                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_PANEL_CONTACT}</div>
+                    <div>
+                        <h6>Contact information</h6>
+                        <p>How to reach this client</p>
+                    </div>
+                </div>
+                <div class="lcv-panel__body">
+                    <div class="lcv-detail-grid">{CONTACT_DETAILS}</div>
+                </div>
+            </div>
+
+            <div class="card lcv-panel mb-4">
+                <div class="lcv-panel__head">
+                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_PANEL_CASES}</div>
+                    <div>
+                        <h6>Associated cases</h6>
+                        <p>Cases involving this client that are assigned to you</p>
+                    </div>
+                </div>
+                <div class="lcv-panel__body">
+                    {CLIENT_CASES}
+                </div>
+            </div>
+
+            <div class="card lcv-panel">
+                <div class="lcv-panel__head">
+                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_PANEL_ACTIVITY}</div>
+                    <div>
+                        <h6>Activity</h6>
+                        <p>Comments and documents from shared cases</p>
+                    </div>
+                </div>
+                <div class="lcv-tabs-wrap">
+                    <ul class="nav lcv-tabs" id="clientTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
+                                Comments <span class="lcv-tab-badge">{COMMENTS_COUNT}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                                Documents <span class="lcv-tab-badge">{DOCUMENTS_COUNT}</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="lcv-panel__body pt-3">
+                    <div class="tab-content" id="clientTabsContent">
+                        <div class="tab-pane fade show active" id="comments" role="tabpanel">
+                            <div class="lawyer-client-comments-feed">
+                                {COMMENTS_HTML}
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Client Cases -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <h5 class="mb-0">Associated Cases</h5>
-                            <p class="text-sm text-muted mb-0">Cases involving this client that are assigned to you</p>
-                        </div>
-                        <div class="card-body">
-                            {CLIENT_CASES}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Client Activity Tabs -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <ul class="nav nav-tabs" id="clientTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">Comments</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">Documents</button>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="card-body">
-                            <div class="tab-content" id="clientTabsContent">
-                                <!-- Comments Tab -->
-                                <div class="tab-pane fade show active" id="comments" role="tabpanel">
-                                    <div class="lawyer-client-comments-feed">
-                                        {COMMENTS_HTML}
-                                    </div>
-                                </div>
-
-                                <!-- Documents Tab -->
-                                <div class="tab-pane fade" id="documents" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped align-items-center mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Document</th>
-                                                    <th class="text-center">Type</th>
-                                                    <th class="text-center">Size</th>
-                                                    <th class="text-center">Uploaded</th>
-                                                    <th class="text-end">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {DOCUMENTS_HTML}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                        <div class="tab-pane fade" id="documents" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table lcv-table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Document</th>
+                                            <th class="text-center">Type</th>
+                                            <th class="text-center">Size</th>
+                                            <th class="text-center">Uploaded</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {DOCUMENTS_HTML}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -490,23 +474,25 @@ $html = <<<'HTML'
 HTML;
 
 // Calculate statistics
-$totalCases = count($clientCases);
-$activeCases = count(array_filter($clientCases, function($case) {
-    return $case['status'] !== 'closed';
-}));
-
 $replacements = [
     '{NAVIGATION}' => $navHtml,
-    '{CLIENT_NAME}' => htmlspecialchars($client['first_name'] . ' ' . $client['last_name']),
-    '{CLIENT_EMAIL}' => htmlspecialchars($client['email'] ?: 'Not provided'),
-    '{CLIENT_PHONE}' => htmlspecialchars($client['phone'] ?: 'Not provided'),
-    '{CLIENT_ADDRESS}' => htmlspecialchars($client['address'] ?: 'Not provided'),
+    '{CLIENT_NAME}' => htmlspecialchars($clientFullName),
+    '{CLIENT_INITIALS}' => htmlspecialchars($clientInitials),
+    '{CLIENT_SINCE}' => date('M d, Y', strtotime($client['created_at'])),
     '{TOTAL_CASES}' => $totalCases,
     '{ACTIVE_CASES}' => $activeCases,
-    '{CLIENT_SINCE}' => date('M d, Y', strtotime($client['created_at'])),
+    '{COMMENTS_COUNT}' => $commentsCount,
+    '{DOCUMENTS_COUNT}' => $documentsCount,
+    '{CONTACT_DETAILS}' => $contactDetailsHtml,
     '{CLIENT_CASES}' => $casesHtml,
     '{COMMENTS_HTML}' => $commentsHtml,
     '{DOCUMENTS_HTML}' => $documentsHtml,
+    '{ICON_ARROW_LEFT}' => $iconArrowLeft,
+    '{ICON_PANEL_CONTACT}' => $iconPanelContact,
+    '{ICON_PANEL_CASES}' => $iconPanelCases,
+    '{ICON_PANEL_ACTIVITY}' => $iconPanelActivity,
+    '{ICON_DOC_ROW}' => $iconDocRow,
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);
