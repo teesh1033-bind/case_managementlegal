@@ -202,6 +202,131 @@
         });
     }
 
+    function initActivityFeedPagination() {
+        var wrap = qs('.cd-activity-feed-wrap');
+        if (!wrap) {
+            return;
+        }
+
+        var perPage = parseInt(wrap.getAttribute('data-activity-per-page') || '6', 10);
+        var items = qsa('.cp-activity-feed .cp-activity-item', wrap);
+        if (!items.length || items.length <= perPage) {
+            return;
+        }
+
+        var nav = qs('.cd-activity-pagination', wrap);
+        var rangeEl = qs('[data-activity-range]', wrap);
+        var pagesEl = qs('[data-activity-pages]', wrap);
+        if (!nav || !rangeEl || !pagesEl) {
+            return;
+        }
+
+        var currentPage = 1;
+        var totalPages = Math.ceil(items.length / perPage);
+
+        function pageButton(label, page, options) {
+            options = options || {};
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cd-activity-pagination__btn';
+            if (options.nav) {
+                btn.className += ' cd-activity-pagination__btn--nav';
+            }
+            if (options.active) {
+                btn.className += ' cd-activity-pagination__btn--active';
+            }
+            btn.textContent = label;
+            btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
+            if (options.disabled) {
+                btn.disabled = true;
+            } else if (page) {
+                btn.addEventListener('click', function () {
+                    showPage(page);
+                });
+            }
+            return btn;
+        }
+
+        function ellipsis() {
+            var span = document.createElement('span');
+            span.className = 'cd-activity-pagination__ellipsis';
+            span.textContent = '…';
+            span.setAttribute('aria-hidden', 'true');
+            return span;
+        }
+
+        function visiblePages() {
+            if (totalPages <= 7) {
+                var all = [];
+                for (var p = 1; p <= totalPages; p++) {
+                    all.push(p);
+                }
+                return all;
+            }
+
+            var pages = [1];
+            var start = Math.max(2, currentPage - 1);
+            var end = Math.min(totalPages - 1, currentPage + 1);
+
+            if (start > 2) {
+                pages.push('gap');
+            }
+            for (var i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            if (end < totalPages - 1) {
+                pages.push('gap');
+            }
+            pages.push(totalPages);
+            return pages;
+        }
+
+        function renderControls() {
+            pagesEl.innerHTML = '';
+
+            var prev = pageButton('‹ Prev', currentPage - 1, {
+                nav: true,
+                disabled: currentPage === 1,
+                ariaLabel: 'Previous page'
+            });
+            pagesEl.appendChild(prev);
+
+            visiblePages().forEach(function (page) {
+                if (page === 'gap') {
+                    pagesEl.appendChild(ellipsis());
+                    return;
+                }
+                pagesEl.appendChild(pageButton(String(page), page, {
+                    active: page === currentPage,
+                    ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
+                }));
+            });
+
+            var next = pageButton('Next ›', currentPage + 1, {
+                nav: true,
+                disabled: currentPage === totalPages,
+                ariaLabel: 'Next page'
+            });
+            pagesEl.appendChild(next);
+        }
+
+        function showPage(page) {
+            currentPage = Math.max(1, Math.min(totalPages, page));
+            items.forEach(function (item, index) {
+                var itemPage = Math.floor(index / perPage) + 1;
+                item.classList.toggle('cp-activity-item--hidden', itemPage !== currentPage);
+            });
+
+            var start = (currentPage - 1) * perPage + 1;
+            var end = Math.min(currentPage * perPage, items.length);
+            rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + items.length;
+
+            renderControls();
+        }
+
+        showPage(1);
+    }
+
     function initActivityIcons() {
         qsa('.cp-activity-item__icon[data-icon]').forEach(function (el) {
             var name = el.getAttribute('data-icon');
@@ -300,5 +425,6 @@
         initNotificationDropdown();
         initMoreSheet();
         initActivityIcons();
+        initActivityFeedPagination();
     });
 })();

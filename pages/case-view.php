@@ -267,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type'])) {
                 'tax_rate' => $taxRate,
                 'created_by' => 'Admin',
                 'updated_by' => 'Admin',
-            ], quotation_save_number_payload($pdo, $editQuotationId));
+            ], bank_account_fields_from_post($_POST), quotation_save_number_payload($pdo, $editQuotationId));
 
             if ($editQuotationId > 0) {
                 if (update_case_quotation($pdo, $caseId, $editQuotationId, $payload, $items)) {
@@ -863,6 +863,9 @@ if (empty($quotations)) {
             'amount' => (float) ($quotation['subtotal'] ?? 0),
             'valid_until' => (string) ($quotation['valid_until'] ?? ''),
             'tax_rate' => (float) ($quotation['tax_rate'] ?? 0),
+            'bank_account_slot' => (int) ($quotation['bank_account_slot'] ?? getDefaultBankAccountSlot()),
+            'payment_terms' => (string) ($quotation['payment_terms'] ?? getDefaultPaymentTerms()),
+            'payment_instructions' => (string) ($quotation['payment_instructions'] ?? getDefaultPaymentInstructions()),
         ];
 
         $quoteNumber = !empty($quotation['quotation_number'])
@@ -958,6 +961,10 @@ $caseDetailTabsNav = '<ul class="nav case-detail-tabs case-detail-tabs--sidebar"
     . legalpro_case_detail_tab('#events', 'activity', 'Activity', count($caseEvents))
     . '</ul>';
 
+ob_start();
+include __DIR__ . '/../inc/admin-portal-head.php';
+$adminPortalHeadHtml = ob_get_clean();
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -973,9 +980,10 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/case-detail-tabs.css?v=10" rel="stylesheet" />
+    {ADMIN_PORTAL_HEAD}
+    <link href="../assets/css/case-detail-tabs.css?v=11" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
     </aside>
@@ -1149,6 +1157,18 @@ $html = <<<'HTML'
                                                     <div class="col-md-3">
                                                         <label class="form-label text-sm">Tax Rate (%)</label>
                                                         <input type="number" class="form-control" name="quotation_tax_rate" id="quotation_tax_rate" min="0" step="0.01" value="0">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label text-sm">Bank account on quotation</label>
+                                                        <?php echo legalpro_render_bank_account_select('bank_account_slot', getDefaultBankAccountSlot(), 'quotation_bank_account_slot'); ?>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label text-sm">Payment terms</label>
+                                                        <input type="text" class="form-control" name="payment_terms" value="<?php echo htmlspecialchars(getDefaultPaymentTerms(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label text-sm">Payment instructions</label>
+                                                        <input type="text" class="form-control" name="payment_instructions" value="<?php echo htmlspecialchars(getDefaultPaymentInstructions(), ENT_QUOTES, 'UTF-8'); ?>" placeholder="Optional">
                                                     </div>
                                                 </div>
 
@@ -1412,6 +1432,8 @@ $replacements = [
     '{TASKS_COUNT}' => count($tasks),
     '{EVENTS_HTML}' => $eventsHtml,
     '{EVENTS_COUNT}' => count($caseEvents),
+    '{ADMIN_PORTAL_HEAD}' => $adminPortalHeadHtml,
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

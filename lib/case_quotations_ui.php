@@ -36,7 +36,7 @@ function case_quotations_handle_post(
                 'tax_rate' => $taxRate,
                 'created_by' => $actorLabel,
                 'updated_by' => $actorLabel,
-            ], quotation_save_number_payload($pdo, $editQuotationId));
+            ], bank_account_fields_from_post($post), quotation_save_number_payload($pdo, $editQuotationId));
 
             if ($editQuotationId > 0) {
                 if (update_case_quotation($pdo, $caseId, $editQuotationId, $payload, $items)) {
@@ -117,6 +117,9 @@ function case_quotations_build_admin_view(PDO $pdo, int $caseId): array
                 'amount' => (float) ($quotation['subtotal'] ?? 0),
                 'valid_until' => (string) ($quotation['valid_until'] ?? ''),
                 'tax_rate' => (float) ($quotation['tax_rate'] ?? 0),
+                'bank_account_slot' => (int) ($quotation['bank_account_slot'] ?? getDefaultBankAccountSlot()),
+                'payment_terms' => (string) ($quotation['payment_terms'] ?? getDefaultPaymentTerms()),
+                'payment_instructions' => (string) ($quotation['payment_instructions'] ?? getDefaultPaymentInstructions()),
             ];
 
             $quoteNumber = !empty($quotation['quotation_number'])

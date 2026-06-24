@@ -247,6 +247,22 @@ body.legalpro-dark-mode.legalpro-finance-page .progress {
     background: rgba(255, 255, 255, 0.1);
 }
 
+body.legalpro-dark-mode.legalpro-finance-page .btn-dark,
+body.legalpro-dark-mode.legalpro-finance-page .btn.bg-gradient-dark {
+    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(94, 114, 228, 0.28) !important;
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .btn-dark:hover,
+body.legalpro-dark-mode.legalpro-finance-page .btn-dark:focus,
+body.legalpro-dark-mode.legalpro-finance-page .btn.bg-gradient-dark:hover,
+body.legalpro-dark-mode.legalpro-finance-page .btn.bg-gradient-dark:focus {
+    background: linear-gradient(135deg, #6d7fe8 0%, #916fef 100%) !important;
+    color: #fff !important;
+}
+
 /* Client detail — financial summary */
 body.admin-client-detail-page .client-fin-summary .dashboard-stat-card {
     border-radius: 14px;

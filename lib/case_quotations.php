@@ -3,6 +3,10 @@
  * Case quotations — schema, numbering, and persistence helpers.
  */
 
+if (!function_exists('getDefaultBankAccountSlot')) {
+    require_once __DIR__ . '/bank_accounts.php';
+}
+
 function ensure_case_quotation_schema(PDO $pdo): void
 {
     $pdo->exec("
@@ -42,6 +46,9 @@ function ensure_case_quotation_schema(PDO $pdo): void
         'ADD COLUMN invoice_id INT NULL AFTER total_amount',
         'ADD COLUMN responded_at TIMESTAMP NULL AFTER updated_at',
         'ADD COLUMN responded_by VARCHAR(100) NULL AFTER responded_at',
+        'ADD COLUMN bank_account_slot TINYINT UNSIGNED NULL AFTER notes',
+        'ADD COLUMN payment_terms TEXT NULL AFTER bank_account_slot',
+        'ADD COLUMN payment_instructions TEXT NULL AFTER payment_terms',
     ] as $alter) {
         try {
             $pdo->exec('ALTER TABLE case_quotations ' . $alter);
@@ -175,8 +182,9 @@ function save_case_quotation(PDO $pdo, int $caseId, array $data, array $items): 
         $stmt = $pdo->prepare('
             INSERT INTO case_quotations (
                 case_id, quotation_number, title, status, valid_until, notes,
+                bank_account_slot, payment_terms, payment_instructions,
                 subtotal, tax_rate, tax_amount, total_amount, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             $caseId,
@@ -185,6 +193,9 @@ function save_case_quotation(PDO $pdo, int $caseId, array $data, array $items): 
             case_quotations_default_status(),
             !empty($data['valid_until']) ? (string) $data['valid_until'] : null,
             trim((string) ($data['notes'] ?? '')) ?: null,
+            isset($data['bank_account_slot']) ? (int) $data['bank_account_slot'] : getDefaultBankAccountSlot(),
+            trim((string) ($data['payment_terms'] ?? '')) ?: null,
+            trim((string) ($data['payment_instructions'] ?? '')) ?: null,
             $subtotal,
             $taxRate,
             $taxAmount,
@@ -522,6 +533,7 @@ function update_case_quotation(PDO $pdo, int $caseId, int $quotationId, array $d
         $stmt = $pdo->prepare('
             UPDATE case_quotations
             SET quotation_number = ?, title = ?, status = ?, valid_until = ?, notes = ?,
+                bank_account_slot = ?, payment_terms = ?, payment_instructions = ?,
                 subtotal = ?, tax_rate = ?, tax_amount = ?, total_amount = ?
             WHERE id = ? AND case_id = ?
         ');
@@ -531,6 +543,9 @@ function update_case_quotation(PDO $pdo, int $caseId, int $quotationId, array $d
             $newStatus,
             !empty($data['valid_until']) ? (string) $data['valid_until'] : null,
             trim((string) ($data['notes'] ?? '')) ?: null,
+            isset($data['bank_account_slot']) ? (int) $data['bank_account_slot'] : getDefaultBankAccountSlot(),
+            trim((string) ($data['payment_terms'] ?? '')) ?: null,
+            trim((string) ($data['payment_instructions'] ?? '')) ?: null,
             $normalized['subtotal'],
             $normalized['tax_rate'],
             $normalized['tax_amount'],

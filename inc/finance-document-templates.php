@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/finance-document-styles.php';
+require_once dirname(__DIR__) . '/lib/bank_accounts.php';
 
 function legalpro_finance_safe_filename(string $base): string
 {
@@ -22,6 +23,69 @@ function legalpro_finance_firm_details(): array
 function legalpro_finance_h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+function legalpro_render_finance_payment_details_html(
+    ?int $bankSlot,
+    ?string $paymentTerms = null,
+    ?string $paymentInstructions = null,
+    ?string $statusLabel = null
+): string {
+    $slot = $bankSlot !== null && $bankSlot > 0 ? $bankSlot : getDefaultBankAccountSlot();
+    $account = getBankAccountBySlot($slot) ?? bank_account_empty_slot($slot);
+    $vat = getCompanyVatNumber();
+
+    $lines = [];
+    if ($statusLabel !== null && trim($statusLabel) !== '') {
+        $lines[] = '<p class="fin-doc-pay-status">' . legalpro_finance_h($statusLabel) . '</p>';
+    }
+
+    $detailRows = [
+        'Account name' => $account['account_name'] ?? '',
+        'Account number' => $account['account_number'] ?? '',
+        'Bank name' => $account['bank_name'] ?? '',
+    ];
+
+    if ($vat !== '') {
+        $detailRows['VAT Number'] = $vat;
+    }
+
+    foreach ($detailRows as $label => $value) {
+        $value = trim((string) $value);
+        if ($value === '') {
+            continue;
+        }
+        $lines[] = '<div class="fin-doc-pay-line"><span class="fin-doc-pay-label">' . legalpro_finance_h($label) . ':</span> '
+            . legalpro_finance_h($value) . '</div>';
+    }
+
+    $lines[] = '<div class="fin-doc-thanks">Thank you for your business.</div>';
+
+    return '<div class="fin-doc-payment">' . implode('', $lines) . '</div>';
+}
+
+function legalpro_render_finance_summary_box_html(array $rows, string $grandTotal): string
+{
+    $html = '<div class="fin-doc-summary-box"><table class="fin-doc-summary-table">';
+    foreach ($rows as $row) {
+        if (!empty($row['divider'])) {
+            $html .= '<tr class="divider"><td colspan="2"></td></tr>';
+            continue;
+        }
+        $class = '';
+        if (!empty($row['emphasis'])) {
+            $class = ' class="emphasis"';
+        } elseif (!empty($row['grand'])) {
+            $class = ' class="grand"';
+        }
+        $html .= '<tr' . $class . '><td class="label">' . legalpro_finance_h($row['label']) . '</td>'
+            . '<td class="value">' . legalpro_finance_h($row['value']) . '</td></tr>';
+    }
+    $html .= '<tr class="grand-total"><td class="label">Grand Total</td><td class="value">'
+        . legalpro_finance_h($grandTotal) . '</td></tr>';
+    $html .= '</table></div>';
+
+    return $html;
 }
 
 /**
@@ -72,12 +136,56 @@ function legalpro_render_finance_document_page(
 
 function legalpro_render_invoice_document_html(array $invoice, int $invoiceId): string
 {
+    global $pdo;
+
     $firm = legalpro_finance_firm_details();
     $invoiceNumber = $invoice['invoice_number'] ?: ('INV-' . str_pad((string) $invoiceId, 4, '0', STR_PAD_LEFT));
-    $amountDisplay = formatCurrency((float) ($invoice['amount'] ?? 0));
+    $amount = (float) ($invoice['amount'] ?? 0);
+    $taxRate = (float) ($invoice['tax_rate'] ?? 0);
+    $subtotal = $taxRate > 0 ? round($amount / (1 + ($taxRate / 100)), 2) : $amount;
+    $taxAmount = round($amount - $subtotal, 2);
+    $amountDisplay = formatCurrency($amount);
     $issueDate = !empty($invoice['issue_date']) ? date('F d, Y', strtotime($invoice['issue_date'])) : 'N/A';
     $dueDate = !empty($invoice['due_date']) ? date('F d, Y', strtotime($invoice['due_date'])) : 'N/A';
-    $notes = trim((string) ($invoice['notes'] ?? '')) ?: 'Thank you for your business.';
+    $notes = trim((string) ($invoice['notes'] ?? ''));
+    $status = ucfirst((string) ($invoice['status'] ?? 'draft'));
+
+    $paidTotal = (float) ($invoice['total_paid'] ?? 0);
+    if ($paidTotal <= 0 && $pdo instanceof PDO) {
+        try {
+            $paidStmt = $pdo->prepare('SELECT COALESCE(SUM(amount), 0) FROM payments WHERE invoice_id = ?');
+            $paidStmt->execute([$invoiceId]);
+            $paidTotal = (float) $paidStmt->fetchColumn();
+        } catch (PDOException $e) {
+            $paidTotal = 0.0;
+        }
+    }
+
+    $amountDue = max($amount - $paidTotal, 0);
+    if ($status === 'Paid' || $paidTotal >= $amount) {
+        $status = 'Paid';
+    }
+
+    $bankSlot = isset($invoice['bank_account_slot']) ? (int) $invoice['bank_account_slot'] : getDefaultBankAccountSlot();
+    $paymentTerms = (string) ($invoice['payment_terms'] ?? '');
+    $paymentInstructions = (string) ($invoice['payment_instructions'] ?? '');
+
+    $summaryRows = [
+        ['label' => 'Subtotal', 'value' => formatCurrency($subtotal)],
+        ['label' => 'VAT Amount', 'value' => formatCurrency($taxAmount)],
+        ['label' => 'Net Amount (Excluding VAT)', 'value' => formatCurrency($subtotal)],
+        ['label' => 'Net Amount (Including VAT)', 'value' => formatCurrency($amount)],
+        ['label' => 'Amount Paid', 'value' => formatCurrency($paidTotal)],
+        ['divider' => true],
+        ['label' => 'Amount Due', 'value' => formatCurrency($amountDue), 'emphasis' => true],
+        ['divider' => true],
+    ];
+
+    $notesBlock = '';
+    if ($notes !== '') {
+        $notesBlock = '<div class="fin-doc-section"><div class="fin-doc-section-title">Notes</div>'
+            . '<div class="fin-doc-notes">' . nl2br(legalpro_finance_h($notes)) . '</div></div>';
+    }
 
     return '<div class="fin-doc">'
         . legalpro_render_finance_document_top('Invoice', $invoiceNumber)
@@ -85,7 +193,7 @@ function legalpro_render_invoice_document_html(array $invoice, int $invoiceId): 
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">Invoice details</div><div class="fin-doc-grid">'
         . '<div><strong>Issue date</strong>' . legalpro_finance_h($issueDate) . '</div>'
         . '<div><strong>Due date</strong>' . legalpro_finance_h($dueDate) . '</div>'
-        . '<div><strong>Status</strong>' . legalpro_finance_h(ucfirst((string) ($invoice['status'] ?? ''))) . '</div>'
+        . '<div><strong>Status</strong>' . legalpro_finance_h($status) . '</div>'
         . '<div><strong>Case</strong>' . legalpro_finance_h($invoice['case_title'] ?: 'N/A') . '</div>'
         . '</div></div>'
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">Client</div><div class="fin-doc-grid">'
@@ -98,13 +206,10 @@ function legalpro_render_invoice_document_html(array $invoice, int $invoiceId): 
         . '<tr><td>Professional services · ' . legalpro_finance_h($invoice['case_title'] ?: 'N/A') . '</td>'
         . '<td class="text-end">' . legalpro_finance_h($amountDisplay) . '</td></tr>'
         . '</tbody></table>'
-        . '<table class="fin-doc-totals"><tr class="grand"><td class="label">Total due</td><td class="value">'
-        . legalpro_finance_h($amountDisplay) . '</td></tr></table></div>'
-        . '<div class="fin-doc-section"><div class="fin-doc-section-title">Notes</div>'
-        . '<div class="fin-doc-notes">' . nl2br(legalpro_finance_h($notes)) . '</div></div>'
-        . '<div class="fin-doc-section"><div class="fin-doc-section-title">Issued by</div>'
-        . '<div class="fin-doc-footer">' . legalpro_finance_h($firm['name']) . ' · ' . nl2br(legalpro_finance_h($firm['address'])) . '<br>'
-        . 'Email: ' . legalpro_finance_h($firm['email']) . ' · Phone: ' . legalpro_finance_h($firm['phone']) . '</div></div>'
+        . legalpro_render_finance_summary_box_html($summaryRows, $amountDisplay)
+        . '</div>'
+        . $notesBlock
+        . legalpro_render_finance_payment_details_html($bankSlot, $paymentTerms, $paymentInstructions, $status)
         . '</div></div>';
 }
 
@@ -157,6 +262,7 @@ function legalpro_render_payment_receipt_document_html(array $payment, int $paym
         . '</table></div>'
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">Notes</div>'
         . '<div class="fin-doc-notes">' . nl2br(legalpro_finance_h($payment['notes'] ?: 'No additional notes were provided.')) . '</div></div>'
+        . legalpro_render_finance_payment_details_html(getDefaultBankAccountSlot(), getDefaultPaymentTerms(), getDefaultPaymentInstructions(), 'Paid')
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">Issued by</div>'
         . '<div class="fin-doc-footer">' . legalpro_finance_h($firm['name']) . ' · ' . nl2br(legalpro_finance_h($firm['address'])) . '<br>'
         . 'Email: ' . legalpro_finance_h($firm['email']) . ' · Phone: ' . legalpro_finance_h($firm['phone']) . '</div></div>'
@@ -188,6 +294,16 @@ function legalpro_render_quotation_document_html(array $quotation, array $items,
             . '<div class="fin-doc-notes">' . nl2br(legalpro_finance_h($notes)) . '</div></div>';
     }
 
+    $bankSlot = isset($quotation['bank_account_slot']) ? (int) $quotation['bank_account_slot'] : getDefaultBankAccountSlot();
+    $paymentTerms = (string) ($quotation['payment_terms'] ?? '');
+    $paymentInstructions = (string) ($quotation['payment_instructions'] ?? '');
+    $grandTotal = formatCurrency((float) ($quotation['total_amount'] ?? 0));
+    $summaryRows = [
+        ['label' => 'Subtotal', 'value' => formatCurrency((float) ($quotation['subtotal'] ?? 0))],
+        ['label' => 'VAT Amount (' . number_format((float) ($quotation['tax_rate'] ?? 0), 2) . '%)', 'value' => formatCurrency((float) ($quotation['tax_amount'] ?? 0))],
+        ['label' => 'Amount Due', 'value' => $grandTotal, 'grand' => true],
+    ];
+
     return '<div class="fin-doc">'
         . legalpro_render_finance_document_top($title, $quotationNumber)
         . '<div class="fin-doc-body">'
@@ -204,13 +320,10 @@ function legalpro_render_quotation_document_html(array $quotation, array $items,
         . '<table class="fin-doc-table"><thead><tr><th>Description</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Line total</th></tr></thead><tbody>'
         . $rows
         . '</tbody></table>'
-        . '<table class="fin-doc-totals">'
-        . '<tr><td class="label">Subtotal</td><td class="value">' . legalpro_finance_h(formatCurrency((float) ($quotation['subtotal'] ?? 0))) . '</td></tr>'
-        . '<tr><td class="label">Tax (' . legalpro_finance_h(number_format((float) ($quotation['tax_rate'] ?? 0), 2)) . '%)</td><td class="value">'
-        . legalpro_finance_h(formatCurrency((float) ($quotation['tax_amount'] ?? 0))) . '</td></tr>'
-        . '<tr class="grand"><td class="label">Total</td><td class="value">' . legalpro_finance_h(formatCurrency((float) ($quotation['total_amount'] ?? 0))) . '</td></tr>'
-        . '</table></div>'
+        . legalpro_render_finance_summary_box_html($summaryRows, $grandTotal)
+        . '</div>'
         . $notesBlock
+        . legalpro_render_finance_payment_details_html($bankSlot, $paymentTerms, $paymentInstructions, ucfirst((string) ($quotation['status'] ?? 'sent')))
         . '</div></div>';
 }
 

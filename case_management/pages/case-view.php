@@ -958,6 +958,10 @@ $caseDetailTabsNav = '<ul class="nav case-detail-tabs case-detail-tabs--sidebar"
     . legalpro_case_detail_tab('#events', 'activity', 'Activity', count($caseEvents))
     . '</ul>';
 
+ob_start();
+include __DIR__ . '/../inc/admin-portal-head.php';
+$adminPortalHeadHtml = ob_get_clean();
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -973,9 +977,10 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="../assets/css/case-detail-tabs.css?v=10" rel="stylesheet" />
+    {ADMIN_PORTAL_HEAD}
+    <link href="../assets/css/case-detail-tabs.css?v=11" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
     </aside>
@@ -1412,6 +1417,8 @@ $replacements = [
     '{TASKS_COUNT}' => count($tasks),
     '{EVENTS_HTML}' => $eventsHtml,
     '{EVENTS_COUNT}' => count($caseEvents),
+    '{ADMIN_PORTAL_HEAD}' => $adminPortalHeadHtml,
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

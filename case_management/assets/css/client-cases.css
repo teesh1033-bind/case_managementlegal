@@ -623,8 +623,18 @@ body.legalpro-dark-mode.client-cases-page .cc-table tbody tr {
 }
 
 body.legalpro-dark-mode.client-cases-page .badge-closed {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--lp-dark-text-muted);
+    background: #363d4d;
+    color: #a8b3cf;
+}
+
+body.legalpro-dark-mode.client-cases-page .badge-active {
+    background: #2d4a4a;
+    color: #7ef2c6;
+}
+
+body.legalpro-dark-mode.client-cases-page .badge-pending {
+    background: #3f4c77;
+    color: #b0bcff;
 }
 
 body.legalpro-dark-mode.client-cases-page .lawyer-stack__name {

@@ -8,10 +8,13 @@ if (isset($_GET['msg']) && isset($_GET['type'])) {
     $messageType = $_GET['type'];
 }
 
+require_once __DIR__ . '/../inc/bank-accounts-settings.php';
+
 $currencyOptionsList = getCurrencyOptions();
 $currencyConfig = getCurrencyConfig();
 $companyBranding = getCompanyBranding();
 $portalThemeSettingsHtml = renderPortalThemeSettingsHtml();
+$bankAccountsSettingsHtml = renderBankAccountsSettingsHtml();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formType = isset($_POST['form_type']) ? $_POST['form_type'] : '';
@@ -49,6 +52,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             setSetting('currency', $selectedCurrency);
             header('Location: settings.php?msg=' . urlencode('Currency updated successfully.') . '&type=success');
+            exit;
+        }
+    } elseif ($formType === 'bank_accounts') {
+        $result = saveBankAccountsSettings($_POST);
+        if (!$result['ok']) {
+            $message = $result['message'];
+            $messageType = 'danger';
+        } else {
+            header('Location: settings.php?msg=' . urlencode($result['message']) . '&type=success');
             exit;
         }
     } elseif ($formType === 'add_service') {
@@ -255,6 +267,8 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	<link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
+	<link href="../assets/css/bank-accounts-ui.css?v=4" rel="stylesheet" />
 	<style>
 		.settings-brand-logo-preview {
 			width: 52px;
@@ -327,7 +341,7 @@ $html = <<<'HTML'
 	</style>
 	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-settings-page{PORTAL_THEME_BODY_CLASS}">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
 		<div class="sidenav-header">
@@ -371,7 +385,8 @@ $html = <<<'HTML'
 				<div class="col-12">
 					<div class="card mb-4">
 						<div class="card-header pb-0">
-							<h6>Branding</h6>
+							<h6>Branding &amp; company information</h6>
+							<p class="text-sm text-muted mb-0">Company logo, currency, and bank accounts shown on invoices.</p>
 						</div>
 						<div class="card-body">
 							<form method="post" enctype="multipart/form-data">
@@ -422,6 +437,7 @@ $html = <<<'HTML'
                                     <small class="text-muted d-block mt-2">Applies across admin, lawyer, and client portals — invoices, payments, dashboards, and documents.</small>
                                 </div>
                             </form>
+                            {BANK_ACCOUNTS_SETTINGS}
 						</div>
 					</div>
                     {PORTAL_THEME_SETTINGS}
@@ -596,6 +612,8 @@ $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name'])
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{COMPANY_DETAILS}', htmlspecialchars($companyBranding['details']), $html);
 $html = str_replace('{PORTAL_THEME_SETTINGS}', $portalThemeSettingsHtml, $html);
+$html = str_replace('{BANK_ACCOUNTS_SETTINGS}', $bankAccountsSettingsHtml, $html);
+$html = str_replace('{PORTAL_THEME_BODY_CLASS}', legalpro_portal_theme_body_class(), $html);
 $html = str_replace('{CHATBOT_AI_STATUS}', $chatbotAiStatusHtml, $html);
 $html = str_replace('{CHATBOT_AI_ENABLED_CHECKED}', $chatbotAiEnabledChecked, $html);
 $html = str_replace('{OPENAI_KEY_PLACEHOLDER}', htmlspecialchars($openaiKeyPlaceholder), $html);
