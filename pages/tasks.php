@@ -701,7 +701,7 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-tasks-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-tasks-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -989,6 +989,7 @@ $replacements = [
     '{DUE_OVERDUE}' => $dueFilter === 'overdue' ? ' selected' : '',
     '{DUE_TODAY}' => $dueFilter === 'today' ? ' selected' : '',
     '{DUE_THIS_WEEK}' => $dueFilter === 'this_week' ? ' selected' : '',
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

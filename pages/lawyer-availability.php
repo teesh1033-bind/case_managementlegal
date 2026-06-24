@@ -441,7 +441,7 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-availability-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-availability-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -1098,6 +1098,7 @@ $html = str_replace('{NAVIGATION}', $navHtml, $html);
 $html = str_replace('{$lawyerName}', htmlspecialchars($lawyerName), $html);
 $html = str_replace('{AVAILABILITY_EVENTS_JSON}', json_encode($availabilityEvents), $html);
 $html = str_replace('{AVAILABILITY_TIME_OPTIONS}', $availabilityTimeOptions, $html);
+$html = str_replace('{PORTAL_THEME_BODY_CLASS}', legalpro_portal_theme_body_class(), $html);
 
 echo $html;
 ?>

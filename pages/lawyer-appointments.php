@@ -845,7 +845,7 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-appointments-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-appointments-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -2074,6 +2074,7 @@ $replacements = [
     '{APPOINTMENT_CALENDAR_EVENTS_JSON}' => $appointmentCalendarEventsJson,
     '{ICON_CARD_HEADER}' => $iconCardHeader,
     '{LAWYER_CASE_OPTIONS}' => $lawyerCaseOptions,
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

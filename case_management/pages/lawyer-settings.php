@@ -226,7 +226,7 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-settings-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-settings-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -261,8 +261,8 @@ $html = <<<'HTML'
 HTML;
 
 $html = str_replace(
-    ['{NAVIGATION}', '{MESSAGE}', '{APPEARANCE_HTML}'],
-    [$navHtml, $messageHtml, $appearanceHtml],
+    ['{NAVIGATION}', '{MESSAGE}', '{APPEARANCE_HTML}', '{PORTAL_THEME_BODY_CLASS}'],
+    [$navHtml, $messageHtml, $appearanceHtml, legalpro_portal_theme_body_class()],
     $html
 );
 

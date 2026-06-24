@@ -61,6 +61,14 @@ body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-header-the
     stroke: currentColor;
 }
 
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle .lp-icon svg {
+    stroke: #344767;
+}
+
+body.legalpro-dark-mode.legalpro-lawyer-portal .navbar-main .legalpro-header-theme-toggle .lp-icon svg {
+    stroke: currentColor;
+}
+
 .legalpro-header-user__caret.lp-icon svg {
     width: 0.85rem;
     height: 0.85rem;

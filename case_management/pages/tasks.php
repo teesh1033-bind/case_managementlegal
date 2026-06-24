@@ -492,7 +492,7 @@ $html = <<<'HTML'
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-tasks-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-tasks-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -711,6 +711,7 @@ $replacements = [
     '{PRIORITY_HIGH}' => $priorityFilter === 'high' ? ' selected' : '',
     '{PRIORITY_MEDIUM}' => $priorityFilter === 'medium' ? ' selected' : '',
     '{PRIORITY_LOW}' => $priorityFilter === 'low' ? ' selected' : '',
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

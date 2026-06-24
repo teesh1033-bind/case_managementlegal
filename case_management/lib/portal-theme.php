@@ -3514,13 +3514,18 @@ function renderPortalSidebarPaintBlock(): string
 function renderPortalThemeHeadEarly(): void
 {
     static $done = false;
-    if ($done || !isEffectivePortalThemeDark()) {
+    if ($done) {
         return;
     }
     $done = true;
 
-    echo '<style>html.legalpro-theme-dark{background:#2a3040;}</style>';
-    echo '<script>(function(){var d=document;d.documentElement.classList.add("legalpro-theme-dark");var apply=function(){if(d.body&&!d.body.classList.contains("legalpro-dark-mode")){d.body.classList.add("legalpro-dark-mode");}};if(d.body){apply();}else{d.addEventListener("DOMContentLoaded",apply);}})();</script>';
+    if (isEffectivePortalThemeDark()) {
+        echo '<style>html.legalpro-theme-dark{background:#2a3040;}</style>';
+        echo '<script>(function(){var d=document;d.documentElement.classList.add("legalpro-theme-dark");var apply=function(){if(d.body&&!d.body.classList.contains("legalpro-dark-mode")){d.body.classList.add("legalpro-dark-mode");}};if(d.body){apply();}else{d.addEventListener("DOMContentLoaded",apply);}})();</script>';
+        return;
+    }
+
+    echo '<script>(function(){var d=document;d.documentElement.classList.remove("legalpro-theme-dark");var apply=function(){if(d.body){d.body.classList.remove("legalpro-dark-mode");}};if(d.body){apply();}else{d.addEventListener("DOMContentLoaded",apply);}})();</script>';
 }
 
 function renderPortalThemeHead(): void

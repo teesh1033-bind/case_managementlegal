@@ -69,4 +69,5 @@ echo legalpro_render_portal_sidebar([
 ?>
 
 <?php echo $navbarUtilitiesMount; ?>
+<script src="../assets/js/lawyer-portal.js?v=1"></script>
 <?php legalpro_icons_footer_scripts(); ?>

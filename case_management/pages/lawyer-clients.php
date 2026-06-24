@@ -112,7 +112,7 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-clients-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-clients-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -219,6 +219,7 @@ $replacements = [
     '{TOTAL_CLIENTS}' => count($clients),
     '{CLIENTS_TABLE}' => $clientsTable,
     '{ICON_CARD_HEADER}' => $iconCardHeader,
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);
