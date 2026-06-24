@@ -167,7 +167,7 @@ if (empty($cases)) {
         $searchHay = strtolower($caseNumber . ' ' . ($case['title'] ?? '') . ' ' . ($case['category'] ?? '')
             . ' ' . ($case['status'] ?? '') . ' ' . ($case['priority'] ?? '') . ' ' . ($case['lawyer_names'] ?? ''));
 
-        $casesRows .= '<tr data-status="' . htmlspecialchars($case['status'] ?? '') . '"
+        $casesRows .= '<tr class="cc-case-row" data-status="' . htmlspecialchars($case['status'] ?? '') . '"
                             data-priority="' . htmlspecialchars($case['priority'] ?? '') . '"
                             data-title="' . strtolower($title) . '"
                             data-category="' . strtolower($case['category'] ?? '') . '"
@@ -248,7 +248,7 @@ ob_start(); ?>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-    <link href="../assets/css/client-portal-pages.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/client-portal-pages.css?v=6" rel="stylesheet" />
     <link href="../assets/css/client-cases.css?v=3" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-cases-page<?php echo legalpro_portal_theme_body_class(); ?>">
@@ -294,6 +294,7 @@ ob_start(); ?>
 
             <section class="cp-panel">
                 <?= $panelHeaderHtml ?>
+                <div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cc-case-row" data-portal-per-page="10" data-portal-show-page-global="ccShowPage">
                 <div class="table-responsive">
                     <table class="cc-table" id="ccTable">
                         <thead>
@@ -310,6 +311,11 @@ ob_start(); ?>
                             <?= $casesRows ?>
                         </tbody>
                     </table>
+                </div>
+                <nav class="cp-portal-pagination" data-portal-pagination aria-label="Cases pagination" hidden>
+                    <p class="cp-portal-pagination__info" data-portal-range></p>
+                    <div class="cp-portal-pagination__controls" data-portal-pages></div>
+                </nav>
                 </div>
             </section>
 
@@ -344,6 +350,9 @@ ob_start(); ?>
         });
         var el = document.getElementById('ccRowCount');
         if (el) el.textContent = visible + ' case' + (visible === 1 ? '' : 's');
+        if (typeof window.ccShowPage === 'function') {
+            window.ccShowPage(1);
+        }
     }
     document.addEventListener('DOMContentLoaded', function() {
         if (document.getElementById('ccSearch').value) ccFilter();

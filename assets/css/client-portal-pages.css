@@ -1058,3 +1058,121 @@ body.legalpro-dark-mode.client-appointments-page .dashboard-calendar-hub {
     border-color: var(--cpp-border);
     overflow: visible !important;
 }
+
+/* ── Shared client portal table pagination ───────────────────────────── */
+.cp-portal-row--off-page {
+    display: none;
+}
+
+.cp-portal-table-wrap .cp-portal-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.9rem 1.5rem 1.1rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.cp-portal-pagination__info {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.cp-portal-pagination__controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.cp-portal-pagination__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.55rem;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    background: rgba(var(--cpp-primary-rgb), 0.04);
+    color: #8392ab;
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.cp-portal-pagination__btn:hover:not(:disabled) {
+    background: rgba(var(--cpp-primary-rgb), 0.1);
+    border-color: rgba(var(--cpp-primary-rgb), 0.35);
+    color: var(--cpp-primary);
+    transform: translateY(-1px);
+}
+
+.cp-portal-pagination__btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--cpp-primary-rgb), 0.22);
+}
+
+.cp-portal-pagination__btn--active {
+    background: var(--cpp-gradient);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(var(--cpp-primary-rgb), 0.32);
+}
+
+.cp-portal-pagination__btn--active:hover:not(:disabled) {
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.cp-portal-pagination__btn--nav {
+    min-width: auto;
+    padding: 0 0.75rem;
+}
+
+.cp-portal-pagination__btn:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.cp-portal-pagination__ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 2rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .cp-portal-pagination {
+    border-top-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .cp-portal-pagination__btn {
+    background: rgba(var(--cpp-primary-rgb), 0.12);
+    border-color: rgba(var(--cpp-primary-rgb), 0.28);
+    color: #c5cede;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .cp-portal-pagination__btn:hover:not(:disabled) {
+    background: rgba(var(--cpp-primary-rgb), 0.2);
+    color: #f8f9fc;
+}
+
+.client-requests-page .cp-portal-table-wrap .table-responsive {
+    padding-bottom: 0;
+}
+
+.client-requests-page .cp-portal-pagination {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}

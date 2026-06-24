@@ -400,6 +400,7 @@
         filterClientSearchRows('.cp-invoice-row.cp-search-row', '#cpInvoiceCount', 'invoice', 'invoices', ' total');
         filterClientSearchRows('.cp-payment-row.cp-search-row', '#cpPaymentCount', 'payment', 'payments', ' total');
         filterClientSearchRows('.cct-search-row', '#cctRowCount', 'court date', 'court dates', ' total');
+        legalproResetClientTablePaginations();
 
         var navInput = qs('.legalpro-navbar-search input[name="q"]');
         if (navInput) {
@@ -416,8 +417,166 @@
                 if (typeof window.ccFilter === 'function') {
                     window.ccFilter();
                 }
+                legalproResetClientTablePaginations();
             });
         }
+    }
+
+    function legalproResetClientTablePaginations() {
+        [
+            'ccShowPage',
+            'cpInvoiceShowPage',
+            'cpPaymentShowPage',
+            'cpQuotationShowPage',
+            'cdocShowPage',
+            'crRequestShowPage'
+        ].forEach(function (name) {
+            if (typeof window[name] === 'function') {
+                window[name](1);
+            }
+        });
+    }
+
+    function legalproInitClientTablePagination(wrap) {
+        if (!wrap || wrap.getAttribute('data-portal-pagination-ready') === '1') {
+            return null;
+        }
+
+        var nav = wrap.querySelector('[data-portal-pagination]');
+        var rowSelector = wrap.getAttribute('data-portal-row');
+        if (!nav || !rowSelector) {
+            return null;
+        }
+
+        var perPage = parseInt(wrap.getAttribute('data-portal-per-page') || '10', 10);
+        var hiddenClass = wrap.getAttribute('data-portal-hidden-class') || 'cp-portal-row--off-page';
+        var rows = qsa(rowSelector, wrap);
+        var rangeEl = nav.querySelector('[data-portal-range]');
+        var pagesEl = nav.querySelector('[data-portal-pages]');
+
+        if (!rows.length || rows.length <= perPage) {
+            nav.hidden = true;
+            wrap.setAttribute('data-portal-pagination-ready', '1');
+            return null;
+        }
+
+        nav.hidden = false;
+        var currentPage = 1;
+        var totalPages = Math.ceil(rows.length / perPage);
+        var btnClass = 'cp-portal-pagination__btn';
+
+        function pageButton(label, page, options) {
+            options = options || {};
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = btnClass;
+            if (options.nav) {
+                btn.className += ' cp-portal-pagination__btn--nav';
+            }
+            if (options.active) {
+                btn.className += ' cp-portal-pagination__btn--active';
+            }
+            btn.textContent = label;
+            btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
+            if (options.disabled) {
+                btn.disabled = true;
+            } else if (page) {
+                btn.addEventListener('click', function () {
+                    showPage(page);
+                });
+            }
+            return btn;
+        }
+
+        function ellipsis() {
+            var span = document.createElement('span');
+            span.className = 'cp-portal-pagination__ellipsis';
+            span.textContent = '…';
+            span.setAttribute('aria-hidden', 'true');
+            return span;
+        }
+
+        function visiblePages() {
+            if (totalPages <= 7) {
+                var all = [];
+                for (var p = 1; p <= totalPages; p++) {
+                    all.push(p);
+                }
+                return all;
+            }
+
+            var pages = [1];
+            var start = Math.max(2, currentPage - 1);
+            var end = Math.min(totalPages - 1, currentPage + 1);
+            if (start > 2) {
+                pages.push('gap');
+            }
+            for (var i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            if (end < totalPages - 1) {
+                pages.push('gap');
+            }
+            pages.push(totalPages);
+            return pages;
+        }
+
+        function renderControls() {
+            if (!pagesEl) {
+                return;
+            }
+            pagesEl.innerHTML = '';
+            pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
+                nav: true,
+                disabled: currentPage === 1,
+                ariaLabel: 'Previous page'
+            }));
+            visiblePages().forEach(function (page) {
+                if (page === 'gap') {
+                    pagesEl.appendChild(ellipsis());
+                    return;
+                }
+                pagesEl.appendChild(pageButton(String(page), page, {
+                    active: page === currentPage,
+                    ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
+                }));
+            });
+            pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
+                nav: true,
+                disabled: currentPage === totalPages,
+                ariaLabel: 'Next page'
+            }));
+        }
+
+        function showPage(page) {
+            currentPage = Math.max(1, Math.min(totalPages, page));
+            rows.forEach(function (row, index) {
+                var rowPage = Math.floor(index / perPage) + 1;
+                row.classList.toggle(hiddenClass, rowPage !== currentPage);
+            });
+
+            var start = (currentPage - 1) * perPage + 1;
+            var end = Math.min(currentPage * perPage, rows.length);
+            if (rangeEl) {
+                rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
+            }
+            renderControls();
+        }
+
+        var globalName = wrap.getAttribute('data-portal-show-page-global');
+        if (globalName) {
+            window[globalName] = showPage;
+        }
+
+        wrap.setAttribute('data-portal-pagination-ready', '1');
+        showPage(1);
+        return showPage;
+    }
+
+    function initAllClientTablePaginations() {
+        qsa('[data-portal-table-wrap]').forEach(function (wrap) {
+            legalproInitClientTablePagination(wrap);
+        });
     }
 
     function initThemeToggle() {
@@ -467,5 +626,9 @@
         initMoreSheet();
         initActivityIcons();
         initActivityFeedPagination();
+        initAllClientTablePaginations();
     });
+
+    window.legalproInitClientTablePagination = legalproInitClientTablePagination;
+    window.legalproResetClientTablePaginations = legalproResetClientTablePaginations;
 })();

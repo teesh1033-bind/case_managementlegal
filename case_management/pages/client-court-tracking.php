@@ -254,6 +254,90 @@ if (!empty($_SESSION['error_message'])) {
         .cct-table thead th:last-child { padding-right: 1.5rem; text-align: right; }
         .cct-table tbody tr { border-bottom: 1px solid #f8fafc; transition: background .1s; }
         .cct-table tbody tr:hover { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04); }
+        .cct-table tbody .cct-court-row.cct-court-row--off-page { display: none; }
+        .cct-court-table-wrap { padding: 0 0 0.25rem; }
+        .cct-court-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding: 0.9rem 1.5rem 1.1rem;
+            border-top: 1px solid #f1f5f9;
+        }
+        .cct-court-pagination__info {
+            margin: 0;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+        .cct-court-pagination__controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+        .cct-court-pagination__btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 0.55rem;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+            color: #8392ab;
+            font-size: 0.76rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+        .cct-court-pagination__btn:hover:not(:disabled) {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            color: var(--cct-primary);
+            transform: translateY(-1px);
+        }
+        .cct-court-pagination__btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+        }
+        .cct-court-pagination__btn--active {
+            background: var(--cct-gradient);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+        }
+        .cct-court-pagination__btn--active:hover:not(:disabled) {
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .cct-court-pagination__btn--nav { min-width: auto; padding: 0 0.75rem; }
+        .cct-court-pagination__btn:disabled { opacity: 0.42; cursor: not-allowed; transform: none; box-shadow: none; }
+        .cct-court-pagination__ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.5rem;
+            height: 2rem;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-court-pagination {
+            border-top-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-court-pagination__btn {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.28);
+            color: #c5cede;
+        }
+        body.legalpro-dark-mode.client-court-tracking-page .cct-court-pagination__btn:hover:not(:disabled) {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+            color: #f8f9fc;
+        }
         .cct-table tbody td { padding: .85rem 1rem; vertical-align: middle; }
         .cct-table tbody td:first-child { padding-left: 1.5rem; }
         .cct-table tbody td:last-child { padding-right: 1.5rem; text-align: right; }
@@ -577,6 +661,7 @@ if (!empty($_SESSION['error_message'])) {
                         <p>When your legal team adds hearings or appearances for your matters, they will appear here and on the calendar above.</p>
                     </div>
                 <?php else: ?>
+                    <div class="cct-court-table-wrap" id="clientCourtDatesTableWrap" data-court-per-page="10">
                     <div class="table-responsive">
                         <table class="cct-table">
                             <thead>
@@ -596,7 +681,7 @@ if (!empty($_SESSION['error_message'])) {
                                     <?php
                                     $rowCaseNumber = $cid > 0 ? 'C-' . str_pad((string) $cid, 4, '0', STR_PAD_LEFT) : '';
                                     ?>
-                                    <tr class="cct-search-row"<?php echo legalpro_client_search_data_attr([
+                                    <tr class="cct-search-row cct-court-row"<?php echo legalpro_client_search_data_attr([
                                         $rowCaseNumber,
                                         $date['case_title'] ?? '',
                                         $date['title'] ?? '',
@@ -636,6 +721,11 @@ if (!empty($_SESSION['error_message'])) {
                             </tbody>
                         </table>
                     </div>
+                    <nav class="cct-court-pagination" id="clientCourtDatesPagination" aria-label="Court dates pagination" hidden>
+                        <p class="cct-court-pagination__info" data-court-range></p>
+                        <div class="cct-court-pagination__controls" data-court-pages></div>
+                    </nav>
+                    </div>
                 <?php endif; ?>
             </div>
             </div>
@@ -662,6 +752,128 @@ if (!empty($_SESSION['error_message'])) {
             var d = document.createElement('div');
             d.textContent = text == null ? '' : String(text);
             return d.innerHTML;
+        }
+
+        function initClientCourtDatesTablePagination() {
+            var wrap = document.getElementById('clientCourtDatesTableWrap');
+            var nav = document.getElementById('clientCourtDatesPagination');
+            if (!wrap || !nav) {
+                return;
+            }
+
+            var perPage = parseInt(wrap.getAttribute('data-court-per-page') || '10', 10);
+            var rows = Array.prototype.slice.call(document.querySelectorAll('.cct-table tbody .cct-court-row'));
+            var rangeEl = nav.querySelector('[data-court-range]');
+            var pagesEl = nav.querySelector('[data-court-pages]');
+
+            if (!rows.length || rows.length <= perPage) {
+                nav.hidden = true;
+                return;
+            }
+
+            nav.hidden = false;
+            var currentPage = 1;
+            var totalPages = Math.ceil(rows.length / perPage);
+
+            function pageButton(label, page, options) {
+                options = options || {};
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'cct-court-pagination__btn';
+                if (options.nav) {
+                    btn.className += ' cct-court-pagination__btn--nav';
+                }
+                if (options.active) {
+                    btn.className += ' cct-court-pagination__btn--active';
+                }
+                btn.textContent = label;
+                btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
+                if (options.disabled) {
+                    btn.disabled = true;
+                } else if (page) {
+                    btn.addEventListener('click', function() {
+                        showPage(page);
+                    });
+                }
+                return btn;
+            }
+
+            function ellipsis() {
+                var span = document.createElement('span');
+                span.className = 'cct-court-pagination__ellipsis';
+                span.textContent = '…';
+                span.setAttribute('aria-hidden', 'true');
+                return span;
+            }
+
+            function visiblePages() {
+                if (totalPages <= 7) {
+                    var all = [];
+                    for (var p = 1; p <= totalPages; p++) {
+                        all.push(p);
+                    }
+                    return all;
+                }
+                var pages = [1];
+                var start = Math.max(2, currentPage - 1);
+                var end = Math.min(totalPages - 1, currentPage + 1);
+                if (start > 2) {
+                    pages.push('gap');
+                }
+                for (var i = start; i <= end; i++) {
+                    pages.push(i);
+                }
+                if (end < totalPages - 1) {
+                    pages.push('gap');
+                }
+                pages.push(totalPages);
+                return pages;
+            }
+
+            function renderControls() {
+                if (!pagesEl) {
+                    return;
+                }
+                pagesEl.innerHTML = '';
+                pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
+                    nav: true,
+                    disabled: currentPage === 1,
+                    ariaLabel: 'Previous page'
+                }));
+                visiblePages().forEach(function(page) {
+                    if (page === 'gap') {
+                        pagesEl.appendChild(ellipsis());
+                        return;
+                    }
+                    pagesEl.appendChild(pageButton(String(page), page, {
+                        active: page === currentPage,
+                        ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
+                    }));
+                });
+                pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
+                    nav: true,
+                    disabled: currentPage === totalPages,
+                    ariaLabel: 'Next page'
+                }));
+            }
+
+            function showPage(page) {
+                currentPage = Math.max(1, Math.min(totalPages, page));
+                rows.forEach(function(row, index) {
+                    var rowPage = Math.floor(index / perPage) + 1;
+                    row.classList.toggle('cct-court-row--off-page', rowPage !== currentPage);
+                });
+
+                var start = (currentPage - 1) * perPage + 1;
+                var end = Math.min(currentPage * perPage, rows.length);
+                if (rangeEl) {
+                    rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
+                }
+                renderControls();
+            }
+
+            window.cctCourtShowPage = showPage;
+            showPage(1);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -703,6 +915,7 @@ if (!empty($_SESSION['error_message'])) {
 
             if (!calendarEl || typeof FullCalendar === 'undefined') {
                 initCctCalendarSearch(courtEvents);
+                initClientCourtDatesTablePagination();
                 return;
             }
 
@@ -750,6 +963,7 @@ if (!empty($_SESSION['error_message'])) {
             });
             clientCourtTrackingCalendar.render();
             initCctCalendarSearch(courtEvents);
+            initClientCourtDatesTablePagination();
         });
 
         function initCctCalendarSearch(courtEvents) {
@@ -862,7 +1076,37 @@ if (!empty($_SESSION['error_message'])) {
             }
         }
     </script>
-    <?php echo legalpro_render_client_page_search_script('.cct-search-row', '#cctRowCount', 'court date', 'court dates', ' total'); ?>
+    <script>
+    (function () {
+        function applyClientCourtTableSearch() {
+            var params = new URLSearchParams(window.location.search);
+            var q = (params.get('q') || '').trim().toLowerCase();
+            var rows = document.querySelectorAll('.cct-table tbody .cct-court-row[data-search]');
+            var visible = 0;
+            rows.forEach(function (row) {
+                if (!q) {
+                    row.style.display = '';
+                    visible++;
+                    return;
+                }
+                var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
+                var show = hay.indexOf(q) !== -1;
+                row.style.display = show ? '' : 'none';
+                if (show) {
+                    visible++;
+                }
+            });
+            var countEl = document.querySelector('#cctRowCount');
+            if (countEl) {
+                countEl.textContent = visible + ' ' + (visible === 1 ? 'court date' : 'court dates') + ' total';
+            }
+            if (typeof window.cctCourtShowPage === 'function') {
+                window.cctCourtShowPage(1);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', applyClientCourtTableSearch);
+    })();
+    </script>
     <script>
     (function () {
         document.addEventListener('DOMContentLoaded', function () {
