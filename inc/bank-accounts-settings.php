@@ -3,7 +3,7 @@
  * Admin settings UI — bank accounts for invoices.
  */
 
-function renderBankAccountsSettingsHtml(): string
+function renderBankAccountsSettingsHtml(bool $embedded = true): string
 {
     legalpro_bank_ensure_icons();
     $accounts = getBankAccounts();
@@ -44,8 +44,8 @@ function renderBankAccountsSettingsHtml(): string
         $defaultOptions .= '<option value="' . $i . '"' . ($i === $defaultSlot ? ' selected' : '') . '>Bank account ' . $i . '</option>';
     }
 
-    return '<div class="lp-bank-ui mt-4 pt-2" id="bank-accounts-settings">'
-        . '<hr class="horizontal dark my-4">'
+    return '<div class="lp-bank-ui' . ($embedded ? ' mt-4 pt-2' : '') . '" id="bank-accounts-settings">'
+        . ($embedded ? '<hr class="horizontal dark my-4">' : '')
         . '<div class="lp-bank-ui__head">'
         . '<span class="lp-bank-ui__head-icon">' . legalpro_icon('landmark') . '</span>'
         . '<div><h6 class="lp-bank-ui__title">Bank accounts for invoices</h6>'
