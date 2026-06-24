@@ -609,16 +609,7 @@ $clientOptions = '<option value="">Select client</option>';
 foreach ($clients as $client) {
     $fullName = trim($client['first_name'] . ' ' . $client['last_name']);
     $selected = ((int)$case['client_id'] === (int)$client['id']) ? ' selected' : '';
-    $hint = '';
-    if (!empty($client['username'])) {
-        $hint = ' — login: ' . $client['username'];
-    } elseif (!empty($client['email'])) {
-        $hint = ' — ' . $client['email'];
-    }
-    if (empty($client['user_id'])) {
-        $hint .= ' (no client portal account)';
-    }
-    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName . $hint) . '</option>';
+    $clientOptions .= '<option value="' . (int)$client['id'] . '"' . $selected . '>' . htmlspecialchars($fullName) . '</option>';
 }
 
 // Build lawyer checkboxes

@@ -326,15 +326,6 @@ echo ob_get_clean();
                 </p>
             </div>
 
-            <!-- Quick actions -->
-            <div class="dashboard-quick-actions ms-auto d-none d-lg-flex">
-                <a href="case-new.php" class="btn btn-sm bg-gradient-primary mb-0">
-                    <i class="fas fa-plus me-1"></i>New Case
-                </a>
-                <a href="appointments.php" class="btn btn-sm btn-outline-secondary mb-0">Appointments</a>
-                <a href="clients.php"      class="btn btn-sm btn-outline-secondary mb-0">Clients</a>
-            </div>
-
         </div>
     </nav>
 
