@@ -654,7 +654,7 @@ if (!empty($_SESSION['error_message'])) {
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-    <script src="../assets/js/court-date-view-modal.js?v=2"></script>
+    <script src="../assets/js/court-date-view-modal.js?v=3"></script>
     <script>
         var clientCourtTrackingCalendar = null;
 
