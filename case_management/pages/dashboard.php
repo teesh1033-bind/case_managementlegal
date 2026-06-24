@@ -251,9 +251,7 @@ $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCate
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <link href="../assets/css/dashboard-enhancements.css?v=5" rel="stylesheet" />
-    <link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />
-    <!-- MODERNISED STYLESHEET — drop in legalpro-modern.css to upgrade -->
-    <link href="../assets/css/legalpro-modern.css?v=1" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
 
     <style>
         /* Inline extras not yet in the drop-in CSS */
@@ -307,7 +305,7 @@ $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCate
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page<?php echo legalpro_portal_theme_body_class(); ?>">
 <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 
 <?php
@@ -680,7 +678,7 @@ echo ob_get_clean();
                 tooltip: { mode: 'index', intersect: false,
                     callbacks: {
                         label: function(ctx) {
-                            return ' ' + ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2});
+                            return ' ' + ctx.dataset.label + ': ' + (window.LegalProFormatCurrency ? window.LegalProFormatCurrency(ctx.parsed.y) : ctx.parsed.y);
                         }
                     }
                 }
@@ -689,7 +687,7 @@ echo ob_get_clean();
             scales: {
                 y: { grid: { borderDash: [5,5], color: 'rgba(0,0,0,0.05)' },
                      ticks: { color: '#8392ab', font: { size:11,family:'Montserrat' },
-                              callback: function(v){ return '$'+v.toLocaleString(); } } },
+                              callback: function(v){ return window.LegalProFormatCurrency ? window.LegalProFormatCurrency(v, 0) : v.toLocaleString(); } } },
                 x: { grid: { display: false },
                      ticks: { color: '#8392ab', font: { size:11,family:'Montserrat' } } }
             }

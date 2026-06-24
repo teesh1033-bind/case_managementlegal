@@ -1,8 +1,8 @@
 <?php
-// inc/menunav.php — Admin sidebar + header utilities (LegalPro colors, modern shell)
+// inc/menunav.php — Admin sidebar + header utilities
 
 require_once __DIR__ . '/admin-layout.php';
-require_once __DIR__ . '/legalpro-icons.php';
+require_once __DIR__ . '/../lib/portal-sidebar.php';
 
 if (defined('LEGALPRO_ADMIN_MENUNAV_LOADED')) {
     return;
@@ -45,6 +45,9 @@ if (!function_exists('legalpro_admin_menu_is_active')) {
         if ($itemId === 'court-tracking' && $currentPage === 'court-tracking') {
             return true;
         }
+        if ($itemId === 'documents' && in_array($currentPage, ['documents', 'document-upload', 'document-templates', 'document-generate', 'document-browse'], true)) {
+            return true;
+        }
 
         return $itemId === $currentPage;
     }
@@ -57,125 +60,31 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 ?>
 
 <?php if (!defined('LEGALPRO_ADMIN_PORTAL_HEAD')): ?>
+<?php include __DIR__ . '/portal-theme-head-early.php'; ?>
+<?php legalpro_icons_head_scripts(); ?>
 <link href="../assets/css/legalpro-portal-shell.css?v=21" rel="stylesheet" />
-<link href="../assets/css/legalpro-admin-portal.css?v=25" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=30" rel="stylesheet" />
 <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
-<link href="../assets/css/legalpro-sidebar-nav.css?v=17" rel="stylesheet" />
+<?php echo legalpro_sidebar_stylesheet_tag(); ?>
 <?php legalpro_icons_asset_links(); ?>
+<?php include __DIR__ . '/portal-theme-head.php'; ?>
 <?php endif; ?>
 
-<aside class="sidenav navbar navbar-vertical navbar-expand-xs fixed-start legalpro-admin-sidebar legalpro-admin-sidebar--compact" id="sidenav-main">
-    <div class="legalpro-sidebar-brand">
-        <a href="dashboard.php" class="legalpro-sidebar-brand__link">
-            <img src="<?php echo htmlspecialchars($companyLogoUrl); ?>" width="34" height="34" alt="<?php echo htmlspecialchars($companyName); ?> logo" class="legalpro-sidebar-brand__logo">
-            <span class="legalpro-sidebar-brand__text">
-                <span class="legalpro-sidebar-brand__name"><?php echo htmlspecialchars($companyName); ?></span>
-                <span class="legalpro-sidebar-brand__role">ADMIN</span>
-            </span>
-        </a>
-        <button type="button" class="legalpro-sidebar-collapse btn btn-link p-0 d-none d-xl-inline-flex" id="legalproSidebarCollapse" aria-label="Collapse sidebar">
-            <?php echo legalpro_icon('chevron-left'); ?>
-        </button>
-        <i class="fas fa-times legalpro-sidebar-close d-xl-none" id="iconSidenav" aria-hidden="true"></i>
-    </div>
-
-    <div class="collapse show navbar-collapse w-100 legalpro-sidebar-nav-wrap legalpro-sidebar-nav-wrap--expanded" id="sidenav-collapse-main">
-        <ul class="navbar-nav legalpro-sidebar-nav">
-            <?php foreach ($menuItems as $item): ?>
-                <?php $active = legalpro_admin_menu_is_active($item['id'], $currentPage); ?>
-                <li class="nav-item">
-                    <a class="nav-link<?php echo $active ? ' active' : ''; ?>" href="<?php echo htmlspecialchars($item['url']); ?>" title="<?php echo htmlspecialchars($item['title']); ?>" aria-label="<?php echo htmlspecialchars($item['title']); ?>">
-                        <span class="legalpro-sidebar-nav__icon"><?php echo legalpro_icon($item['icon']); ?></span>
-                        <span class="nav-link-text legalpro-sidebar-nav__label"><?php echo htmlspecialchars($item['title']); ?></span>
-                    </a>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-
-    <nav class="legalpro-sidebar-collapsed-rail" id="legalpro-sidebar-collapsed-rail" aria-label="Collapsed navigation">
-        <?php foreach ($menuItems as $item): ?>
-            <?php $active = legalpro_admin_menu_is_active($item['id'], $currentPage); ?>
-            <a class="legalpro-sidebar-collapsed-rail__link<?php echo $active ? ' active' : ''; ?>"
-               href="<?php echo htmlspecialchars($item['url']); ?>"
-               title="<?php echo htmlspecialchars($item['title']); ?>"
-               aria-label="<?php echo htmlspecialchars($item['title']); ?>">
-                <span class="legalpro-sidebar-collapsed-rail__icon"><?php echo legalpro_icon($item['icon']); ?></span>
-            </a>
-        <?php endforeach; ?>
-    </nav>
-</aside>
-
-<script>
-(function () {
-    var body = document.body;
-    if (!body) {
-        return;
-    }
-    body.classList.remove('g-sidenav-hidden');
-    body.classList.add('g-sidenav-pinned');
-})();
-</script>
+<?php
+echo legalpro_render_portal_sidebar([
+    'portal' => 'admin',
+    'home_url' => 'dashboard.php',
+    'role_label' => 'ADMIN',
+    'company_name' => $companyName,
+    'logo_url' => $companyLogoUrl,
+    'current_page' => $currentPage,
+    'items' => $menuItems,
+    'is_active' => 'legalpro_admin_menu_is_active',
+    'compact' => true,
+]);
+?>
 
 <?php echo $navbarUtilitiesMount; ?>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var body = document.body;
-    var collapseBtn = document.getElementById('legalproSidebarCollapse');
-    var navWrap = document.getElementById('sidenav-collapse-main');
-    var sidenav = document.getElementById('sidenav-main');
-
-    function fixAdminSidenavLayout() {
-        if (!body || !body.classList.contains('legalpro-admin-portal')) {
-            return;
-        }
-
-        body.classList.remove('g-sidenav-hidden');
-        body.classList.add('g-sidenav-pinned');
-
-        if (sidenav) {
-            sidenav.classList.remove('ps', 'ps--active-y');
-            sidenav.style.overflow = 'hidden';
-            sidenav.querySelectorAll('.ps__rail-y, .ps__thumb-y').forEach(function(node) {
-                node.remove();
-            });
-        }
-
-        var isCollapsed = body.classList.contains('legalpro-sidebar-collapsed');
-
-        if (navWrap) {
-            if (isCollapsed) {
-                navWrap.classList.add('show');
-                navWrap.style.removeProperty('display');
-                navWrap.style.removeProperty('height');
-                navWrap.style.removeProperty('max-height');
-                navWrap.style.removeProperty('min-height');
-                navWrap.style.removeProperty('overflow-y');
-            } else {
-                navWrap.classList.add('show');
-                navWrap.style.removeProperty('display');
-                navWrap.style.removeProperty('height');
-                navWrap.style.removeProperty('max-height');
-                navWrap.style.minHeight = '0';
-                navWrap.style.overflowY = 'auto';
-            }
-        }
-    }
-
-    fixAdminSidenavLayout();
-    window.addEventListener('load', fixAdminSidenavLayout);
-    setTimeout(fixAdminSidenavLayout, 150);
-    setTimeout(fixAdminSidenavLayout, 600);
-
-    if (collapseBtn) {
-        collapseBtn.addEventListener('click', function() {
-            body.classList.toggle('legalpro-sidebar-collapsed');
-            body.classList.remove('g-sidenav-hidden');
-            body.classList.add('g-sidenav-pinned');
-            fixAdminSidenavLayout();
-        });
-    }
-});
-</script>
+<script src="../assets/js/admin-portal.js?v=2"></script>
 <?php legalpro_icons_footer_scripts(); ?>

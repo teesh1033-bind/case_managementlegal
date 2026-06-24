@@ -6,7 +6,7 @@
     --lp-portal-primary-dark: #825ee4;
     --lp-portal-sidebar-bg: #1e2a44;
     --lp-portal-sidebar-bg-deep: #151d30;
-    --lp-portal-sidebar-width: 270px;
+    --lp-portal-sidebar-width: 300px;
     --lp-portal-sidebar-collapsed: 88px;
     --lp-portal-header-height: 76px;
     --lp-portal-content-bg: #f4f6f9;
@@ -17,6 +17,13 @@
 /* Lawyer + client page body selectors */
 body.legalpro-lawyer-portal,
 body.legalpro-lawyer-portal.bg-gray-100,
+body.legalpro-admin-portal,
+body.legalpro-admin-portal.bg-gray-100,
+body.legalpro-dashboard-page,
+body.legalpro-dashboard-page.bg-gray-100,
+body.admin-cases-page,
+body.admin-case-view-page,
+body.admin-court-tracking-page,
 body.lawyer-dashboard-page,
 body.lawyer-dashboard-page.bg-gray-100,
 body.lawyer-cases-page,
@@ -48,6 +55,11 @@ body.g-sidenav-show.client-appointments-page,
 }
 
 body.legalpro-lawyer-portal > .min-height-300,
+body.legalpro-admin-portal > .min-height-300,
+body.legalpro-dashboard-page > .min-height-300,
+body.admin-cases-page > .min-height-300,
+body.admin-case-view-page > .min-height-300,
+body.admin-court-tracking-page > .min-height-300,
 body.lawyer-dashboard-page > .min-height-300,
 body.lawyer-cases-page > .min-height-300,
 body.lawyer-clients-page > .min-height-300,
@@ -98,6 +110,11 @@ body.client-portal-page .legalpro-admin-sidebar,
 body.client-profile-page .legalpro-portal-sidebar,
 body.client-profile-page .legalpro-admin-sidebar,
 body.legalpro-lawyer-portal .legalpro-admin-sidebar,
+body.legalpro-admin-portal .legalpro-admin-sidebar,
+body.legalpro-dashboard-page .legalpro-admin-sidebar,
+body.admin-cases-page .legalpro-admin-sidebar,
+body.admin-case-view-page .legalpro-admin-sidebar,
+body.admin-court-tracking-page .legalpro-admin-sidebar,
 body.lawyer-dashboard-page .legalpro-admin-sidebar,
 body.lawyer-cases-page .legalpro-admin-sidebar,
 body.lawyer-clients-page .legalpro-admin-sidebar,
@@ -226,9 +243,9 @@ body.legalpro-sidebar-collapsed .legalpro-sidebar-signout span {
 }
 
 .legalpro-sidebar-nav .nav-link.active {
-    background: var(--lp-portal-gradient) !important;
+    background: var(--legalpro-theme-gradient, var(--lp-portal-gradient)) !important;
     color: #fff !important;
-    box-shadow: 0 8px 18px rgba(94, 114, 228, 0.35);
+    box-shadow: 0 8px 18px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
 }
 
 .legalpro-sidebar-nav__icon {
@@ -273,6 +290,11 @@ body.legalpro-sidebar-collapsed .legalpro-sidebar-signout span {
 
 /* Main content */
 body.legalpro-lawyer-portal .main-content,
+body.legalpro-admin-portal .main-content,
+body.legalpro-dashboard-page .main-content,
+body.admin-cases-page .main-content,
+body.admin-case-view-page .main-content,
+body.admin-court-tracking-page .main-content,
 body.lawyer-dashboard-page .main-content,
 body.lawyer-cases-page .main-content,
 body.lawyer-clients-page .main-content,
@@ -720,4 +742,31 @@ body.client-appointments-page .footer .copyright {
     body.client-portal-page .navbar-main .container-fluid {
         padding: 0.85rem 1rem !important;
     }
+}
+
+/* Dark mode page backgrounds (override :root light tokens from this file) */
+body.legalpro-dark-mode.legalpro-admin-portal,
+body.legalpro-dark-mode.legalpro-admin-portal.bg-gray-100,
+body.legalpro-dark-mode.legalpro-dashboard-page,
+body.legalpro-dark-mode.legalpro-dashboard-page.bg-gray-100,
+body.legalpro-dark-mode.admin-court-tracking-page,
+body.legalpro-dark-mode.admin-cases-page,
+body.legalpro-dark-mode.admin-case-view-page,
+body.legalpro-dark-mode.legalpro-client-portal,
+body.legalpro-dark-mode.client-dashboard-page,
+body.legalpro-dark-mode.client-cases-page,
+body.legalpro-dark-mode.client-appointments-page,
+body.legalpro-dark-mode.client-court-tracking-page,
+body.legalpro-dark-mode.client-payments-page,
+body.legalpro-dark-mode.client-portal-page,
+body.legalpro-dark-mode.client-profile-page,
+body.legalpro-dark-mode.legalpro-lawyer-portal,
+body.legalpro-dark-mode.lawyer-dashboard-page,
+body.legalpro-dark-mode.lawyer-cases-page,
+body.legalpro-dark-mode.lawyer-clients-page,
+body.legalpro-dark-mode.lawyer-appointments-page,
+body.legalpro-dark-mode.lawyer-court-tracking-page {
+    background: var(--lp-dark-bg, #2a3040) !important;
+    background-color: var(--lp-dark-bg, #2a3040) !important;
+    background-image: linear-gradient(180deg, #2e3446 0%, #2a3040 45%, #272c3c 100%) !important;
 }

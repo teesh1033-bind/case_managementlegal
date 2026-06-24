@@ -819,7 +819,7 @@ if (empty($invoices)) {
             htmlspecialchars($amount),
             '<span class="case-status-pill ' . $pillClass . '">' . htmlspecialchars($status) . '</span>
                 <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm bg-gradient-primary mb-0" target="_blank">
-                    <i class="ni ni-single-copy-04 me-1"></i>View
+                    <i class="ni ni-single-copy-04 me-1"></i>PDF
                 </a>'
         );
     }
@@ -841,7 +841,7 @@ if (empty($payments)) {
             htmlspecialchars($amount),
             htmlspecialchars($method) . ' · ' . htmlspecialchars($date),
             '<a href="payment-receipt.php?id=' . (int)$payment['id'] . '" class="btn btn-sm bg-gradient-success mb-0" target="_blank">
-                <i class="ni ni-single-copy-04 me-1"></i>Receipt
+                <i class="ni ni-single-copy-04 me-1"></i>PDF
             </a>'
         );
     }
@@ -1029,7 +1029,7 @@ $html = <<<'HTML'
                                     <a href="case-edit.php?id={CASE_ID}" class="btn btn-sm btn-dark">
                                         <i class="ni ni-settings me-1"></i>Edit Case
                                     </a>
-                                    <a href="documents.php?case_id={CASE_ID}" class="btn btn-sm btn-outline-primary">
+                                    <a href="document-upload.php?case_id={CASE_ID}" class="btn btn-sm btn-outline-primary">
                                         <i class="ni ni-cloud-upload-96 me-1"></i>Add Document
                                     </a>
                                 </div>
@@ -1100,7 +1100,7 @@ $html = <<<'HTML'
                                                     <h4 class="mb-0">{TOTAL_FEES}</h4>
                                                 </div>
                                                 <div class="col-6 mb-3">
-                                                    <p class="text-sm mb-1">Invoiced</p>
+                                                    <p class="text-sm mb-1">Last Invoiced</p>
                                                     <h6 class="mb-0 text-primary">{TOTAL_INVOICED}</h6>
                                                 </div>
                                                 <div class="col-6 mb-3">

@@ -247,20 +247,20 @@ $iconCommentEmpty = legalpro_icon('message-circle');
 $servicesHtml = '';
 $totalFees = 0;
 if (empty($services)) {
-    $servicesHtml = '<tr><td colspan="3" class="text-center text-muted py-3">No services added yet</td></tr>';
+    $servicesHtml = '<tr><td colspan="2" class="text-center text-muted py-3">No services added yet</td></tr>';
 } else {
     foreach ($services as $service) {
         $servicesHtml .= '
         <tr>
             <td>' . htmlspecialchars($service['service_name']) . '</td>
-            <td class="text-end">Rs' . number_format($service['price'], 2) . '</td>
+            <td class="text-end">' . formatCurrency($service['price']) . '</td>
         </tr>';
         $totalFees += $service['price'];
     }
     $servicesHtml .= '
     <tr class="table-active">
         <td><strong>Total Estimated Fees</strong></td>
-        <td class="text-end"><strong>Rs' . number_format($totalFees, 2) . '</strong></td>
+        <td class="text-end"><strong>' . formatCurrency($totalFees) . '</strong></td>
     </tr>';
 }
 
@@ -336,7 +336,7 @@ if (empty($documents)) {
 
         $documentsHtml .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconDocRow . '</div>
                     <div>
@@ -345,10 +345,10 @@ if (empty($documents)) {
                     </div>
                 </div>
             </td>
-            <td class="text-center">' . htmlspecialchars($fileType) . '</td>
-            <td class="text-center">' . $fileSizeFormatted . '</td>
-            <td class="text-end">
-                <div class="d-inline-flex flex-wrap justify-content-end gap-1">' . $actionButtons . '</div>
+            <td class="align-middle text-center">' . htmlspecialchars($fileType) . '</td>
+            <td class="align-middle text-center">' . $fileSizeFormatted . '</td>
+            <td class="align-middle text-end lp-table-actions">
+                <div class="lp-table-actions-inner">' . $actionButtons . '</div>
             </td>
         </tr>';
     }
@@ -398,7 +398,7 @@ $html = <<<'HTML'
             width: 100%;
             max-width: 100%;
         }
-        .lawyer-case-comments .cc-comment-item--client .cc-comment-item-inner { border-left-color: #11cdef; }
+        .lawyer-case-comments .cc-comment-item--client .cc-comment-item-inner { border-left-color: #8898aa; }
         .lawyer-case-comments .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
         .lawyer-case-comments .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
         .lawyer-case-comments .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
@@ -565,7 +565,7 @@ $html = <<<'HTML'
                                 <!-- Services Tab -->
                                 <div class="tab-pane fade show active" id="services" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Service</th>
@@ -582,7 +582,7 @@ $html = <<<'HTML'
                                 <!-- Stages Tab -->
                                 <div class="tab-pane fade" id="stages" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Stage #</th>
@@ -603,7 +603,7 @@ $html = <<<'HTML'
                                 <!-- Appointments Tab -->
                                 <div class="tab-pane fade" id="appointments" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Date</th>
@@ -655,7 +655,7 @@ $html = <<<'HTML'
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Document</th>
@@ -751,7 +751,7 @@ HTML;
 $commentRoleBadge = static function (string $type): string {
     switch ($type) {
         case 'client':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-info">Client</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Client</span>';
         case 'lawyer':
             return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
         case 'admin':

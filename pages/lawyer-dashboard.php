@@ -100,7 +100,7 @@ if (empty($recentCases)) {
 
         $recentCasesHtml .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3" style="width:2.25rem;height:2.25rem;min-width:2.25rem">' . $iconRowCase . '</div>
                     <div>
@@ -112,10 +112,10 @@ if (empty($recentCases)) {
             <td class="text-center align-middle">
                 <div class="d-flex flex-column gap-1 align-items-center">' . $statusBadge . $priorityBadge . '</div>
             </td>
-            <td class="text-center">
+            <td class="text-center align-middle">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
-            <td class="text-center align-middle">
+            <td class="text-center align-middle lp-table-actions">
                 <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">View</a>
             </td>
         </tr>';
@@ -170,6 +170,91 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=3" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
+    <style>
+    .lawyer-dashboard-page {
+        --cp-primary: var(--legalpro-theme-primary, #5e72e4);
+        --cp-primary-soft: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+        --cp-primary-light: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+        --cp-primary-border: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+        --cp-text: #1e293b;
+        --cp-muted: #94a3b8;
+        --cp-surface: #ffffff;
+        --cp-border: rgba(0,0,0,0.07);
+        --cp-r: 16px;
+        --cp-ease: 0.18s cubic-bezier(.4,0,.2,1);
+        --cp-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        --cp-shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    .cd-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .cd-kpi {
+        background: var(--cp-surface);
+        border: 1px solid var(--cp-border);
+        border-radius: var(--cp-r);
+        box-shadow: var(--cp-shadow);
+        padding: 1.1rem 1.25rem;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .75rem;
+        transition: transform var(--cp-ease), box-shadow var(--cp-ease);
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        color: var(--cp-text);
+        height: 100%;
+    }
+    .cd-kpi::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--kpi-color, var(--cp-primary));
+        border-radius: 0 0 var(--cp-r) var(--cp-r);
+        opacity: 0;
+        transition: opacity var(--cp-ease);
+    }
+    .cd-kpi:hover { transform: translateY(-3px); box-shadow: var(--cp-shadow-lg); }
+    .cd-kpi:hover::after { opacity: 1; }
+    .cd-kpi__val {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -.04em;
+        color: var(--cp-text);
+    }
+    .cd-kpi__lbl {
+        font-size: .66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--cp-muted);
+        margin-top: .3rem;
+    }
+    .cd-kpi__icon {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: var(--cp-primary-soft);
+        color: var(--cp-primary);
+    }
+    @media (max-width: 1199px) {
+        .cd-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 767px) {
+        .cd-kpi-grid { grid-template-columns: 1fr; }
+    }
+    </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-dashboard-page legalpro-dashboard-page">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
@@ -187,59 +272,29 @@ $html = <<<'HTML'
         </nav>
 
         <div class="container-fluid py-4">
-            <!-- Statistics Cards - First Row -->
-            <div class="row mb-4">
-                <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <div class="row">
-                                <div class="col-8">
-                                    <div class="numbers">
-                                        <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Cases</p>
-                                        <h5 class="font-weight-bolder mb-0">{TOTAL_CASES}</h5>
-                                    </div>
-                                </div>
-                                <div class="col-4 text-end">
-                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_STAT_CASES}</div>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Statistics Cards -->
+            <div class="cd-kpi-grid">
+                <a href="lawyer-cases.php" class="cd-kpi" style="--kpi-color:var(--cp-primary);">
+                    <div>
+                        <div class="cd-kpi__val">{TOTAL_CASES}</div>
+                        <div class="cd-kpi__lbl">Total Cases</div>
                     </div>
-                </div>
-                <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <div class="row">
-                                <div class="col-8">
-                                    <div class="numbers">
-                                        <p class="text-sm mb-0 text-uppercase font-weight-bold">Active Cases</p>
-                                        <h5 class="font-weight-bolder mb-0">{ACTIVE_CASES}</h5>
-                                    </div>
-                                </div>
-                                <div class="col-4 text-end">
-                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">{ICON_STAT_ACTIVE}</div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="cd-kpi__icon">{ICON_STAT_CASES}</div>
+                </a>
+                <a href="lawyer-cases.php" class="cd-kpi" style="--kpi-color:#2dce89;">
+                    <div>
+                        <div class="cd-kpi__val">{ACTIVE_CASES}</div>
+                        <div class="cd-kpi__lbl">Active Cases</div>
                     </div>
-                </div>
-                <div class="col-xl-4 col-sm-6">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <div class="row">
-                                <div class="col-8">
-                                    <div class="numbers">
-                                        <p class="text-sm mb-0 text-uppercase font-weight-bold">My Clients</p>
-                                        <h5 class="font-weight-bolder mb-0">{TOTAL_CLIENTS}</h5>
-                                    </div>
-                                </div>
-                                <div class="col-4 text-end">
-                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_STAT_CLIENTS}</div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="cd-kpi__icon" style="background:rgba(45,206,137,.1);color:#2dce89;">{ICON_STAT_ACTIVE}</div>
+                </a>
+                <a href="lawyer-clients.php" class="cd-kpi" style="--kpi-color:#11cdef;">
+                    <div>
+                        <div class="cd-kpi__val">{TOTAL_CLIENTS}</div>
+                        <div class="cd-kpi__lbl">My Clients</div>
                     </div>
-                </div>
+                    <div class="cd-kpi__icon" style="background:rgba(17,205,239,.12);color:#11cdef;">{ICON_STAT_CLIENTS}</div>
+                </a>
             </div>
 
 
@@ -327,7 +382,8 @@ $html = <<<'HTML'
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
 HTML;

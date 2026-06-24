@@ -618,7 +618,8 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/fullcalendar/fallback.js"></script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
         var availabilityEvents = {AVAILABILITY_EVENTS_JSON};
         var workingHours = {WORKING_HOURS_JSON};

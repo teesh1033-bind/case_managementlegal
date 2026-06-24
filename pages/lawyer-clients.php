@@ -67,7 +67,7 @@ if (empty($clients)) {
 
         $clientsTable .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="lawyer-client-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconClientRow . '</div>
                     <div>
@@ -76,16 +76,16 @@ if (empty($clients)) {
                     </div>
                 </div>
             </td>
-            <td>' . htmlspecialchars($client['phone'] ?: 'Not provided') . '</td>
+            <td class="align-middle">' . htmlspecialchars($client['phone'] ?: 'Not provided') . '</td>
             <td class="align-middle text-center">
                 <span class="ca-status-pill ca-status-pill--scheduled d-inline-block mb-1">' . (int)$client['total_cases'] . ' total</span><br>
                 <span class="ca-status-pill ca-status-pill--done d-inline-block">' . (int)$client['active_cases'] . ' active</span>
             </td>
-            <td>
+            <td class="align-middle">
                 <span class="text-sm" title="' . $caseTitles . '">' . $caseTitlesShort . '</span>
             </td>
-            <td class="text-end">
-                <a href="lawyer-client-view.php?id=' . (int)$client['id'] . '" class="btn btn-sm btn-primary">View Details</a>
+            <td class="align-middle text-end lp-table-actions">
+                <a href="lawyer-client-view.php?id=' . (int)$client['id'] . '" class="btn btn-sm btn-primary mb-0">View Details</a>
             </td>
         </tr>';
     }
@@ -207,7 +207,8 @@ $html = <<<'HTML'
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
 HTML;

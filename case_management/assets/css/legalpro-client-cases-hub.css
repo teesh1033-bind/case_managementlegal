@@ -1,0 +1,145 @@
+/**
+ * Client case hub — overview, activity, services, appointments, documents, comments.
+ */
+.ccv-page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.legalpro-client-cases-hub .legalpro-case-subnav {
+    margin-bottom: 0;
+}
+
+.ccv-panel-body {
+    padding: 1.15rem 1.35rem 1.35rem;
+}
+
+.ccv-overview-desc {
+    margin: 0 0 1rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--cpp-muted, #64748b);
+}
+
+.ccv-overview-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 1.15rem;
+}
+
+.ccv-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.75rem;
+}
+
+.ccv-detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+}
+
+.ccv-detail-item__icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.1);
+    color: var(--cpp-primary, #5e72e4);
+}
+
+.ccv-detail-item__icon .lp-icon svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    stroke: currentColor;
+}
+
+.ccv-detail-item__copy {
+    min-width: 0;
+}
+
+.ccv-detail-item__lbl {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cpp-muted, #94a3b8);
+    margin-bottom: 0.15rem;
+}
+
+.ccv-detail-item__val {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--cpp-text, #1e293b);
+    line-height: 1.35;
+}
+
+.ccv-activity-feed {
+    padding-top: 0.15rem;
+}
+
+.ccv-service-list .list-group-item {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.ccv-upload-block {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.ccv-upload-block__title {
+    margin: 0 0 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--cpp-text, #1e293b);
+}
+
+.ccv-doc-row .ccv-doc-icon .legalpro-doc-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+}
+
+.cp-appt-card {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.cp-appt-card:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.cp-empty .btn-cp-link,
+.cp-empty .btn-action {
+    margin-top: 1rem;
+}
+
+body.legalpro-dark-mode.legalpro-client-cases-hub .ccv-detail-item {
+    background: var(--lp-dark-surface-raised, #3d455c);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+}
+
+body.legalpro-dark-mode.legalpro-client-cases-hub .ccv-detail-item__val,
+body.legalpro-dark-mode.legalpro-client-cases-hub .ccv-upload-block__title,
+body.legalpro-dark-mode.legalpro-client-cases-hub .ccv-overview-desc {
+    color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode.legalpro-client-cases-hub .ccv-upload-block,
+body.legalpro-dark-mode.legalpro-client-cases-hub .cp-appt-card {
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+}

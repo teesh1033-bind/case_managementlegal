@@ -34,25 +34,48 @@ try {
 }
 
 // ── Stat helpers ──────────────────────────────────────────────────────────────
-$caseCount  = count($cases);
-$activeCount = 0;
-$reviewCount = 0;
+$caseCount    = count($cases);
+$activeCount  = 0;
+$openCount    = 0;
+$pendingCount = 0;
+$closedCount  = 0;
+$reviewCount  = 0;
 foreach ($cases as $c) {
-    $s = strtolower($c['status'] ?? '');
-    if ($s === 'active')                     $activeCount++;
-    if (str_contains($s, 'review'))          $reviewCount++;
+    $s = strtolower(str_replace([' ', '-'], '_', trim((string) ($c['status'] ?? ''))));
+    if (in_array($s, ['active', 'open', 'in_progress'], true)) {
+        $activeCount++;
+    }
+    if ($s === 'open') {
+        $openCount++;
+    }
+    if ($s === 'pending') {
+        $pendingCount++;
+    }
+    if ($s === 'closed') {
+        $closedCount++;
+    }
+    if (str_contains($s, 'review')) {
+        $reviewCount++;
+    }
 }
+
+require_once __DIR__ . '/../inc/legalpro-icons.php';
+require_once __DIR__ . '/../lib/client-portal-page-ui.php';
 
 // ── Badge helpers ─────────────────────────────────────────────────────────────
 function modern_status_badge(string $status): string {
     $map = [
         'active'        => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'Active'],
+        'open'          => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'Open'],
+        'in_progress'   => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'In progress'],
         'pending'       => ['cls' => 'badge-pending', 'dot' => '#ca8a04', 'label' => 'Pending'],
         'under review'  => ['cls' => 'badge-review',  'dot' => 'currentColor', 'label' => 'Under review'],
+        'under_review'  => ['cls' => 'badge-review',  'dot' => 'currentColor', 'label' => 'Under review'],
         'closed'        => ['cls' => 'badge-closed',  'dot' => '#94a3b8', 'label' => 'Closed'],
     ];
-    $key  = strtolower(trim($status));
-    $cfg  = $map[$key] ?? ['cls' => 'badge-closed', 'dot' => '#94a3b8', 'label' => ucfirst($status)];
+    $key  = strtolower(trim(str_replace('_', ' ', $status)));
+    $keyUnderscore = strtolower(str_replace(' ', '_', trim($status)));
+    $cfg  = $map[$key] ?? $map[$keyUnderscore] ?? ['cls' => 'badge-closed', 'dot' => '#94a3b8', 'label' => ucfirst($status)];
     return '<span class="badge ' . $cfg['cls'] . '">'
          . '<span class="badge-dot" style="background:' . $cfg['dot'] . '"></span>'
          . htmlspecialchars($cfg['label'])
@@ -123,16 +146,11 @@ function category_pill(string $cat): string {
 $casesRows = '';
 if (empty($cases)) {
     $casesRows = '<tr><td colspan="6">
-        <div class="empty">
-            <div class="empty-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <rect x="2" y="7" width="20" height="14" rx="2"/>
-                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-                </svg>
-            </div>
-            <h5 style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:.4rem">No cases yet</h5>
-            <p style="font-size:13px;color:#94a3b8;max-width:22rem;margin:0 auto 1.25rem">When your legal team opens a matter for you, it will appear here with status, priority, and assigned counsel.</p>
-            <a href="client-dashboard.php" class="btn-action">Go to dashboard</a>
+        <div class="cp-empty">
+            <div class="cp-empty-icon cp-empty-icon--primary">' . legalpro_icon('briefcase') . '</div>
+            <h5>No cases yet</h5>
+            <p>When your legal team opens a matter for you, it will appear here with status, priority, and assigned counsel.</p>
+            <a href="client-dashboard.php" class="btn-action">' . legalpro_icon('layout-dashboard') . ' Go to dashboard</a>
         </div>
     </td></tr>';
 } else {
@@ -155,13 +173,8 @@ if (empty($cases)) {
                             data-category="' . strtolower($case['category'] ?? '') . '"
                             data-search="' . htmlspecialchars($searchHay, ENT_QUOTES, 'UTF-8') . '">
             <td>
-                <div style="display:flex;align-items:center;gap:10px">
-                    <div class="case-icon">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <rect x="2" y="7" width="20" height="14" rx="2"/>
-                            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-                        </svg>
-                    </div>
+                <div class="cc-case-cell">
+                    <div class="case-icon">' . legalpro_icon('briefcase') . '</div>
                     <div>
                         <p class="case-num">' . $caseNumber . '</p>
                         <p class="case-title">' . $title . '</p>
@@ -173,15 +186,43 @@ if (empty($cases)) {
             <td style="text-align:center">' . $status . '</td>
             <td style="text-align:center">' . $priority . '</td>
             <td>' . $lawyers . '</td>
-            <td><a href="client-case-view.php?id=' . $id . '" class="btn-view">View</a></td>
+            <td><a href="client-case-view.php?id=' . $id . '" class="btn-view">' . legalpro_icon('arrow-right') . ' View</a></td>
         </tr>';
     }
 }
 
 // ── Message HTML ──────────────────────────────────────────────────────────────
 $messageHtml = $message
-    ? '<div class="alert-bar alert-' . htmlspecialchars($messageType) . '">' . htmlspecialchars($message) . '</div>'
+    ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">'
+        . htmlspecialchars($message)
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>'
     : '';
+
+$heroHtml = client_portal_render_hero([
+    'kicker' => 'Client portal',
+    'title' => 'My cases',
+    'subtitle' => 'Track status, priority, and the counsel assigned to each of your matters.',
+    'show_date' => true,
+    'aria_label' => 'My cases overview',
+    'stats' => [
+        ['num' => (string) $caseCount, 'lbl' => 'Total'],
+        ['num' => (string) $activeCount, 'lbl' => 'Active'],
+        ['num' => (string) $pendingCount, 'lbl' => 'Pending'],
+        ['num' => (string) $closedCount, 'lbl' => 'Closed'],
+    ],
+    'actions' => [
+        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-documents.php', 'label' => 'Documents', 'icon' => 'folder-open'],
+    ],
+]);
+
+$panelHeaderHtml = client_portal_render_panel_header([
+    'title' => 'Case list',
+    'subtitle' => 'Sorted by most recently updated',
+    'icon' => 'briefcase',
+    'badge' => $caseCount . ' case' . ($caseCount !== 1 ? 's' : ''),
+    'badge_id' => 'ccRowCount',
+]);
 
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
@@ -207,365 +248,8 @@ ob_start(); ?>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-
-    <style>
-        /* ── Reset / base ───────────────────────────────────────── */
-        *, *::before, *::after { box-sizing: border-box; }
-        body.client-cases-page {
-            background: #f0f2f8;
-            --cc-primary: var(--legalpro-theme-primary, #5e72e4);
-            --cc-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
-            --cc-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
-            --cc-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
-            --cc-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
-            --cc-field-bg: #fff;
-            --cc-field-color: #1e293b;
-            --cc-field-border: #e2e8f0;
-            --cc-field-muted: #94a3b8;
-        }
-        body.legalpro-dark-mode.client-cases-page {
-            --cc-field-bg: var(--lp-dark-input-bg, #2f3547);
-            --cc-field-color: var(--lp-dark-text, #f8f9fc);
-            --cc-field-border: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
-            --cc-field-muted: var(--lp-dark-text-subtle, #9aa8bc);
-        }
-
-        /* ── Alert bar ──────────────────────────────────────────── */
-        .alert-bar {
-            border-radius: 10px;
-            padding: .75rem 1rem;
-            font-size: 13px;
-            margin-bottom: 1rem;
-        }
-        .alert-danger  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-
-        /* ── Hero card ──────────────────────────────────────────── */
-        .cc-hero-card {
-            background: var(--cc-gradient);
-            border-radius: 20px;
-            padding: 2rem 2.5rem;
-            color: #fff;
-            margin-bottom: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .cc-hero-card::before {
-            content: '';
-            position: absolute;
-            top: -60px; right: -60px;
-            width: 200px; height: 200px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.08);
-        }
-        .cc-hero-card::after {
-            content: '';
-            position: absolute;
-            bottom: -80px; right: 80px;
-            width: 160px; height: 160px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.06);
-        }
-        .cc-hero-kicker {
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            opacity: .75;
-            margin-bottom: .35rem;
-        }
-        .cc-hero-title {
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: .3rem;
-        }
-        .cc-hero-sub {
-            font-size: 13px;
-            opacity: .75;
-            margin-bottom: 1.5rem;
-        }
-        .cc-hero-stats {
-            display: flex;
-            gap: .85rem;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-        .cc-stat-pill {
-            background: rgba(255,255,255,.15);
-            border: 1px solid rgba(255,255,255,.2);
-            border-radius: 12px;
-            padding: .6rem 1.1rem;
-            backdrop-filter: blur(10px);
-        }
-        .cc-stat-pill .num {
-            font-size: 20px;
-            font-weight: 700;
-            line-height: 1;
-        }
-        .cc-stat-pill .lbl {
-            font-size: 11px;
-            opacity: .75;
-            margin-top: 2px;
-        }
-
-        /* ── Filters ────────────────────────────────────────────── */
-        .cc-filters {
-            display: flex;
-            gap: .75rem;
-            margin-bottom: 1.25rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .cc-search-wrap {
-            position: relative;
-            flex: 1;
-            min-width: 200px;
-        }
-        .cc-search-wrap svg {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--cc-field-muted);
-            pointer-events: none;
-        }
-        .cc-search-input {
-            width: 100%;
-            padding: .55rem .75rem .55rem 2.25rem;
-            border: 1px solid var(--cc-field-border);
-            border-radius: 10px;
-            font-size: 13px;
-            background: var(--cc-field-bg);
-            color: var(--cc-field-color);
-            outline: none;
-            transition: border-color .15s, box-shadow .15s;
-        }
-        .cc-search-input::placeholder {
-            color: var(--cc-field-muted);
-            opacity: 1;
-        }
-        .cc-search-input:focus {
-            border-color: var(--cc-primary);
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
-        }
-        body.legalpro-dark-mode.client-cases-page .cc-search-input:focus {
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-        }
-        .cc-filter-select {
-            padding: .52rem .75rem;
-            border: 1px solid var(--cc-field-border);
-            border-radius: 10px;
-            font-size: 13px;
-            background: var(--cc-field-bg);
-            color: var(--cc-field-color);
-            outline: none;
-            cursor: pointer;
-        }
-
-        /* ── Table card ─────────────────────────────────────────── */
-        .cc-panel {
-            background: #fff;
-            border-radius: 16px;
-            border: 1px solid #e9ecf3;
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-        .cc-panel-header {
-            padding: 1.1rem 1.5rem;
-            border-bottom: 1px solid #f1f5f9;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: .75rem;
-            flex-wrap: wrap;
-        }
-        .cc-panel-header h5 {
-            font-size: 15px;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 0;
-        }
-        .cc-panel-header p {
-            font-size: 12px;
-            color: #94a3b8;
-            margin: 2px 0 0;
-        }
-        .cc-row-count {
-            background: var(--cc-primary-soft);
-            color: var(--cc-primary);
-            font-size: 11px;
-            font-weight: 600;
-            padding: .2rem .65rem;
-            border-radius: 99px;
-        }
-        .cc-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        .cc-table thead th {
-            background: #f8fafc;
-            color: #94a3b8;
-            font-size: 10.5px;
-            font-weight: 700;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            padding: .7rem 1rem;
-            border-bottom: 1px solid #f1f5f9;
-            white-space: nowrap;
-        }
-        .cc-table thead th:first-child { padding-left: 1.5rem; }
-        .cc-table thead th:last-child  { padding-right: 1.5rem; text-align: right; }
-        .cc-table tbody tr {
-            border-bottom: 1px solid #f8fafc;
-            transition: background .1s;
-        }
-        .cc-table tbody tr:hover   { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04); }
-        .cc-table tbody tr:last-child { border-bottom: none; }
-        .cc-table tbody td {
-            padding: .85rem 1rem;
-            vertical-align: middle;
-        }
-        .cc-table tbody td:first-child { padding-left: 1.5rem; }
-        .cc-table tbody td:last-child  { padding-right: 1.5rem; text-align: right; }
-
-        /* ── Case cell parts ────────────────────────────────────── */
-        .case-icon {
-            width: 36px; height: 36px;
-            border-radius: 10px;
-            background: var(--cc-primary-soft);
-            color: var(--cc-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .case-num   { font-size: 11px; font-weight: 700; color: var(--cc-primary); margin: 0 0 1px; }
-        .case-title {
-            font-size: 13px; font-weight: 600; color: #1e293b;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            max-width: 220px; margin: 0;
-        }
-        .case-date  { font-size: 11px; color: #94a3b8; margin: 1px 0 0; }
-
-        /* ── Category pill ──────────────────────────────────────── */
-        .cat-pill {
-            display: inline-block;
-            padding: .2rem .6rem;
-            border-radius: 99px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        /* ── Status badges ──────────────────────────────────────── */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: .22rem .65rem;
-            border-radius: 99px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .badge-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .badge-active  { background: #dcfce7; color: #166534; }
-        .badge-pending { background: #fef9c3; color: #854d0e; }
-        .badge-closed  { background: #f1f5f9; color: #475569; }
-        .badge-review  { background: var(--cc-primary-soft); color: var(--cc-primary); }
-        .badge-review .badge-dot { background: var(--cc-primary) !important; }
-
-        /* ── Priority badges ────────────────────────────────────── */
-        .pri-high   { background: #fee2e2; color: #991b1b; padding: .2rem .6rem; border-radius: 6px; font-size: 11px; font-weight: 600; }
-        .pri-med    { background: #fff7ed; color: #9a3412; padding: .2rem .6rem; border-radius: 6px; font-size: 11px; font-weight: 600; }
-        .pri-low    { background: #f0fdf4; color: #166534; padding: .2rem .6rem; border-radius: 6px; font-size: 11px; font-weight: 600; }
-
-        /* ── Lawyer stack ───────────────────────────────────────── */
-        .lawyer-stack {
-            display: flex;
-            align-items: center;
-        }
-        .lawyer-stack__unassigned {
-            font-size: 12px;
-            color: #94a3b8;
-        }
-        .lawyer-stack__name {
-            font-size: 12px;
-            font-weight: 500;
-            color: #334155;
-            margin-left: 8px;
-        }
-        .lawyer-stack__more {
-            font-size: 11px;
-            font-weight: 600;
-            color: #64748b;
-            margin-left: 6px;
-        }
-        .avatar {
-            width: 26px; height: 26px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: 700;
-            flex-shrink: 0;
-            border: 2px solid #fff;
-        }
-
-        /* ── View button ────────────────────────────────────────── */
-        .btn-view {
-            display: inline-block;
-            padding: .35rem .9rem;
-            border-radius: 8px;
-            border: 1.5px solid var(--cc-primary);
-            color: var(--cc-primary);
-            font-size: 12px;
-            font-weight: 600;
-            background: none;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background .15s, color .15s;
-        }
-        .btn-view:hover { background: var(--cc-primary); color: #fff; }
-
-        .btn-action {
-            display: inline-block;
-            padding: .5rem 1.25rem;
-            border-radius: 10px;
-            background: var(--cc-primary);
-            color: #fff;
-            font-size: 13px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: background .15s;
-        }
-        .btn-action:hover { background: var(--cc-primary-dark); color: #fff; }
-
-        /* ── Empty state ────────────────────────────────────────── */
-        .empty { padding: 3.5rem 1.5rem; text-align: center; }
-        .empty-icon {
-            width: 52px; height: 52px;
-            border-radius: 14px;
-            background: var(--cc-primary-soft);
-            color: var(--cc-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-        }
-
-        /* ── Responsive tweaks ──────────────────────────────────── */
-        @media (max-width: 640px) {
-            .cc-hero-card { padding: 1.5rem; }
-            .cc-panel-header { flex-direction: column; align-items: flex-start; }
-            .case-title { max-width: 140px; }
-        }
-    </style>
+    <link href="../assets/css/client-portal-pages.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/client-cases.css?v=3" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-cases-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
@@ -575,94 +259,61 @@ ob_start(); ?>
     <main class="main-content position-relative border-radius-lg">
         <?= $clientPageNavbar ?>
 
-        <div class="container-fluid py-4">
+        <div class="container-fluid py-4 px-4">
+            <div class="cp-page">
 
             <?= $messageHtml ?>
 
-            <!-- Hero -------------------------------------------------------->
-            <div class="row mb-0">
-                <div class="col-12">
-                    <div class="cc-hero-card">
-                        <p class="cc-hero-kicker">Client portal</p>
-                        <h4 class="cc-hero-title">My cases</h4>
-                        <p class="cc-hero-sub">Track status, priority, and the counsel assigned to each of your matters.</p>
-                        <div class="cc-hero-stats">
-                            <div class="cc-stat-pill">
-                                <div class="num"><?= $caseCount ?></div>
-                                <div class="lbl">Total cases</div>
-                            </div>
-                            <div class="cc-stat-pill">
-                                <div class="num"><?= $activeCount ?></div>
-                                <div class="lbl">Active</div>
-                            </div>
-                            <div class="cc-stat-pill">
-                                <div class="num"><?= $reviewCount ?></div>
-                                <div class="lbl">Under review</div>
-                            </div>
-                        </div>
+            <?= $heroHtml ?>
+
+            <section class="cp-filters-card" aria-label="Filter cases">
+                <div class="cp-filters">
+                    <div class="cp-search-wrap">
+                        <?= legalpro_icon('search') ?>
+                        <input id="ccSearch" class="cp-search-input" type="text"
+                               placeholder="Search cases…" oninput="ccFilter()"
+                               value="<?= htmlspecialchars(legalpro_client_page_search_query(), ENT_QUOTES, 'UTF-8') ?>">
                     </div>
+                    <select id="ccStatus" class="cp-filter-select" onchange="ccFilter()">
+                        <option value="">All statuses</option>
+                        <option>Open</option>
+                        <option>Active</option>
+                        <option>Pending</option>
+                        <option>Under review</option>
+                        <option>Closed</option>
+                    </select>
+                    <select id="ccPriority" class="cp-filter-select" onchange="ccFilter()">
+                        <option value="">All priorities</option>
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Normal</option>
+                        <option>Low</option>
+                    </select>
                 </div>
-            </div>
+            </section>
 
-            <!-- Filters ----------------------------------------------------->
-            <div class="cc-filters">
-                <div class="cc-search-wrap">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                    <input id="ccSearch" class="cc-search-input" type="text"
-                           placeholder="Search cases…" oninput="ccFilter()"
-                           value="<?= htmlspecialchars(legalpro_client_page_search_query(), ENT_QUOTES, 'UTF-8') ?>">
+            <section class="cp-panel">
+                <?= $panelHeaderHtml ?>
+                <div class="table-responsive">
+                    <table class="cc-table" id="ccTable">
+                        <thead>
+                            <tr>
+                                <th>Case</th>
+                                <th>Category</th>
+                                <th style="text-align:center">Status</th>
+                                <th style="text-align:center">Priority</th>
+                                <th>Lawyer(s)</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="ccBody">
+                            <?= $casesRows ?>
+                        </tbody>
+                    </table>
                 </div>
-                <select id="ccStatus" class="cc-filter-select" onchange="ccFilter()">
-                    <option value="">All statuses</option>
-                    <option>Active</option>
-                    <option>Pending</option>
-                    <option>Under review</option>
-                    <option>Closed</option>
-                </select>
-                <select id="ccPriority" class="cc-filter-select" onchange="ccFilter()">
-                    <option value="">All priorities</option>
-                    <option>High</option>
-                    <option>Medium</option>
-                    <option>Normal</option>
-                    <option>Low</option>
-                </select>
-                <a href="client-dashboard.php" class="btn-action" style="white-space:nowrap">Dashboard</a>
-            </div>
+            </section>
 
-            <!-- Case table -------------------------------------------------->
-            <div class="row">
-                <div class="col-12">
-                    <div class="cc-panel">
-                        <div class="cc-panel-header">
-                            <div>
-                                <h5>Case list</h5>
-                                <p>Sorted by most recently updated.</p>
-                            </div>
-                            <span class="cc-row-count" id="ccRowCount"><?= $caseCount ?> case<?= $caseCount !== 1 ? 's' : '' ?></span>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="cc-table" id="ccTable">
-                                <thead>
-                                    <tr>
-                                        <th>Case</th>
-                                        <th>Category</th>
-                                        <th style="text-align:center">Status</th>
-                                        <th style="text-align:center">Priority</th>
-                                        <th>Lawyer(s)</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ccBody">
-                                    <?= $casesRows ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </div>
-
         </div><!-- /container -->
     </main>
 
@@ -671,7 +322,8 @@ ob_start(); ?>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 
     <script>
     function ccFilter() {
@@ -682,9 +334,10 @@ ob_start(); ?>
         var visible = 0;
         rows.forEach(function(r) {
             var hay = r.dataset.search || (r.dataset.title + ' ' + r.dataset.category);
+            var rowStatus = (r.dataset.status || '').toLowerCase().replace(/_/g, ' ');
             var titleMatch    = !q  || hay.includes(q);
-            var statusMatch   = !st || r.dataset.status.toLowerCase() === st;
-            var priorityMatch = !pr || r.dataset.priority.toLowerCase() === pr;
+            var statusMatch   = !st || rowStatus === st || rowStatus.replace(/ /g, '_') === st.replace(/ /g, '_');
+            var priorityMatch = !pr || (r.dataset.priority || '').toLowerCase() === pr;
             var show = titleMatch && statusMatch && priorityMatch;
             r.style.display = show ? '' : 'none';
             if (show) visible++;

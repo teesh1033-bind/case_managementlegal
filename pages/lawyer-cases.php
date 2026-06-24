@@ -84,7 +84,7 @@ if (empty($cases)) {
                     </div>
                 </div>
             </td>
-            <td class="align-middle">
+            <td class="align-middle text-center lc-col-category">
                 <div class="lc-category-cell">' . $categoryPill . '</div>
             </td>
             <td class="align-middle">
@@ -100,8 +100,8 @@ if (empty($cases)) {
             <td class="align-middle text-center">
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
-            <td class="align-middle text-end">
-                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary">View Details</a>
+            <td class="align-middle text-end lp-table-actions">
+                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">View Details</a>
             </td>
         </tr>';
     }
@@ -198,7 +198,7 @@ $html = <<<'HTML'
                                     <thead>
                                         <tr>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case Details</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Category</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 lc-col-category">Category</th>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
                                             <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
@@ -234,7 +234,8 @@ $html = <<<'HTML'
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
 HTML;

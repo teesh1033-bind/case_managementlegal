@@ -182,7 +182,8 @@ $html = <<<'HTML'
 			},
 		});
 	</script>
-	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+	<script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
 HTML;

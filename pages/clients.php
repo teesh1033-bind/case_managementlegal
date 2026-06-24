@@ -168,7 +168,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=26" rel="stylesheet" />
 	<?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
@@ -292,8 +292,8 @@ if (empty($clients)) {
         );
 
         $clientsRows .= '<tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td>
-                <div class="d-flex px-2 py-1">
+            <td class="align-middle">
+                <div class="d-flex align-items-center px-2">
                     <div>
                         <img src="' . $avatarImg . '" class="avatar avatar-sm me-3" alt="client">
                     </div>
@@ -303,15 +303,17 @@ if (empty($clients)) {
                     </div>
                 </div>
             </td>
-            <td>
+            <td class="align-middle">
                 <p class="text-xs font-weight-bold mb-0">' . $email . '</p>
                 <p class="text-xs text-secondary mb-0">' . $phone . '</p>
             </td>
             <td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' . $activeCases . '</span></td>
             <td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' . $lastActivity . '</span></td>
             <td class="align-middle">
-                <a href="client-detail.php?id=' . $clientId . '" class="btn btn-sm btn-primary me-2">View</a>
-                <button type="button" class="btn btn-sm btn-danger" onclick="deleteClient(' . $clientId . ', \'' . addslashes($fullName) . '\')">Delete</button>
+                <div class="legalpro-admin-list-row__actions">
+                    <a href="client-detail.php?id=' . $clientId . '" class="btn btn-sm btn-primary mb-0">View</a>
+                    <button type="button" class="btn btn-sm btn-danger mb-0" onclick="deleteClient(' . $clientId . ', \'' . addslashes($fullName) . '\')">Delete</button>
+                </div>
             </td>
         </tr>';
     }

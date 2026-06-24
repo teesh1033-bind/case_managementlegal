@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../inc/admin-layout.php';
+
 /**
  * Client-level financial summary (fees, payments, invoices).
  */
@@ -32,13 +34,20 @@ function legalpro_get_client_financial_summary(PDO $pdo, int $clientId): array
                 c.status,
                 c.category,
                 COALESCE(c.estimated_fees, 0) AS estimated_fees,
+                COALESCE(inv.invoiced_total, 0) AS invoiced_total,
                 COUNT(p.id) AS payment_count,
                 COALESCE(SUM(p.amount), 0) AS paid_total,
                 MAX(p.payment_date) AS last_payment
             FROM cases c
             LEFT JOIN payments p ON p.case_id = c.id
+            LEFT JOIN (
+                SELECT case_id, COALESCE(SUM(amount), 0) AS invoiced_total
+                FROM invoices
+                WHERE LOWER(COALESCE(status, '')) NOT IN ('cancelled', 'void')
+                GROUP BY case_id
+            ) inv ON inv.case_id = c.id
             WHERE c.client_id = ?
-            GROUP BY c.id, c.title, c.status, c.category, c.estimated_fees
+            GROUP BY c.id, c.title, c.status, c.category, c.estimated_fees, inv.invoiced_total
             ORDER BY c.created_at DESC
         ");
         $stmt->execute([$clientId]);
@@ -49,11 +58,13 @@ function legalpro_get_client_financial_summary(PDO $pdo, int $clientId): array
 
     foreach ($cases as $case) {
         $estimated = (float) ($case['estimated_fees'] ?? 0);
+        $invoiced = (float) ($case['invoiced_total'] ?? 0);
+        $totalDue = legalpro_case_fee_due($estimated, $invoiced);
         $paid = (float) ($case['paid_total'] ?? 0);
-        $balance = max($estimated - $paid, 0);
+        $balance = max($totalDue - $paid, 0);
         $paymentCount = (int) ($case['payment_count'] ?? 0);
 
-        $summary['total_fees'] += $estimated;
+        $summary['total_fees'] += $totalDue;
         $summary['total_paid'] += $paid;
         $summary['total_balance'] += $balance;
         $summary['payment_count'] += $paymentCount;
@@ -61,7 +72,7 @@ function legalpro_get_client_financial_summary(PDO $pdo, int $clientId): array
         if ($balance > 0.01) {
             $summary['cases_with_balance']++;
         }
-        if ($balance <= 0.01 && $estimated > 0) {
+        if ($paid >= $totalDue - 0.01 && ($totalDue > 0.01 || $paid > 0.01)) {
             $summary['cases_fully_paid']++;
         }
 
@@ -70,12 +81,13 @@ function legalpro_get_client_financial_summary(PDO $pdo, int $clientId): array
             'title' => (string) ($case['title'] ?? ''),
             'status' => (string) ($case['status'] ?? 'open'),
             'category' => (string) ($case['category'] ?? 'General'),
-            'estimated' => $estimated,
+            'estimated' => $totalDue,
             'paid' => $paid,
             'balance' => $balance,
             'payment_count' => $paymentCount,
             'last_payment' => $case['last_payment'] ?? null,
-            'percent_paid' => $estimated > 0 ? min(100, (int) round(($paid / $estimated) * 100)) : 0,
+            'percent_paid' => $totalDue > 0 ? min(100, (int) round(($paid / $totalDue) * 100)) : ($paid > 0 ? 100 : 0),
+            'payment_status' => legalpro_case_payment_status_label($totalDue, $paid),
         ];
     }
 
@@ -162,7 +174,7 @@ function legalpro_render_client_financial_summary_html(array $summary, int $clie
     $caseRows = '';
     $cases = $summary['cases'] ?? [];
     if (empty($cases)) {
-        $caseRows = '<tr><td colspan="5" class="text-center py-3 text-muted text-sm">No cases linked to this client yet.</td></tr>';
+        $caseRows = '<tr><td colspan="6" class="text-center py-3 text-muted text-sm">No cases linked to this client yet.</td></tr>';
     } else {
         foreach ($cases as $case) {
             $caseId = (int) $case['id'];
@@ -170,6 +182,7 @@ function legalpro_render_client_financial_summary_html(array $summary, int $clie
             $title = htmlspecialchars($case['title']);
             $category = htmlspecialchars(ucfirst((string) $case['category']));
             $percent = (int) ($case['percent_paid'] ?? 0);
+            $paymentStatus = legalpro_case_payment_status_badge((float) $case['estimated'], (float) $case['paid']);
 
             $caseRows .= '<tr>'
                 . '<td><div class="d-flex flex-column">'
@@ -181,6 +194,7 @@ function legalpro_render_client_financial_summary_html(array $summary, int $clie
                 . '<td class="text-center"><div class="progress-wrapper">'
                 . '<div class="progress" style="height: 5px;"><div class="progress-bar bg-gradient-primary" style="width: ' . $percent . '%;"></div></div>'
                 . '<small class="text-xs text-muted">' . $percent . '% paid</small></div></td>'
+                . '<td class="text-center">' . $paymentStatus . '</td>'
                 . '</tr>';
         }
     }
@@ -243,7 +257,7 @@ function legalpro_render_client_financial_summary_html(array $summary, int $clie
         . '</div><div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--info">' . $iconInvoiced . '</div></div></div></div></div>'
         . '</div>'
         . '<div class="row g-4">'
-        . '<div class="col-lg-8"><p class="text-uppercase text-xs fw-bold text-muted mb-2">Case Financials</p>'
+        . '<div class="col-12"><p class="text-uppercase text-xs fw-bold text-muted mb-2">Case Financials</p>'
         . '<div class="table-responsive"><table class="table align-items-center mb-0">'
         . '<thead><tr>'
         . '<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case</th>'
@@ -251,8 +265,11 @@ function legalpro_render_client_financial_summary_html(array $summary, int $clie
         . '<th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Paid</th>'
         . '<th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Balance</th>'
         . '<th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Progress</th>'
+        . '<th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Payment</th>'
         . '</tr></thead><tbody>' . $caseRows . '</tbody></table></div></div>'
-        . '<div class="col-lg-4"><p class="text-uppercase text-xs fw-bold text-muted mb-2">Recent Payments</p>'
+        . '</div>'
+        . '<div class="row g-4 mt-1">'
+        . '<div class="col-12"><p class="text-uppercase text-xs fw-bold text-muted mb-2">Recent Payments</p>'
         . '<ul class="list-group list-group-flush client-fin-summary__payments">' . $paymentRows . '</ul>'
         . '<p class="text-xs text-muted mt-3 mb-0">Last payment: <strong>' . $lastPayment . '</strong>'
         . ($casesFullyPaid > 0 ? ' · ' . $casesFullyPaid . ' case' . ($casesFullyPaid === 1 ? '' : 's') . ' fully paid' : '')

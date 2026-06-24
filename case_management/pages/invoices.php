@@ -362,27 +362,27 @@ if (empty($invoices)) {
         );
         $invoiceRows .= '
         <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td>
+            <td class="align-middle">
                 <div class="d-flex flex-column">
                     <strong>' . htmlspecialchars($invoice['invoice_number']) . '</strong>
                     <small class="text-muted">' . ($invoice['issue_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['issue_date']))) : 'N/A') . '</small>
                 </div>
             </td>
-            <td>
+            <td class="align-middle">
                 <p class="text-sm mb-0">' . htmlspecialchars($invoice['client_name'] ?: 'Client') . '</p>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($invoice['case_title'] ?: 'No case linked') . '</p>
             </td>
-            <td class="text-center">' . htmlspecialchars(formatCurrency($invoice['amount'])) . '</td>
-            <td class="text-center">' . $statusBadge . '</td>
-            <td class="text-center">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
-            <td class="text-end">
-                <div class="d-flex gap-1 justify-content-end">
-                    <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-dark" title="Edit Invoice">Edit</a>
-                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary" title="Download Invoice" target="_blank">Download</a>
-                    <form method="post" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This action cannot be undone.\');">
+            <td class="align-middle text-center">' . htmlspecialchars(formatCurrency($invoice['amount'])) . '</td>
+            <td class="align-middle text-center">' . $statusBadge . '</td>
+            <td class="align-middle text-center">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
+            <td class="align-middle text-end">
+                <div class="legalpro-admin-list-row__actions">
+                    <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-dark mb-0" title="Edit Invoice">Edit</a>
+                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary mb-0" title="Download invoice PDF" target="_blank">Download PDF</a>
+                    <form method="post" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete">
                         <input type="hidden" name="invoice_id" value="' . (int)$invoice['id'] . '">
-                        <button class="btn btn-sm btn-danger" type="submit" title="Delete Invoice">Delete</button>
+                        <button class="btn btn-sm btn-danger mb-0" type="submit" title="Delete Invoice">Delete</button>
                     </form>
                 </div>
             </td>
@@ -427,7 +427,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/legalpro-finance-pages.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -643,7 +643,11 @@ $html = <<<'HTML'
 </html>
 HTML;
 
-$invoicesSearchHtml = legalpro_render_admin_list_search('invoicesSearchInput', 'Search invoices...');
+$invoicesSearchHtml = legalpro_render_admin_featured_list_search(
+    'invoicesSearchInput',
+    'Search invoices',
+    'Search by invoice number, client, case, amount, or status…'
+);
 $invoicesSearchScript = legalpro_admin_list_search_script('invoicesSearchInput', 'invoicesTableBody', 'invoicesFilterEmpty');
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);

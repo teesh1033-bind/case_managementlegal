@@ -265,30 +265,193 @@ function isEffectivePortalThemeDark(): bool
 
 function renderLawyerPortalThemeSettingsHtml(int $lawyerId): string
 {
+    global $pdo;
+
+    return renderLawyerPortalSettingsFullHtml($pdo instanceof PDO ? $pdo : null, $lawyerId);
+}
+
+function renderLawyerPortalSettingsFullHtml(?PDO $pdo, int $lawyerId): string
+{
+    if (!function_exists('legalpro_lawyer_settings_snapshot')) {
+        $featuresPath = __DIR__ . '/lawyer-portal-features.php';
+        if (is_file($featuresPath)) {
+            require_once $featuresPath;
+        }
+    }
+
+    if (!function_exists('legalpro_icon')) {
+        $iconsPath = dirname(__DIR__) . '/inc/legalpro-icons.php';
+        if (is_file($iconsPath)) {
+            require_once $iconsPath;
+        }
+    }
+
+    if (!function_exists('getCompanyBranding')) {
+        $brandingPath = __DIR__ . '/branding.php';
+        if (is_file($brandingPath)) {
+            require_once $brandingPath;
+        }
+    }
+
+    if (!function_exists('legalpro_lawyer_notification_count') && $pdo instanceof PDO) {
+        $layoutPath = dirname(__DIR__) . '/inc/admin-layout.php';
+        if (is_file($layoutPath)) {
+            require_once $layoutPath;
+        }
+    }
+
+    $snapshot = legalpro_lawyer_settings_snapshot($pdo, $lawyerId);
     $currentMode = getLawyerPortalThemeMode($lawyerId);
     $lightChecked = $currentMode === 'light' ? ' checked' : '';
     $darkChecked = $currentMode === 'dark' ? ' checked' : '';
 
-    return '<div class="card mb-4">'
-        . '<div class="card-header pb-0"><h6>Appearance</h6></div>'
-        . '<div class="card-body">'
-        . '<p class="text-sm text-muted mb-4">Choose light or dark mode for your lawyer portal. This applies only to your account.</p>'
-        . '<form method="post" class="settings-theme-form">'
-        . '<input type="hidden" name="action" value="save_appearance">'
-        . '<div class="mb-4">'
-        . '<label class="form-control-label d-block mb-2">Theme mode</label>'
-        . '<div class="settings-theme-mode">'
-        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> Light</label>'
-        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> Dark</label>'
-        . '</div>'
-        . '</div>'
-        . '<button type="submit" class="btn btn-primary mb-0">Save appearance</button>'
-        . '</form>'
-        . '</div>'
-        . '</div>';
+    $displayName = htmlspecialchars(trim((string) ($snapshot['display_name'] ?? '')) ?: 'Lawyer');
+    $email = htmlspecialchars(trim((string) ($snapshot['email'] ?? '')) ?: '—');
+    $phone = htmlspecialchars(trim((string) ($snapshot['phone'] ?? '')) ?: '—');
+    $specialization = htmlspecialchars(trim((string) ($snapshot['specialization'] ?? '')) ?: '—');
+    $memberSince = htmlspecialchars(trim((string) ($snapshot['member_since'] ?? '')) ?: '—');
+    $themeLabel = htmlspecialchars(ucfirst((string) ($snapshot['theme_mode'] ?? 'light')));
+
+    $firm = function_exists('getCompanyBranding') ? getCompanyBranding() : ['name' => 'LegalPro', 'details' => ''];
+    $firmName = htmlspecialchars((string) ($firm['name'] ?? 'LegalPro'));
+    $firmDetails = trim((string) ($firm['details'] ?? ''));
+    $firmDetailsHtml = $firmDetails !== ''
+        ? '<p class="text-sm text-muted mb-0">' . nl2br(htmlspecialchars($firmDetails)) . '</p>'
+        : '<p class="text-sm text-muted mb-0">Contact your firm administrator for office details and support.</p>';
+
+    $quickLinks = [
+        ['url' => 'lawyer-profile.php', 'icon' => 'user', 'label' => 'Profile'],
+        ['url' => 'lawyer-dashboard.php', 'icon' => 'layout-dashboard', 'label' => 'Dashboard'],
+        ['url' => 'tasks.php', 'icon' => 'list-checks', 'label' => 'My Tasks'],
+        ['url' => 'lawyer-cases.php', 'icon' => 'briefcase', 'label' => 'My Cases'],
+        ['url' => 'lawyer-clients.php', 'icon' => 'users', 'label' => 'My Clients'],
+        ['url' => 'lawyer-appointments.php', 'icon' => 'calendar', 'label' => 'Appointments'],
+        ['url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'label' => 'Court Tracking'],
+        ['url' => 'lawyer-availability.php', 'icon' => 'clock', 'label' => 'Availability'],
+        ['url' => 'chatbot.php', 'icon' => 'bot', 'label' => 'AI Assistant'],
+    ];
+
+    $quickLinksHtml = '';
+    foreach ($quickLinks as $link) {
+        $icon = function_exists('legalpro_icon') ? legalpro_icon($link['icon']) : '';
+        $quickLinksHtml .= '<a class="cs-quick-link" href="' . htmlspecialchars($link['url']) . '">'
+            . '<span class="cs-quick-link__icon">' . $icon . '</span>'
+            . '<span class="cs-quick-link__label">' . htmlspecialchars($link['label']) . '</span>'
+            . '</a>';
+    }
+
+    $stat = static function (string $value, string $label): string {
+        return '<div class="cs-stat"><span class="cs-stat__num">' . htmlspecialchars($value) . '</span><span class="cs-stat__lbl">' . htmlspecialchars($label) . '</span></div>';
+    };
+
+    $statsHtml = $stat((string) (int) ($snapshot['total_cases'] ?? 0), 'Cases')
+        . $stat((string) (int) ($snapshot['active_cases'] ?? 0), 'Active')
+        . $stat((string) (int) ($snapshot['total_clients'] ?? 0), 'Clients')
+        . $stat((string) (int) ($snapshot['upcoming_appointments'] ?? 0), 'Upcoming')
+        . $stat((string) (int) ($snapshot['open_tasks'] ?? 0), 'Open tasks')
+        . $stat((string) (int) ($snapshot['unread_notifications'] ?? 0), 'Alerts');
+
+    return '
+    <div class="cs-hero mb-4">
+        <div class="cs-hero__body">
+            <p class="cs-hero__kicker">Settings</p>
+            <h4 class="cs-hero__title">Personalize your portal</h4>
+            <p class="cs-hero__sub">Manage appearance, review your account, and jump to common areas of the lawyer portal.</p>
+        </div>
+        <div class="cs-hero__meta">
+            <span>Member since ' . $memberSince . '</span>
+            <span>Theme: ' . $themeLabel . '</span>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <form method="post" class="settings-theme-form">
+                <input type="hidden" name="action" value="save_appearance">
+                <div class="card mb-4">
+                    <div class="card-header pb-0"><h6>Appearance</h6></div>
+                    <div class="card-body">
+                        <p class="text-sm text-muted mb-4">Choose light or dark mode for your lawyer portal. This applies only to your account.</p>
+                        <div class="mb-0">
+                            <label class="form-control-label d-block mb-2">Theme mode</label>
+                            <div class="settings-theme-mode">
+                                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> Light</label>
+                                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> Dark</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mb-4">Save appearance</button>
+            </form>
+            <div class="card mb-4">
+                <div class="card-header pb-0"><h6>Notifications</h6></div>
+                <div class="card-body">
+                    <p class="text-sm text-muted mb-3">Stay on top of case activity from the bell menu in the top navigation bar.</p>
+                    <ul class="cs-tip-list text-sm text-muted mb-0">
+                        <li>New appointments, documents, and case updates appear in your notification dropdown.</li>
+                        <li>Click a notification to open the related case or page.</li>
+                        <li>Use <strong>Mark all read</strong> to clear your unread count when you are caught up.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header pb-0"><h6>Privacy &amp; security</h6></div>
+                <div class="card-body">
+                    <ul class="cs-tip-list text-sm text-muted mb-3">
+                        <li>Never share your portal password with anyone, including colleagues or clients.</li>
+                        <li>Sign out when using a shared or public device.</li>
+                        <li>Keep your profile contact details current so clients and staff can reach you.</li>
+                    </ul>
+                    <a href="lawyer-profile.php" class="btn btn-outline-primary btn-sm mb-0">Manage profile &amp; password</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header pb-0"><h6>Your account</h6></div>
+                <div class="card-body">
+                    <p class="text-sm text-muted mb-3">Details tied to your lawyer portal login.</p>
+                    <dl class="cs-account-dl mb-3">
+                        <dt>Name</dt><dd>' . $displayName . '</dd>
+                        <dt>Email</dt><dd>' . $email . '</dd>
+                        <dt>Phone</dt><dd>' . $phone . '</dd>
+                        <dt>Specialization</dt><dd>' . $specialization . '</dd>
+                        <dt>Member since</dt><dd>' . $memberSince . '</dd>
+                    </dl>
+                    <a href="lawyer-profile.php" class="btn btn-outline-primary btn-sm mb-0 w-100">Edit profile</a>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header pb-0"><h6>Portal overview</h6></div>
+                <div class="card-body">
+                    <div class="cs-stats-grid">' . $statsHtml . '</div>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header pb-0"><h6>Quick links</h6></div>
+                <div class="card-body">
+                    <p class="text-sm text-muted mb-3">Jump to common areas of your lawyer portal.</p>
+                    <div class="cs-quick-links">' . $quickLinksHtml . '</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header pb-0"><h6>Your firm</h6></div>
+                <div class="card-body">
+                    <h6 class="mb-2">' . $firmName . '</h6>
+                    ' . $firmDetailsHtml . '
+                </div>
+            </div>
+        </div>
+    </div>';
 }
 
 function renderClientPortalPreferencesHtml(int $clientId): string
+{
+    global $pdo;
+
+    return renderClientPortalSettingsFullHtml($pdo instanceof PDO ? $pdo : null, $clientId);
+}
+
+function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
 {
     if (!function_exists('getClientEmailDigest')) {
         $featuresPath = dirname(__DIR__, 2) . '/lib/client-portal-features.php';
@@ -299,6 +462,28 @@ function renderClientPortalPreferencesHtml(int $clientId): string
             require_once $featuresPath;
         }
     }
+
+    if (!function_exists('legalpro_icon')) {
+        $iconsPath = dirname(__DIR__) . '/inc/legalpro-icons.php';
+        if (is_file($iconsPath)) {
+            require_once $iconsPath;
+        }
+    }
+
+    if (!function_exists('client_portal_render_hero')) {
+        require_once __DIR__ . '/client-portal-page-ui.php';
+    }
+
+    if (!function_exists('getCompanyBranding')) {
+        $brandingPath = __DIR__ . '/branding.php';
+        if (is_file($brandingPath)) {
+            require_once $brandingPath;
+        }
+    }
+
+    $snapshot = function_exists('legalpro_client_settings_snapshot')
+        ? legalpro_client_settings_snapshot($pdo, $clientId)
+        : [];
 
     $currentMode = getClientPortalThemeMode($clientId);
     $lightChecked = $currentMode === 'light' ? ' checked' : '';
@@ -317,55 +502,196 @@ function renderClientPortalPreferencesHtml(int $clientId): string
             . htmlspecialchars($label) . '</option>';
     }
 
-    $appearanceTitle = function_exists('client_t') ? client_t('settings.appearance') : 'Appearance';
-    $appearanceHelp = function_exists('client_t') ? client_t('settings.appearance_help') : 'Choose light or dark mode for your client portal. This applies only to your account.';
-    $themeModeLabel = function_exists('client_t') ? client_t('settings.theme_mode') : 'Theme mode';
-    $lightLabel = function_exists('client_t') ? client_t('settings.light') : 'Light';
-    $darkLabel = function_exists('client_t') ? client_t('settings.dark') : 'Dark';
-    $languageTitle = function_exists('client_t') ? client_t('settings.language') : 'Language';
-    $languageHelp = function_exists('client_t') ? client_t('settings.language_help') : 'Choose the language used in your client portal navigation and settings.';
-    $languageLabel = function_exists('client_t') ? client_t('settings.language_label') : 'Display language';
-    $saveLabel = function_exists('client_t') ? client_t('settings.save_preferences') : 'Save preferences';
-    $digestTitle = function_exists('client_t') ? client_t('settings.email_digest') : 'Email digest';
-    $digestHelp = function_exists('client_t') ? client_t('settings.email_digest_help') : 'Receive a summary of case activity by email.';
-    $digestNone = function_exists('client_t') ? client_t('settings.digest_none') : 'Off';
-    $digestDaily = function_exists('client_t') ? client_t('settings.digest_daily') : 'Daily';
-    $digestWeekly = function_exists('client_t') ? client_t('settings.digest_weekly') : 'Weekly';
-    $currentDigest = function_exists('getClientEmailDigest') ? getClientEmailDigest($clientId) : 'none';
+    $t = static function (string $key, string $fallback): string {
+        if (!function_exists('client_t')) {
+            return $fallback;
+        }
+        $value = client_t($key);
+        return $value !== $key ? $value : $fallback;
+    };
 
-    return '<div class="card mb-4">'
-        . '<div class="card-header pb-0"><h6>' . htmlspecialchars($appearanceTitle) . '</h6></div>'
-        . '<div class="card-body">'
-        . '<p class="text-sm text-muted mb-4">' . htmlspecialchars($appearanceHelp) . '</p>'
-        . '<form method="post" class="client-settings-form">'
-        . '<input type="hidden" name="action" value="save_preferences">'
-        . '<div class="mb-4">'
-        . '<label class="form-control-label d-block mb-2">' . htmlspecialchars($themeModeLabel) . '</label>'
-        . '<div class="settings-theme-mode">'
-        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars($lightLabel) . '</label>'
-        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars($darkLabel) . '</label>'
-        . '</div>'
-        . '</div>'
-        . '<div class="mb-4">'
-        . '<label class="form-control-label d-block mb-2" for="client_locale">' . htmlspecialchars($languageLabel) . '</label>'
-        . '<select class="form-select" name="locale" id="client_locale" required>'
-        . $localeOptions
-        . '</select>'
-        . '<p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($languageHelp) . '</p>'
-        . '</div>'
-        . '<div class="mb-4" id="email-digest">'
-        . '<label class="form-control-label d-block mb-2" for="client_email_digest">' . htmlspecialchars($digestTitle) . '</label>'
-        . '<select class="form-select" name="email_digest" id="client_email_digest">'
-        . '<option value="none"' . ($currentDigest === 'none' ? ' selected' : '') . '>' . htmlspecialchars($digestNone) . '</option>'
-        . '<option value="daily"' . ($currentDigest === 'daily' ? ' selected' : '') . '>' . htmlspecialchars($digestDaily) . '</option>'
-        . '<option value="weekly"' . ($currentDigest === 'weekly' ? ' selected' : '') . '>' . htmlspecialchars($digestWeekly) . '</option>'
-        . '</select>'
-        . '<p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($digestHelp) . '</p>'
-        . '</div>'
-        . '<button type="submit" class="btn btn-primary mb-0">' . htmlspecialchars($saveLabel) . '</button>'
-        . '</form>'
-        . '</div>'
-        . '</div>';
+    $currentDigest = function_exists('getClientEmailDigest') ? getClientEmailDigest($clientId) : 'none';
+    $displayName = htmlspecialchars(trim((string) ($snapshot['display_name'] ?? '')) ?: 'Client');
+    $email = htmlspecialchars(trim((string) ($snapshot['email'] ?? '')) ?: '—');
+    $phone = htmlspecialchars(trim((string) ($snapshot['phone'] ?? '')) ?: '—');
+    $memberSince = htmlspecialchars(trim((string) ($snapshot['member_since'] ?? '')) ?: '—');
+    $firm = function_exists('getCompanyBranding') ? getCompanyBranding() : ['name' => 'LegalPro', 'details' => ''];
+    $firmName = htmlspecialchars((string) ($firm['name'] ?? 'LegalPro'));
+    $firmDetails = trim((string) ($firm['details'] ?? ''));
+    $firmDetailsHtml = $firmDetails !== ''
+        ? '<p class="text-sm text-muted mb-0">' . nl2br(htmlspecialchars($firmDetails)) . '</p>'
+        : '<p class="text-sm text-muted mb-0">' . htmlspecialchars($t('settings.firm_default', 'Contact your legal team for office hours and support.')) . '</p>';
+
+    $outstanding = (float) ($snapshot['outstanding_balance'] ?? 0);
+    $outstandingLabel = function_exists('formatCurrency')
+        ? formatCurrency($outstanding)
+        : '$' . number_format($outstanding, 2);
+
+    $digestLabels = [
+        'none' => $t('settings.digest_none', 'Off'),
+        'daily' => $t('settings.digest_daily', 'Daily'),
+        'weekly' => $t('settings.digest_weekly', 'Weekly'),
+    ];
+    $currentDigestLabel = htmlspecialchars($digestLabels[$currentDigest] ?? $digestLabels['none']);
+
+    $quickLinks = [
+        ['url' => 'client-profile.php', 'icon' => 'user', 'label' => $t('nav.profile', 'Profile')],
+        ['url' => 'client-cases.php', 'icon' => 'briefcase', 'label' => $t('nav.my_cases', 'My Cases')],
+        ['url' => 'client-documents.php', 'icon' => 'file-text', 'label' => $t('nav.documents', 'Documents')],
+        ['url' => 'client-appointments.php', 'icon' => 'calendar', 'label' => $t('nav.appointments', 'Appointments')],
+        ['url' => 'client-payments.php', 'icon' => 'credit-card', 'label' => $t('nav.payments', 'Payments')],
+        ['url' => 'client-court-tracking.php', 'icon' => 'landmark', 'label' => $t('nav.court_tracking', 'Court Tracking')],
+        ['url' => 'chatbot.php', 'icon' => 'bot', 'label' => $t('nav.ai_assistant', 'AI Assistant')],
+        ['url' => 'client-requests.php', 'icon' => 'message-circle', 'label' => $t('nav.my_requests', 'My requests')],
+    ];
+
+    $quickLinksHtml = '';
+    foreach ($quickLinks as $link) {
+        $icon = function_exists('legalpro_icon') ? legalpro_icon($link['icon']) : '';
+        $quickLinksHtml .= '<a class="cs-quick-link" href="' . htmlspecialchars($link['url']) . '">'
+            . '<span class="cs-quick-link__icon">' . $icon . '</span>'
+            . '<span class="cs-quick-link__label">' . htmlspecialchars($link['label']) . '</span>'
+            . '</a>';
+    }
+
+    $stat = static function (string $value, string $label): string {
+        return '<div class="cs-stat"><span class="cs-stat__num">' . htmlspecialchars($value) . '</span><span class="cs-stat__lbl">' . htmlspecialchars($label) . '</span></div>';
+    };
+
+    $statsHtml = $stat((string) (int) ($snapshot['total_cases'] ?? 0), $t('settings.stat_cases', 'Cases'))
+        . $stat((string) (int) ($snapshot['open_cases'] ?? 0), $t('settings.stat_open_cases', 'Active'))
+        . $stat((string) (int) ($snapshot['unread_notifications'] ?? 0), $t('settings.stat_unread', 'Unread alerts'))
+        . $stat((string) (int) ($snapshot['new_documents'] ?? 0), $t('settings.stat_new_docs', 'New docs'))
+        . $stat((string) (int) ($snapshot['upcoming_appointments'] ?? 0), $t('settings.stat_upcoming_appts', 'Upcoming'))
+        . $stat($outstandingLabel, $t('settings.stat_outstanding', 'Outstanding'));
+
+    $heroHtml = client_portal_render_hero([
+        'kicker' => $t('settings.title', 'Settings'),
+        'title' => $t('settings.hero_title', 'Personalize your portal'),
+        'subtitle' => $t('settings.hero_sub', 'Manage appearance, notifications, and shortcuts for your client account.'),
+        'meta' => $t('settings.member_since', 'Member since') . ' ' . $memberSince
+            . ' · ' . $t('settings.current_digest', 'Email digest') . ': ' . $currentDigestLabel,
+        'show_date' => true,
+        'aria_label' => $t('settings.title', 'Settings'),
+        'stats' => [
+            ['num' => (string) (int) ($snapshot['total_cases'] ?? 0), 'lbl' => $t('settings.stat_cases', 'Cases')],
+            ['num' => (string) (int) ($snapshot['open_cases'] ?? 0), 'lbl' => $t('settings.stat_open_cases', 'Active')],
+            ['num' => (string) (int) ($snapshot['new_documents'] ?? 0), 'lbl' => $t('settings.stat_new_docs', 'New docs')],
+            ['num' => $outstandingLabel, 'lbl' => $t('settings.stat_outstanding', 'Outstanding')],
+        ],
+        'actions' => [
+            ['url' => 'client-profile.php', 'label' => $t('settings.edit_profile', 'Edit profile'), 'primary' => true, 'icon' => 'user'],
+            ['url' => 'client-dashboard.php', 'label' => $t('nav.dashboard', 'Dashboard'), 'icon' => 'layout-dashboard'],
+        ],
+    ]);
+
+    $appearanceBody = '
+        <p class="text-sm text-muted mb-4">' . htmlspecialchars($t('settings.appearance_help', 'Choose light or dark mode and your preferred language.')) . '</p>
+        <div class="mb-4">
+            <label class="form-label d-block mb-2">' . htmlspecialchars($t('settings.theme_mode', 'Theme mode')) . '</label>
+            <div class="settings-theme-mode">
+                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars($t('settings.light', 'Light')) . '</label>
+                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars($t('settings.dark', 'Dark')) . '</label>
+            </div>
+        </div>
+        <div class="mb-0">
+            <label class="form-label d-block mb-2" for="client_locale">' . htmlspecialchars($t('settings.language_label', 'Display language')) . '</label>
+            <select class="form-select" name="locale" id="client_locale" required>' . $localeOptions . '</select>
+            <p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($t('settings.language_help', 'Updates navigation labels and settings across the client portal.')) . '</p>
+        </div>';
+
+    $notificationsBody = '
+        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.')) . '</p>
+        <label class="form-label d-block mb-2" for="client_email_digest">' . htmlspecialchars($t('settings.email_digest', 'Email digest')) . '</label>
+        <select class="form-select" name="email_digest" id="client_email_digest">
+            <option value="none"' . ($currentDigest === 'none' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_none', 'Off')) . '</option>
+            <option value="daily"' . ($currentDigest === 'daily' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_daily', 'Daily')) . '</option>
+            <option value="weekly"' . ($currentDigest === 'weekly' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_weekly', 'Weekly')) . '</option>
+        </select>
+        <ul class="cs-tip-list mt-3 mb-0">
+            <li>' . htmlspecialchars($t('settings.digest_tip_1', 'Daily digests are sent each morning with the previous day\'s activity.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.digest_tip_2', 'Weekly digests arrive Monday with a summary of the past week.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.digest_tip_3', 'In-portal alerts in the bell menu are always available regardless of digest setting.')) . '</li>
+        </ul>';
+
+    $privacyBody = '
+        <ul class="cs-tip-list mb-3">
+            <li>' . htmlspecialchars($t('settings.privacy_tip_1', 'Never share your portal password with anyone, including firm staff.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.privacy_tip_2', 'Sign out when using a shared or public device.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.privacy_tip_3', 'Update your contact details on your profile so your firm can reach you.')) . '</li>
+        </ul>
+        <a href="client-profile.php" class="btn btn-outline-primary btn-sm mb-0">' . htmlspecialchars($t('settings.manage_profile', 'Manage profile & password')) . '</a>';
+
+    $accountBody = '
+        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.account_help', 'Basic details tied to your client portal login.')) . '</p>
+        <dl class="cs-account-dl mb-3">
+            <dt>' . htmlspecialchars($t('settings.account_name', 'Name')) . '</dt><dd>' . $displayName . '</dd>
+            <dt>' . htmlspecialchars($t('settings.account_email', 'Email')) . '</dt><dd>' . $email . '</dd>
+            <dt>' . htmlspecialchars($t('settings.account_phone', 'Phone')) . '</dt><dd>' . $phone . '</dd>
+            <dt>' . htmlspecialchars($t('settings.member_since', 'Member since')) . '</dt><dd>' . $memberSince . '</dd>
+        </dl>
+        <a href="client-profile.php" class="btn btn-outline-primary btn-sm mb-0 w-100">' . htmlspecialchars($t('settings.edit_profile', 'Edit profile')) . '</a>';
+
+    $overviewBody = '<div class="cs-stats-grid">' . $statsHtml . '</div>';
+
+    $quickLinksBody = '
+        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.quick_links_help', 'Jump to common areas of your client portal.')) . '</p>
+        <div class="cs-quick-links">' . $quickLinksHtml . '</div>';
+
+    $firmBody = '<h6 class="mb-2">' . $firmName . '</h6>' . $firmDetailsHtml;
+
+    return '
+    <div class="cp-page">
+        ' . $heroHtml . '
+        <div class="cp-account-layout">
+            <div class="cp-panel-stack">
+                <form method="post" class="client-settings-form cp-panel-stack">
+                    <input type="hidden" name="action" value="save_preferences">
+                    ' . client_portal_render_panel([
+                        'title' => $t('settings.appearance', 'Appearance & language'),
+                        'subtitle' => $t('settings.appearance_help', 'Choose light or dark mode and your preferred language.'),
+                        'icon' => 'palette',
+                    ], $appearanceBody) . '
+                    ' . client_portal_render_panel([
+                        'title' => $t('settings.notifications_section', 'Email notifications'),
+                        'subtitle' => $t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.'),
+                        'icon' => 'bell',
+                        'panel_id' => 'email-digest',
+                    ], $notificationsBody) . '
+                    <div class="cp-form-actions">
+                        <button type="submit" class="btn btn-primary">' . htmlspecialchars($t('settings.save_preferences', 'Save preferences')) . '</button>
+                    </div>
+                </form>
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.privacy_security', 'Privacy & security'),
+                    'subtitle' => $t('settings.privacy_tip_1', 'Never share your portal password with anyone, including firm staff.'),
+                    'icon' => 'shield',
+                ], $privacyBody) . '
+            </div>
+            <div class="cp-panel-stack">
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.account', 'Your account'),
+                    'subtitle' => $t('settings.account_help', 'Basic details tied to your client portal login.'),
+                    'icon' => 'user',
+                ], $accountBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.portal_overview', 'Portal overview'),
+                    'subtitle' => $t('settings.quick_links_help', 'Jump to common areas of your client portal.'),
+                    'icon' => 'layout-grid',
+                ], $overviewBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.quick_links', 'Quick links'),
+                    'subtitle' => $t('settings.quick_links_help', 'Jump to common areas of your client portal.'),
+                    'icon' => 'link',
+                ], $quickLinksBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.your_firm', 'Your firm'),
+                    'subtitle' => $t('settings.firm_default', 'Contact your legal team for office hours and support.'),
+                    'icon' => 'building-2',
+                ], $firmBody) . '
+            </div>
+        </div>
+    </div>';
 }
 
 function renderPortalThemeDarkCss(string $primary, string $rgb): string
@@ -419,8 +745,8 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '--lp-dark-border-strong: rgba(255, 255, 255, 0.16);'
         . '--lp-dark-text: #f8f9fc;'
         . '--lp-dark-text-secondary: #e2e8f2;'
-        . '--lp-dark-text-muted: #c5cede;'
-        . '--lp-dark-text-subtle: #9aa8bc;'
+        . '--lp-dark-text-muted: #d4dcea;'
+        . '--lp-dark-text-subtle: #aeb9cb;'
         . '--lp-dark-input-bg: #2f3547;'
         . '--lp-admin-content-bg: #2a3040;'
         . '--lp-portal-content-bg: #2a3040;'
@@ -499,6 +825,46 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'body.legalpro-dark-mode .table td,'
         . 'body.legalpro-dark-mode .table tbody td {'
         . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .text-success,'
+        . 'body.legalpro-dark-mode td.text-success,'
+        . 'body.legalpro-dark-mode .text-success.fw-bold,'
+        . 'body.legalpro-dark-mode .text-success.fw-semibold {'
+        . 'color: #6ee7b7 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .text-warning,'
+        . 'body.legalpro-dark-mode td.text-warning,'
+        . 'body.legalpro-dark-mode .text-warning.fw-bold,'
+        . 'body.legalpro-dark-mode .text-warning.fw-semibold {'
+        . 'color: #fdba74 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .text-danger,'
+        . 'body.legalpro-dark-mode td.text-danger {'
+        . 'color: #fca5a5 !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .text-info,'
+        . 'body.legalpro-dark-mode td.text-info {'
+        . 'color: #7dd3fc !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .table tbody td strong,'
+        . 'body.legalpro-dark-mode .table tbody td .fw-bold,'
+        . 'body.legalpro-dark-mode .table tbody td .fw-semibold,'
+        . 'body.legalpro-dark-mode .card strong:not(.lp-pill):not(.badge),'
+        . 'body.legalpro-dark-mode .card .fw-bold:not(.lp-pill):not(.badge),'
+        . 'body.legalpro-dark-mode .card .fw-semibold:not(.lp-pill):not(.badge),'
+        . 'body.legalpro-dark-mode .list-group-item .fw-bold,'
+        . 'body.legalpro-dark-mode .list-group-item .fw-semibold,'
+        . 'body.legalpro-dark-mode .list-group-item strong {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .opacity-7 {'
+        . 'opacity: 1 !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .navbar-main,'
@@ -676,7 +1042,8 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode .table tbody td .font-weight-bold,'
-        . 'body.legalpro-dark-mode .table tbody td .text-sm.font-weight-bold {'
+        . 'body.legalpro-dark-mode .table tbody td .text-sm.font-weight-bold,'
+        . 'body.legalpro-dark-mode .table tbody td .text-sm.fw-bold {'
         . 'color: var(--lp-dark-text) !important;'
         . '}';
 
@@ -900,7 +1267,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode .modal-body,'
         . 'body.legalpro-dark-mode .modal-body p,'
-        . 'body.legalpro-dark-mode .modal-body span:not(.badge):not(.lp-pill):not(.ca-status-pill) {'
+        . 'body.legalpro-dark-mode .modal-body span:not(.badge):not(.lp-pill):not(.ca-status-pill):not(.ca-badge) {'
         . 'color: var(--lp-dark-text-secondary) !important;'
         . '}';
 
@@ -951,12 +1318,12 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'background: #4a5568 !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.badge) {'
+    $css .= 'body.legalpro-dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.badge):not(.legalpro-doc-subnav__link) {'
         . 'color: ' . $primary . ';'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .text-muted a:not(.btn),'
-        . 'body.legalpro-dark-mode .modal-content a:not(.btn):not(.nav-link):not(.dropdown-item) {'
+    $css .= 'body.legalpro-dark-mode .text-muted a:not(.btn):not(.legalpro-doc-subnav__link),'
+        . 'body.legalpro-dark-mode .modal-content a:not(.btn):not(.nav-link):not(.dropdown-item):not(.legalpro-doc-subnav__link) {'
         . 'color: ' . $primary . ' !important;'
         . '}';
 
@@ -2667,9 +3034,13 @@ function getPortalThemeCalendarDarkCss(): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-col-header-cell-cushion,'
-        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number,'
-        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar-title {'
+        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number {'
         . 'color: var(--lp-dark-text-secondary) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title {'
+        . 'color: #fff !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-day-today {'
@@ -2956,24 +3327,27 @@ function renderPortalThemeCss(): string
         . '}';
 
     $css .= $fcToolbarBtn . ' {'
-        . 'background-color: ' . $primary . ' !important;'
-        . 'background-image: ' . $gradient310 . ' !important;'
-        . 'border-color: ' . $primary . ' !important;'
+        . 'background-color: rgba(255, 255, 255, 0.22) !important;'
+        . 'background-image: none !important;'
+        . 'border: 1.5px solid rgba(255, 255, 255, 0.92) !important;'
         . 'color: #fff !important;'
+        . 'font-weight: 700 !important;'
+        . 'text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22) !important;'
         . '}';
 
     $css .= $fcToolbarBtnHover . ' {'
-        . 'background-color: ' . $primaryDark . ' !important;'
+        . 'background-color: rgba(255, 255, 255, 0.38) !important;'
         . 'background-image: none !important;'
-        . 'border-color: ' . $primaryDark . ' !important;'
+        . 'border-color: #fff !important;'
         . 'color: #fff !important;'
         . '}';
 
     $css .= $fcToolbarBtnActive . ' {'
-        . 'background-color: ' . $primaryDark . ' !important;'
+        . 'background-color: #fff !important;'
         . 'background-image: none !important;'
         . 'border-color: #fff !important;'
-        . 'color: #fff !important;'
+        . 'color: ' . $primary . ' !important;'
+        . 'text-shadow: none !important;'
         . '}';
 
     $css .= '.fc .fc-toolbar.fc-header-toolbar .fc-icon,'
@@ -3018,6 +3392,58 @@ function portalThemeHexToRgba(string $hex, float $alpha): string
     return 'rgba(' . $r . ', ' . $g . ', ' . $b . ', ' . $alpha . ')';
 }
 
+/**
+ * Sidebar-only theme CSS for inline paint (avoids purple flash before external stylesheets).
+ */
+function renderPortalSidebarPaintCss(): string
+{
+    $theme = getPortalTheme();
+    $preset = $theme['preset'];
+    $primary = $preset['primary'];
+    $primaryDark = $preset['primary_dark'];
+    $sidebarBg = $preset['sidebar_bg'];
+    $sidebarDeep = $preset['sidebar_deep'];
+    $gradient = 'linear-gradient(135deg, ' . $primary . ' 0%, ' . $primaryDark . ' 100%)';
+    $sidebarGradient = 'linear-gradient(180deg, ' . $sidebarBg . ' 0%, ' . $sidebarDeep . ' 100%)';
+    $shadow = portalThemeHexToRgba($primary, 0.35);
+
+    return '#sidenav-main.legalpro-admin-sidebar,'
+        . '#sidenav-main.lp-sidebar {'
+        . 'background: ' . $sidebarGradient . ' !important;'
+        . 'background-color: ' . $sidebarBg . ' !important;'
+        . '}'
+        . '#sidenav-main .legalpro-sidebar-nav .nav-link.active {'
+        . 'background: ' . $gradient . ' !important;'
+        . 'background-image: ' . $gradient . ' !important;'
+        . 'color: #fff !important;'
+        . 'box-shadow: 0 8px 18px ' . $shadow . ' !important;'
+        . '}'
+        . '#sidenav-main .legalpro-sidebar-nav__icon .lp-icon {'
+        . 'display: inline-flex;'
+        . 'width: 1.125rem;'
+        . 'height: 1.125rem;'
+        . 'min-width: 1.125rem;'
+        . 'min-height: 1.125rem;'
+        . '}';
+}
+
+function renderPortalSidebarPaintBlock(): string
+{
+    return '<style id="legalpro-sidebar-paint">' . renderPortalSidebarPaintCss() . '</style>';
+}
+
+function renderPortalThemeHeadEarly(): void
+{
+    static $done = false;
+    if ($done || !isEffectivePortalThemeDark()) {
+        return;
+    }
+    $done = true;
+
+    echo '<style>html.legalpro-theme-dark{background:#2a3040;}</style>';
+    echo '<script>(function(){var d=document;d.documentElement.classList.add("legalpro-theme-dark");var apply=function(){if(d.body&&!d.body.classList.contains("legalpro-dark-mode")){d.body.classList.add("legalpro-dark-mode");}};if(d.body){apply();}else{d.addEventListener("DOMContentLoaded",apply);}})();</script>';
+}
+
 function renderPortalThemeHead(): void
 {
     static $rendered = false;
@@ -3027,11 +3453,6 @@ function renderPortalThemeHead(): void
     $rendered = true;
 
     $css = renderPortalThemeCss();
-    $isDark = isEffectivePortalThemeDark();
-
-    if ($isDark) {
-        echo '<script>(function(){var d=document;d.documentElement.classList.add("legalpro-theme-dark");var apply=function(){if(d.body&&!d.body.classList.contains("legalpro-dark-mode"))d.body.classList.add("legalpro-dark-mode");};if(d.body)apply();else d.addEventListener("DOMContentLoaded",apply);})();</script>';
-    }
     echo '<style id="legalpro-portal-theme">' . $css . '</style>';
 }
 

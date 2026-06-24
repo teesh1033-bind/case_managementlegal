@@ -102,7 +102,8 @@ $html = <<<'HTML'
 	</main>
 	<script src="../assets/js/core/popper.min.js"></script>
 	<script src="../assets/js/core/bootstrap.min.js"></script>
-	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+	<script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
 HTML;

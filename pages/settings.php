@@ -407,17 +407,20 @@ $html = <<<'HTML'
                             <hr class="horizontal dark my-4">
                             <form method="post" class="mt-3">
                                 <input type="hidden" name="form_type" value="currency">
-                                <div class="row g-3 align-items-end">
-                                    <div class="col-md-6">
-                                        <label class="form-control-label">Default Currency</label>
-                                        <select class="form-control" name="currency">
-                                            {CURRENCY_OPTIONS}
-                                        </select>
-                                        <small class="text-muted">Applies across all monetary values.</small>
+                                <div class="form-group">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-control-label">Default Currency</label>
+                                            <select class="form-control" name="currency">
+                                                {CURRENCY_OPTIONS}
+                                            </select>
+                                        </div>
+                                        <div class="col-auto">
+                                            <label class="form-control-label d-block">Save Currency</label>
+                                            <button type="submit" class="btn btn-dark">Save</button>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6 d-flex align-items-end">
-                                        <button class="btn btn-dark ms-md-3 mt-3 mt-md-0">Save Currency</button>
-                                    </div>
+                                    <small class="text-muted d-block mt-2">Applies across admin, lawyer, and client portals — invoices, payments, dashboards, and documents.</small>
                                 </div>
                             </form>
 						</div>
@@ -530,7 +533,7 @@ $html = <<<'HTML'
                             <p class="text-sm text-muted mb-3">Connect OpenAI to power natural-language answers with your live case data. Booking, navigation, and profile updates still run locally for reliability.</p>
                             <form method="post">
                                 <input type="hidden" name="form_type" value="chatbot_ai">
-                                <div class="form-check form-switch mb-3">
+                                <div class="form-check form-switch legalpro-status-switch mb-3">
                                     <input class="form-check-input" type="checkbox" name="chatbot_ai_enabled" id="chatbotAiEnabled" value="1"{CHATBOT_AI_ENABLED_CHECKED}>
                                     <label class="form-check-label" for="chatbotAiEnabled">Enable OpenAI-powered responses</label>
                                 </div>
@@ -599,5 +602,7 @@ $html = str_replace('{CHATBOT_AI_ENABLED_CHECKED}', $chatbotAiEnabledChecked, $h
 $html = str_replace('{OPENAI_KEY_PLACEHOLDER}', htmlspecialchars($openaiKeyPlaceholder), $html);
 $html = str_replace('{OPENAI_MODEL_OPTIONS}', $openaiModelOptionsHtml, $html);
 echo $html;
+echo legalpro_apply_copyright_line($html);
+?>
 echo legalpro_apply_copyright_line($html);
 ?>

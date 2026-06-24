@@ -100,7 +100,7 @@ function ensureCurrencyDefault() {
     $initialized = true;
     $defaultCode = getDefaultCurrencyCode();
     $current = getSetting('currency', null);
-    if ($current === null || $current === '' || strtoupper((string) $current) === 'USD') {
+    if ($current === null || trim((string) $current) === '') {
         setSetting('currency', $defaultCode);
     }
 }
@@ -124,9 +124,49 @@ function getCurrencySymbol() {
 function formatCurrency($amount, $decimals = 2) {
     $config = getCurrencyConfig();
     $formattedAmount = number_format((float) $amount, $decimals);
-    return $config['prefix']
-        ? $config['symbol'] . $formattedAmount
-        : $formattedAmount . ' ' . $config['symbol'];
+    if ($config['prefix']) {
+        $separator = in_array($config['symbol'], ['$', '€'], true) ? '' : ' ';
+
+        return $config['symbol'] . $separator . $formattedAmount;
+    }
+
+    return $formattedAmount . ' ' . $config['symbol'];
+}
+
+function renderCurrencyHeadScript() {
+    if (defined('LEGALPRO_CURRENCY_HEAD')) {
+        return;
+    }
+    define('LEGALPRO_CURRENCY_HEAD', true);
+
+    $config = getCurrencyConfig();
+    $payload = json_encode([
+        'code' => $config['code'],
+        'symbol' => $config['symbol'],
+        'prefix' => (bool) $config['prefix'],
+    ], JSON_UNESCAPED_UNICODE);
+    ?>
+<script>
+window.LegalProCurrency = <?= $payload ?>;
+window.LegalProFormatCurrency = function(amount, decimals) {
+    var places = (decimals === undefined || decimals === null) ? 2 : decimals;
+    var value = Number(amount);
+    if (isNaN(value)) {
+        value = 0;
+    }
+    var formatted = value.toLocaleString(undefined, {
+        minimumFractionDigits: places,
+        maximumFractionDigits: places
+    });
+    var cfg = window.LegalProCurrency || {};
+    if (cfg.prefix) {
+        var sep = (cfg.symbol === '$' || cfg.symbol === '€') ? '' : ' ';
+        return cfg.symbol + sep + formatted;
+    }
+    return formatted + ' ' + (cfg.symbol || '');
+};
+</script>
+<?php
 }
 
 function getOfferedServices() {

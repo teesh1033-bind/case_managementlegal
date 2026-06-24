@@ -24,7 +24,16 @@ function legalpro_icons_asset_links(): void
         return;
     }
     define('LEGALPRO_ICONS_HEAD', true);
-    echo '<link href="../assets/css/legalpro-icons.css?v=1" rel="stylesheet" />' . "\n";
+    echo '<link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />' . "\n";
+}
+
+function legalpro_icons_head_scripts(): void
+{
+    if (defined('LEGALPRO_ICONS_HEAD_SCRIPTS')) {
+        return;
+    }
+    define('LEGALPRO_ICONS_HEAD_SCRIPTS', true);
+    echo '<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>' . "\n";
 }
 
 function legalpro_icons_footer_scripts(): void
@@ -34,6 +43,8 @@ function legalpro_icons_footer_scripts(): void
         return;
     }
     $done = true;
-    echo '<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>' . "\n";
-    echo '<script>function legalproInitIcons(root){if(typeof lucide==="undefined"){return;}lucide.createIcons({attrs:{"stroke-width":1.75},nameAttr:"data-lucide",root:root||document});}function legalproScheduleIconInit(){if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){legalproInitIcons();});}else{legalproInitIcons();}}legalproScheduleIconInit();document.addEventListener("shown.bs.modal",function(e){legalproInitIcons(e.target);});</script>' . "\n";
+    if (!defined('LEGALPRO_ICONS_HEAD_SCRIPTS')) {
+        echo '<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>' . "\n";
+    }
+    echo '<script>function legalproInitIcons(root){if(typeof lucide==="undefined"){return;}lucide.createIcons({attrs:{"stroke-width":1.75},nameAttr:"data-lucide",root:root||document});}function legalproScheduleIconInit(){var s=document.getElementById("sidenav-main");if(s&&typeof lucide!=="undefined"){lucide.createIcons({attrs:{"stroke-width":1.75},nameAttr:"data-lucide",root:s});}legalproInitIcons();}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",legalproScheduleIconInit);}else{legalproScheduleIconInit();}document.addEventListener("shown.bs.modal",function(e){legalproInitIcons(e.target);});</script>' . "\n";
 }

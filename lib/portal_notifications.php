@@ -106,6 +106,25 @@ function legalpro_filter_read_notifications(PDO $pdo, array $items): array
     }));
 }
 
+function legalpro_notification_unread_hint(): string
+{
+    if (function_exists('client_t')) {
+        $hint = client_t('notifications.unread_hint');
+        if ($hint !== 'notifications.unread_hint') {
+            return $hint;
+        }
+    }
+
+    return 'New — not yet seen';
+}
+
+function legalpro_notification_unread_caption_html(): string
+{
+    return '<span class="legalpro-notif-item__hover-caption" role="tooltip">'
+        . htmlspecialchars(legalpro_notification_unread_hint(), ENT_QUOTES, 'UTF-8')
+        . '</span>';
+}
+
 function legalpro_notification_sanitize_redirect(string $url): string
 {
     $url = trim($url);
@@ -316,9 +335,9 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
                 'Outstanding balance',
                 $caseNumber . ' · ' . (string) $row['title'] . ' · ' . $clientName . ' · ' . formatCurrency($balance) . ' due',
                 'payments.php?case_id=' . $caseId,
-                date('Y-m-d H:i:s'),
+                null,
                 'banknote',
-                time()
+                $caseId
             );
         }
     } catch (PDOException $e) {
@@ -328,6 +347,35 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
     return legalpro_filter_read_notifications($pdo, legalpro_sort_notifications($items, $limit));
 }
 
+function legalpro_admin_notification_unread_count(?PDO $pdo = null): int
+{
+    if (!$pdo instanceof PDO) {
+        return 0;
+    }
+
+    return count(legalpro_fetch_admin_notifications($pdo, 100));
+}
+
+function legalpro_mark_all_portal_notifications_read(PDO $pdo, string $role, int $userId, array $items): bool
+{
+    if ($userId <= 0 || $role === '' || $items === []) {
+        return false;
+    }
+
+    $ok = true;
+    foreach ($items as $item) {
+        $key = trim((string) ($item['key'] ?? ''));
+        if ($key === '') {
+            continue;
+        }
+        if (!legalpro_mark_notification_read($pdo, $role, $userId, $key)) {
+            $ok = false;
+        }
+    }
+
+    return $ok;
+}
+
 function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit = 20): array
 {
     if ($lawyerId <= 0) {
@@ -335,6 +383,157 @@ function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit
     }
 
     $items = [];
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                clw.case_id,
+                clw.assigned_at,
+                clw.is_primary,
+                c.title AS case_title,
+                c.status AS case_status,
+                CONCAT(cl.first_name, ' ', cl.last_name) AS client_name
+            FROM case_lawyers clw
+            INNER JOIN cases c ON c.id = clw.case_id
+            LEFT JOIN clients cl ON cl.id = c.client_id
+            WHERE clw.lawyer_id = ?
+              AND LOWER(COALESCE(c.status, 'open')) != 'closed'
+              AND clw.assigned_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+            ORDER BY clw.assigned_at DESC
+            LIMIT 12
+        ");
+        $stmt->execute([$lawyerId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $caseId = (int) ($row['case_id'] ?? 0);
+            if ($caseId <= 0) {
+                continue;
+            }
+            $caseNumber = 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
+            $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Case';
+            $clientName = trim((string) ($row['client_name'] ?? '')) ?: 'Client';
+            $assignedAt = (string) ($row['assigned_at'] ?? '');
+            $roleLabel = !empty($row['is_primary']) ? 'Primary lawyer' : 'Assigned lawyer';
+
+            $items[] = legalpro_build_notification_item(
+                'case-assign:' . $caseId,
+                'case',
+                'Assigned to a case',
+                $caseNumber . ' · ' . $caseTitle . ' · ' . $clientName . ' · ' . $roleLabel,
+                'lawyer-case-view.php?id=' . $caseId,
+                $assignedAt,
+                'briefcase',
+                $assignedAt !== '' ? (int) strtotime($assignedAt) : time()
+            );
+        }
+    } catch (PDOException $e) {
+        // ignore
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                t.id,
+                t.title,
+                t.priority,
+                t.due_date,
+                t.created_at,
+                t.status,
+                c.id AS case_id,
+                c.title AS case_title
+            FROM tasks t
+            INNER JOIN cases c ON c.id = t.case_id
+            WHERE LOWER(COALESCE(t.status, 'pending')) IN ('pending', 'in_progress')
+              AND (
+                t.assigned_lawyer_id = ?
+                OR EXISTS (
+                    SELECT 1 FROM task_lawyers tl
+                    WHERE tl.task_id = t.id AND tl.lawyer_id = ?
+                )
+              )
+            ORDER BY COALESCE(t.due_date, t.created_at) ASC
+            LIMIT 12
+        ");
+        $stmt->execute([$lawyerId, $lawyerId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $taskId = (int) ($row['id'] ?? 0);
+            if ($taskId <= 0) {
+                continue;
+            }
+            $caseId = (int) ($row['case_id'] ?? 0);
+            $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+            $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Case';
+            $taskTitle = trim((string) ($row['title'] ?? '')) ?: 'Task';
+            $priority = ucfirst(strtolower((string) ($row['priority'] ?? 'medium')));
+            $dueLabel = !empty($row['due_date'])
+                ? 'Due ' . date('M j, Y', strtotime((string) $row['due_date']))
+                : 'No due date';
+
+            $items[] = legalpro_build_notification_item(
+                'task:' . $taskId,
+                'task',
+                'Task assigned to you',
+                $caseNumber . ' · ' . $taskTitle . ' · ' . $caseTitle . ' · ' . $priority . ' · ' . $dueLabel,
+                'tasks.php',
+                (string) ($row['created_at'] ?? ''),
+                'list-checks',
+                !empty($row['due_date'])
+                    ? (int) strtotime((string) $row['due_date'])
+                    : (int) strtotime((string) ($row['created_at'] ?? ''))
+            );
+        }
+    } catch (PDOException $e) {
+        // ignore — task_lawyers table may not exist yet on older installs
+    }
+
+    try {
+        $tableExists = $pdo->query("SHOW TABLES LIKE 'court_dates'")->rowCount() > 0;
+        if ($tableExists) {
+            $stmt = $pdo->prepare("
+                SELECT
+                    cd.id,
+                    cd.court_date,
+                    cd.title,
+                    cd.created_at,
+                    cd.case_id,
+                    c.title AS case_title,
+                    CONCAT(cl.first_name, ' ', cl.last_name) AS client_name
+                FROM court_dates cd
+                INNER JOIN case_lawyers clw ON clw.case_id = cd.case_id
+                LEFT JOIN cases c ON c.id = cd.case_id
+                LEFT JOIN clients cl ON cl.id = c.client_id
+                WHERE clw.lawyer_id = ?
+                  AND cd.court_date >= CURDATE()
+                  AND cd.court_date <= DATE_ADD(CURDATE(), INTERVAL 14 DAY)
+                  AND LOWER(COALESCE(cd.status, 'scheduled')) = 'scheduled'
+                ORDER BY cd.court_date ASC
+                LIMIT 8
+            ");
+            $stmt->execute([$lawyerId]);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $caseId = (int) ($row['case_id'] ?? 0);
+                $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+                $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Court hearing';
+                $hearingTitle = trim((string) ($row['title'] ?? '')) ?: 'Court date';
+                $clientName = trim((string) ($row['client_name'] ?? '')) ?: 'Client';
+                $when = !empty($row['court_date'])
+                    ? date('M j, Y · g:i A', strtotime((string) $row['court_date']))
+                    : 'Upcoming';
+
+                $items[] = legalpro_build_notification_item(
+                    'court:' . (int) $row['id'],
+                    'court',
+                    'Upcoming court date',
+                    $caseNumber . ' · ' . $caseTitle . ' · ' . $hearingTitle . ' · ' . $clientName . ' · ' . $when,
+                    'lawyer-court-tracking.php',
+                    (string) ($row['created_at'] ?? $row['court_date'] ?? ''),
+                    'landmark',
+                    !empty($row['court_date']) ? (int) strtotime((string) $row['court_date']) : 0
+                );
+            }
+        }
+    } catch (PDOException $e) {
+        // ignore
+    }
 
     try {
         $stmt = $pdo->prepare("
@@ -471,8 +670,10 @@ function legalpro_render_notification_panel(array $items, string $viewAllUrl): s
             $clickUrl = $notifKey !== ''
                 ? legalpro_notification_click_url($notifKey, $destinationUrl)
                 : $destinationUrl;
-            $bodyHtml .= '<a href="' . htmlspecialchars($clickUrl, ENT_QUOTES, 'UTF-8') . '" class="legalpro-notif-item"'
+            $unreadHint = legalpro_notification_unread_hint();
+            $bodyHtml .= '<a href="' . htmlspecialchars($clickUrl, ENT_QUOTES, 'UTF-8') . '" class="legalpro-notif-item is-unread"'
                 . ($notifKey !== '' ? ' data-notif-key="' . htmlspecialchars($notifKey, ENT_QUOTES, 'UTF-8') . '"' : '')
+                . ' title="' . htmlspecialchars($unreadHint, ENT_QUOTES, 'UTF-8') . '"'
                 . '>'
                 . '<span class="legalpro-notif-item__icon legalpro-notif-item__icon--' . htmlspecialchars((string) ($item['type'] ?? 'default'), ENT_QUOTES, 'UTF-8') . '">'
                 . legalpro_icon($icon)
@@ -482,6 +683,7 @@ function legalpro_render_notification_panel(array $items, string $viewAllUrl): s
                 . '<span class="legalpro-notif-item__message">' . htmlspecialchars((string) $item['message']) . '</span>'
                 . '<span class="legalpro-notif-item__time">' . htmlspecialchars((string) ($item['time'] ?? '')) . '</span>'
                 . '</span>'
+                . legalpro_notification_unread_caption_html()
                 . '</a>';
         }
     }

@@ -169,7 +169,7 @@ class CaseEvents {
             'service_added',
             "Added service: {$serviceData['service_name']}",
             null,
-            '$' . number_format($serviceData['price'], 2)
+            formatCurrency((float) $serviceData['price'])
         );
     }
 
@@ -179,7 +179,7 @@ class CaseEvents {
             $changes[] = "Name: '{$oldData['service_name']}' → '{$newData['service_name']}'";
         }
         if ($oldData['price'] != $newData['price']) {
-            $changes[] = "Price: $" . number_format($oldData['price'], 2) . " → $" . number_format($newData['price'], 2);
+            $changes[] = 'Price: ' . formatCurrency((float) $oldData['price']) . ' → ' . formatCurrency((float) $newData['price']);
         }
 
         if (!empty($changes)) {
@@ -198,7 +198,7 @@ class CaseEvents {
             $caseId,
             'service_deleted',
             "Removed service: {$serviceData['service_name']}",
-            '$' . number_format($serviceData['price'], 2),
+            formatCurrency((float) $serviceData['price']),
             null
         );
     }
@@ -212,7 +212,7 @@ class CaseEvents {
             'payment_added',
             "Payment recorded",
             null,
-            '$' . number_format($paymentData['amount'], 2) . " ({$paymentData['method']})"
+            formatCurrency((float) $paymentData['amount']) . " ({$paymentData['method']})"
         );
     }
 
@@ -452,13 +452,13 @@ class CaseEvents {
             'service_added' => 'bg-gradient-primary',
             'service_updated' => 'bg-gradient-warning',
             'service_deleted' => 'bg-gradient-danger',
-            'payment_added' => 'bg-gradient-success',
+            'payment_added' => 'bg-gradient-warning',
             'document_uploaded' => 'bg-gradient-primary',
             'document_deleted' => 'bg-gradient-danger',
             'comment_added' => 'bg-gradient-secondary',
             'lawyer_assigned' => 'bg-gradient-success',
             'lawyer_unassigned' => 'bg-gradient-warning',
-            'appointment_created' => 'bg-gradient-info',
+            'appointment_created' => 'bg-gradient-primary',
             'appointment_updated' => 'bg-gradient-warning'
         ];
 
@@ -475,13 +475,13 @@ class CaseEvents {
             'service_added' => 'primary',
             'service_updated' => 'warning',
             'service_deleted' => 'danger',
-            'payment_added' => 'success',
+            'payment_added' => 'warning',
             'document_uploaded' => 'primary',
             'document_deleted' => 'danger',
             'comment_added' => 'secondary',
             'lawyer_assigned' => 'success',
             'lawyer_unassigned' => 'warning',
-            'appointment_created' => 'info',
+            'appointment_created' => 'primary',
             'appointment_updated' => 'warning'
         ];
 

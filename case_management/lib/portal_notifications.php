@@ -106,6 +106,25 @@ function legalpro_filter_read_notifications(PDO $pdo, array $items): array
     }));
 }
 
+function legalpro_notification_unread_hint(): string
+{
+    if (function_exists('client_t')) {
+        $hint = client_t('notifications.unread_hint');
+        if ($hint !== 'notifications.unread_hint') {
+            return $hint;
+        }
+    }
+
+    return 'New — not yet seen';
+}
+
+function legalpro_notification_unread_caption_html(): string
+{
+    return '<span class="legalpro-notif-item__hover-caption" role="tooltip">'
+        . htmlspecialchars(legalpro_notification_unread_hint(), ENT_QUOTES, 'UTF-8')
+        . '</span>';
+}
+
 function legalpro_notification_sanitize_redirect(string $url): string
 {
     $url = trim($url);
@@ -316,9 +335,9 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
                 'Outstanding balance',
                 $caseNumber . ' · ' . (string) $row['title'] . ' · ' . $clientName . ' · ' . formatCurrency($balance) . ' due',
                 'payments.php?case_id=' . $caseId,
-                date('Y-m-d H:i:s'),
+                null,
                 'banknote',
-                time()
+                $caseId
             );
         }
     } catch (PDOException $e) {
@@ -326,6 +345,35 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
     }
 
     return legalpro_filter_read_notifications($pdo, legalpro_sort_notifications($items, $limit));
+}
+
+function legalpro_admin_notification_unread_count(?PDO $pdo = null): int
+{
+    if (!$pdo instanceof PDO) {
+        return 0;
+    }
+
+    return count(legalpro_fetch_admin_notifications($pdo, 100));
+}
+
+function legalpro_mark_all_portal_notifications_read(PDO $pdo, string $role, int $userId, array $items): bool
+{
+    if ($userId <= 0 || $role === '' || $items === []) {
+        return false;
+    }
+
+    $ok = true;
+    foreach ($items as $item) {
+        $key = trim((string) ($item['key'] ?? ''));
+        if ($key === '') {
+            continue;
+        }
+        if (!legalpro_mark_notification_read($pdo, $role, $userId, $key)) {
+            $ok = false;
+        }
+    }
+
+    return $ok;
 }
 
 function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit = 20): array
@@ -471,8 +519,10 @@ function legalpro_render_notification_panel(array $items, string $viewAllUrl): s
             $clickUrl = $notifKey !== ''
                 ? legalpro_notification_click_url($notifKey, $destinationUrl)
                 : $destinationUrl;
-            $bodyHtml .= '<a href="' . htmlspecialchars($clickUrl, ENT_QUOTES, 'UTF-8') . '" class="legalpro-notif-item"'
+            $unreadHint = legalpro_notification_unread_hint();
+            $bodyHtml .= '<a href="' . htmlspecialchars($clickUrl, ENT_QUOTES, 'UTF-8') . '" class="legalpro-notif-item is-unread"'
                 . ($notifKey !== '' ? ' data-notif-key="' . htmlspecialchars($notifKey, ENT_QUOTES, 'UTF-8') . '"' : '')
+                . ' title="' . htmlspecialchars($unreadHint, ENT_QUOTES, 'UTF-8') . '"'
                 . '>'
                 . '<span class="legalpro-notif-item__icon legalpro-notif-item__icon--' . htmlspecialchars((string) ($item['type'] ?? 'default'), ENT_QUOTES, 'UTF-8') . '">'
                 . legalpro_icon($icon)
@@ -482,6 +532,7 @@ function legalpro_render_notification_panel(array $items, string $viewAllUrl): s
                 . '<span class="legalpro-notif-item__message">' . htmlspecialchars((string) $item['message']) . '</span>'
                 . '<span class="legalpro-notif-item__time">' . htmlspecialchars((string) ($item['time'] ?? '')) . '</span>'
                 . '</span>'
+                . legalpro_notification_unread_caption_html()
                 . '</a>';
         }
     }

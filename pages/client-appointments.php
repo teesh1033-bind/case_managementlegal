@@ -195,6 +195,25 @@ foreach ($appointments as $_apt) {
     if (($_apt['status'] ?? '') === 'accepted' && !empty($_apt['starts_at']) && strtotime($_apt['starts_at']) > time())  $apptUpcoming++;
 }
 
+require_once __DIR__ . '/../lib/client-portal-page-ui.php';
+
+$heroHtml = client_portal_render_hero([
+    'kicker' => 'Calendar',
+    'title' => 'My appointments',
+    'subtitle' => 'Track meetings with your legal team and request new sessions below.',
+    'show_date' => true,
+    'aria_label' => 'Appointments overview',
+    'stats' => [
+        ['num' => (string) $apptTotal, 'lbl' => 'Total'],
+        ['num' => (string) $apptPending, 'lbl' => 'Pending'],
+        ['num' => (string) $apptUpcoming, 'lbl' => 'Upcoming'],
+    ],
+    'actions' => [
+        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+    ],
+]);
+
 // ── Available lawyers ─────────────────────────────────────────────────────────
 $availableLawyers = [];
 try {
@@ -325,6 +344,91 @@ if (empty($appointments)) {
     }
 }
 
+// ── Calendar events (FullCalendar) ─────────────────────────────────────────
+$appointmentCalendarEvents = [];
+foreach ($appointments as $row) {
+    if (empty($row['starts_at'])) {
+        continue;
+    }
+
+    $status = strtolower((string) ($row['status'] ?? 'pending'));
+    $caseTitle = $row['case_title'] ?: 'Appointment';
+    $lawyerName = trim((string) ($row['lawyer_name'] ?? ''));
+    $notes = trim((string) ($row['notes'] ?? ''));
+    $startsLabel = date('M j, Y g:i A', strtotime($row['starts_at']));
+
+    $appointmentCalendarEvents[] = [
+        'id' => (string) $row['id'],
+        'title' => $caseTitle,
+        'start' => $row['starts_at'],
+        'end' => !empty($row['ends_at']) ? $row['ends_at'] : null,
+        'backgroundColor' => 'transparent',
+        'borderColor' => 'transparent',
+        'textColor' => '#344767',
+        'extendedProps' => [
+            'lawyer' => $lawyerName !== '' ? $lawyerName : 'TBD',
+            'notes' => $notes,
+            'status' => $status,
+            'statusLabel' => ucfirst($status),
+            'appointmentId' => (int) $row['id'],
+            'startsLabel' => $startsLabel,
+            'searchHay' => strtolower(implode(' ', array_filter([
+                $caseTitle,
+                $lawyerName,
+                $status,
+                $notes,
+                $startsLabel,
+                date('Y-m-d', strtotime($row['starts_at'])),
+                date('m/d/Y', strtotime($row['starts_at'])),
+                (string) $row['id'],
+            ]))),
+        ],
+    ];
+}
+
+$appointmentCalendarEventsJson = json_encode(
+    $appointmentCalendarEvents,
+    JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+);
+
+$upcomingAppointmentsCalendarHtml = '';
+$upcomingForCalendar = array_values(array_filter($appointments, function ($row) {
+    if (empty($row['starts_at']) || strtotime($row['starts_at']) < time()) {
+        return false;
+    }
+    $status = strtolower((string) ($row['status'] ?? 'pending'));
+
+    return $status !== 'rejected';
+}));
+
+if (empty($upcomingForCalendar)) {
+    $upcomingAppointmentsCalendarHtml = '<div class="dashboard-upcoming-empty">'
+        . '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">'
+        . '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'
+        . '</svg><span>No upcoming appointments</span></div>';
+} else {
+    usort($upcomingForCalendar, function ($a, $b) {
+        return strtotime($a['starts_at']) <=> strtotime($b['starts_at']);
+    });
+    foreach (array_slice($upcomingForCalendar, 0, 8) as $row) {
+        $status = strtolower((string) ($row['status'] ?? 'pending'));
+        $caseTitle = $row['case_title'] ?: 'Appointment';
+        $lawyerName = trim((string) ($row['lawyer_name'] ?? ''));
+        $lawyerName = $lawyerName !== '' ? $lawyerName : 'TBD';
+        $hourLabel = date('g:i A', strtotime($row['starts_at']));
+        $dayLabel = date('M j', strtotime($row['starts_at']));
+
+        $upcomingAppointmentsCalendarHtml .= '
+        <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . '" data-appointment-id="' . (int) $row['id'] . '">
+            <span class="dashboard-upcoming-item__time">' . htmlspecialchars($hourLabel) . '<br><small style="font-weight:500;opacity:.8">' . htmlspecialchars($dayLabel) . '</small></span>
+            <span class="flex-grow-1">
+                <p class="dashboard-upcoming-item__title">' . htmlspecialchars($caseTitle) . '</p>
+                <p class="dashboard-upcoming-item__sub">' . htmlspecialchars($lawyerName) . '</p>
+            </span>
+        </button>';
+    }
+}
+
 // ── Message HTML ──────────────────────────────────────────────────────────────
 $messageHtml = '';
 if ($message) {
@@ -359,7 +463,10 @@ ob_start(); ?>
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
+    <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
     <?php
     require_once __DIR__ . '/../inc/availability-date-picker.php';
     legalpro_render_availability_date_picker_assets();
@@ -390,49 +497,6 @@ ob_start(); ?>
             --ca-field-muted: var(--lp-dark-text-subtle, #9aa8bc);
             --ca-time-available-color: #6ee7b7;
         }
-
-        /* ── Hero ───────────────────────────────────────────────────── */
-        .ca-hero-card {
-            background: var(--ca-gradient);
-            border-radius: 20px;
-            padding: 2rem 2.5rem;
-            color: #fff;
-            margin-bottom: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        .ca-hero-card::before {
-            content: '';
-            position: absolute;
-            top: -50px; right: -50px;
-            width: 180px; height: 180px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.08);
-        }
-        .ca-hero-card::after {
-            content: '';
-            position: absolute;
-            bottom: -70px; left: 60px;
-            width: 140px; height: 140px;
-            border-radius: 50%;
-            background: rgba(255,255,255,.06);
-        }
-        .ca-hero-kicker {
-            font-size: 11px; font-weight: 600;
-            letter-spacing: .12em; text-transform: uppercase;
-            opacity: .75; margin-bottom: .35rem;
-        }
-        .ca-hero-title { font-size: 22px; font-weight: 800; margin-bottom: .3rem; }
-        .ca-hero-sub   { font-size: 13px; opacity: .75; margin-bottom: 1.5rem; }
-        .ca-hero-pills { display: flex; gap: .85rem; flex-wrap: wrap; position: relative; z-index: 1; }
-        .ca-stat-pill {
-            background: rgba(255,255,255,.15);
-            border: 1px solid rgba(255,255,255,.2);
-            border-radius: 12px;
-            padding: .6rem 1.1rem;
-        }
-        .ca-stat-pill .num { font-size: 20px; font-weight: 700; line-height: 1; }
-        .ca-stat-pill .lbl { font-size: 11px; opacity: .75; margin-top: 2px; }
 
         /* ── Layout ─────────────────────────────────────────────────── */
         .ca-layout {
@@ -518,6 +582,33 @@ ob_start(); ?>
         .ca-badge.b-inprogress .ca-badge-dot { background: var(--ca-primary); }
         .ca-badge.b-muted      { background: #f1f5f9; color: #64748b; }
         .ca-badge.b-muted      .ca-badge-dot { background: #94a3b8; }
+        body.legalpro-dark-mode .ca-badge.b-upcoming {
+            background: rgba(45, 206, 137, 0.18) !important;
+            color: #b8f5d8 !important;
+        }
+        body.legalpro-dark-mode .ca-badge.b-upcoming .ca-badge-dot { background: #2dce89 !important; }
+        body.legalpro-dark-mode .ca-badge.b-pending {
+            background: rgba(251, 140, 64, 0.18) !important;
+            color: #ffe0b8 !important;
+        }
+        body.legalpro-dark-mode .ca-badge.b-pending .ca-badge-dot { background: #fb8c40 !important; }
+        body.legalpro-dark-mode .ca-badge.b-done,
+        body.legalpro-dark-mode .ca-badge.b-muted {
+            background: rgba(148, 163, 184, 0.2) !important;
+            color: #e2e8f2 !important;
+        }
+        body.legalpro-dark-mode .ca-badge.b-done .ca-badge-dot,
+        body.legalpro-dark-mode .ca-badge.b-muted .ca-badge-dot { background: #94a3b8 !important; }
+        body.legalpro-dark-mode .ca-badge.b-declined {
+            background: rgba(245, 54, 92, 0.22) !important;
+            color: #ffc9d4 !important;
+        }
+        body.legalpro-dark-mode .ca-badge.b-declined .ca-badge-dot { background: #f5365c !important; }
+        body.legalpro-dark-mode .ca-badge.b-inprogress {
+            background: rgba(94, 114, 228, 0.2) !important;
+            color: #d4dcff !important;
+        }
+        body.legalpro-dark-mode .ca-badge.b-inprogress .ca-badge-dot { background: var(--ca-primary, #5e72e4) !important; }
 
         /* ── Action buttons ─────────────────────────────────────────── */
         .btn-det {
@@ -892,11 +983,231 @@ ob_start(); ?>
         .ca-modal .modal-header { border-bottom: 1px solid #f1f5f9; }
         .ca-modal .modal-title  { font-size: 15px; font-weight: 700; color: #1e293b; }
         .ca-detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .ca-modal .ca-apt-detail-label,
         .ca-detail-field p.lbl {
             font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
-            text-transform: uppercase; color: #94a3b8; margin: 0 0 3px;
+            text-transform: uppercase; color: #8392ab; margin: 0 0 3px;
         }
-        .ca-detail-field p.val { font-size: 13px; color: #1e293b; font-weight: 500; margin: 0; }
+        .ca-modal .ca-apt-detail-matter {
+            font-size: 15px; font-weight: 700; color: #344767; margin: 0;
+        }
+        .ca-modal .ca-apt-detail-value,
+        .ca-detail-field p.val {
+            font-size: 13px; color: #344767; font-weight: 600; margin: 0;
+        }
+        .ca-modal .ca-apt-detail-value--empty { color: #8392ab; font-weight: 500; }
+        body.legalpro-dark-mode .ca-modal .modal-title,
+        body.legalpro-dark-mode .ca-modal .ca-apt-detail-matter,
+        body.legalpro-dark-mode .ca-modal .ca-apt-detail-value,
+        body.legalpro-dark-mode .ca-modal .ca-detail-field p.val {
+            color: var(--lp-dark-text, #f8f9fc) !important;
+        }
+        body.legalpro-dark-mode .ca-modal .ca-apt-detail-label,
+        body.legalpro-dark-mode .ca-modal .ca-detail-field p.lbl,
+        body.legalpro-dark-mode .ca-modal .ca-apt-detail-value--empty {
+            color: var(--lp-dark-text-muted, #a8b5cc) !important;
+        }
+
+        /* ── Appointments calendar (same hub as admin) ───────────────── */
+        .client-appointments-page .ca-calendar-hub {
+            margin-bottom: 1.5rem;
+        }
+        .client-appointments-page .ca-calendar-hub .dashboard-calendar-hub__title {
+            color: var(--ca-primary);
+            font-weight: 800;
+        }
+        .client-appointments-page .dashboard-calendar-hub__head {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .client-appointments-page .ca-cal-search-wrap {
+            position: relative;
+            width: 100%;
+            flex-shrink: 0;
+        }
+        .client-appointments-page .ca-cal-search-wrap--featured {
+            padding: .9rem 1rem 1rem;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+        }
+        .client-appointments-page .ca-cal-search-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--ca-primary);
+            margin-bottom: .55rem;
+        }
+        .client-appointments-page .ca-cal-search-field {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            background: #fff;
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border-radius: 12px;
+            padding: .7rem 1rem;
+            transition: border-color .15s, box-shadow .15s, transform .15s;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
+        }
+        .client-appointments-page .ca-cal-search-field:focus-within {
+            border-color: var(--ca-primary);
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            transform: translateY(-1px);
+        }
+        .client-appointments-page .ca-cal-search-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            color: var(--ca-primary);
+            flex-shrink: 0;
+        }
+        .client-appointments-page .ca-cal-search-field svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+            flex-shrink: 0;
+        }
+        .client-appointments-page .ca-cal-search-input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            font-family: inherit;
+        }
+        .client-appointments-page .ca-cal-search-input::placeholder {
+            color: #64748b;
+            font-weight: 500;
+        }
+        .client-appointments-page .ca-cal-search-results {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            z-index: 30;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+            max-height: 320px;
+            overflow-y: auto;
+            padding: .35rem;
+        }
+        .client-appointments-page .ca-cal-search-item {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            width: 100%;
+            text-align: left;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            padding: .65rem .75rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background .12s;
+        }
+        .client-appointments-page .ca-cal-search-item:hover,
+        .client-appointments-page .ca-cal-search-item:focus-visible {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            outline: none;
+        }
+        .client-appointments-page .ca-cal-search-item__dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: .45rem;
+            flex-shrink: 0;
+        }
+        .client-appointments-page .ca-cal-search-item__dot--pending { background: #fb6340; }
+        .client-appointments-page .ca-cal-search-item__dot--accepted { background: #2dce89; }
+        .client-appointments-page .ca-cal-search-item__dot--rejected { background: #f5365c; }
+        .client-appointments-page .ca-cal-search-item__body { min-width: 0; flex: 1; }
+        .client-appointments-page .ca-cal-search-item__title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .client-appointments-page .ca-cal-search-item__sub {
+            font-size: 11.5px;
+            color: #64748b;
+            margin: 0;
+        }
+        .client-appointments-page .ca-cal-search-empty {
+            padding: 1rem .75rem;
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-wrap--featured {
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-label {
+            color: #b8c4ff;
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-icon {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            color: #d4dcff;
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-field,
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-results {
+            background: var(--ca-field-bg);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-field:focus-within {
+            border-color: #9aaeff;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-input {
+            color: var(--ca-field-color);
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-input::placeholder {
+            color: #94a3b8;
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-cal-search-item__title {
+            color: var(--ca-field-color);
+        }
+        body.client-appointments-page .navbar-main .legalpro-navbar-search {
+            min-width: min(100%, 340px);
+        }
+        body.client-appointments-page .navbar-main .legalpro-navbar-search .input-group {
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.3) !important;
+            background: rgba(255, 255, 255, 0.96) !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+            border-radius: 12px !important;
+        }
+        body.client-appointments-page .navbar-main .legalpro-navbar-search .input-group:focus-within {
+            border-color: var(--ca-primary) !important;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.16), 0 4px 16px rgba(15, 23, 42, 0.1) !important;
+        }
+        body.client-appointments-page .navbar-main .legalpro-navbar-search .form-control,
+        body.client-appointments-page .navbar-main .legalpro-navbar-search input[type="search"].form-control {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+        }
+        body.client-appointments-page .navbar-main .legalpro-navbar-search .input-group-text {
+            color: var(--ca-primary) !important;
+        }
+        body.legalpro-dark-mode.client-appointments-page .navbar-main .legalpro-navbar-search .input-group {
+            background: var(--lp-dark-surface-raised, #3d455c) !important;
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35) !important;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-appointments-page<?php echo legalpro_portal_theme_body_class(); ?>">
@@ -908,26 +1219,51 @@ ob_start(); ?>
         <?= $clientPageNavbar ?>
 
         <div class="container-fluid py-4">
+            <div class="cp-page">
 
             <?= $messageHtml ?>
 
-            <!-- Hero -------------------------------------------------------->
-            <div class="ca-hero-card">
-                <p class="ca-hero-kicker">Calendar</p>
-                <h4 class="ca-hero-title">My appointments</h4>
-                <p class="ca-hero-sub">Track meetings with your legal team and request new sessions below.</p>
-                <div class="ca-hero-pills">
-                    <div class="ca-stat-pill">
-                        <div class="num"><?= $apptTotal ?></div>
-                        <div class="lbl">Total</div>
+            <?= $heroHtml ?>
+
+            <!-- Calendar hub (same as admin appointments) ----------------->
+            <div class="dashboard-calendar-hub ca-calendar-hub">
+                <div class="dashboard-calendar-hub__head">
+                    <div class="ca-calendar-hub__intro">
+                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Appointments Calendar</h6>
+                        <p class="text-sm mb-0 text-muted">Use the search bar below to find appointments quickly, or click a calendar event</p>
+                        <div class="dashboard-legend-pills">
+                            <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
+                            <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
+                            <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
+                        </div>
                     </div>
-                    <div class="ca-stat-pill">
-                        <div class="num"><?= $apptPending ?></div>
-                        <div class="lbl">Pending</div>
+                    <div class="ca-cal-search-wrap ca-cal-search-wrap--featured">
+                        <label class="ca-cal-search-label" for="caCalSearchInput">Search appointments</label>
+                        <div class="ca-cal-search-field">
+                            <span class="ca-cal-search-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                                    <circle cx="11" cy="11" r="7"></circle>
+                                    <path d="M20 20l-3-3"></path>
+                                </svg>
+                            </span>
+                            <input type="search" id="caCalSearchInput" class="ca-cal-search-input"
+                                   placeholder="Search by matter, lawyer, date, status…" autocomplete="off">
+                        </div>
+                        <div class="ca-cal-search-results" id="caCalSearchResults" hidden></div>
                     </div>
-                    <div class="ca-stat-pill">
-                        <div class="num"><?= $apptUpcoming ?></div>
-                        <div class="lbl">Upcoming</div>
+                </div>
+                <div class="dashboard-calendar-hub__body">
+                    <div class="dashboard-calendar-layout">
+                        <div id="clientAppointmentsCalendar"></div>
+                        <aside class="dashboard-upcoming-panel">
+                            <div class="dashboard-upcoming-panel__title">
+                                <span>Upcoming</span>
+                                <a href="#caAppointmentsTable" class="text-xs font-weight-bold" style="color:var(--ca-primary)">View list</a>
+                            </div>
+                            <div class="dashboard-upcoming-list" id="clientUpcomingAppointmentsList">
+                                <?= $upcomingAppointmentsCalendarHtml ?>
+                            </div>
+                        </aside>
                     </div>
                 </div>
             </div>
@@ -936,7 +1272,7 @@ ob_start(); ?>
             <div class="ca-layout">
 
                 <!-- Appointments table -->
-                <div class="ca-panel">
+                <div class="ca-panel" id="caAppointmentsTable">
                     <div class="ca-panel-hdr">
                         <div>
                             <h5>Your appointments</h5>
@@ -1022,6 +1358,7 @@ ob_start(); ?>
                 </div>
 
             </div><!-- /ca-layout -->
+            </div><!-- /cp-page -->
         </div><!-- /container -->
     </main>
 
@@ -1047,9 +1384,12 @@ ob_start(); ?>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <?php legalpro_render_availability_date_picker_script(); ?>
 
     <script>
+    var clientAppointmentEvents = <?= $appointmentCalendarEventsJson ?>;
+    var clientAppointmentsCalendar = null;
     var lawyerAvailabilityByDate = <?= json_encode($lawyerAvailabilityByDate) ?>;
     var lawyerAvailabilityByDay  = <?= json_encode($lawyerAvailabilityByDay) ?>;
     var lawyerHasAvailability    = <?= json_encode($lawyerHasAvailability) ?>;
@@ -1532,6 +1872,169 @@ ob_start(); ?>
 
         if (document.getElementById('lawyer_id').value) {
             onLawyerChange();
+        }
+
+        var calendarEl = document.getElementById('clientAppointmentsCalendar');
+        var upcomingList = document.getElementById('clientUpcomingAppointmentsList');
+
+        function appointmentStatusKey(status) {
+            var value = String(status || 'pending').toLowerCase();
+            return value === 'approved' ? 'accepted' : value;
+        }
+
+        function renderAppointmentEvent(arg) {
+            var props = arg.event.extendedProps || {};
+            var statusKey = appointmentStatusKey(props.status);
+            var timeText = arg.timeText || '';
+            var title = arg.event.title || 'Appointment';
+            if (title.length > 22) {
+                title = title.slice(0, 19) + '...';
+            }
+            var wrap = document.createElement('div');
+            wrap.className = 'dashboard-cal-event';
+            wrap.innerHTML =
+                '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
+                '<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
+            return { domNodes: [wrap] };
+        }
+
+        if (upcomingList) {
+            upcomingList.addEventListener('click', function(e) {
+                var btn = e.target.closest('[data-appointment-id]');
+                if (!btn) {
+                    return;
+                }
+                viewAppointmentDetails(parseInt(btn.getAttribute('data-appointment-id'), 10));
+            });
+        }
+
+        if (calendarEl && typeof FullCalendar !== 'undefined') {
+            clientAppointmentsCalendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+                height: 'auto',
+                firstDay: 1,
+                navLinks: true,
+                nowIndicator: true,
+                fixedWeekCount: false,
+                dayMaxEvents: 3,
+                moreLinkClick: 'day',
+                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                dayHeaderFormat: { weekday: 'short' },
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                events: clientAppointmentEvents,
+                eventContent: renderAppointmentEvent,
+                eventClick: function(info) {
+                    info.jsEvent.preventDefault();
+                    var props = info.event.extendedProps || {};
+                    viewAppointmentDetails(props.appointmentId || parseInt(info.event.id, 10));
+                },
+                eventDidMount: function(info) {
+                    var props = info.event.extendedProps || {};
+                    var tip = info.event.title;
+                    if (props.lawyer) {
+                        tip += '\nLawyer: ' + props.lawyer;
+                    }
+                    info.el.setAttribute('title', tip);
+                }
+            });
+            clientAppointmentsCalendar.render();
+            initClientCalendarSearch();
+        }
+
+        function initClientCalendarSearch() {
+            var input = document.getElementById('caCalSearchInput');
+            var resultsEl = document.getElementById('caCalSearchResults');
+            if (!input || !resultsEl) {
+                return;
+            }
+
+            function hideResults() {
+                resultsEl.hidden = true;
+                resultsEl.innerHTML = '';
+            }
+
+            function renderSearchResults(matches) {
+                var query = input.value.trim();
+                if (!query) {
+                    hideResults();
+                    return;
+                }
+                if (!matches.length) {
+                    resultsEl.innerHTML = '<div class="ca-cal-search-empty">No appointments match your search.</div>';
+                    resultsEl.hidden = false;
+                    return;
+                }
+
+                var html = '';
+                matches.slice(0, 12).forEach(function(ev) {
+                    var props = ev.extendedProps || {};
+                    var statusKey = appointmentStatusKey(props.status);
+                    var title = ev.title || 'Appointment';
+                    var when = props.startsLabel || '';
+                    var lawyer = props.lawyer || 'TBD';
+                    html += '<button type="button" class="ca-cal-search-item" data-appointment-id="' + escapeHtml(props.appointmentId || ev.id) + '" data-start="' + escapeHtml(ev.start || '') + '">' +
+                        '<span class="ca-cal-search-item__dot ca-cal-search-item__dot--' + escapeHtml(statusKey) + '" aria-hidden="true"></span>' +
+                        '<span class="ca-cal-search-item__body">' +
+                            '<p class="ca-cal-search-item__title">' + escapeHtml(title) + '</p>' +
+                            '<p class="ca-cal-search-item__sub">' + escapeHtml(when) + ' · ' + escapeHtml(lawyer) + ' · ' + escapeHtml(props.statusLabel || props.status || 'Pending') + '</p>' +
+                        '</span>' +
+                    '</button>';
+                });
+                resultsEl.innerHTML = html;
+                resultsEl.hidden = false;
+            }
+
+            input.addEventListener('input', function() {
+                var q = input.value.trim().toLowerCase();
+                if (!q) {
+                    hideResults();
+                    return;
+                }
+
+                var matches = clientAppointmentEvents.filter(function(ev) {
+                    var props = ev.extendedProps || {};
+                    var hay = props.searchHay || ((ev.title || '') + ' ' + (props.lawyer || '')).toLowerCase();
+                    return hay.indexOf(q) !== -1;
+                });
+
+                matches.sort(function(a, b) {
+                    return new Date(b.start).getTime() - new Date(a.start).getTime();
+                });
+
+                renderSearchResults(matches);
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideResults();
+                    input.blur();
+                }
+            });
+
+            resultsEl.addEventListener('click', function(e) {
+                var btn = e.target.closest('[data-appointment-id]');
+                if (!btn) {
+                    return;
+                }
+                var id = parseInt(btn.getAttribute('data-appointment-id'), 10);
+                var start = btn.getAttribute('data-start');
+                if (clientAppointmentsCalendar && start) {
+                    clientAppointmentsCalendar.gotoDate(start);
+                }
+                viewAppointmentDetails(id);
+                hideResults();
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.ca-cal-search-wrap')) {
+                    hideResults();
+                }
+            });
         }
     });
     </script>

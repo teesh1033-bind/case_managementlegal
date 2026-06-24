@@ -79,7 +79,7 @@ try {
 $commentRoleBadge = static function (string $type): string {
     switch ($type) {
         case 'client':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-info">Client</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Client</span>';
         case 'lawyer':
             return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
         case 'admin':
@@ -224,7 +224,7 @@ if (empty($clientDocuments)) {
 
         $documentsHtml .= '
         <tr>
-            <td>
+            <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconDocRow . '</div>
                     <div>
@@ -233,11 +233,11 @@ if (empty($clientDocuments)) {
                     </div>
                 </div>
             </td>
-            <td class="text-center">' . $safeFileType . '</td>
-            <td class="text-center">' . $fileSizeFormatted . '</td>
-            <td class="text-center">' . date('M d, Y', strtotime($document['uploaded_at'])) . '</td>
-            <td class="text-end">
-                ' . $documentActionsHtml . '
+            <td class="align-middle text-center">' . $safeFileType . '</td>
+            <td class="align-middle text-center">' . $fileSizeFormatted . '</td>
+            <td class="align-middle text-center">' . date('M d, Y', strtotime($document['uploaded_at'])) . '</td>
+            <td class="align-middle text-end lp-table-actions">
+                <div class="lp-table-actions-inner">' . $documentActionsHtml . '</div>
             </td>
         </tr>';
     }
@@ -285,7 +285,7 @@ $html = <<<'HTML'
             border-left: 4px solid #8392ab;
             box-shadow: 0 1px 4px rgba(0,0,0,.04);
         }
-        .lawyer-client-comments-feed .cc-comment-item--client .cc-comment-item-inner { border-left-color: #11cdef; }
+        .lawyer-client-comments-feed .cc-comment-item--client .cc-comment-item-inner { border-left-color: #8898aa; }
         .lawyer-client-comments-feed .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
         .lawyer-client-comments-feed .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
         .lawyer-client-comments-feed .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
@@ -444,7 +444,7 @@ $html = <<<'HTML'
                                 <!-- Documents Tab -->
                                 <div class="tab-pane fade" id="documents" role="tabpanel">
                                     <div class="table-responsive">
-                                        <table class="table table-striped">
+                                        <table class="table table-striped align-items-center mb-0">
                                             <thead>
                                                 <tr>
                                                     <th>Document</th>

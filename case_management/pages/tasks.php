@@ -200,10 +200,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     }
                 } else {
                     $insertStmt = $pdo->prepare("
-                        INSERT INTO tasks (case_id, assigned_lawyer_id, title, description, priority, due_date, created_by)
-                        VALUES (?, ?, ?, ?, ?, ?, NULL)
+                        INSERT INTO tasks (case_id, assigned_lawyer_id, title, description, priority, due_date, task_comment, created_by)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
                     ");
-                    $insertStmt->execute([$caseId, $lawyerId, $taskTitle, $taskDescription, $taskPriority, $dueDate ?: null]);
+                    $insertStmt->execute([
+                        $caseId,
+                        $lawyerId,
+                        $taskTitle,
+                        $taskDescription,
+                        $taskPriority,
+                        $dueDate ?: null,
+                        $taskComment !== '' ? $taskComment : null,
+                    ]);
 
                     $message = 'Task added successfully!';
                     $messageType = 'success';
@@ -624,10 +632,9 @@ $html = <<<'HTML'
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="task_description" id="task_description" rows="3" placeholder="Task description (optional)">{TASK_FORM_DESCRIPTION}</textarea>
                         </div>
-                        <div class="mb-0" id="task_comment_wrap" style="display: none;">
+                        <div class="mb-0" id="task_comment_wrap">
                             <label class="form-label">Your comment</label>
                             <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Add a note for the admin about this task (optional)">{TASK_FORM_COMMENT}</textarea>
-
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -642,7 +649,8 @@ $html = <<<'HTML'
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
+<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
         function showAddTaskModal() {
             document.getElementById('taskModalTitle').textContent = 'Add Task';
@@ -654,7 +662,6 @@ $html = <<<'HTML'
             document.getElementById('task_priority').value = 'medium';
             document.getElementById('task_due_date').value = '';
             document.getElementById('task_case_id').value = '';
-            document.getElementById('task_comment_wrap').style.display = 'none';
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 
@@ -668,7 +675,6 @@ $html = <<<'HTML'
             document.getElementById('task_comment').value = taskComment || '';
             document.getElementById('task_priority').value = priority || 'medium';
             document.getElementById('task_due_date').value = dueDate || '';
-            document.getElementById('task_comment_wrap').style.display = '';
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 
@@ -695,7 +701,7 @@ $replacements = [
     '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
     '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
-    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ if (parseInt(document.getElementById("task_id").value, 10) > 0) { document.getElementById("task_comment_wrap").style.display = ""; } new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
+    '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad ? 'setTimeout(function(){ new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);' : '',
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
     '{STATUS_IN_PROGRESS}' => $statusFilter === 'in_progress' ? ' selected' : '',

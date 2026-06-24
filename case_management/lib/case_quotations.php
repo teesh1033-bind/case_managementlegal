@@ -37,6 +37,20 @@ function ensure_case_quotation_schema(PDO $pdo): void
             INDEX idx_case_quotation_items_quotation_id (quotation_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ");
+
+    foreach ([
+        'ADD COLUMN invoice_id INT NULL AFTER total_amount',
+        'ADD COLUMN responded_at TIMESTAMP NULL AFTER updated_at',
+        'ADD COLUMN responded_by VARCHAR(100) NULL AFTER responded_at',
+    ] as $alter) {
+        try {
+            $pdo->exec('ALTER TABLE case_quotations ' . $alter);
+        } catch (PDOException $e) {
+            if (stripos($e->getMessage(), 'duplicate column') === false) {
+                throw $e;
+            }
+        }
+    }
 }
 
 function get_next_quotation_number(PDO $pdo): string
@@ -346,7 +360,16 @@ function notify_client_about_quotation(PDO $pdo, int $quotationId): void
         $body .= ' · ' . $caseTitle;
     }
 
-    $notificationTitle = $status === 'sent' ? 'Quotation received' : 'Quotation update';
+    $notificationTitle = 'Quotation update';
+    if ($status === 'sent') {
+        $notificationTitle = 'Quotation received';
+    } elseif ($status === 'accepted') {
+        $notificationTitle = 'Quotation accepted';
+    } elseif ($status === 'rejected') {
+        $notificationTitle = 'Quotation declined';
+    } elseif ($status === 'expired') {
+        $notificationTitle = 'Quotation expired';
+    }
 
     legalpro_client_create_notification(
         $pdo,
@@ -373,5 +396,273 @@ function remove_client_quotation_notifications(PDO $pdo, int $quotationId): void
         $stmt->execute([$quotationId]);
     } catch (PDOException $e) {
         error_log('remove quotation notification: ' . $e->getMessage());
+    }
+}
+
+function quotation_is_expired(array $quotation): bool
+{
+    $status = strtolower(trim((string) ($quotation['status'] ?? '')));
+    if ($status === 'expired') {
+        return true;
+    }
+
+    $validUntil = $quotation['valid_until'] ?? null;
+
+    return $validUntil !== null && $validUntil !== '' && strtotime((string) $validUntil) < strtotime('today');
+}
+
+function quotation_can_client_respond(array $quotation): bool
+{
+    if (strtolower(trim((string) ($quotation['status'] ?? ''))) !== 'sent') {
+        return false;
+    }
+
+    return !quotation_is_expired($quotation);
+}
+
+function quotation_get_next_invoice_number(PDO $pdo): string
+{
+    $maxNum = 0;
+
+    try {
+        $stmt = $pdo->query("SELECT invoice_number FROM invoices WHERE invoice_number IS NOT NULL AND invoice_number != ''");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $num = (string) ($row['invoice_number'] ?? '');
+            if (preg_match('/^INV\s+(\d+)/i', $num, $matches)) {
+                $maxNum = max($maxNum, (int) $matches[1]);
+            } elseif (preg_match('/^Invoice\s+(\d+)/i', $num, $matches)) {
+                $maxNum = max($maxNum, (int) $matches[1]);
+            }
+        }
+    } catch (PDOException $e) {
+        // default numbering
+    }
+
+    return 'INV ' . str_pad((string) ($maxNum + 1), 3, '0', STR_PAD_LEFT);
+}
+
+function create_invoice_from_quotation(PDO $pdo, array $quotation): int
+{
+    $existingInvoiceId = (int) ($quotation['invoice_id'] ?? 0);
+    if ($existingInvoiceId > 0) {
+        return $existingInvoiceId;
+    }
+
+    $clientId = (int) ($quotation['client_id'] ?? 0);
+    $caseId = (int) ($quotation['case_id'] ?? 0);
+    if ($clientId <= 0) {
+        throw new InvalidArgumentException('Quotation has no linked client.');
+    }
+
+    $amount = (float) ($quotation['total_amount'] ?? 0);
+    if ($amount <= 0) {
+        throw new InvalidArgumentException('Quotation total must be greater than zero.');
+    }
+
+    $quoteNumber = trim((string) ($quotation['quotation_number'] ?? ''));
+    if ($quoteNumber === '') {
+        $quoteNumber = 'QUO-' . str_pad((string) ($quotation['id'] ?? '0'), 4, '0', STR_PAD_LEFT);
+    }
+
+    $notes = 'Generated from accepted quotation ' . $quoteNumber;
+    $title = trim((string) ($quotation['title'] ?? ''));
+    if ($title !== '') {
+        $notes .= ' — ' . $title;
+    }
+
+    $invoiceNumber = quotation_get_next_invoice_number($pdo);
+    $issueDate = date('Y-m-d');
+    $dueDate = date('Y-m-d', strtotime('+14 days'));
+
+    $stmt = $pdo->prepare('
+        INSERT INTO invoices (invoice_number, client_id, case_id, amount, status, issue_date, due_date, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ');
+    $stmt->execute([
+        $invoiceNumber,
+        $clientId,
+        $caseId > 0 ? $caseId : null,
+        $amount,
+        'sent',
+        $issueDate,
+        $dueDate,
+        $notes,
+    ]);
+
+    return (int) $pdo->lastInsertId();
+}
+
+function quotation_log_status_event(array $quotation, string $newStatus, string $actorLabel): void
+{
+    $caseId = (int) ($quotation['case_id'] ?? 0);
+    if ($caseId <= 0) {
+        return;
+    }
+
+    if (!class_exists('CaseEvents')) {
+        require_once __DIR__ . '/case_events.php';
+    }
+
+    $number = trim((string) ($quotation['quotation_number'] ?? ''));
+    if ($number === '') {
+        $number = 'QUO-' . str_pad((string) ($quotation['id'] ?? '0'), 4, '0', STR_PAD_LEFT);
+    }
+
+    $description = $actorLabel . ' set quotation ' . $number . ' to ' . quotation_status_label($newStatus);
+    CaseEvents::logEvent(
+        $caseId,
+        'quotation_' . $newStatus,
+        $description,
+        (string) ($quotation['status'] ?? ''),
+        $newStatus
+    );
+}
+
+/**
+ * @return array{ok: bool, message: string, invoice_id?: int|null}
+ */
+function client_respond_to_quotation(PDO $pdo, int $clientId, int $quotationId, string $response): array
+{
+    $response = strtolower(trim($response));
+    if (!in_array($response, ['accepted', 'rejected'], true)) {
+        return ['ok' => false, 'message' => 'Invalid response.'];
+    }
+
+    $quotation = fetch_quotation_with_case($pdo, $quotationId);
+    if (!$quotation || (int) ($quotation['client_id'] ?? 0) !== $clientId) {
+        return ['ok' => false, 'message' => 'Quotation not found.'];
+    }
+
+    if (quotation_is_expired($quotation)) {
+        $pdo->prepare('UPDATE case_quotations SET status = ? WHERE id = ? AND status = ?')
+            ->execute(['expired', $quotationId, 'sent']);
+
+        return ['ok' => false, 'message' => 'This quotation has expired and can no longer be accepted.'];
+    }
+
+    if (!quotation_can_client_respond($quotation)) {
+        return ['ok' => false, 'message' => 'This quotation can no longer be responded to.'];
+    }
+
+    $pdo->beginTransaction();
+
+    try {
+        $invoiceId = null;
+
+        if ($response === 'accepted') {
+            $invoiceId = create_invoice_from_quotation($pdo, $quotation);
+            $stmt = $pdo->prepare('
+                UPDATE case_quotations
+                SET status = ?, invoice_id = ?, responded_at = NOW(), responded_by = ?
+                WHERE id = ?
+            ');
+            $stmt->execute(['accepted', $invoiceId, 'Client', $quotationId]);
+        } else {
+            $stmt = $pdo->prepare('
+                UPDATE case_quotations
+                SET status = ?, responded_at = NOW(), responded_by = ?
+                WHERE id = ?
+            ');
+            $stmt->execute(['rejected', 'Client', $quotationId]);
+        }
+
+        $pdo->commit();
+
+        notify_client_about_quotation($pdo, $quotationId);
+        quotation_log_status_event($quotation, $response, 'Client');
+
+        return [
+            'ok' => true,
+            'message' => $response === 'accepted'
+                ? 'Quotation accepted. An invoice has been created and is now available under Invoices.'
+                : 'Quotation declined. Your firm has been notified.',
+            'invoice_id' => $invoiceId,
+        ];
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        error_log('client_respond_to_quotation: ' . $e->getMessage());
+
+        return ['ok' => false, 'message' => 'Could not save your response. Please try again.'];
+    }
+}
+
+/**
+ * @return array{ok: bool, message: string, invoice_id?: int|null}
+ */
+function admin_update_case_quotation_status(PDO $pdo, int $caseId, int $quotationId, string $status): array
+{
+    $status = strtolower(trim($status));
+    $options = quotation_status_options();
+    if (!isset($options[$status])) {
+        return ['ok' => false, 'message' => 'Invalid quotation status selected.'];
+    }
+
+    $quotation = fetch_quotation_with_case($pdo, $quotationId);
+    if (!$quotation || (int) ($quotation['case_id'] ?? 0) !== $caseId) {
+        return ['ok' => false, 'message' => 'Quotation not found for this case.'];
+    }
+
+    $oldStatus = strtolower(trim((string) ($quotation['status'] ?? '')));
+    if ($oldStatus === $status) {
+        return ['ok' => true, 'message' => 'Quotation status is already ' . quotation_status_label($status) . '.'];
+    }
+
+    $pdo->beginTransaction();
+
+    try {
+        $invoiceId = (int) ($quotation['invoice_id'] ?? 0);
+
+        if ($status === 'accepted' && $invoiceId <= 0) {
+            $invoiceId = create_invoice_from_quotation($pdo, $quotation);
+        }
+
+        $stmt = $pdo->prepare('
+            UPDATE case_quotations
+            SET status = ?,
+                invoice_id = CASE WHEN ? > 0 THEN ? ELSE invoice_id END,
+                responded_at = CASE
+                    WHEN ? IN ("accepted", "rejected") AND responded_at IS NULL THEN NOW()
+                    ELSE responded_at
+                END,
+                responded_by = CASE
+                    WHEN ? IN ("accepted", "rejected") AND responded_by IS NULL THEN ?
+                    ELSE responded_by
+                END
+            WHERE id = ? AND case_id = ?
+        ');
+        $stmt->execute([
+            $status,
+            $invoiceId,
+            $invoiceId,
+            $status,
+            $status,
+            'Admin',
+            $quotationId,
+            $caseId,
+        ]);
+
+        $pdo->commit();
+
+        if ($status === 'sent' && $oldStatus === 'draft') {
+            notify_client_about_quotation($pdo, $quotationId);
+        } elseif (in_array($status, ['accepted', 'rejected', 'expired', 'sent'], true)) {
+            notify_client_about_quotation($pdo, $quotationId);
+        }
+
+        if ($oldStatus !== $status) {
+            quotation_log_status_event($quotation, $status, 'Admin');
+        }
+
+        $message = 'Quotation status updated to ' . quotation_status_label($status) . '.';
+        if ($status === 'accepted' && $invoiceId > 0) {
+            $message .= ' Invoice created.';
+        }
+
+        return ['ok' => true, 'message' => $message, 'invoice_id' => $invoiceId > 0 ? $invoiceId : null];
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        error_log('admin_update_case_quotation_status: ' . $e->getMessage());
+
+        return ['ok' => false, 'message' => 'Error updating quotation status.'];
     }
 }

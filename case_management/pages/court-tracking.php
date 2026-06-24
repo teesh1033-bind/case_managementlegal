@@ -170,6 +170,14 @@ foreach ($court_dates as $date) {
         $displayTitle = $caseNumber . ' · ' . $date['case_title'];
     }
 
+    $courtDateLabel = !empty($date['court_date'])
+        ? date('M j, Y · g:i A', strtotime($date['court_date']))
+        : '';
+    $searchHay = strtolower(
+        $displayTitle . ' ' . ($date['client_name'] ?? '') . ' ' . ($date['title'] ?? '')
+        . ' ' . ($date['case_title'] ?? '') . ' ' . ($date['location'] ?? '') . ' ' . $status
+    );
+
     $calendar_events[] = [
         'id' => (string) $date['id'],
         'title' => $displayTitle,
@@ -187,6 +195,11 @@ foreach ($court_dates as $date) {
             'created_by_name' => $date['created_by_name'] ?? '',
             'creator_role' => $date['creator_role'] ?? '',
             'case_id' => $caseId,
+            'courtDateId' => (int) $date['id'],
+            'courtDateLabel' => $courtDateLabel,
+            'hearingTitle' => $date['title'] ?? '',
+            'statusLabel' => ucfirst($status),
+            'searchHay' => $searchHay,
         ],
     ];
 }
@@ -240,31 +253,19 @@ if (empty($upcomingCourtDates)) {
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <link href="../assets/css/dashboard-enhancements.css?v=9" rel="stylesheet" />
-    <link href="../assets/css/legalpro-admin-portal.css?v=21" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
     <?php legalpro_icons_asset_links(); ?>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
         .court-date-modal .modal-dialog {
             max-width: 640px;
         }
-        .court-actions {
-            display: inline-flex;
-            flex-wrap: nowrap;
-            align-items: center;
-            gap: 0.35rem;
-        }
-        .court-actions .btn {
-            min-width: 4.25rem;
-            padding-left: 0.25rem;
-            padding-right: 0.25rem;
-            text-align: center;
-        }
     </style>
     <?php legalpro_render_time_slot_picker_styles(); ?>
     <?php legalpro_render_availability_date_picker_assets(); ?>
     <?php legalpro_render_availability_date_picker_styles(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/menunav.php'; ?>
 
@@ -312,21 +313,29 @@ if (empty($upcomingCourtDates)) {
                 <div class="col-12">
                     <div class="dashboard-calendar-hub">
                         <div class="dashboard-calendar-hub__head">
-                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                                <div>
-                                    <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
-                                    <p class="text-sm mb-0 text-muted">Click an event or upcoming item for details</p>
-                                    <div class="dashboard-legend-pills">
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
-                                        <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
+                            <div class="admin-calendar-hub__intro">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 w-100">
+                                    <div>
+                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
+                                        <p class="text-sm mb-0 text-muted">Use the search bar below to find court dates quickly, or click a calendar event</p>
+                                        <div class="dashboard-legend-pills">
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
+                                        </div>
                                     </div>
+                                    <button class="btn btn-sm bg-gradient-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
+                                        <i class="fas fa-plus me-1"></i>Add Court Date
+                                    </button>
                                 </div>
-                                <button class="btn btn-sm bg-gradient-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
-                                    <i class="fas fa-plus me-1"></i>Add Court Date
-                                </button>
                             </div>
+                            <?php echo legalpro_render_admin_featured_cal_search(
+                                'actCalSearchInput',
+                                'actCalSearchResults',
+                                'Search court dates',
+                                'Search by case, client, hearing, location, or status…'
+                            ); ?>
                         </div>
                         <div class="dashboard-calendar-hub__body">
                             <div class="dashboard-calendar-layout">
@@ -368,21 +377,21 @@ if (empty($upcomingCourtDates)) {
                                     </thead>
                                     <tbody>
                                         <?php foreach ($court_dates as $date): ?>
-                                            <tr>
-                                                <td>
-                                                    <div class="d-flex align-items-center gap-3 py-1">
+                                            <tr class="legalpro-admin-list-row">
+                                                <td class="align-middle">
+                                                    <div class="d-flex align-items-center gap-3">
                                                         <div class="ct-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0"><?php echo $iconCourtRow; ?></div>
                                                         <span class="text-sm font-weight-bold"><?php echo htmlspecialchars($date['case_title']); ?></span>
                                                     </div>
                                                 </td>
-                                                <td><?php echo htmlspecialchars($date['client_name']); ?></td>
-                                                <td><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
-                                                <td><?php echo htmlspecialchars($date['title']); ?></td>
+                                                <td class="align-middle"><?php echo htmlspecialchars($date['client_name']); ?></td>
+                                                <td class="align-middle"><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
+                                                <td class="align-middle"><?php echo htmlspecialchars($date['title']); ?></td>
                                                 <td class="align-middle text-center">
                                                     <?php echo legalpro_court_date_status_badge((string) ($date['status'] ?? '')); ?>
                                                 </td>
-                                                <td class="align-middle">
-                                                    <div class="court-actions">
+                                                <td class="align-middle text-end">
+                                                    <div class="legalpro-admin-list-row__actions">
                                                         <button type="button" class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
                                                         <button type="button" class="btn btn-sm btn-dark mb-0" onclick="editCourtDate(<?php echo (int) $date['id']; ?>)" title="Edit">Edit</button>
                                                         <button type="button" class="btn btn-sm btn-danger mb-0" onclick="deleteCourtDate(<?php echo (int) $date['id']; ?>)" title="Delete">Delete</button>
@@ -641,6 +650,93 @@ if (empty($upcomingCourtDates)) {
                 }
             });
             calendar.render();
+
+            (function initAdminCourtCalendarSearch(cal, events) {
+                var input = document.getElementById('actCalSearchInput');
+                var resultsEl = document.getElementById('actCalSearchResults');
+                if (!input || !resultsEl) {
+                    return;
+                }
+
+                function escapeHtmlAct(str) {
+                    return String(str)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;');
+                }
+
+                function hideResults() {
+                    resultsEl.hidden = true;
+                    resultsEl.innerHTML = '';
+                }
+
+                input.addEventListener('input', function() {
+                    var q = input.value.trim().toLowerCase();
+                    if (!q) {
+                        hideResults();
+                        return;
+                    }
+
+                    var matches = events.filter(function(ev) {
+                        var props = ev.extendedProps || {};
+                        var hay = props.searchHay || ((ev.title || '') + ' ' + (props.case_title || '')).toLowerCase();
+                        return hay.indexOf(q) !== -1;
+                    }).sort(function(a, b) {
+                        return new Date(b.start).getTime() - new Date(a.start).getTime();
+                    });
+
+                    if (!matches.length) {
+                        resultsEl.innerHTML = '<div class="admin-cal-search-empty">No court dates match your search.</div>';
+                        resultsEl.hidden = false;
+                        return;
+                    }
+
+                    var html = '';
+                    matches.slice(0, 12).forEach(function(ev) {
+                        var props = ev.extendedProps || {};
+                        var statusKey = courtStatusKey(props.status);
+                        var hearing = props.hearingTitle || '';
+                        var location = props.location ? ' · ' + props.location : '';
+                        html += '<button type="button" class="admin-cal-search-item" data-court-date-id="' + escapeHtmlAct(props.courtDateId || ev.id) + '" data-start="' + escapeHtmlAct(ev.start || '') + '">' +
+                            '<span class="admin-cal-search-item__dot admin-cal-search-item__dot--' + escapeHtmlAct(statusKey) + '" aria-hidden="true"></span>' +
+                            '<span class="admin-cal-search-item__body">' +
+                                '<p class="admin-cal-search-item__title">' + escapeHtmlAct(ev.title || 'Court date') + '</p>' +
+                                '<p class="admin-cal-search-item__sub">' + escapeHtmlAct(props.courtDateLabel || '') + (hearing ? ' · ' + escapeHtmlAct(hearing) : '') + escapeHtmlAct(location) + ' · ' + escapeHtmlAct(props.statusLabel || props.status || 'Scheduled') + '</p>' +
+                            '</span>' +
+                        '</button>';
+                    });
+                    resultsEl.innerHTML = html;
+                    resultsEl.hidden = false;
+                });
+
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        hideResults();
+                        input.blur();
+                    }
+                });
+
+                resultsEl.addEventListener('click', function(e) {
+                    var btn = e.target.closest('[data-court-date-id]');
+                    if (!btn) {
+                        return;
+                    }
+                    var id = btn.getAttribute('data-court-date-id');
+                    var start = btn.getAttribute('data-start');
+                    if (cal && start) {
+                        cal.gotoDate(start);
+                    }
+                    viewCourtDate(id);
+                    hideResults();
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.admin-cal-search-wrap')) {
+                        hideResults();
+                    }
+                });
+            })(calendar, courtEvents);
         });
 
         function viewCourtDate(id) {
