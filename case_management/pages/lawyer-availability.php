@@ -134,17 +134,20 @@ foreach ($timeSlots as $slot) {
     $appointmentId = isset($slot['appointment_id']) ? (int) $slot['appointment_id'] : 0;
     $isAppointment = $appointmentId > 0;
     $timeLabel = date('g:i A', strtotime($slot['start_time'])) . ' - ' . date('g:i A', strtotime($slot['end_time']));
+    $statusKey = $isAppointment ? 'unavailable' : $slotType;
+    $startLabel = date('g:i A', strtotime($slot['start_time']));
+    $shortLabel = $isAppointment ? 'Appt · ' . $startLabel : ucfirst($slotType) . ' · ' . $startLabel;
     $title = $isAppointment
-        ? 'Unavailable - Appointment ' . $timeLabel
-        : ucfirst($slotType) . ' - ' . $timeLabel;
+        ? 'Unavailable — Appointment ' . $timeLabel
+        : ucfirst($slotType) . ' — ' . $timeLabel;
     $availabilityEvents[] = [
         'id' => (string)$slot['id'],
         'title' => $title,
         'start' => $slotDate . 'T' . $startTime . ':00',
         'end' => $slotDate . 'T' . $endTime . ':00',
-        'backgroundColor' => $slotType === 'available' ? '#2dce89' : '#f5365c',
-        'borderColor' => $slotType === 'available' ? '#2dce89' : '#f5365c',
-        'textColor' => '#ffffff',
+        'backgroundColor' => 'transparent',
+        'borderColor' => 'transparent',
+        'textColor' => '#344767',
         'extendedProps' => [
             'slotId' => (int)$slot['id'],
             'day' => $slot['day_of_week'],
@@ -152,6 +155,9 @@ foreach ($timeSlots as $slot) {
             'startTime' => $startTime,
             'endTime' => $endTime,
             'slotType' => $slotType,
+            'statusKey' => $statusKey,
+            'shortLabel' => $shortLabel,
+            'timeLabel' => $timeLabel,
             'isAppointment' => $isAppointment,
             'appointmentId' => $appointmentId,
             'readOnly' => $isAppointment
@@ -200,36 +206,16 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
-    <link rel="stylesheet" href="../assets/css/simple-calendar.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/5.10.1/main.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
         #availabilityCalendar {
+            min-height: 480px;
+        }
+        #availabilityWeekCalendar {
             min-height: 0;
         }
-        .fc-event {
-            cursor: pointer;
-            font-weight: 700;
-            border-radius: 0.45rem;
-            padding: 2px 4px;
-        }
-        .fc .fc-prev-button,
-        .fc .fc-next-button {
-            background: #ffffff !important;
-            border-color: #ffffff !important;
-            color: #344767 !important;
-        }
-        .fc .fc-prev-button:hover,
-        .fc .fc-next-button:hover,
-        .fc .fc-prev-button:focus,
-        .fc .fc-next-button:focus {
-            background: #f8f9fa !important;
-            border-color: #f8f9fa !important;
-            color: #1f2b4d !important;
-            box-shadow: none !important;
-        }
-        .fc .fc-prev-button .fc-icon,
-        .fc .fc-next-button .fc-icon {
-            color: #344767 !important;
+        .availability-month-panel {
+            margin-top: 0.15rem;
         }
         .availability-hero {
             background: linear-gradient(140deg, rgba(45, 63, 111, 0.08), rgba(111, 127, 210, 0.12));
@@ -342,6 +328,42 @@ $html = <<<'HTML'
         .availability-fallback-event-delete:hover {
             background: rgba(255, 255, 255, 0.45);
         }
+        .availability-view-toggle {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+        .availability-view-toggle__btn {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            color: #344767;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.4rem 0.9rem;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+        .availability-view-toggle__btn:hover,
+        .availability-view-toggle__btn:focus {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            color: var(--legalpro-theme-primary, #5e72e4);
+            outline: none;
+        }
+        .availability-view-toggle__btn.is-active {
+            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            border-color: transparent;
+            color: #fff;
+        }
+        body.legalpro-dark-mode.lawyer-availability-page .availability-view-toggle__btn {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.14);
+            color: #f8f9fc;
+        }
         body.lawyer-availability-page .legalpro-navbar-search {
             display: none !important;
         }
@@ -449,7 +471,7 @@ $html = <<<'HTML'
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                     <div>
                                         <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Availability Calendar</h6>
-                                        <p class="text-sm mb-0 text-muted">Use the search bar below to find days or slots quickly, or click a day to add a slot</p>
+                                        <p class="text-sm mb-0 text-muted">Week view shows your detailed schedule; switch to month for the full calendar overview</p>
                                         <div class="dashboard-legend-pills mt-2">
                                             <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Available</span>
                                             <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Unavailable</span>
@@ -471,16 +493,26 @@ $html = <<<'HTML'
                                     </span>
                                     <input type="search" id="laAvailSearchInput" class="la-avail-search-input"
                                            placeholder="Search by day, date, time, available, unavailable…" autocomplete="off">
+                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laAvailSearchInput" aria-label="Reset search">Reset</button>
                                 </div>
                             </div>
                         </div>
                         <div class="dashboard-calendar-hub__body">
-                            <div class="availability-week-nav">
-                                <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="prevWeekBtn">Previous Week</button>
-                                <span class="availability-fallback-week-label mb-0" id="weekRangeLabel"></span>
-                                <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="nextWeekBtn">Next Week</button>
+                            <div class="availability-view-toggle" role="tablist" aria-label="Calendar view">
+                                <button type="button" class="availability-view-toggle__btn is-active" data-availability-view="week" role="tab" aria-selected="true">Week</button>
+                                <button type="button" class="availability-view-toggle__btn" data-availability-view="month" role="tab" aria-selected="false">Month</button>
                             </div>
-                            <div id="availabilityCalendar"></div>
+                            <div id="availabilityWeekPanel">
+                                <div class="availability-week-nav">
+                                    <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="prevWeekBtn">Previous Week</button>
+                                    <span class="availability-fallback-week-label mb-0" id="weekRangeLabel"></span>
+                                    <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="nextWeekBtn">Next Week</button>
+                                </div>
+                                <div id="availabilityWeekCalendar"></div>
+                            </div>
+                            <div id="availabilityMonthPanel" class="availability-month-panel" hidden>
+                                <div id="availabilityCalendar"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -545,13 +577,16 @@ $html = <<<'HTML'
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/fullcalendar/fallback.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
 <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
         var availabilityEvents = {AVAILABILITY_EVENTS_JSON};
-        var fallbackWeekStartIso = null;
         var availabilitySearchQuery = '';
+        var availabilityCalendarInstance = null;
+        var availabilityActiveView = 'week';
+        var fallbackWeekStartIso = null;
+        var availabilityMonthInitialized = false;
 
         function eventMatchesAvailabilitySearch(event, query) {
             if (!query) {
@@ -572,7 +607,27 @@ $html = <<<'HTML'
 
         function applyAvailabilityPageSearch(query) {
             availabilitySearchQuery = String(query || '').trim().toLowerCase();
-            renderAvailabilityCalendar();
+            if (availabilityActiveView === 'week') {
+                renderAvailabilityWeekCalendar();
+            } else {
+                refreshAvailabilityMonthEvents();
+            }
+        }
+
+        function getFilteredAvailabilityEvents() {
+            return availabilityEvents.filter(function (event) {
+                return eventMatchesAvailabilitySearch(event, availabilitySearchQuery);
+            });
+        }
+
+        function refreshAvailabilityMonthEvents() {
+            if (!availabilityCalendarInstance) {
+                return;
+            }
+            availabilityCalendarInstance.removeAllEvents();
+            getFilteredAvailabilityEvents().forEach(function (event) {
+                availabilityCalendarInstance.addEvent(event);
+            });
         }
 
         function parseIsoDate(iso) {
@@ -580,14 +635,14 @@ $html = <<<'HTML'
             return new Date(parts[0], parts[1] - 1, parts[2]);
         }
 
+        function dayNameFromDate(date) {
+            return ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][date.getDay()];
+        }
+
         function getWeekStart(date) {
             var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             d.setDate(d.getDate() - d.getDay());
             return d;
-        }
-
-        function dayNameFromDate(date) {
-            return ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][date.getDay()];
         }
 
         function dateToInputValue(date) {
@@ -620,7 +675,7 @@ $html = <<<'HTML'
 
         function shiftFallbackWeek(deltaWeeks) {
             fallbackWeekStartIso = addDaysToIso(getCurrentWeekStartIso(), deltaWeeks * 7);
-            renderAvailabilityCalendar();
+            renderAvailabilityWeekCalendar();
         }
 
         function formatAvailabilityTimeLabel(timeValue) {
@@ -718,10 +773,113 @@ $html = <<<'HTML'
             document.getElementById('deleteSlotForm').submit();
         }
 
-        function renderAvailabilityCalendar() {
+        function escapeHtmlAvailability(text) {
+            var div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        function availabilityStatusKey(props) {
+            if (props.isAppointment) {
+                return 'unavailable';
+            }
+            return props.slotType === 'available' ? 'available' : 'unavailable';
+        }
+
+        function renderAvailabilityMonthEvent(arg) {
+            var props = arg.event.extendedProps || {};
+            var statusKey = props.statusKey || availabilityStatusKey(props);
+            var label = props.shortLabel || arg.timeText || arg.event.title || 'Slot';
+            var wrap = document.createElement('div');
+            wrap.className = 'dashboard-cal-event availability-cal-event';
+            wrap.innerHTML =
+                '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + escapeHtmlAvailability(statusKey) + '" aria-hidden="true"></span>' +
+                '<span class="dashboard-cal-event__text availability-cal-event__text availability-cal-event__text--' + escapeHtmlAvailability(statusKey) + '">' +
+                    escapeHtmlAvailability(label) +
+                '</span>';
+            return { domNodes: [wrap] };
+        }
+
+        function initAvailabilityMonthCalendar() {
+            if (availabilityMonthInitialized) {
+                refreshAvailabilityMonthEvents();
+                return;
+            }
+
             var calendarEl = document.getElementById('availabilityCalendar');
+            if (!calendarEl || typeof FullCalendar === 'undefined') {
+                return;
+            }
+
+            availabilityCalendarInstance = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                height: 'auto',
+                firstDay: 0,
+                navLinks: true,
+                nowIndicator: true,
+                fixedWeekCount: false,
+                dayMaxEvents: 4,
+                moreLinkClick: 'popover',
+                eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
+                displayEventTime: true,
+                displayEventEnd: false,
+                buttonText: { today: 'Today' },
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: ''
+                },
+                events: getFilteredAvailabilityEvents(),
+                eventContent: renderAvailabilityMonthEvent,
+                dateClick: function (info) {
+                    openAvailabilityModalFromDate(info.dateStr);
+                },
+                eventClick: function (info) {
+                    info.jsEvent.preventDefault();
+                    var props = info.event.extendedProps || {};
+                    var slotId = props.slotId || info.event.id;
+                    if (props.readOnly) {
+                        if (slotId && confirm('Remove this appointment block? The linked appointment will be marked as rejected.')) {
+                            deleteAvailabilitySlot(slotId, true);
+                        }
+                        return;
+                    }
+                    openAvailabilityModal(
+                        props.day,
+                        slotId,
+                        props.slotDate,
+                        props.startTime,
+                        props.endTime,
+                        props.slotType
+                    );
+                },
+                dayCellDidMount: function (info) {
+                    if (window.legalproMountCalendarDayCell) {
+                        window.legalproMountCalendarDayCell(info);
+                    }
+                },
+                eventDidMount: function (info) {
+                    var props = info.event.extendedProps || {};
+                    var tip = info.event.title || props.timeLabel || '';
+                    if (tip) {
+                        info.el.setAttribute('title', tip);
+                    }
+                    if (window.legalproMountCalendarEventClickable) {
+                        window.legalproMountCalendarEventClickable(info);
+                    }
+                }
+            });
+
+            availabilityCalendarInstance.render();
+            availabilityMonthInitialized = true;
+        }
+
+        function renderAvailabilityWeekCalendar() {
+            var calendarEl = document.getElementById('availabilityWeekCalendar');
             var weekLabelEl = document.getElementById('weekRangeLabel');
-            if (!calendarEl) return;
+            if (!calendarEl) {
+                return;
+            }
 
             var weekStartIso = getCurrentWeekStartIso();
             if (weekLabelEl) {
@@ -730,22 +888,20 @@ $html = <<<'HTML'
 
             var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             var visibleDays = [];
+            var filteredEvents = getFilteredAvailabilityEvents();
 
-            dayNames.forEach(function(dayName, dayIndex) {
+            dayNames.forEach(function (dayName, dayIndex) {
                 var dayDateIso = addDaysToIso(weekStartIso, dayIndex);
                 var dayKey = dayNameFromDate(parseIsoDate(dayDateIso));
-                var eventsForDay = availabilityEvents.filter(function(event) {
+                var eventsForDay = filteredEvents.filter(function (event) {
                     var props = event.extendedProps || {};
                     var eventDate = props.slotDate || (event.start ? event.start.split('T')[0] : '');
                     return eventDate === dayDateIso;
                 });
-                var filteredEventsForDay = eventsForDay.filter(function (event) {
-                    return eventMatchesAvailabilitySearch(event, availabilitySearchQuery);
-                });
                 var dayHaystack = (dayName + ' ' + dayKey + ' ' + dayDateIso).toLowerCase();
                 var dayMatches = !availabilitySearchQuery
                     || dayHaystack.indexOf(availabilitySearchQuery) !== -1
-                    || filteredEventsForDay.length > 0;
+                    || eventsForDay.length > 0;
                 if (!dayMatches) {
                     return;
                 }
@@ -754,7 +910,7 @@ $html = <<<'HTML'
                     dayDateIso: dayDateIso,
                     dayKey: dayKey,
                     dayHaystack: dayHaystack,
-                    events: filteredEventsForDay
+                    events: eventsForDay
                 });
             });
 
@@ -764,10 +920,10 @@ $html = <<<'HTML'
             }
 
             if (!availabilitySearchQuery) {
-                visibleDays = dayNames.map(function(dayName, dayIndex) {
+                visibleDays = dayNames.map(function (dayName, dayIndex) {
                     var dayDateIso = addDaysToIso(weekStartIso, dayIndex);
                     var dayKey = dayNameFromDate(parseIsoDate(dayDateIso));
-                    var eventsForDay = availabilityEvents.filter(function(event) {
+                    var eventsForDay = filteredEvents.filter(function (event) {
                         var props = event.extendedProps || {};
                         var eventDate = props.slotDate || (event.start ? event.start.split('T')[0] : '');
                         return eventDate === dayDateIso;
@@ -787,7 +943,7 @@ $html = <<<'HTML'
             var html = '<div class="availability-fallback-calendar">';
             html += '<div class="availability-fallback-header" style="' + gridStyle + '">';
 
-            visibleDays.forEach(function(day) {
+            visibleDays.forEach(function (day) {
                 var dayDate = parseIsoDate(day.dayDateIso);
                 var dateLabel = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 html += '<div><span class="availability-fallback-day-name">' + day.dayName + '</span>';
@@ -795,15 +951,16 @@ $html = <<<'HTML'
             });
 
             html += '</div><div class="availability-fallback-grid" style="' + gridStyle + '">';
-            visibleDays.forEach(function(day) {
+            visibleDays.forEach(function (day) {
                 html += '<div class="availability-fallback-day" data-date="' + day.dayDateIso + '" data-search="' + day.dayHaystack + '">';
                 if (day.events.length === 0) {
                     html += '<p class="text-sm text-muted mb-0">No slots set</p>';
                 } else {
-                    day.events.forEach(function(event) {
+                    day.events.forEach(function (event) {
                         var props = event.extendedProps || {};
                         var slotId = props.slotId || event.id || '';
-                        html += '<div class="availability-fallback-event" style="background-color:' + event.backgroundColor + '"';
+                        var bgColor = props.slotType === 'available' ? '#2dce89' : '#f5365c';
+                        html += '<div class="availability-fallback-event" style="background-color:' + bgColor + '"';
                         html += ' data-day="' + (props.day || '') + '"';
                         html += ' data-slot-id="' + slotId + '"';
                         html += ' data-slot-date="' + (props.slotDate || '') + '"';
@@ -826,6 +983,33 @@ $html = <<<'HTML'
             });
             html += '</div></div>';
             calendarEl.innerHTML = html;
+        }
+
+        function setAvailabilityView(view) {
+            availabilityActiveView = view === 'month' ? 'month' : 'week';
+            var weekPanel = document.getElementById('availabilityWeekPanel');
+            var monthPanel = document.getElementById('availabilityMonthPanel');
+            if (weekPanel) {
+                weekPanel.hidden = availabilityActiveView !== 'week';
+            }
+            if (monthPanel) {
+                monthPanel.hidden = availabilityActiveView !== 'month';
+            }
+
+            document.querySelectorAll('[data-availability-view]').forEach(function (btn) {
+                var isActive = btn.getAttribute('data-availability-view') === availabilityActiveView;
+                btn.classList.toggle('is-active', isActive);
+                btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+
+            if (availabilityActiveView === 'week') {
+                renderAvailabilityWeekCalendar();
+            } else {
+                initAvailabilityMonthCalendar();
+                if (availabilityCalendarInstance) {
+                    availabilityCalendarInstance.updateSize();
+                }
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -852,7 +1036,7 @@ $html = <<<'HTML'
                 openAvailabilityModal();
             });
 
-            document.getElementById('availabilityCalendar').addEventListener('click', function(event) {
+            document.getElementById('availabilityWeekCalendar').addEventListener('click', function(event) {
                 var deleteBtn = event.target.closest('.availability-fallback-event-delete');
                 if (deleteBtn) {
                     event.stopPropagation();
@@ -886,6 +1070,12 @@ $html = <<<'HTML'
                 }
             });
 
+            document.querySelectorAll('[data-availability-view]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    setAvailabilityView(btn.getAttribute('data-availability-view'));
+                });
+            });
+
             var searchInput = document.getElementById('laAvailSearchInput');
             if (searchInput) {
                 searchInput.addEventListener('input', function () {
@@ -893,6 +1083,7 @@ $html = <<<'HTML'
                 });
             }
 
+            setAvailabilityView('week');
             applyAvailabilityPageSearch('');
         });
     </script>

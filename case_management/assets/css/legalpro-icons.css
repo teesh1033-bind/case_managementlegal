@@ -53,7 +53,11 @@
     stroke: currentColor;
 }
 
-body.legalpro-client-portal .navbar-main .legalpro-header-theme-toggle .lp-icon svg {
+body.legalpro-client-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle .lp-icon svg {
+    stroke: #344767;
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-header-theme-toggle .lp-icon svg {
     stroke: currentColor;
 }
 

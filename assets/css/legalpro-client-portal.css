@@ -757,3 +757,59 @@ body.legalpro-dark-mode.legalpro-client-portal .client-documents-page .cdoc-fiel
 }
 
 /* Sidebar menunav — legalpro-sidebar-nav.css + inc/menunav.php (same as admin) */
+
+/* —— Header theme toggle (moon / sun) —— */
+.legalpro-header-theme-toggle {
+    position: relative;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    color: #4c5d7a;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.legalpro-header-theme-toggle:hover,
+.legalpro-header-theme-toggle:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+    color: var(--legalpro-theme-primary, #5e72e4);
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+    outline: none;
+}
+
+body.legalpro-client-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle {
+    background: #fff;
+    color: #344767;
+    border-color: transparent;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    backdrop-filter: none;
+}
+
+body.legalpro-client-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle:hover,
+body.legalpro-client-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle:focus {
+    background: #fff;
+    color: var(--legalpro-theme-primary, #5e72e4);
+    border-color: transparent;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-header-theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e8ecf4;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-header-theme-toggle:hover,
+body.legalpro-dark-mode.legalpro-client-portal .navbar-main .legalpro-header-theme-toggle:focus {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}

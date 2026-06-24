@@ -94,6 +94,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
 $message     = '';
 $messageType = '';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['msg'])) {
+    $message     = (string) $_GET['msg'];
+    $messageType = isset($_GET['type']) ? (string) $_GET['type'] : 'success';
+}
+
 // ── POST handling ─────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'book';
@@ -163,6 +168,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $messageType = 'danger';
             }
         }
+    }
+
+    if ($message !== '') {
+        header('Location: client-appointments.php?msg=' . urlencode($message) . '&type=' . urlencode($messageType));
+        exit;
     }
 }
 

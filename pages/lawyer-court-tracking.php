@@ -200,6 +200,9 @@ try {
     $cases = [];
 }
 
+$courtDatesCount = count($court_dates);
+$courtDatesCountLabel = $courtDatesCount === 1 ? '1 court date' : $courtDatesCount . ' court dates';
+
 // Prepare calendar events for FullCalendar (dashboard-style dots)
 $calendar_events = [];
 foreach ($court_dates as $date) {
@@ -482,6 +485,90 @@ if (empty($upcomingCourtDates)) {
         }
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-input { color: var(--lp-dark-text, #f8f9fc); }
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-item__title { color: var(--lp-dark-text, #f8f9fc); }
+        .lct-court-table-wrap { padding: 0 1rem 1rem; }
+        .lct-court-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding: 0.9rem 0.15rem 0.25rem;
+            margin-top: 0.35rem;
+            border-top: 1px solid #e9ecef;
+        }
+        .lct-court-pagination__info {
+            margin: 0;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #8392ab;
+        }
+        .lct-court-pagination__controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+        .lct-court-pagination__btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 0.55rem;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+            color: #8392ab;
+            font-size: 0.76rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+        .lct-court-pagination__btn:hover:not(:disabled) {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            color: var(--lct-primary);
+            transform: translateY(-1px);
+        }
+        .lct-court-pagination__btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+        }
+        .lct-court-pagination__btn--active {
+            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+        }
+        .lct-court-pagination__btn--active:hover:not(:disabled) {
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .lct-court-pagination__btn--nav { min-width: auto; padding: 0 0.75rem; }
+        .lct-court-pagination__btn:disabled { opacity: 0.42; cursor: not-allowed; transform: none; box-shadow: none; }
+        .lct-court-pagination__ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.5rem;
+            height: 2rem;
+            color: #8392ab;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-court-pagination {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-court-pagination__btn {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+        }
+        body.legalpro-dark-mode.lawyer-court-tracking-page .lct-court-pagination__btn:hover:not(:disabled) {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+            color: #f8f9fc;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
@@ -614,8 +701,10 @@ if (empty($upcomingCourtDates)) {
                     <div class="card">
                         <div class="card-header pb-0">
                             <h6 class="mb-0">My Court Dates</h6>
+                            <p class="text-xs text-muted mb-0"><span id="lawyerCourtTableCount"><?php echo htmlspecialchars($courtDatesCountLabel); ?></span></p>
                         </div>
                         <div class="card-body px-0 pt-0 pb-2">
+                            <div class="lct-court-table-wrap" id="lawyerCourtDatesTableWrap" data-court-per-page="10">
                             <div class="table-responsive p-0">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -635,7 +724,7 @@ if (empty($upcomingCourtDates)) {
                                             </tr>
                                         <?php else: ?>
                                         <?php foreach ($court_dates as $date): ?>
-                                            <tr>
+                                            <tr id="court-<?php echo (int) $date['id']; ?>" class="lct-court-row">
                                                 <td class="align-middle">
                                                     <div class="d-flex align-items-center gap-3">
                                                         <div class="lawyer-ct-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0"><?php echo $iconCourtRow; ?></div>
@@ -660,6 +749,11 @@ if (empty($upcomingCourtDates)) {
                                         <?php endif; ?>
                                     </tbody>
                                 </table>
+                            </div>
+                            <nav class="lct-court-pagination" id="lawyerCourtDatesPagination" aria-label="Court dates pagination" hidden>
+                                <p class="lct-court-pagination__info" data-court-range></p>
+                                <div class="lct-court-pagination__controls" data-court-pages></div>
+                            </nav>
                             </div>
                         </div>
                     </div>
@@ -805,7 +899,155 @@ if (empty($upcomingCourtDates)) {
             return div.innerHTML;
         }
 
+        function focusLawyerCourtDateRow(id) {
+            var row = document.getElementById('court-' + id);
+            if (!row) {
+                return;
+            }
+            if (typeof window.lawyerCourtShowPage === 'function') {
+                var rows = Array.prototype.slice.call(document.querySelectorAll('.lct-court-row'));
+                var index = rows.indexOf(row);
+                if (index >= 0) {
+                    var wrap = document.getElementById('lawyerCourtDatesTableWrap');
+                    var perPage = wrap ? parseInt(wrap.getAttribute('data-court-per-page') || '10', 10) : 10;
+                    window.lawyerCourtShowPage(Math.floor(index / perPage) + 1);
+                }
+            }
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            row.classList.add('table-warning');
+            setTimeout(function () {
+                row.classList.remove('table-warning');
+            }, 2200);
+        }
+
+        function initLawyerCourtDatesTablePagination() {
+            var wrap = document.getElementById('lawyerCourtDatesTableWrap');
+            var nav = document.getElementById('lawyerCourtDatesPagination');
+            if (!wrap || !nav) {
+                return;
+            }
+
+            var perPage = parseInt(wrap.getAttribute('data-court-per-page') || '10', 10);
+            var rows = Array.prototype.slice.call(document.querySelectorAll('.lct-court-row'));
+            var rangeEl = nav.querySelector('[data-court-range]');
+            var pagesEl = nav.querySelector('[data-court-pages]');
+            var countEl = document.getElementById('lawyerCourtTableCount');
+
+            if (!rows.length || rows.length <= perPage) {
+                nav.hidden = true;
+                return;
+            }
+
+            nav.hidden = false;
+            var currentPage = 1;
+            var totalPages = Math.ceil(rows.length / perPage);
+
+            function pageButton(label, page, options) {
+                options = options || {};
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'lct-court-pagination__btn';
+                if (options.nav) {
+                    btn.className += ' lct-court-pagination__btn--nav';
+                }
+                if (options.active) {
+                    btn.className += ' lct-court-pagination__btn--active';
+                }
+                btn.textContent = label;
+                btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
+                if (options.disabled) {
+                    btn.disabled = true;
+                } else if (page) {
+                    btn.addEventListener('click', function () {
+                        showPage(page);
+                    });
+                }
+                return btn;
+            }
+
+            function ellipsis() {
+                var span = document.createElement('span');
+                span.className = 'lct-court-pagination__ellipsis';
+                span.textContent = '…';
+                span.setAttribute('aria-hidden', 'true');
+                return span;
+            }
+
+            function visiblePages() {
+                if (totalPages <= 7) {
+                    var all = [];
+                    for (var p = 1; p <= totalPages; p++) {
+                        all.push(p);
+                    }
+                    return all;
+                }
+                var pages = [1];
+                var start = Math.max(2, currentPage - 1);
+                var end = Math.min(totalPages - 1, currentPage + 1);
+                if (start > 2) {
+                    pages.push('gap');
+                }
+                for (var i = start; i <= end; i++) {
+                    pages.push(i);
+                }
+                if (end < totalPages - 1) {
+                    pages.push('gap');
+                }
+                pages.push(totalPages);
+                return pages;
+            }
+
+            function renderControls() {
+                if (!pagesEl) {
+                    return;
+                }
+                pagesEl.innerHTML = '';
+                pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
+                    nav: true,
+                    disabled: currentPage === 1,
+                    ariaLabel: 'Previous page'
+                }));
+                visiblePages().forEach(function (page) {
+                    if (page === 'gap') {
+                        pagesEl.appendChild(ellipsis());
+                        return;
+                    }
+                    pagesEl.appendChild(pageButton(String(page), page, {
+                        active: page === currentPage,
+                        ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
+                    }));
+                });
+                pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
+                    nav: true,
+                    disabled: currentPage === totalPages,
+                    ariaLabel: 'Next page'
+                }));
+            }
+
+            function showPage(page) {
+                currentPage = Math.max(1, Math.min(totalPages, page));
+                rows.forEach(function (row, index) {
+                    var rowPage = Math.floor(index / perPage) + 1;
+                    row.style.display = rowPage === currentPage ? '' : 'none';
+                });
+
+                var start = (currentPage - 1) * perPage + 1;
+                var end = Math.min(currentPage * perPage, rows.length);
+                if (rangeEl) {
+                    rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
+                }
+                if (countEl) {
+                    countEl.textContent = rows.length + (rows.length === 1 ? ' court date' : ' court dates');
+                }
+                renderControls();
+            }
+
+            window.lawyerCourtShowPage = showPage;
+            showPage(1);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            initLawyerCourtDatesTablePagination();
             var calendarEl = document.getElementById('courtTrackingCalendar');
             var courtEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 

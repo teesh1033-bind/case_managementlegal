@@ -404,6 +404,9 @@ $iconApptRow = legalpro_icon('calendar-clock');
 $iconApptEmpty = legalpro_icon('calendar');
 $iconCardHeader = legalpro_icon('calendar');
 
+$appointmentsCount = count($appointments);
+$appointmentsCountLabel = $appointmentsCount === 1 ? '1 appointment' : $appointmentsCount . ' appointments';
+
 // Build appointments table HTML
 $appointmentsTable = '';
 if (empty($appointments)) {
@@ -423,7 +426,7 @@ if (empty($appointments)) {
         $rowClass = $appointment['status'] === 'rejected' ? 'table-danger' : ($isToday && $appointment['status'] === 'accepted' ? 'table-info' : '');
 
         $appointmentsTable .= '
-        <tr id="apt-' . (int) $appointment['id'] . '" class="' . $rowClass . '">
+        <tr id="apt-' . (int) $appointment['id'] . '" class="la-appt-row ' . $rowClass . '">
             <td class="align-middle">
                 <div class="d-flex align-items-center">
                     <div class="lawyer-appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconApptRow . '</div>
@@ -756,6 +759,90 @@ $html = <<<'HTML'
         }
         body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-input { color: var(--lp-dark-text, #f8f9fc); }
         body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-item__title { color: var(--lp-dark-text, #f8f9fc); }
+        .la-appt-table-wrap { padding: 0 1rem 1rem; }
+        .la-appt-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding: 0.9rem 0.15rem 0.25rem;
+            margin-top: 0.35rem;
+            border-top: 1px solid #e9ecef;
+        }
+        .la-appt-pagination__info {
+            margin: 0;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #8392ab;
+        }
+        .la-appt-pagination__controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+        .la-appt-pagination__btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 0.55rem;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+            color: #8392ab;
+            font-size: 0.76rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+        .la-appt-pagination__btn:hover:not(:disabled) {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            color: var(--la-primary);
+            transform: translateY(-1px);
+        }
+        .la-appt-pagination__btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+        }
+        .la-appt-pagination__btn--active {
+            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+        }
+        .la-appt-pagination__btn--active:hover:not(:disabled) {
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .la-appt-pagination__btn--nav { min-width: auto; padding: 0 0.75rem; }
+        .la-appt-pagination__btn:disabled { opacity: 0.42; cursor: not-allowed; transform: none; box-shadow: none; }
+        .la-appt-pagination__ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.5rem;
+            height: 2rem;
+            color: #8392ab;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        body.legalpro-dark-mode.lawyer-appointments-page .la-appt-pagination {
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+        body.legalpro-dark-mode.lawyer-appointments-page .la-appt-pagination__btn {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+        }
+        body.legalpro-dark-mode.lawyer-appointments-page .la-appt-pagination__btn:hover:not(:disabled) {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+            color: #f8f9fc;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-appointments-page">
@@ -843,11 +930,12 @@ $html = <<<'HTML'
                                 <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                 <div>
                                     <h6 class="mb-0">My Appointments</h6>
-                                    <p class="text-xs text-muted mb-0">Schedule meetings with clients, accept requests, or reschedule</p>
+                                    <p class="text-xs text-muted mb-0">Schedule meetings with clients, accept requests, or reschedule · <span id="lawyerApptTableCount">{APPOINTMENTS_COUNT_LABEL}</span></p>
                                 </div>
                             </div>
                         </div>
                         <div class="card-body px-0 pt-0 pb-2">
+                            <div class="la-appt-table-wrap" id="lawyerAppointmentsTableWrap" data-appt-per-page="10">
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -865,6 +953,11 @@ $html = <<<'HTML'
                                         {APPOINTMENTS_TABLE}
                                     </tbody>
                                 </table>
+                            </div>
+                            <nav class="la-appt-pagination" id="lawyerAppointmentsPagination" aria-label="Appointments pagination" hidden>
+                                <p class="la-appt-pagination__info" data-appt-range></p>
+                                <div class="la-appt-pagination__controls" data-appt-pages></div>
+                            </nav>
                             </div>
                         </div>
                     </div>
@@ -1044,11 +1137,146 @@ $html = <<<'HTML'
             if (!row) {
                 return;
             }
+            if (typeof window.lawyerApptShowPage === 'function') {
+                var rows = Array.prototype.slice.call(document.querySelectorAll('.la-appt-row'));
+                var index = rows.indexOf(row);
+                if (index >= 0) {
+                    var wrap = document.getElementById('lawyerAppointmentsTableWrap');
+                    var perPage = wrap ? parseInt(wrap.getAttribute('data-appt-per-page') || '10', 10) : 10;
+                    window.lawyerApptShowPage(Math.floor(index / perPage) + 1);
+                }
+            }
             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
             row.classList.add('table-warning');
             setTimeout(function() {
                 row.classList.remove('table-warning');
             }, 2200);
+        }
+
+        function initLawyerAppointmentsTablePagination() {
+            var wrap = document.getElementById('lawyerAppointmentsTableWrap');
+            var nav = document.getElementById('lawyerAppointmentsPagination');
+            if (!wrap || !nav) {
+                return;
+            }
+
+            var perPage = parseInt(wrap.getAttribute('data-appt-per-page') || '10', 10);
+            var rows = Array.prototype.slice.call(document.querySelectorAll('.la-appt-row'));
+            var rangeEl = nav.querySelector('[data-appt-range]');
+            var pagesEl = nav.querySelector('[data-appt-pages]');
+            var countEl = document.getElementById('lawyerApptTableCount');
+
+            if (!rows.length || rows.length <= perPage) {
+                nav.hidden = true;
+                return;
+            }
+
+            nav.hidden = false;
+            var currentPage = 1;
+            var totalPages = Math.ceil(rows.length / perPage);
+
+            function pageButton(label, page, options) {
+                options = options || {};
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'la-appt-pagination__btn';
+                if (options.nav) {
+                    btn.className += ' la-appt-pagination__btn--nav';
+                }
+                if (options.active) {
+                    btn.className += ' la-appt-pagination__btn--active';
+                }
+                btn.textContent = label;
+                btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
+                if (options.disabled) {
+                    btn.disabled = true;
+                } else if (page) {
+                    btn.addEventListener('click', function () {
+                        showPage(page);
+                    });
+                }
+                return btn;
+            }
+
+            function ellipsis() {
+                var span = document.createElement('span');
+                span.className = 'la-appt-pagination__ellipsis';
+                span.textContent = '…';
+                span.setAttribute('aria-hidden', 'true');
+                return span;
+            }
+
+            function visiblePages() {
+                if (totalPages <= 7) {
+                    var all = [];
+                    for (var p = 1; p <= totalPages; p++) {
+                        all.push(p);
+                    }
+                    return all;
+                }
+                var pages = [1];
+                var start = Math.max(2, currentPage - 1);
+                var end = Math.min(totalPages - 1, currentPage + 1);
+                if (start > 2) {
+                    pages.push('gap');
+                }
+                for (var i = start; i <= end; i++) {
+                    pages.push(i);
+                }
+                if (end < totalPages - 1) {
+                    pages.push('gap');
+                }
+                pages.push(totalPages);
+                return pages;
+            }
+
+            function renderControls() {
+                if (!pagesEl) {
+                    return;
+                }
+                pagesEl.innerHTML = '';
+                pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
+                    nav: true,
+                    disabled: currentPage === 1,
+                    ariaLabel: 'Previous page'
+                }));
+                visiblePages().forEach(function (page) {
+                    if (page === 'gap') {
+                        pagesEl.appendChild(ellipsis());
+                        return;
+                    }
+                    pagesEl.appendChild(pageButton(String(page), page, {
+                        active: page === currentPage,
+                        ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
+                    }));
+                });
+                pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
+                    nav: true,
+                    disabled: currentPage === totalPages,
+                    ariaLabel: 'Next page'
+                }));
+            }
+
+            function showPage(page) {
+                currentPage = Math.max(1, Math.min(totalPages, page));
+                rows.forEach(function (row, index) {
+                    var rowPage = Math.floor(index / perPage) + 1;
+                    row.style.display = rowPage === currentPage ? '' : 'none';
+                });
+
+                var start = (currentPage - 1) * perPage + 1;
+                var end = Math.min(currentPage * perPage, rows.length);
+                if (rangeEl) {
+                    rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
+                }
+                if (countEl) {
+                    countEl.textContent = rows.length + (rows.length === 1 ? ' appointment' : ' appointments');
+                }
+                renderControls();
+            }
+
+            window.lawyerApptShowPage = showPage;
+            showPage(1);
         }
 
         function fmtLawyerApptDT(value) {
@@ -1364,7 +1592,10 @@ $html = <<<'HTML'
             });
         }
 
-        document.addEventListener('DOMContentLoaded', initLawyerAppointmentsCalendar);
+        document.addEventListener('DOMContentLoaded', function () {
+            initLawyerAppointmentsTablePagination();
+            initLawyerAppointmentsCalendar();
+        });
     </script>
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
@@ -1838,6 +2069,7 @@ $replacements = [
     '{STATUS_TODAY}' => '',
     '{STATUS_PAST}' => '',
     '{APPOINTMENTS_TABLE}' => $appointmentsTable,
+    '{APPOINTMENTS_COUNT_LABEL}' => $appointmentsCountLabel,
     '{UPCOMING_APPOINTMENTS_CALENDAR}' => $upcomingAppointmentsCalendarHtml,
     '{APPOINTMENT_CALENDAR_EVENTS_JSON}' => $appointmentCalendarEventsJson,
     '{ICON_CARD_HEADER}' => $iconCardHeader,
