@@ -410,6 +410,7 @@ $html = <<<'HTML'
 							<a class="btn btn-sm btn-outline-dark" href="javascript:;">Add Expense</a>
 						</div>
 						<div class="card-body pt-4 p-3">
+							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
 							<div class="table-responsive">
 								<table class="table align-items-center">
 									<thead>
@@ -422,14 +423,14 @@ $html = <<<'HTML'
 										</tr>
 									</thead>
 									<tbody>
-										<tr>
+										<tr class="legalpro-admin-list-row">
 											<td>08/11/25</td>
 											<td>Operational</td>
 											<td class="text-center">$320</td>
 											<td class="text-center">Court filing fees</td>
 											<td class="text-end"><a href="javascript:;" class="text-secondary text-xs font-weight-bold">Edit</a></td>
 										</tr>
-										<tr>
+										<tr class="legalpro-admin-list-row">
 											<td>04/11/25</td>
 											<td>Salary</td>
 											<td class="text-center">$2,800</td>
@@ -438,6 +439,8 @@ $html = <<<'HTML'
 										</tr>
 									</tbody>
 								</table>
+							</div>
+							<nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Expenses pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
 							</div>
 						</div>
 					</div>

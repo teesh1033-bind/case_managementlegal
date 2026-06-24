@@ -140,7 +140,7 @@ foreach ($cases as $case) {
     $statusBadge = legalpro_case_payment_status_badge($totalDue, $paid);
 
     $caseRows .= '
-        <tr>
+        <tr class="legalpro-admin-list-row">
             <td>
                 <div class="d-flex flex-column">
                     <span class="text-sm fw-bold">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</span>
@@ -183,7 +183,7 @@ foreach ($cases as $case) {
 }
 
 if (!$caseRows) {
-    $caseRows = '<tr><td colspan="9" class="text-center py-4 text-muted">No cases found.</td></tr>';
+    $caseRows = '<tr class="lp-admin-pagination-skip"><td colspan="9" class="text-center py-4 text-muted">No cases found.</td></tr>';
 }
 
 // Payment history grouped per case
@@ -370,6 +370,7 @@ $html = <<<'HTML'
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
+                    <div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
                     <div class="table-responsive">
                         <table class="table align-items-center mb-0">
                             <thead>
@@ -389,6 +390,8 @@ $html = <<<'HTML'
                                 {CASE_ROWS}
                             </tbody>
                         </table>
+                    </div>
+                    <nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Case financials pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
                     </div>
                 </div>
             </div>

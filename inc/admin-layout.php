@@ -903,6 +903,27 @@ function legalpro_render_admin_list_search(string $inputId, string $placeholder 
 /**
  * Client-side filter for rows with class + data-search (matches cases table behavior).
  */
+function legalpro_render_admin_table_pagination_nav(string $ariaLabel = 'Table pagination'): string
+{
+    return '<nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="'
+        . htmlspecialchars($ariaLabel, ENT_QUOTES, 'UTF-8') . '" hidden>'
+        . '<p class="lp-admin-pagination__info" data-lp-range></p>'
+        . '<div class="lp-admin-pagination__controls" data-lp-pages></div>'
+        . '</nav>';
+}
+
+function legalpro_admin_table_pagination_open(int $perPage = 10, string $rowSelector = '.legalpro-admin-list-row'): string
+{
+    return '<div class="lp-admin-table-paginate" data-lp-admin-paginate'
+        . ' data-lp-per-page="' . (int) $perPage . '"'
+        . ' data-lp-row="' . htmlspecialchars($rowSelector, ENT_QUOTES, 'UTF-8') . '">';
+}
+
+function legalpro_admin_table_pagination_close(string $ariaLabel = 'Table pagination'): string
+{
+    return legalpro_render_admin_table_pagination_nav($ariaLabel) . '</div>';
+}
+
 function legalpro_admin_list_search_script(
     string $inputId,
     string $tbodyId,
@@ -924,10 +945,14 @@ function legalpro_admin_list_search_script(
         . 'var visible=0;'
         . 'rows.forEach(function(row){'
         . 'var match=!q||row.getAttribute("data-search").indexOf(q)!==-1;'
-        . 'row.style.display=match?"":"none";'
+        . 'row.classList.toggle("lp-admin-row-filtered",!match);'
         . 'if(match){visible++;}'
         . '});'
         . 'if(emptyNote){emptyNote.classList.toggle("d-none",visible>0||rows.length===0);}'
+        . 'var paginateWrap=tbody.closest("[data-lp-admin-paginate]");'
+        . 'if(paginateWrap&&window.LegalproAdminTablePagination){'
+        . 'window.LegalproAdminTablePagination.refresh(paginateWrap);'
+        . '}'
         . '}'
         . 'if(searchInput){searchInput.addEventListener("input",applyAdminListSearch);}'
         . '})();</script>';

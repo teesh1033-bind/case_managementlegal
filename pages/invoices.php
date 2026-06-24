@@ -566,6 +566,7 @@ $html = <<<'HTML'
                         </div>
                         <div class="card-body px-0 pt-0 pb-2">
                             {INVOICES_SEARCH}
+                            <div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -585,6 +586,8 @@ $html = <<<'HTML'
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                            <nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Invoices pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
                             </div>
                         </div>
                     </div>

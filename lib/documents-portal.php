@@ -517,12 +517,12 @@ function legalpro_documents_portal_build_fragments(array &$state): void
     }
 
     if (empty($templates)) {
-        $state['templatesRows'] = '<tr><td colspan="3" class="text-center text-muted py-3">No templates yet.</td></tr>';
+        $state['templatesRows'] = '<tr class="lp-admin-pagination-skip"><td colspan="3" class="text-center text-muted py-3">No templates yet.</td></tr>';
     } else {
         $templatesRows = '';
         foreach ($templates as $template) {
             $templatesRows .= '
-            <tr>
+            <tr class="legalpro-admin-list-row">
                 <td>
                     <strong>' . htmlspecialchars($template['name']) . '</strong>
                     <p class="text-xs text-muted mb-0">' . htmlspecialchars($template['description'] ?? '') . '</p>

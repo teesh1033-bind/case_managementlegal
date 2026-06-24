@@ -64,6 +64,7 @@ $html = <<<'HTML'
 							<a href="profile.html" class="btn btn-sm btn-dark">Add Staff</a>
 						</div>
 						<div class="card-body px-0 pt-0 pb-2">
+							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
 							<div class="table-responsive p-0">
 								<table class="table align-items-center mb-0">
 									<thead>
@@ -75,7 +76,7 @@ $html = <<<'HTML'
 										</tr>
 									</thead>
 									<tbody>
-										<tr>
+										<tr class="legalpro-admin-list-row">
 											<td>
 												<div class="d-flex px-2 py-1">
 													<div>
@@ -91,7 +92,7 @@ $html = <<<'HTML'
 											<td class="text-center"><span class="text-secondary text-xs font-weight-bold">01/02/22</span></td>
 											<td class="text-end"><a href="profile.html" class="text-secondary text-xs font-weight-bold">Profile</a></td>
 										</tr>
-										<tr>
+										<tr class="legalpro-admin-list-row">
 											<td>
 												<div class="d-flex px-2 py-1">
 													<div>
@@ -109,6 +110,8 @@ $html = <<<'HTML'
 										</tr>
 									</tbody>
 								</table>
+							</div>
+							<nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Staff pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
 							</div>
 						</div>
 					</div>

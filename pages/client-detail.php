@@ -308,7 +308,7 @@ if ($client_id) {
     }
     
     if (empty($linkedCases)) {
-        $linkedCasesRows = '<tr><td colspan="4" class="text-center py-3 text-muted">No cases found for this client.</td></tr>';
+        $linkedCasesRows = '<tr class="lp-admin-pagination-skip"><td colspan="4" class="text-center py-3 text-muted">No cases found for this client.</td></tr>';
     } else {
         foreach ($linkedCases as $case) {
             $caseId = (int)$case['id'];
@@ -344,7 +344,7 @@ if ($client_id) {
             ]), ENT_QUOTES);
             
             $linkedCasesRows .= '
-            <tr>
+            <tr class="legalpro-admin-list-row">
                 <td>' . $caseNumber . ' · ' . $title . '</td>
                 <td><span class="badge badge-sm ' . $badgeClass . '">' . $statusLabel . '</span></td>
                 <td class="text-center">' . $lawyerName . '</td>
@@ -355,7 +355,7 @@ if ($client_id) {
         }
     }
 } else {
-    $linkedCasesRows = '<tr><td colspan="4" class="text-center py-3 text-muted">Save the client first to view linked cases.</td></tr>';
+    $linkedCasesRows = '<tr class="lp-admin-pagination-skip"><td colspan="4" class="text-center py-3 text-muted">Save the client first to view linked cases.</td></tr>';
 }
 
 $clientFinancialId = $client_id ? (int) $client_id : 0;
@@ -505,6 +505,7 @@ $html = <<<'HTML'
 							</form>
 							<hr class="horizontal dark">
 							<p class="text-uppercase text-sm">Linked Cases</p>
+							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
 							<div class="table-responsive">
 								<table class="table align-items-center">
 									<thead>
@@ -519,6 +520,8 @@ $html = <<<'HTML'
 										{LINKED_CASES_ROWS}
 									</tbody>
 								</table>
+							</div>
+							<nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Linked cases pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
 							</div>
 						</div>
 					</div>

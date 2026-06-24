@@ -361,6 +361,7 @@ if (empty($upcomingCourtDates)) {
                             <h6 class="mb-0">Upcoming Court Dates</h6>
                         </div>
                         <div class="card-body px-0 pt-0 pb-2">
+                            <?php echo legalpro_admin_table_pagination_open(); ?>
                             <div class="table-responsive p-0">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -400,6 +401,7 @@ if (empty($upcomingCourtDates)) {
                                     </tbody>
                                 </table>
                             </div>
+                            <?php echo legalpro_admin_table_pagination_close('Court dates pagination'); ?>
                         </div>
                     </div>
                 </div>
