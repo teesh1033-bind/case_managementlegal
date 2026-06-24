@@ -355,9 +355,55 @@ body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item a:
     opacity: 1 !important;
 }
 
-body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-action-card__title,
 body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-recent-item__body strong {
     color: var(--lp-dark-text);
+}
+
+/* Document file icons — stronger contrast in dark mode */
+.legalpro-doc-icon.dashboard-stat-icon-wrap {
+    border-radius: 12px;
+}
+
+.legalpro-doc-icon.dashboard-stat-icon-wrap .lp-icon svg {
+    stroke-width: 2.25;
+}
+
+body.legalpro-dark-mode .legalpro-doc-icon.dashboard-stat-icon-wrap {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+body.legalpro-dark-mode .legalpro-doc-recent-item__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--info,
+body.legalpro-dark-mode .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--info {
+    background: rgba(14, 165, 233, 0.28) !important;
+}
+
+body.legalpro-dark-mode .legalpro-doc-recent-item__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--info .lp-icon svg,
+body.legalpro-dark-mode .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--info .lp-icon svg {
+    stroke: #f0f9ff !important;
+    stroke-width: 2.35;
+}
+
+body.legalpro-dark-mode .legalpro-doc-recent-item__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--dark,
+body.legalpro-dark-mode .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--dark {
+    background: rgba(99, 102, 241, 0.28) !important;
+}
+
+body.legalpro-dark-mode .legalpro-doc-recent-item__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--dark .lp-icon svg,
+body.legalpro-dark-mode .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--dark .lp-icon svg {
+    stroke: #e0e7ff !important;
+    stroke-width: 2.35;
+}
+
+body.legalpro-dark-mode .legalpro-doc-recent-item__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--danger .lp-icon svg,
+body.legalpro-dark-mode .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--danger .lp-icon svg {
+    stroke: #fecdd3 !important;
+    stroke-width: 2.35;
+}
+
+body.legalpro-dark-mode .legalpro-doc-recent-item__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--success .lp-icon svg,
+body.legalpro-dark-mode .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wrap--success .lp-icon svg {
+    stroke: #bbf7d0 !important;
+    stroke-width: 2.35;
 }
 
 @media (max-width: 767.98px) {

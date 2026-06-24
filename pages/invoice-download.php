@@ -16,10 +16,17 @@ try {
             CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
             cl.email AS client_email,
             cl.phone AS client_phone,
-            c.title AS case_title
+            c.title AS case_title,
+            COALESCE(p.total_paid, 0) AS total_paid
         FROM invoices inv
         LEFT JOIN clients cl ON cl.id = inv.client_id
         LEFT JOIN cases c ON c.id = inv.case_id
+        LEFT JOIN (
+            SELECT invoice_id, SUM(amount) AS total_paid
+            FROM payments
+            WHERE invoice_id IS NOT NULL
+            GROUP BY invoice_id
+        ) p ON p.invoice_id = inv.id
         WHERE inv.id = ?
     ");
     $stmt->execute([$invoiceId]);

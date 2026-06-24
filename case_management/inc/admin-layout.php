@@ -42,17 +42,7 @@ function legalpro_lawyer_notification_count(?PDO $pdo = null, ?int $lawyerId = n
         return 0;
     }
 
-    try {
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) FROM appointments
-            WHERE lawyer_id = ? AND LOWER(COALESCE(status, 'pending')) = 'pending'
-        ");
-        $stmt->execute([$lawyerId]);
-
-        return (int) $stmt->fetchColumn();
-    } catch (PDOException $e) {
-        return 0;
-    }
+    return count(legalpro_fetch_lawyer_notifications($pdo, $lawyerId));
 }
 
 function legalpro_client_notification_count(?PDO $pdo = null, ?int $clientId = null): int
@@ -170,6 +160,59 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
     nav.classList.add("d-flex", "align-items-center", "justify-content-between", "flex-wrap", "gap-2", "w-100");
+
+    var isLawyerPortal = document.body.classList.contains("legalpro-lawyer-portal");
+    var navCollapse = nav.querySelector("#navbar") || nav.querySelector(".navbar-collapse");
+    if (isLawyerPortal && navCollapse && !navCollapse.querySelector(".legalpro-navbar-search")) {
+        var params = new URLSearchParams(window.location.search);
+        var searchForm = document.createElement("form");
+        searchForm.className = "ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search";
+        searchForm.method = "get";
+        searchForm.action = window.location.pathname.split("/").pop() || "";
+        searchForm.setAttribute("role", "search");
+        searchForm.innerHTML = ""
+            + "<div class=\"input-group\">"
+            + "<span class=\"input-group-text text-body\"><i class=\"fas fa-search\" aria-hidden=\"true\"></i></span>"
+            + "<input type=\"search\" name=\"q\" id=\"lawyerNavbarSearchInput\" class=\"form-control\" placeholder=\"Search...\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"Search\">"
+            + "<button type=\"button\" class=\"lp-lawyer-search-reset-btn\" data-lawyer-search-reset=\"lawyerNavbarSearchInput\" data-clear-url-param=\"q\" aria-label=\"Reset search\">Reset</button>"
+            + "</div>";
+
+        var searchInput = searchForm.querySelector("input[name=\"q\"]");
+        if (searchInput) {
+            searchInput.value = (params.get("q") || "").trim();
+        }
+
+        var navList = navCollapse.querySelector(".navbar-nav");
+        if (navList && navList.parentNode === navCollapse) {
+            navCollapse.insertBefore(searchForm, navList);
+        } else {
+            navCollapse.prepend(searchForm);
+        }
+
+        var searchRows = Array.prototype.slice.call(document.querySelectorAll("[data-search]"));
+        function applyLawyerSearch(term) {
+            if (!searchRows.length) {
+                return;
+            }
+            var q = String(term || "").trim().toLowerCase();
+            searchRows.forEach(function (row) {
+                if (!q) {
+                    row.style.display = "";
+                    return;
+                }
+                var hay = (row.getAttribute("data-search") || row.textContent || "").toLowerCase();
+                row.style.display = hay.indexOf(q) !== -1 ? "" : "none";
+            });
+        }
+
+        if (searchInput) {
+            applyLawyerSearch(searchInput.value);
+            searchInput.addEventListener("input", function () {
+                applyLawyerSearch(searchInput.value);
+            });
+        }
+    }
+
     if (!nav.querySelector(".legalpro-navbar-actions")) {
         nav.appendChild(actions);
     }
@@ -286,7 +329,7 @@ function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
         legalpro_admin_display_name(),
         'Administrator',
         [],
-        'dashboard.php',
+        'admin-notifications.php',
         'admin-logout.php',
         'profile.php',
         '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
@@ -309,7 +352,7 @@ function legalpro_render_admin_notification_dropdown(): string
         . '<div class="text-muted text-sm p-3">Loading…</div>'
         . '</div>'
         . '<div class="legalpro-notif-panel__foot">'
-        . '<a href="dashboard.php" class="legalpro-notif-panel__view-all">View dashboard</a>'
+        . '<a href="admin-notifications.php" class="legalpro-notif-panel__view-all">View all</a>'
         . '</div>'
         . '</div>'
         . '<template id="adminNotifEmptyTpl">'
@@ -333,7 +376,7 @@ function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
         $displayName,
         'Lawyer',
         $notifications,
-        'lawyer-appointments.php',
+        'lawyer-notifications.php',
         'lawyer-logout.php',
         'lawyer-profile.php',
         '<li><a class="dropdown-item" href="lawyer-settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>'
@@ -355,7 +398,7 @@ function legalpro_render_client_header_utilities(?PDO $pdo = null): string
         $displayName,
         $clientLabel,
         $notifications,
-        'client-appointments.php',
+        'client-notifications.php',
         'client-logout.php',
         'client-profile.php',
         '<li><a class="dropdown-item" href="client-settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars($settingsLabel) . '</a></li>',
@@ -369,8 +412,7 @@ function legalpro_render_client_notification_dropdown(): string
     $markAll = function_exists('client_t') ? client_t('notifications.mark_all_read') : 'Mark all read';
     $title = function_exists('client_t') ? client_t('notifications.title') : 'Notifications';
     $empty = function_exists('client_t') ? client_t('notifications.empty') : 'No notifications yet';
-    $showMore = function_exists('client_t') ? client_t('notifications.show_more') : 'Show more';
-    $showLess = function_exists('client_t') ? client_t('notifications.show_less') : 'Show less';
+    $viewAll = function_exists('client_t') ? client_t('notifications.view_all') : 'View all';
     $unreadHint = htmlspecialchars(
         function_exists('client_t') ? client_t('notifications.unread_hint') : legalpro_notification_unread_hint(),
         ENT_QUOTES,
@@ -386,9 +428,8 @@ function legalpro_render_client_notification_dropdown(): string
         . '<div class="legalpro-notif-panel__body" id="clientNotifList">'
         . '<div class="text-muted text-sm p-3">Loading…</div>'
         . '</div>'
-        . '<div class="legalpro-notif-panel__foot legalpro-client-notif-dropdown__foot" id="clientNotifFoot" hidden>'
-        . '<button type="button" class="legalpro-notif-panel__view-all legalpro-client-notif-dropdown__toggle" id="clientNotifShowMore" data-show-more="' . htmlspecialchars($showMore) . '" data-show-less="' . htmlspecialchars($showLess) . '">'
-        . htmlspecialchars($showMore) . '</button>'
+        . '<div class="legalpro-notif-panel__foot">'
+        . '<a href="client-notifications.php" class="legalpro-notif-panel__view-all">' . htmlspecialchars($viewAll) . '</a>'
         . '</div>'
         . '</div>'
         . '<template id="clientNotifEmptyTpl">'
@@ -439,7 +480,7 @@ function legalpro_format_case_fee($amount): string
 {
     $value = is_numeric($amount) ? (float) $amount : 0.0;
 
-    return '£ ' . number_format($value, 2);
+    return function_exists('formatCurrency') ? formatCurrency($value) : number_format($value, 2);
 }
 
 function legalpro_case_priority_badge(string $priority): string
@@ -648,6 +689,9 @@ function legalpro_document_file_icon_meta(string $filename): array
             return ['icon' => 'file-spreadsheet', 'accent' => 'success'];
         case 'txt':
             return ['icon' => 'file-text', 'accent' => 'dark'];
+        case 'html':
+        case 'htm':
+            return ['icon' => 'file-text', 'accent' => 'info'];
         default:
             return ['icon' => 'file', 'accent' => 'dark'];
     }
@@ -657,7 +701,7 @@ function legalpro_document_file_icon_wrap(string $filename, string $extraClass =
 {
     $meta = legalpro_document_file_icon_meta($filename);
     $class = 'dashboard-stat-icon-wrap dashboard-stat-icon-wrap--' . $meta['accent']
-        . ' document-item-icon flex-shrink-0 me-3';
+        . ' document-item-icon legalpro-doc-icon flex-shrink-0 me-3';
     if (trim($extraClass) !== '') {
         $class .= ' ' . trim($extraClass);
     }

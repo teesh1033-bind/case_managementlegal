@@ -444,6 +444,31 @@ function legalpro_client_acknowledge_document(?PDO $pdo, int $clientId, int $doc
     }
 }
 
+function legalpro_client_resolve_notification_link(array $notification): string
+{
+    $link = trim((string) ($notification['link_url'] ?? ''));
+    $refType = strtolower(trim((string) ($notification['ref_type'] ?? '')));
+    $refId = (int) ($notification['ref_id'] ?? 0);
+
+    if ($refType === 'quotation' && $refId > 0) {
+        if (function_exists('client_quotation_notification_link')) {
+            return client_quotation_notification_link($refId);
+        }
+
+        return 'client-payments.php?quote=' . $refId . '#quotations';
+    }
+
+    if ($link !== '' && preg_match('#client-quotation-view\.php#i', $link)) {
+        if (preg_match('/[?&]id=(\d+)/', $link, $matches)) {
+            return 'client-payments.php?quote=' . (int) $matches[1] . '#quotations';
+        }
+
+        return 'client-payments.php#quotations';
+    }
+
+    return $link !== '' ? $link : '#';
+}
+
 function legalpro_client_create_notification(
     ?PDO $pdo,
     int $clientId,
@@ -624,7 +649,7 @@ function legalpro_client_sync_notifications(?PDO $pdo, int $clientId): void
                 $clientId,
                 'invoice',
                 'Invoice issued',
-                ($inv['invoice_number'] ?: 'Invoice') . ' — $' . number_format((float) $inv['amount'], 2),
+                ($inv['invoice_number'] ?: 'Invoice') . ' — ' . formatCurrency((float) $inv['amount']),
                 'client-payments.php',
                 'receipt',
                 'invoice',
@@ -889,7 +914,7 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
                 'type' => 'invoice',
                 'icon' => 'receipt',
                 'title' => 'Invoice issued',
-                'subtitle' => ($row['invoice_number'] ?: 'Invoice') . ' — $' . number_format((float) $row['amount'], 2),
+                'subtitle' => ($row['invoice_number'] ?: 'Invoice') . ' — ' . formatCurrency((float) $row['amount']),
                 'ts' => strtotime((string) $row['created_at']),
                 'url' => 'client-payments.php',
             ];
@@ -1012,9 +1037,19 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
     return array_slice($items, 0, $limit);
 }
 
-function legalpro_client_render_activity_feed_html(array $items): string
+function legalpro_client_activity_feed_per_page(): int
+{
+    return 6;
+}
+
+function legalpro_client_render_activity_feed_html(array $items, ?int $perPage = null): string
 {
     require_once __DIR__ . '/../inc/legalpro-icons.php';
+
+    if ($perPage === null) {
+        $perPage = legalpro_client_activity_feed_per_page();
+    }
+    $perPage = max(1, $perPage);
 
     if (empty($items)) {
         return '<div class="cp-activity-empty">'
@@ -1024,7 +1059,13 @@ function legalpro_client_render_activity_feed_html(array $items): string
             . '</div>';
     }
 
-    $html = '<div class="cp-activity-feed">';
+    $total = count($items);
+    $needsPagination = $total > $perPage;
+
+    $html = '<div class="cd-activity-feed-wrap"'
+        . ' data-activity-per-page="' . (int) $perPage . '"'
+        . ' data-activity-total="' . (int) $total . '">';
+    $html .= '<div class="cp-activity-feed">';
     foreach ($items as $item) {
         $icon = htmlspecialchars((string) ($item['icon'] ?? 'bell'));
         $title = htmlspecialchars((string) ($item['title'] ?? ''));
@@ -1039,15 +1080,24 @@ function legalpro_client_render_activity_feed_html(array $items): string
             'UTF-8'
         );
 
-        $html .= '<a href="' . $url . '" class="cp-activity-item ' . $typeClass . '" data-search="' . $searchHay . '">
-            <span class="cp-activity-item__icon" data-icon="' . $icon . '"></span>
-            <span class="cp-activity-item__body">
-                <span class="cp-activity-item__title">' . $title . '</span>
-                <span class="cp-activity-item__sub">' . $subtitle . '</span>
-            </span>
-            <time class="cp-activity-item__time">' . $time . '</time>
-        </a>';
+        $html .= '<a href="' . $url . '" class="cp-activity-item ' . $typeClass . '" data-search="' . $searchHay . '">'
+            . '<span class="cp-activity-item__icon" data-icon="' . $icon . '"></span>'
+            . '<span class="cp-activity-item__body">'
+            . '<span class="cp-activity-item__title">' . $title . '</span>'
+            . '<span class="cp-activity-item__sub">' . $subtitle . '</span>'
+            . '</span>'
+            . '<time class="cp-activity-item__time">' . $time . '</time>'
+            . '</a>';
     }
+    $html .= '</div>';
+
+    if ($needsPagination) {
+        $html .= '<nav class="cd-activity-pagination" aria-label="Activity pagination">'
+            . '<p class="cd-activity-pagination__info" data-activity-range></p>'
+            . '<div class="cd-activity-pagination__controls" data-activity-pages></div>'
+            . '</nav>';
+    }
+
     $html .= '</div>';
 
     return $html;

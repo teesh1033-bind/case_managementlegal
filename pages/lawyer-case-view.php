@@ -4,6 +4,8 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
+require_once __DIR__ . '/../lib/case_quotations.php';
+require_once __DIR__ . '/../lib/case_quotations_ui.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -39,6 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
             // Handle error silently for now
         }
     }
+    header('Location: lawyer-case-view.php?id=' . $caseId . '#case-comments');
+    exit;
 }
 
 // Handle file upload
@@ -103,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_comment_id']))
             // Deletion failed silently; page will reload without changes
         }
     }
-    header('Location: lawyer-case-view.php?id=' . $caseId . '#lawyer-case-comments');
+    header('Location: lawyer-case-view.php?id=' . $caseId . '#case-comments');
     exit;
 }
 
@@ -166,6 +170,10 @@ try {
 } catch (PDOException $e) {
     die('Error loading case: ' . htmlspecialchars($e->getMessage()));
 }
+
+ensure_case_quotation_schema($pdo);
+$quotationsView = case_quotations_build_readonly_view($pdo, $caseId);
+$quotationsPanelHtml = $quotationsView['html'];
 
 // Fetch case services
 $services = [];
@@ -556,6 +564,12 @@ $html = <<<'HTML'
                                     <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#case-documents" type="button" role="tab">Documents</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="quotations-tab" data-bs-toggle="tab" data-bs-target="#quotations" type="button" role="tab">Quotations ({QUOTATION_COUNT})</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="case-comments-tab" data-bs-toggle="tab" data-bs-target="#case-comments" type="button" role="tab">Comments ({COMMENT_COUNT})</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">Track of Events</button>
                                 </li>
                             </ul>
@@ -670,34 +684,29 @@ $html = <<<'HTML'
                                         </table>
                                     </div>
                                 </div>
+                                <!-- Quotations Tab -->
+                                <div class="tab-pane fade" id="quotations" role="tabpanel">
+                                    {QUOTATIONS_PANEL}
+                                </div>
+                                <!-- Comments Tab -->
+                                <div class="tab-pane fade" id="case-comments" role="tabpanel">
+                                    <div id="lawyer-case-comments" class="lawyer-case-comments">
+                                        <p class="text-sm text-muted mb-3">Discussion and files shared on this case</p>
+                                        {COMMENTS_HTML}
+                                        <form method="POST" action="" class="cc-comment-form mt-4 pt-4 border-top">
+                                            <label for="lawyer-case-comment-input" class="form-label text-sm font-weight-bold mb-2">Add a comment</label>
+                                            <textarea id="lawyer-case-comment-input" class="form-control" name="comment" rows="4" placeholder="Write your comment here…" required></textarea>
+                                            <div class="d-flex justify-content-end mt-3">
+                                                <button type="submit" class="btn bg-gradient-success mb-0">Post comment</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
                                 <!-- Events Tab -->
                                 <div class="tab-pane fade" id="events" role="tabpanel">
                                     {EVENTS_HTML}
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Comments Section -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div id="lawyer-case-comments" class="card cc-comments-panel lawyer-case-comments shadow-sm">
-                        <div class="card-header pb-0">
-                            <h6 class="mb-0">Case Comments &amp; Files</h6>
-                            <p class="text-sm text-muted mb-0">Discussion on this case</p>
-                        </div>
-                        <div class="card-body">
-                            {COMMENTS_HTML}
-
-                            <form method="POST" action="" class="cc-comment-form mt-4 pt-4 border-top">
-                                <label for="lawyer-case-comment-input" class="form-label text-sm font-weight-bold mb-2">Add a comment</label>
-                                <textarea id="lawyer-case-comment-input" class="form-control" name="comment" rows="4" placeholder="Write your comment here…" required></textarea>
-                                <div class="d-flex justify-content-end mt-3">
-                                    <button type="submit" class="btn bg-gradient-success mb-0">Post comment</button>
-                                </div>
-                            </form>
                         </div>
                     </div>
                 </div>
@@ -725,8 +734,9 @@ $html = <<<'HTML'
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         var hash = window.location.hash;
-        if (hash === '#case-documents' || hash === '#lawyer-case-comments') {
-            var tabBtn = document.querySelector('[data-bs-target="' + hash + '"]');
+        if (hash === '#case-documents' || hash === '#case-comments' || hash === '#lawyer-case-comments' || hash === '#quotations') {
+            var target = hash === '#lawyer-case-comments' ? '#case-comments' : hash;
+            var tabBtn = document.querySelector('[data-bs-target="' + target + '"]');
             if (tabBtn && typeof bootstrap !== 'undefined' && bootstrap.Tab) {
                 bootstrap.Tab.getOrCreateInstance(tabBtn).show();
             }
@@ -851,6 +861,9 @@ $replacements = [
     '{DOCUMENTS_HTML}' => $documentsHtml,
     '{COMMENTS_HTML}' => $commentsHtml,
     '{EVENTS_HTML}' => $eventsHtml,
+    '{QUOTATIONS_PANEL}' => $quotationsPanelHtml,
+    '{QUOTATION_COUNT}' => (string) $quotationsView['count'],
+    '{COMMENT_COUNT}' => (string) count($comments),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

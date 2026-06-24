@@ -1,0 +1,437 @@
+/* Bank accounts — settings & invoice forms */
+.lp-bank-ui {
+    --lp-bank-accent: var(--legalpro-theme-primary, #11cdef);
+    --lp-bank-accent-soft: rgba(17, 205, 239, 0.12);
+    --lp-bank-surface: #f8fafc;
+    --lp-bank-border: #e2e8f0;
+    --lp-bank-text: #344767;
+    --lp-bank-muted: #64748b;
+}
+
+.lp-bank-ui__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+}
+
+.lp-bank-ui__head-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--lp-bank-accent-soft);
+    color: var(--lp-bank-accent);
+    flex-shrink: 0;
+}
+
+.lp-bank-ui__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--lp-bank-text);
+    margin: 0 0 0.2rem;
+}
+
+.lp-bank-ui__subtitle {
+    font-size: 0.82rem;
+    color: var(--lp-bank-muted);
+    margin: 0;
+}
+
+.lp-bank-preview {
+    border: 1px dashed var(--lp-bank-border);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    background: var(--lp-bank-surface);
+    margin-bottom: 1.1rem;
+}
+
+.lp-bank-preview__title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--lp-bank-muted);
+    margin-bottom: 0.35rem;
+}
+
+.lp-bank-preview__text {
+    font-size: 0.8rem;
+    color: #475569;
+    margin: 0;
+}
+
+.lp-bank-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.lp-bank-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--lp-bank-border);
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--lp-bank-text);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.lp-bank-tab:hover {
+    border-color: var(--lp-bank-accent);
+    box-shadow: 0 2px 8px rgba(17, 205, 239, 0.12);
+}
+
+.lp-bank-tab.active {
+    background: var(--lp-bank-accent);
+    border-color: var(--lp-bank-accent);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(17, 205, 239, 0.28);
+}
+
+.lp-bank-tab__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.07);
+    font-size: 0.68rem;
+}
+
+.lp-bank-tab.active .lp-bank-tab__num {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.lp-bank-tab__dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: #cbd5e1;
+}
+
+.lp-bank-tab__dot--on {
+    background: #2dce89;
+}
+
+.lp-bank-pane[hidden] {
+    display: none !important;
+}
+
+.lp-bank-pane {
+    border: 1px solid var(--lp-bank-border);
+    border-radius: 14px;
+    padding: 1rem 1.1rem 1.1rem;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+}
+
+.lp-bank-pane__head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.lp-bank-pane__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 8px;
+    background: var(--lp-bank-surface);
+    border: 1px solid var(--lp-bank-border);
+    font-weight: 700;
+    color: var(--lp-bank-text);
+}
+
+.lp-bank-pane__title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--lp-bank-text);
+    margin: 0;
+}
+
+.lp-bank-pane__subtitle {
+    font-size: 0.75rem;
+    color: var(--lp-bank-muted);
+    margin: 0;
+}
+
+.lp-bank-field {
+    margin-bottom: 0.85rem;
+}
+
+.lp-bank-field__label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--lp-bank-text);
+    margin-bottom: 0.35rem;
+}
+
+.lp-bank-field__wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    border: 1px solid var(--lp-bank-border);
+    border-radius: 10px;
+    background: #fff;
+    padding: 0.4rem 0.7rem 0.4rem 0.45rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.lp-bank-field__wrap:focus-within {
+    border-color: var(--lp-bank-accent);
+    box-shadow: 0 0 0 3px rgba(17, 205, 239, 0.15);
+}
+
+.lp-bank-field__icon-box {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 205, 239, 0.12);
+    color: var(--lp-bank-accent);
+    flex-shrink: 0;
+    font-size: 0.82rem;
+}
+
+.lp-bank-field__icon-box .lp-icon {
+    width: 1.05rem;
+    height: 1.05rem;
+    min-width: 1.05rem;
+    min-height: 1.05rem;
+}
+
+.lp-bank-field__icon-box .lp-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.lp-bank-ui__head-icon .lp-icon,
+.lp-invoice-bank__card-icon .lp-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    min-width: 1.15rem;
+    min-height: 1.15rem;
+}
+
+.lp-bank-ui__head-icon .lp-icon svg,
+.lp-invoice-bank__card-icon .lp-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.lp-bank-default__label .lp-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    min-width: 0.95rem;
+    min-height: 0.95rem;
+}
+
+.lp-bank-default__label .lp-icon svg {
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+.lp-bank-field__input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    border: none;
+    border-radius: 0;
+    padding: 0.35rem 0.15rem;
+    font-size: 0.86rem;
+    color: var(--lp-bank-text);
+    background: transparent;
+}
+
+.lp-bank-field__input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.lp-bank-default {
+    background: linear-gradient(135deg, rgba(17, 205, 239, 0.1) 0%, rgba(17, 205, 239, 0.04) 100%);
+    border: 1px solid rgba(17, 205, 239, 0.22);
+    border-radius: 12px;
+    padding: 0.95rem 1rem;
+    margin-top: 1rem;
+}
+
+.lp-bank-default__label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--lp-bank-text);
+    margin-bottom: 0.5rem;
+}
+
+.lp-bank-default__label i {
+    color: var(--lp-bank-accent);
+}
+
+.lp-bank-default__select {
+    max-width: 16rem;
+    border-radius: 10px;
+}
+
+/* Invoice form bank section */
+.lp-invoice-bank {
+    border: 1px solid var(--lp-bank-border);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    background: #fff;
+    margin-bottom: 1rem;
+}
+
+.lp-invoice-bank__select {
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+}
+
+.lp-invoice-bank__hint {
+    font-size: 0.78rem;
+    color: var(--lp-bank-muted);
+    margin: 0 0 0.85rem;
+}
+
+.lp-invoice-bank__hint a {
+    color: var(--lp-bank-accent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.lp-invoice-bank__card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    border: 1px solid rgba(17, 205, 239, 0.28);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    background: linear-gradient(135deg, rgba(17, 205, 239, 0.08) 0%, rgba(17, 205, 239, 0.02) 100%);
+}
+
+.lp-invoice-bank__card-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 205, 239, 0.14);
+    color: var(--lp-bank-accent);
+    flex-shrink: 0;
+}
+
+.lp-invoice-bank__card-kicker {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--lp-bank-accent);
+    margin-bottom: 0.15rem;
+}
+
+.lp-invoice-bank__card-value {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--lp-bank-text);
+    line-height: 1.2;
+}
+
+.lp-invoice-bank__card-meta {
+    font-size: 0.78rem;
+    color: var(--lp-bank-muted);
+    margin-top: 0.15rem;
+}
+
+/* Dark mode */
+body.legalpro-dark-mode .lp-bank-ui {
+    --lp-bank-surface: var(--lp-dark-surface-hover, #3d455c);
+    --lp-bank-border: var(--lp-dark-border, rgba(255, 255, 255, 0.12));
+    --lp-bank-text: var(--lp-dark-text, #f8f9fc);
+    --lp-bank-muted: var(--lp-dark-text-muted, #a8b3cf);
+}
+
+body.legalpro-dark-mode .lp-bank-tab {
+    background: var(--lp-dark-surface-raised, #464f68);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.12));
+    color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode .lp-bank-tab:hover {
+    background: var(--lp-dark-surface-hover, #3d455c);
+}
+
+body.legalpro-dark-mode .lp-bank-pane,
+body.legalpro-dark-mode .lp-invoice-bank {
+    background: var(--lp-dark-surface-hover, #3d455c);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.12));
+    box-shadow: none;
+}
+
+body.legalpro-dark-mode .lp-bank-field__wrap {
+    background: var(--lp-dark-input-bg, #2f3649);
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
+}
+
+body.legalpro-dark-mode .lp-bank-field__input,
+body.legalpro-dark-mode .lp-bank-default__select,
+body.legalpro-dark-mode .lp-invoice-bank__select {
+    background: transparent;
+    border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
+    color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode .lp-bank-default__select,
+body.legalpro-dark-mode .lp-invoice-bank__select {
+    background: var(--lp-dark-input-bg, #2f3649);
+}
+
+body.legalpro-dark-mode .lp-bank-field__input::placeholder {
+    color: var(--lp-dark-text-subtle, #8892a8);
+}
+
+body.legalpro-dark-mode .lp-bank-preview {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.14));
+}
+
+body.legalpro-dark-mode .lp-bank-preview__text {
+    color: var(--lp-dark-text-secondary, #c5cede);
+}
+
+body.legalpro-dark-mode .lp-bank-pane__badge {
+    background: var(--lp-dark-surface-raised, #464f68);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.12));
+}
+
+body.legalpro-dark-mode .lp-bank-default {
+    background: rgba(17, 205, 239, 0.1);
+    border-color: rgba(17, 205, 239, 0.22);
+}
+
+body.legalpro-dark-mode .lp-invoice-bank__card {
+    background: rgba(17, 205, 239, 0.1);
+    border-color: rgba(17, 205, 239, 0.25);
+}
+
+body.legalpro-dark-mode .lp-invoice-bank__card-value {
+    color: var(--lp-dark-text, #f8f9fc);
+}

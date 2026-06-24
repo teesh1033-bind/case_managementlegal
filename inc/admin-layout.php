@@ -173,7 +173,8 @@ document.addEventListener("DOMContentLoaded", function () {
         searchForm.innerHTML = ""
             + "<div class=\"input-group\">"
             + "<span class=\"input-group-text text-body\"><i class=\"fas fa-search\" aria-hidden=\"true\"></i></span>"
-            + "<input type=\"search\" name=\"q\" class=\"form-control\" placeholder=\"Search...\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"Search\">"
+            + "<input type=\"search\" name=\"q\" id=\"lawyerNavbarSearchInput\" class=\"form-control\" placeholder=\"Search...\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"Search\">"
+            + "<button type=\"button\" class=\"lp-lawyer-search-reset-btn\" data-lawyer-search-reset=\"lawyerNavbarSearchInput\" data-clear-url-param=\"q\" aria-label=\"Reset search\">Reset</button>"
             + "</div>";
 
         var searchInput = searchForm.querySelector("input[name=\"q\"]");
@@ -328,7 +329,7 @@ function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
         legalpro_admin_display_name(),
         'Administrator',
         [],
-        'dashboard.php',
+        'admin-notifications.php',
         'admin-logout.php',
         'profile.php',
         '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
@@ -351,7 +352,7 @@ function legalpro_render_admin_notification_dropdown(): string
         . '<div class="text-muted text-sm p-3">Loading…</div>'
         . '</div>'
         . '<div class="legalpro-notif-panel__foot">'
-        . '<a href="dashboard.php" class="legalpro-notif-panel__view-all">View dashboard</a>'
+        . '<a href="admin-notifications.php" class="legalpro-notif-panel__view-all">View all</a>'
         . '</div>'
         . '</div>'
         . '<template id="adminNotifEmptyTpl">'
@@ -375,7 +376,7 @@ function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
         $displayName,
         'Lawyer',
         $notifications,
-        'lawyer-appointments.php',
+        'lawyer-notifications.php',
         'lawyer-logout.php',
         'lawyer-profile.php',
         '<li><a class="dropdown-item" href="lawyer-settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>'
@@ -397,7 +398,7 @@ function legalpro_render_client_header_utilities(?PDO $pdo = null): string
         $displayName,
         $clientLabel,
         $notifications,
-        'client-appointments.php',
+        'client-notifications.php',
         'client-logout.php',
         'client-profile.php',
         '<li><a class="dropdown-item" href="client-settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars($settingsLabel) . '</a></li>',
@@ -411,8 +412,7 @@ function legalpro_render_client_notification_dropdown(): string
     $markAll = function_exists('client_t') ? client_t('notifications.mark_all_read') : 'Mark all read';
     $title = function_exists('client_t') ? client_t('notifications.title') : 'Notifications';
     $empty = function_exists('client_t') ? client_t('notifications.empty') : 'No notifications yet';
-    $showMore = function_exists('client_t') ? client_t('notifications.show_more') : 'Show more';
-    $showLess = function_exists('client_t') ? client_t('notifications.show_less') : 'Show less';
+    $viewAll = function_exists('client_t') ? client_t('notifications.view_all') : 'View all';
     $unreadHint = htmlspecialchars(
         function_exists('client_t') ? client_t('notifications.unread_hint') : legalpro_notification_unread_hint(),
         ENT_QUOTES,
@@ -428,9 +428,8 @@ function legalpro_render_client_notification_dropdown(): string
         . '<div class="legalpro-notif-panel__body" id="clientNotifList">'
         . '<div class="text-muted text-sm p-3">Loading…</div>'
         . '</div>'
-        . '<div class="legalpro-notif-panel__foot legalpro-client-notif-dropdown__foot" id="clientNotifFoot" hidden>'
-        . '<button type="button" class="legalpro-notif-panel__view-all legalpro-client-notif-dropdown__toggle" id="clientNotifShowMore" data-show-more="' . htmlspecialchars($showMore) . '" data-show-less="' . htmlspecialchars($showLess) . '">'
-        . htmlspecialchars($showMore) . '</button>'
+        . '<div class="legalpro-notif-panel__foot">'
+        . '<a href="client-notifications.php" class="legalpro-notif-panel__view-all">' . htmlspecialchars($viewAll) . '</a>'
         . '</div>'
         . '</div>'
         . '<template id="clientNotifEmptyTpl">'
@@ -481,7 +480,7 @@ function legalpro_format_case_fee($amount): string
 {
     $value = is_numeric($amount) ? (float) $amount : 0.0;
 
-    return '£ ' . number_format($value, 2);
+    return function_exists('formatCurrency') ? formatCurrency($value) : number_format($value, 2);
 }
 
 function legalpro_case_priority_badge(string $priority): string
@@ -690,6 +689,9 @@ function legalpro_document_file_icon_meta(string $filename): array
             return ['icon' => 'file-spreadsheet', 'accent' => 'success'];
         case 'txt':
             return ['icon' => 'file-text', 'accent' => 'dark'];
+        case 'html':
+        case 'htm':
+            return ['icon' => 'file-text', 'accent' => 'info'];
         default:
             return ['icon' => 'file', 'accent' => 'dark'];
     }
@@ -699,7 +701,7 @@ function legalpro_document_file_icon_wrap(string $filename, string $extraClass =
 {
     $meta = legalpro_document_file_icon_meta($filename);
     $class = 'dashboard-stat-icon-wrap dashboard-stat-icon-wrap--' . $meta['accent']
-        . ' document-item-icon flex-shrink-0 me-3';
+        . ' document-item-icon legalpro-doc-icon flex-shrink-0 me-3';
     if (trim($extraClass) !== '') {
         $class .= ' ' . trim($extraClass);
     }

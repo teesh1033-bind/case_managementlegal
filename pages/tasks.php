@@ -5,6 +5,7 @@ require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/task_helpers.php';
 
 ensure_task_support_schema($pdo);
+ensure_task_comment_files_schema($pdo);
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -14,6 +15,31 @@ if (!isset($_SESSION['lawyer_id'])) {
 
 $lawyerId = $_SESSION['lawyer_id'];
 $lawyerName = $_SESSION['lawyer_name'];
+$minDueDate = date('Y-m-d');
+
+if (isset($_GET['action']) && $_GET['action'] === 'download_task_file') {
+    $fileId = isset($_GET['file_id']) ? (int) $_GET['file_id'] : 0;
+    $fileRow = lawyer_get_task_comment_file($pdo, $fileId, $lawyerId);
+    if (!$fileRow) {
+        http_response_code(404);
+        exit('File not found.');
+    }
+
+    $absolutePath = realpath(__DIR__ . '/../' . ltrim((string) $fileRow['stored_path'], '/'));
+    $uploadsRoot = realpath(__DIR__ . '/../uploads');
+    if ($absolutePath === false || $uploadsRoot === false || strpos($absolutePath, $uploadsRoot) !== 0 || !is_file($absolutePath)) {
+        http_response_code(404);
+        exit('File not found.');
+    }
+
+    $downloadName = (string) ($fileRow['original_name'] ?? 'attachment');
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . str_replace('"', '', $downloadName) . '"');
+    header('Content-Length: ' . filesize($absolutePath));
+    readfile($absolutePath);
+    exit;
+}
+
 $taskForm = [
     'task_id' => 0,
     'case_id' => 0,
@@ -146,6 +172,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if ($taskTitle === '' || $caseId <= 0 || !in_array($taskPriority, ['low', 'medium', 'high'], true)) {
         $message = 'Please provide a valid title, case, and priority.';
         $messageType = 'danger';
+    } elseif ($dueDate !== '' && $dueDate < $minDueDate && $taskId <= 0) {
+        $message = 'Due date cannot be in the past.';
+        $messageType = 'danger';
     } else {
         try {
             // Only allow task changes for cases assigned to the logged-in lawyer.
@@ -160,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 require_once __DIR__ . '/../lib/case_events.php';
 
                 if ($taskId > 0) {
-                    $existingStmt = $pdo->prepare("SELECT id, case_id, status, title FROM tasks WHERE id = ?");
+                    $existingStmt = $pdo->prepare("SELECT id, case_id, status, title, task_comment FROM tasks WHERE id = ?");
                     $existingStmt->execute([$taskId]);
                     $existingTask = $existingStmt->fetch();
 
@@ -168,6 +197,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         $message = 'Task not found or access denied.';
                         $messageType = 'danger';
                     } else {
+                        $hasCommentFile = isset($_FILES['task_comment_file'])
+                            && (int) ($_FILES['task_comment_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+                        if ($taskComment !== '') {
+                            $commentToSave = $taskComment;
+                        } elseif ($hasCommentFile) {
+                            $commentToSave = trim((string) ($existingTask['task_comment'] ?? '')) !== ''
+                                ? (string) $existingTask['task_comment']
+                                : null;
+                        } else {
+                            $commentToSave = null;
+                        }
+
+                        $savedTaskId = $taskId;
                         $updateStmt = $pdo->prepare("
                             UPDATE tasks
                             SET case_id = ?, title = ?, description = ?, priority = ?, due_date = ?, task_comment = ?
@@ -179,9 +221,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             $taskDescription,
                             $taskPriority,
                             $dueDate ?: null,
-                            $taskComment !== '' ? $taskComment : null,
+                            $commentToSave,
                             $taskId,
                         ]);
+
+                        if ($hasCommentFile) {
+                            $uploadResult = lawyer_save_task_comment_file($pdo, $savedTaskId, $lawyerId, $_FILES['task_comment_file']);
+                            if (!$uploadResult['ok']) {
+                                throw new RuntimeException((string) ($uploadResult['error'] ?? 'Unable to upload attachment.'));
+                            }
+                        }
 
                         $message = 'Task updated successfully!';
                         $messageType = 'success';
@@ -212,6 +261,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         $dueDate ?: null,
                         $taskComment !== '' ? $taskComment : null,
                     ]);
+                    $savedTaskId = (int) $pdo->lastInsertId();
+
+                    if (isset($_FILES['task_comment_file']) && (int) ($_FILES['task_comment_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                        $uploadResult = lawyer_save_task_comment_file($pdo, $savedTaskId, $lawyerId, $_FILES['task_comment_file']);
+                        if (!$uploadResult['ok']) {
+                            throw new RuntimeException((string) ($uploadResult['error'] ?? 'Unable to upload attachment.'));
+                        }
+                    }
 
                     $message = 'Task added successfully!';
                     $messageType = 'success';
@@ -235,6 +292,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } catch (PDOException $e) {
             $message = 'Error saving task: ' . htmlspecialchars($e->getMessage());
             $messageType = 'danger';
+        } catch (RuntimeException $e) {
+            $message = htmlspecialchars($e->getMessage());
+            $messageType = 'danger';
         }
     }
 }
@@ -242,7 +302,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Get filter parameters
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
 $priorityFilter = isset($_GET['priority']) ? $_GET['priority'] : 'all';
+$dueFilter = isset($_GET['due']) ? strtolower(trim((string) $_GET['due'])) : 'all';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$taskDueCounts = lawyer_task_due_counts($pdo, $lawyerId);
 
 // Build query to get tasks for this lawyer
 $query = "
@@ -275,6 +337,14 @@ if ($search !== '') {
     $params[] = $searchParam;
 }
 
+[$dueSql, $dueParams] = lawyer_task_due_filter_sql($dueFilter);
+if ($dueSql !== '') {
+    $query .= $dueSql;
+    foreach ($dueParams as $dueParam) {
+        $params[] = $dueParam;
+    }
+}
+
 $query .= " ORDER BY
     CASE t.priority
         WHEN 'high' THEN 1
@@ -293,6 +363,13 @@ try {
     $message = 'Error loading tasks: ' . htmlspecialchars($e->getMessage());
     $messageType = 'danger';
 }
+
+$taskAttachmentsById = lawyer_fetch_task_comment_files(
+    $pdo,
+    array_map(static function ($task) {
+        return (int) ($task['id'] ?? 0);
+    }, $tasks)
+);
 
 // Cases this lawyer can create tasks for
 $lawyerCases = [];
@@ -322,6 +399,34 @@ if ($message) {
     </div>';
 }
 
+$dueAlertsHtml = '';
+if ($taskDueCounts['overdue'] > 0 || $taskDueCounts['today'] > 0 || $taskDueCounts['this_week'] > 0) {
+    $dueAlertsHtml = '<div class="lt-task-due-alerts mb-4"><div class="card border-0 shadow-sm"><div class="card-body p-3">';
+    $dueAlertsHtml .= '<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">';
+    $dueAlertsHtml .= '<h6 class="mb-0">Due date alerts</h6>';
+    $dueAlertsHtml .= '<a href="' . htmlspecialchars(lawyer_build_tasks_filter_url(['due' => 'all'])) . '" class="text-xs text-primary font-weight-bold">Show all tasks</a>';
+    $dueAlertsHtml .= '</div><div class="d-flex flex-wrap gap-2">';
+    if ($taskDueCounts['overdue'] > 0) {
+        $active = $dueFilter === 'overdue' ? ' lt-task-due-chip--active' : '';
+        $dueAlertsHtml .= '<a class="lt-task-due-chip lt-task-due-chip--overdue' . $active . '" href="'
+            . htmlspecialchars(lawyer_build_tasks_filter_url(['due' => 'overdue'])) . '">'
+            . (int) $taskDueCounts['overdue'] . ' overdue</a>';
+    }
+    if ($taskDueCounts['today'] > 0) {
+        $active = $dueFilter === 'today' ? ' lt-task-due-chip--active' : '';
+        $dueAlertsHtml .= '<a class="lt-task-due-chip lt-task-due-chip--today' . $active . '" href="'
+            . htmlspecialchars(lawyer_build_tasks_filter_url(['due' => 'today'])) . '">'
+            . (int) $taskDueCounts['today'] . ' due today</a>';
+    }
+    if ($taskDueCounts['this_week'] > 0) {
+        $active = $dueFilter === 'this_week' ? ' lt-task-due-chip--active' : '';
+        $dueAlertsHtml .= '<a class="lt-task-due-chip lt-task-due-chip--week' . $active . '" href="'
+            . htmlspecialchars(lawyer_build_tasks_filter_url(['due' => 'this_week'])) . '">'
+            . (int) $taskDueCounts['this_week'] . ' this week</a>';
+    }
+    $dueAlertsHtml .= '</div></div></div></div>';
+}
+
 $tasksListHtml = '';
 if (empty($tasks)) {
     $tasksListHtml = '<div class="text-center py-5 px-4">
@@ -334,24 +439,32 @@ if (empty($tasks)) {
         $statusBadge = legalpro_task_status_badge((string) ($task['status'] ?? ''));
         $priorityBadge = legalpro_task_priority_badge((string) ($task['priority'] ?? 'medium'));
         $dueLabel = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
-        $isOverdue = $task['due_date'] && strtotime($task['due_date']) < time() && $task['status'] !== 'completed';
-        $dueClass = $isOverdue ? 'lt-task-row__due lt-task-row__due--overdue' : 'lt-task-row__due';
+        $dueState = lawyer_task_due_state($task['due_date'] ?? null, (string) ($task['status'] ?? ''));
+        $dueAlertBadge = lawyer_render_task_due_alert_badge($dueState);
+        $rowStateClass = $dueState !== 'none' && $dueState !== 'upcoming' ? ' lt-task-row--' . str_replace('_', '-', $dueState) : '';
+        $dueClass = $dueState === 'overdue' ? 'lt-task-row__due lt-task-row__due--overdue' : 'lt-task-row__due';
         $taskTitleJs = htmlspecialchars(json_encode($task['title']), ENT_QUOTES, 'UTF-8');
         $taskDescriptionJs = htmlspecialchars(json_encode((string) $task['description']), ENT_QUOTES, 'UTF-8');
         $taskPriorityJs = htmlspecialchars(json_encode($task['priority']), ENT_QUOTES, 'UTF-8');
         $taskDueDateJs = htmlspecialchars(json_encode((string) $task['due_date']), ENT_QUOTES, 'UTF-8');
         $clientName = htmlspecialchars(trim($task['client_first_name'] . ' ' . $task['client_last_name']));
         $caseNumber = 'C-' . str_pad((string) $task['case_id'], 4, '0', STR_PAD_LEFT);
+        $taskFiles = $taskAttachmentsById[(int) $task['id']] ?? [];
+        $commentFilesHtml = lawyer_render_task_comment_files_html($taskFiles);
 
         $tasksListHtml .= '
-        <div class="lt-task-row">
+        <div class="lt-task-row' . $rowStateClass . '">
             <div class="row align-items-center g-3">
                 <div class="col-lg-6">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">' . $dueAlertBadge . '</div>
                     <h6 class="lt-task-row__title mb-1">' . htmlspecialchars($task['title']) . '</h6>
                     <p class="lt-task-row__meta mb-1">' . htmlspecialchars($task['case_title']) . ' (' . $caseNumber . ')</p>
                     <p class="lt-task-row__meta mb-0">Client: ' . $clientName . '</p>';
         if (!empty($task['task_comment'])) {
-            $tasksListHtml .= '<p class="lt-task-row__meta mb-0 mt-1"><span class="text-muted">Comment:</span> ' . htmlspecialchars($task['task_comment']) . '</p>';
+            $tasksListHtml .= '<p class="lt-task-row__meta mb-0 mt-1"><span class="text-muted">Comment:</span> ' . nl2br(htmlspecialchars($task['task_comment'])) . '</p>';
+        }
+        if ($commentFilesHtml !== '') {
+            $tasksListHtml .= '<div class="mt-2">' . $commentFilesHtml . '</div>';
         }
         $tasksListHtml .= '
                 </div>
@@ -442,6 +555,87 @@ $html = <<<'HTML'
             color: #ea0606;
             font-weight: 700;
         }
+        .lawyer-tasks-page .lt-task-row--overdue {
+            border-color: rgba(234, 6, 6, 0.35);
+            box-shadow: inset 0 0 0 1px rgba(234, 6, 6, 0.08);
+        }
+        .lawyer-tasks-page .lt-task-row--today {
+            border-color: rgba(251, 140, 0, 0.35);
+        }
+        .lawyer-tasks-page .lt-task-row--this-week {
+            border-color: rgba(94, 114, 228, 0.28);
+        }
+        .lawyer-tasks-page .lt-task-due-alert {
+            border-radius: 999px;
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            padding: 0.2rem 0.55rem;
+            text-transform: uppercase;
+        }
+        .lawyer-tasks-page .lt-task-due-alert--overdue {
+            background: rgba(245, 54, 92, 0.12);
+            color: #f5365c;
+        }
+        .lawyer-tasks-page .lt-task-due-alert--today {
+            background: rgba(251, 140, 0, 0.14);
+            color: #c45c00;
+        }
+        .lawyer-tasks-page .lt-task-due-alert--week {
+            background: rgba(94, 114, 228, 0.12);
+            color: #5e72e4;
+        }
+        .lawyer-tasks-page .lt-task-due-chip {
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 0.4rem 0.8rem;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .lawyer-tasks-page .lt-task-due-chip:hover {
+            transform: translateY(-1px);
+        }
+        .lawyer-tasks-page .lt-task-due-chip--overdue {
+            background: rgba(245, 54, 92, 0.12);
+            color: #f5365c;
+        }
+        .lawyer-tasks-page .lt-task-due-chip--today {
+            background: rgba(251, 140, 0, 0.14);
+            color: #c45c00;
+        }
+        .lawyer-tasks-page .lt-task-due-chip--week {
+            background: rgba(94, 114, 228, 0.12);
+            color: #5e72e4;
+        }
+        .lawyer-tasks-page .lt-task-due-chip--active {
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        .lawyer-tasks-page .lt-task-comment-files {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .lawyer-tasks-page .lt-task-comment-file {
+            align-items: center;
+            background: rgba(94, 114, 228, 0.08);
+            border: 1px solid rgba(94, 114, 228, 0.16);
+            border-radius: 0.45rem;
+            color: #324cdd;
+            display: inline-flex;
+            font-size: 0.78rem;
+            font-weight: 600;
+            max-width: 100%;
+            padding: 0.35rem 0.55rem;
+            text-decoration: none;
+            width: fit-content;
+        }
+        .lawyer-tasks-page .lt-task-comment-file:hover {
+            background: rgba(94, 114, 228, 0.14);
+            color: #243bcc;
+        }
         .lawyer-tasks-page .lt-task-row__badges .ca-status-pill {
             min-width: 5.5rem;
             text-align: center;
@@ -528,16 +722,27 @@ $html = <<<'HTML'
         <div class="container-fluid py-4">
             {MESSAGE}
 
+            {DUE_ALERTS}
+
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body p-3">
-                            <form method="GET" class="row align-items-end">
-                                <div class="col-md-4">
+                            <form method="GET" class="row align-items-end g-3">
+                                <div class="col-lg-3 col-md-6">
                                     <label class="form-label">Search Tasks</label>
                                     <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="Task title, case or client">
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-lg-2 col-md-3">
+                                    <label class="form-label">Due Date</label>
+                                    <select class="form-select" name="due">
+                                        <option value="all"{DUE_ALL}>All due dates</option>
+                                        <option value="overdue"{DUE_OVERDUE}>Overdue</option>
+                                        <option value="today"{DUE_TODAY}>Due today</option>
+                                        <option value="this_week"{DUE_THIS_WEEK}>Due this week</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-2 col-md-3">
                                     <label class="form-label">Status</label>
                                     <select class="form-select" name="status">
                                         <option value="all"{STATUS_ALL}>All Status</option>
@@ -547,7 +752,7 @@ $html = <<<'HTML'
                                         <option value="cancelled"{STATUS_CANCELLED}>Cancelled</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-lg-2 col-md-3">
                                     <label class="form-label">Priority</label>
                                     <select class="form-select" name="priority">
                                         <option value="all"{PRIORITY_ALL}>All Priorities</option>
@@ -556,11 +761,14 @@ $html = <<<'HTML'
                                         <option value="low"{PRIORITY_LOW}>Low</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label d-block invisible">Filter</label>
-                                    <button type="submit" class="btn btn-primary w-100 mb-0">Filter</button>
+                                <div class="col-lg-2 col-md-3">
+                                    <label class="form-label d-block invisible">Actions</label>
+                                    <div class="lp-lawyer-filter-actions">
+                                        <button type="submit" class="btn btn-primary mb-0">Filter</button>
+                                        <a href="tasks.php" class="btn btn-outline-secondary mb-0">Reset</a>
+                                    </div>
                                 </div>
-                                <div class="col-md-2 text-end">
+                                <div class="col-lg-1 col-md-12 text-lg-end">
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_TASKS} tasks</p>
                                 </div>
                             </form>
@@ -613,7 +821,7 @@ $html = <<<'HTML'
                     <h5 class="modal-title" id="taskModalTitle">Add Task</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     <div class="modal-body">
                         <input type="hidden" name="action" value="save_task">
                         <input type="hidden" name="task_id" id="task_id" value="{TASK_FORM_ID}">
@@ -640,7 +848,7 @@ $html = <<<'HTML'
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Due Date</label>
-                                <input type="date" class="form-control" name="due_date" id="task_due_date" value="{TASK_FORM_DUE_DATE}">
+                                <input type="date" class="form-control" name="due_date" id="task_due_date" value="{TASK_FORM_DUE_DATE}" min="{MIN_DUE_DATE}">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -656,6 +864,11 @@ $html = <<<'HTML'
                             </div>
                             <div id="task_comment_wrap" hidden>
                                 <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Your comment">{TASK_FORM_COMMENT}</textarea>
+                                <div class="mt-3">
+                                    <label class="form-label mb-1">Attachment (optional)</label>
+                                    <input type="file" class="form-control" name="task_comment_file" id="task_comment_file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif">
+                                    <p class="task-comment-hint mb-0">PDF, Word, text or image up to 5 MB.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -673,6 +886,16 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
+        var taskMinDueDate = {MIN_DUE_DATE_JSON};
+
+        function applyTaskDueDateMin() {
+            var dueInput = document.getElementById('task_due_date');
+            if (!dueInput || !taskMinDueDate) {
+                return;
+            }
+            dueInput.min = taskMinDueDate;
+        }
+
         function setTaskCommentVisible(show) {
             var wrap = document.getElementById('task_comment_wrap');
             var toggle = document.getElementById('task_comment_toggle');
@@ -691,8 +914,10 @@ $html = <<<'HTML'
             document.getElementById('task_title').value = '';
             document.getElementById('task_description').value = '';
             document.getElementById('task_comment').value = '';
+            document.getElementById('task_comment_file').value = '';
             document.getElementById('task_priority').value = 'medium';
             document.getElementById('task_due_date').value = '';
+            applyTaskDueDateMin();
             document.getElementById('task_case_id').value = '';
             setTaskCommentVisible(false);
             new bootstrap.Modal(document.getElementById('taskModal')).show();
@@ -706,8 +931,11 @@ $html = <<<'HTML'
             document.getElementById('task_title').value = title || '';
             document.getElementById('task_description').value = description || '';
             document.getElementById('task_comment').value = '';
+            document.getElementById('task_comment_file').value = '';
             document.getElementById('task_priority').value = priority || 'medium';
             document.getElementById('task_due_date').value = dueDate || '';
+            applyTaskDueDateMin();
+            setTaskCommentVisible(false);
             new bootstrap.Modal(document.getElementById('taskModal')).show();
         }
 
@@ -730,6 +958,7 @@ $replacements = [
     '{ICON_CARD_HEADER}' => $iconCardHeader,
     '{NAVIGATION}' => $navHtml,
     '{MESSAGE}' => $messageHtml,
+    '{DUE_ALERTS}' => $dueAlertsHtml,
     '{TASKS_LIST}' => $tasksListHtml,
     '{SEARCH_VALUE}' => htmlspecialchars($search),
     '{TOTAL_TASKS}' => count($tasks),
@@ -739,11 +968,13 @@ $replacements = [
     '{TASK_FORM_DESCRIPTION}' => htmlspecialchars($taskForm['task_description']),
     '{TASK_FORM_COMMENT}' => htmlspecialchars($taskForm['task_comment']),
     '{TASK_FORM_DUE_DATE}' => htmlspecialchars($taskForm['due_date']),
+    '{MIN_DUE_DATE}' => htmlspecialchars($minDueDate),
+    '{MIN_DUE_DATE_JSON}' => json_encode($minDueDate),
     '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
     '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
     '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
     '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad
-        ? 'setTimeout(function(){ setTaskCommentVisible(' . ($taskForm['task_comment'] !== '' ? 'true' : 'false') . '); new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);'
+        ? 'setTimeout(function(){ setTaskCommentVisible(true); new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);'
         : '',
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
@@ -754,6 +985,10 @@ $replacements = [
     '{PRIORITY_HIGH}' => $priorityFilter === 'high' ? ' selected' : '',
     '{PRIORITY_MEDIUM}' => $priorityFilter === 'medium' ? ' selected' : '',
     '{PRIORITY_LOW}' => $priorityFilter === 'low' ? ' selected' : '',
+    '{DUE_ALL}' => $dueFilter === 'all' ? ' selected' : '',
+    '{DUE_OVERDUE}' => $dueFilter === 'overdue' ? ' selected' : '',
+    '{DUE_TODAY}' => $dueFilter === 'today' ? ' selected' : '',
+    '{DUE_THIS_WEEK}' => $dueFilter === 'this_week' ? ' selected' : '',
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

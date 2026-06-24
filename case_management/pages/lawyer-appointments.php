@@ -460,15 +460,22 @@ foreach ($appointments as $row) {
     if ($status === 'approved') {
         $status = 'accepted';
     }
+    $caseId = (int) ($row['case_id'] ?? 0);
     $caseTitle = $row['case_title'] ?: 'Appointment';
+    $caseDisplay = ($caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) . ' · ' : '') . $caseTitle;
     $clientName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
     $clientEmail = trim((string) ($row['email'] ?? ''));
     $notes = trim((string) ($row['notes'] ?? ''));
     $startsLabel = date('M j, Y g:i A', strtotime($row['starts_at']));
+    $durationMinutes = lawyerAppointmentDurationMinutes($row);
+    $rescheduleDate = date('Y-m-d', strtotime($row['starts_at']));
+    $rescheduleTime = date('H:i', strtotime($row['starts_at']));
+    $rescheduleStatus = ($status === 'accepted') ? 'accepted' : 'pending';
+    $canReschedule = !in_array($status, ['accepted', 'rejected'], true);
 
     $appointmentCalendarEvents[] = [
         'id' => (string) $row['id'],
-        'title' => $caseTitle,
+        'title' => $caseDisplay,
         'start' => $row['starts_at'],
         'end' => !empty($row['ends_at']) ? $row['ends_at'] : null,
         'backgroundColor' => 'transparent',
@@ -481,6 +488,12 @@ foreach ($appointments as $row) {
             'status' => $status,
             'statusLabel' => ucfirst($status),
             'appointmentId' => (int) $row['id'],
+            'caseId' => $caseId,
+            'durationMinutes' => $durationMinutes,
+            'rescheduleDate' => $rescheduleDate,
+            'rescheduleTime' => $rescheduleTime,
+            'rescheduleStatus' => $rescheduleStatus,
+            'canReschedule' => $canReschedule,
             'startsLabel' => $startsLabel,
             'searchHay' => strtolower(implode(' ', array_filter([
                 $caseTitle,
@@ -798,6 +811,7 @@ $html = <<<'HTML'
                                     </span>
                                     <input type="search" id="laCalSearchInput" class="la-cal-search-input"
                                            placeholder="Search by matter, client, date, status…" autocomplete="off">
+                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laCalSearchInput" aria-label="Reset search">Reset</button>
                                 </div>
                                 <div class="la-cal-search-results" id="laCalSearchResults" hidden></div>
                             </div>
@@ -975,6 +989,40 @@ $html = <<<'HTML'
         </div>
     </div>
 
+    <!-- Appointment detail modal -->
+    <div class="modal fade" id="lawyerAppointmentModal" tabindex="-1" aria-hidden="true" style="z-index:99999;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background:linear-gradient(135deg,var(--legalpro-theme-primary,#5e72e4) 0%,#825ee4 100%);">
+                    <h6 class="modal-title text-white font-weight-bold" id="lawyerApptModalTitle">Appointment</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label>Client</label>
+                            <p id="lawyerApptModalClient" class="mb-0"></p>
+                        </div>
+                        <div class="col-6">
+                            <label>Status</label>
+                            <p id="lawyerApptModalStatus" class="mb-0"></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Scheduled time</label>
+                        <p id="lawyerApptModalTime" class="mb-0"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label>Notes</label>
+                        <div id="lawyerApptModalNotes" class="appointment-modal-notes p-3 rounded"></div>
+                    </div>
+                    <button type="button" id="lawyerApptModalRescheduleBtn" class="btn btn-sm bg-gradient-primary appointment-modal-edit-btn w-100 mb-0" style="display:none;">Reschedule appointment</button>
+                    <a id="lawyerApptModalCaseLink" href="#" class="btn btn-sm btn-outline-primary w-100 mb-0 mt-2" style="display:none;">View case</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script>
         var lawyerAppointmentEvents = {APPOINTMENT_CALENDAR_EVENTS_JSON};
@@ -1001,6 +1049,152 @@ $html = <<<'HTML'
             setTimeout(function() {
                 row.classList.remove('table-warning');
             }, 2200);
+        }
+
+        function fmtLawyerApptDT(value) {
+            if (!value) {
+                return '—';
+            }
+            var d = value instanceof Date ? value : new Date(value);
+            if (isNaN(d.getTime())) {
+                return '—';
+            }
+            var dd = String(d.getDate()).padStart(2, '0');
+            var mm = String(d.getMonth() + 1).padStart(2, '0');
+            var yy = d.getFullYear();
+            var h = String(d.getHours()).padStart(2, '0');
+            var mi = String(d.getMinutes()).padStart(2, '0');
+            return dd + '/' + mm + '/' + yy + ' at ' + h + ':' + mi;
+        }
+
+        function openLawyerAppointmentModal(event) {
+            if (!event) {
+                return;
+            }
+            var p = event.extendedProps || {};
+            document.getElementById('lawyerApptModalTitle').textContent = event.title || 'Appointment';
+            document.getElementById('lawyerApptModalClient').textContent = p.client || '—';
+            document.getElementById('lawyerApptModalStatus').textContent = p.statusLabel || p.status || 'Pending';
+            document.getElementById('lawyerApptModalNotes').textContent = p.notes || 'No notes added.';
+
+            var start = event.start instanceof Date ? event.start : new Date(event.start);
+            var timeText = fmtLawyerApptDT(start);
+            if (event.end) {
+                var end = event.end instanceof Date ? event.end : new Date(event.end);
+                timeText += ' — ' + fmtLawyerApptDT(end);
+            }
+            document.getElementById('lawyerApptModalTime').textContent = timeText;
+
+            var rescheduleBtn = document.getElementById('lawyerApptModalRescheduleBtn');
+            var caseLink = document.getElementById('lawyerApptModalCaseLink');
+            if (p.canReschedule) {
+                rescheduleBtn.style.display = '';
+                rescheduleBtn.onclick = function() {
+                    var detailModal = bootstrap.Modal.getInstance(document.getElementById('lawyerAppointmentModal'));
+                    if (detailModal) {
+                        detailModal.hide();
+                    }
+                    openRescheduleModal(
+                        p.appointmentId || parseInt(event.id, 10),
+                        p.rescheduleDate || '',
+                        p.rescheduleTime || '',
+                        p.rescheduleStatus || 'pending',
+                        p.durationMinutes || 60
+                    );
+                };
+            } else {
+                rescheduleBtn.style.display = 'none';
+                rescheduleBtn.onclick = null;
+            }
+
+            if (p.caseId) {
+                caseLink.style.display = '';
+                caseLink.href = 'lawyer-case-view.php?id=' + encodeURIComponent(p.caseId);
+            } else {
+                caseLink.style.display = 'none';
+            }
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('lawyerAppointmentModal')).show();
+        }
+
+        function openLawyerAppointmentModalById(id) {
+            var match = lawyerAppointmentEvents.find(function(ev) {
+                return String(ev.id) === String(id);
+            });
+            if (!match) {
+                return;
+            }
+            openLawyerAppointmentModal({
+                title: match.title,
+                start: match.start,
+                end: match.end,
+                id: match.id,
+                extendedProps: match.extendedProps || {}
+            });
+        }
+
+        function removeLawyerDayEventPicker() {
+            var existing = document.querySelector('.legalpro-cal-day-picker');
+            if (existing) {
+                existing.remove();
+            }
+        }
+
+        function showLawyerDayEventPicker(events, clickEvent, onSelect) {
+            removeLawyerDayEventPicker();
+            if (!events || !events.length) {
+                return;
+            }
+            if (events.length === 1) {
+                onSelect(events[0]);
+                return;
+            }
+
+            var picker = document.createElement('div');
+            picker.className = 'legalpro-cal-day-picker';
+            picker.setAttribute('role', 'menu');
+
+            var html = '<div class="legalpro-cal-day-picker__head">Select an appointment</div><ul class="legalpro-cal-day-picker__list">';
+            events.forEach(function(ev, index) {
+                var time = '';
+                if (ev.start) {
+                    var start = ev.start instanceof Date ? ev.start : new Date(ev.start);
+                    time = String(start.getHours()).padStart(2, '0') + ':' + String(start.getMinutes()).padStart(2, '0');
+                }
+                html += '<li><button type="button" class="legalpro-cal-day-picker__item" data-index="' + index + '">';
+                html += '<span class="legalpro-cal-day-picker__time">' + escapeHtmlLa(time) + '</span>';
+                html += '<span class="legalpro-cal-day-picker__title">' + escapeHtmlLa(ev.title || 'Appointment') + '</span>';
+                html += '</button></li>';
+            });
+            html += '</ul>';
+            picker.innerHTML = html;
+            document.body.appendChild(picker);
+
+            var rect = picker.getBoundingClientRect();
+            var left = Math.min(clickEvent.clientX, window.innerWidth - rect.width - 12);
+            var top = Math.min(clickEvent.clientY, window.innerHeight - rect.height - 12);
+            picker.style.left = Math.max(12, left) + 'px';
+            picker.style.top = Math.max(12, top) + 'px';
+
+            picker.addEventListener('click', function(e) {
+                var btn = e.target.closest('[data-index]');
+                if (!btn) {
+                    return;
+                }
+                var idx = parseInt(btn.getAttribute('data-index'), 10);
+                removeLawyerDayEventPicker();
+                onSelect(events[idx]);
+            });
+
+            setTimeout(function() {
+                function outsideClick(e) {
+                    if (!picker.contains(e.target)) {
+                        removeLawyerDayEventPicker();
+                        document.removeEventListener('click', outsideClick);
+                    }
+                }
+                document.addEventListener('click', outsideClick);
+            }, 0);
         }
 
         function initLawyerAppointmentsCalendar() {
@@ -1033,7 +1227,7 @@ $html = <<<'HTML'
                     if (!btn) {
                         return;
                     }
-                    focusLawyerAppointmentRow(parseInt(btn.getAttribute('data-appointment-id'), 10));
+                    openLawyerAppointmentModalById(parseInt(btn.getAttribute('data-appointment-id'), 10));
                 });
             }
 
@@ -1056,12 +1250,31 @@ $html = <<<'HTML'
                 },
                 events: lawyerAppointmentEvents,
                 eventContent: renderAppointmentEvent,
+                dateClick: function(info) {
+                    if (window.legalproHandleCalendarDateClick) {
+                        window.legalproHandleCalendarDateClick(info, function(event, allEvents, clickInfo) {
+                            var dayEvents = allEvents && allEvents.length ? allEvents : [event];
+                            if (dayEvents.length > 1 && clickInfo && clickInfo.jsEvent) {
+                                showLawyerDayEventPicker(dayEvents, clickInfo.jsEvent, openLawyerAppointmentModal);
+                            } else {
+                                openLawyerAppointmentModal(event);
+                            }
+                        });
+                    }
+                },
+                dayCellDidMount: function(info) {
+                    if (window.legalproMountCalendarDayCell) {
+                        window.legalproMountCalendarDayCell(info);
+                    }
+                },
                 eventClick: function(info) {
                     info.jsEvent.preventDefault();
-                    var props = info.event.extendedProps || {};
-                    focusLawyerAppointmentRow(props.appointmentId || parseInt(info.event.id, 10));
+                    openLawyerAppointmentModal(info.event);
                 },
                 eventDidMount: function(info) {
+                    if (window.legalproMountCalendarEventClickable) {
+                        window.legalproMountCalendarEventClickable(info);
+                    }
                     var props = info.event.extendedProps || {};
                     var tip = info.event.title;
                     if (props.client) {
@@ -1140,7 +1353,7 @@ $html = <<<'HTML'
                 if (lawyerAppointmentsCalendar && start) {
                     lawyerAppointmentsCalendar.gotoDate(start);
                 }
-                focusLawyerAppointmentRow(id);
+                openLawyerAppointmentModalById(id);
                 hideResults();
             });
 
@@ -1157,14 +1370,12 @@ $html = <<<'HTML'
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
-<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
+    <script src="../assets/js/appointment-slot-window.js?v=2"></script>
     <script>
         const lawyerAvailabilityByDate = {LAWYER_AVAILABILITY_BY_DATE_JSON};
         const lawyerHasPublishedSchedule = {LAWYER_HAS_SCHEDULE_JSON};
         const NO_AVAILABILITY_ON_DATE_MSG = 'No available times on this date. Choose another date.';
-        const SLOT_DAY_START_MINUTES = 9 * 60;
-        const SLOT_DAY_END_MINUTES = 17 * 60 + 30;
 
         var rescheduleOriginalDate = '';
         var rescheduleOriginalTime = '';
@@ -1205,15 +1416,11 @@ $html = <<<'HTML'
                 return durationInput && parseInt(durationInput.value, 10) === 30 ? 30 : 60;
             }
 
-            function getStandardSlotTimes(durationMinutes) {
-                var times = [];
-                var lastStart = durationMinutes === 30 ? SLOT_DAY_END_MINUTES : SLOT_DAY_END_MINUTES - 30;
-                for (var t = SLOT_DAY_START_MINUTES; t <= lastStart; t += durationMinutes) {
-                    var h = Math.floor(t / 60);
-                    var m = t % 60;
-                    times.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
-                }
-                return times;
+            function getStandardSlotTimes(durationMinutes, dateValue) {
+                return LegalproAppointmentSlots.getStandardSlotTimes(durationMinutes, {
+                    slots: dateValue ? getSlotsForDate(dateValue) : [],
+                    hasPublishedSchedule: lawyerHasPublishedSchedule
+                });
             }
 
             function normalizeRescheduleSelectTime(timeValue) {
@@ -1354,7 +1561,7 @@ $html = <<<'HTML'
                 var hasBookable = false;
 
                 timeSelect.innerHTML = '<option value="">Select time</option>';
-                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                getStandardSlotTimes(durationMinutes, dateValue).forEach(function(slotValue) {
                     var option = document.createElement('option');
                     option.value = slotValue;
                     option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);
@@ -1447,7 +1654,7 @@ $html = <<<'HTML'
                 var hasBookable = false;
 
                 timeSelect.innerHTML = '<option value="">Select time</option>';
-                getStandardSlotTimes(durationMinutes).forEach(function(slotValue) {
+                getStandardSlotTimes(durationMinutes, dateValue).forEach(function(slotValue) {
                     var option = document.createElement('option');
                     option.value = slotValue;
                     option.textContent = formatSlotRangeLabel(slotValue, durationMinutes);

@@ -109,17 +109,20 @@ $html = <<<'HTML'
             text-transform: uppercase;
             opacity: 0.75;
             margin-bottom: 0.35rem;
+            color: #fff !important;
         }
         .lawyer-settings-page .cs-hero__title {
             font-size: 1.35rem;
             font-weight: 800;
             margin-bottom: 0.35rem;
+            color: #fff !important;
         }
         .lawyer-settings-page .cs-hero__sub {
             font-size: 0.875rem;
             opacity: 0.85;
             margin: 0;
             max-width: 36rem;
+            color: #fff !important;
         }
         .lawyer-settings-page .cs-hero__meta {
             display: flex;
@@ -127,6 +130,7 @@ $html = <<<'HTML'
             gap: 0.35rem;
             font-size: 0.8rem;
             opacity: 0.9;
+            color: #fff !important;
         }
         .lawyer-settings-page .cs-stats-grid {
             display: grid;

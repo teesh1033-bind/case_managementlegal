@@ -107,13 +107,13 @@ function logCommentAdded($pdo, $caseId, $commentType, $userId = null) {
 
 // Function to log invoice creation
 function logInvoiceCreated($pdo, $caseId, $invoiceNumber, $amount, $userId = null) {
-    $description = "Invoice {$invoiceNumber} created for $" . number_format($amount, 2);
+    $description = "Invoice {$invoiceNumber} created for " . formatCurrency((float) $amount);
     return logCaseEvent($pdo, $caseId, 'invoice_created', $description, null, $invoiceNumber, $userId);
 }
 
 // Function to log payment received
 function logPaymentReceived($pdo, $caseId, $amount, $method, $userId = null) {
-    $description = "Payment of $" . number_format($amount, 2) . " received via {$method}";
+    $description = "Payment of " . formatCurrency((float) $amount) . " received via {$method}";
     return logCaseEvent($pdo, $caseId, 'payment_received', $description, null, number_format($amount, 2), $userId);
 }
 

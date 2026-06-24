@@ -510,7 +510,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
         return $value !== $key ? $value : $fallback;
     };
 
-    $currentDigest = function_exists('getClientEmailDigest') ? getClientEmailDigest($clientId) : 'none';
     $displayName = htmlspecialchars(trim((string) ($snapshot['display_name'] ?? '')) ?: 'Client');
     $email = htmlspecialchars(trim((string) ($snapshot['email'] ?? '')) ?: '—');
     $phone = htmlspecialchars(trim((string) ($snapshot['phone'] ?? '')) ?: '—');
@@ -526,13 +525,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
     $outstandingLabel = function_exists('formatCurrency')
         ? formatCurrency($outstanding)
         : '$' . number_format($outstanding, 2);
-
-    $digestLabels = [
-        'none' => $t('settings.digest_none', 'Off'),
-        'daily' => $t('settings.digest_daily', 'Daily'),
-        'weekly' => $t('settings.digest_weekly', 'Weekly'),
-    ];
-    $currentDigestLabel = htmlspecialchars($digestLabels[$currentDigest] ?? $digestLabels['none']);
 
     $quickLinks = [
         ['url' => 'client-profile.php', 'icon' => 'user', 'label' => $t('nav.profile', 'Profile')],
@@ -568,9 +560,8 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
     $heroHtml = client_portal_render_hero([
         'kicker' => $t('settings.title', 'Settings'),
         'title' => $t('settings.hero_title', 'Personalize your portal'),
-        'subtitle' => $t('settings.hero_sub', 'Manage appearance, notifications, and shortcuts for your client account.'),
-        'meta' => $t('settings.member_since', 'Member since') . ' ' . $memberSince
-            . ' · ' . $t('settings.current_digest', 'Email digest') . ': ' . $currentDigestLabel,
+        'subtitle' => $t('settings.hero_sub', 'Manage appearance and shortcuts for your client account.'),
+        'meta' => $t('settings.member_since', 'Member since') . ' ' . $memberSince,
         'show_date' => true,
         'aria_label' => $t('settings.title', 'Settings'),
         'stats' => [
@@ -599,20 +590,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
             <select class="form-select" name="locale" id="client_locale" required>' . $localeOptions . '</select>
             <p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($t('settings.language_help', 'Updates navigation labels and settings across the client portal.')) . '</p>
         </div>';
-
-    $notificationsBody = '
-        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.')) . '</p>
-        <label class="form-label d-block mb-2" for="client_email_digest">' . htmlspecialchars($t('settings.email_digest', 'Email digest')) . '</label>
-        <select class="form-select" name="email_digest" id="client_email_digest">
-            <option value="none"' . ($currentDigest === 'none' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_none', 'Off')) . '</option>
-            <option value="daily"' . ($currentDigest === 'daily' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_daily', 'Daily')) . '</option>
-            <option value="weekly"' . ($currentDigest === 'weekly' ? ' selected' : '') . '>' . htmlspecialchars($t('settings.digest_weekly', 'Weekly')) . '</option>
-        </select>
-        <ul class="cs-tip-list mt-3 mb-0">
-            <li>' . htmlspecialchars($t('settings.digest_tip_1', 'Daily digests are sent each morning with the previous day\'s activity.')) . '</li>
-            <li>' . htmlspecialchars($t('settings.digest_tip_2', 'Weekly digests arrive Monday with a summary of the past week.')) . '</li>
-            <li>' . htmlspecialchars($t('settings.digest_tip_3', 'In-portal alerts in the bell menu are always available regardless of digest setting.')) . '</li>
-        </ul>';
 
     $privacyBody = '
         <ul class="cs-tip-list mb-3">
@@ -652,12 +629,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
                         'subtitle' => $t('settings.appearance_help', 'Choose light or dark mode and your preferred language.'),
                         'icon' => 'palette',
                     ], $appearanceBody) . '
-                    ' . client_portal_render_panel([
-                        'title' => $t('settings.notifications_section', 'Email notifications'),
-                        'subtitle' => $t('settings.email_digest_help', 'Receive a daily or weekly summary of case activity, documents, and appointments.'),
-                        'icon' => 'bell',
-                        'panel_id' => 'email-digest',
-                    ], $notificationsBody) . '
                     <div class="cp-form-actions">
                         <button type="submit" class="btn btn-primary">' . htmlspecialchars($t('settings.save_preferences', 'Save preferences')) . '</button>
                     </div>
@@ -1670,6 +1641,10 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'vertical-align: middle;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-list-event:hover td {'
+        . 'background: rgba(' . $rgb . ', 0.1) !important;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode .fc .fc-list-event:hover td {'
         . 'background: var(--lp-dark-surface-hover) !important;'
         . '}';
@@ -1941,6 +1916,13 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode .legalpro-notif-panel__view-all {'
         . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    // Unread hover badge uses --legalpro-theme-primary; client dark mode remaps that to a light accent.
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item__hover-caption {'
+        . 'background: ' . $primary . ' !important;'
+        . 'color: #ffffff !important;'
+        . 'box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .cc-pill {'
@@ -2682,12 +2664,12 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         'dark' => ['bg' => 'rgba(103, 116, 142, 0.16)', 'stroke' => '#c5cede'],
     ];
     foreach ($clientSemanticIconWraps as $tone => $meta) {
-        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ','
+        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ':not(.legalpro-doc-icon),'
             . $clientDark . ' .dashboard-glance-icon-wrap--' . $tone . ' {'
             . 'background: ' . $meta['bg'] . ' !important;'
             . 'color: ' . $meta['stroke'] . ' !important;'
             . '}';
-        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ' .lp-icon svg,'
+        $css .= $clientDark . ' .dashboard-stat-icon-wrap--' . $tone . ':not(.legalpro-doc-icon) .lp-icon svg,'
             . $clientDark . ' .dashboard-glance-icon-wrap--' . $tone . ' .lp-icon svg {'
             . 'stroke: ' . $meta['stroke'] . ' !important;'
             . '}';
@@ -2903,8 +2885,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: #fff !important;'
         . '}';
 
-    $css .= $clientDark . ' .btn.bg-gradient-primary,'
-        . $clientDark . ' .badge.bg-gradient-primary {'
+    $css .= $clientDark . ' .btn.bg-gradient-primary {'
         . 'background: var(--lp-dark-surface-raised) !important;'
         . 'background-image: none !important;'
         . 'border: 1px solid var(--lp-dark-border-strong) !important;'
@@ -2997,7 +2978,7 @@ function getPortalThemeCalendarDarkCss(): string
         . 'background: var(--lp-dark-surface) !important;'
         . 'border: 1px solid var(--lp-dark-border) !important;'
         . 'border-radius: 1rem !important;'
-        . 'overflow: hidden !important;'
+        . 'overflow: visible !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.admin-court-tracking-page .dashboard-calendar-hub__head {'
@@ -3009,11 +2990,22 @@ function getPortalThemeCalendarDarkCss(): string
         . 'background: transparent !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #dashboardCalendar,'
+    $calRoots = 'body.legalpro-dark-mode #dashboardCalendar,'
         . 'body.legalpro-dark-mode #courtTrackingCalendar,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar';
+
+    $css .= $calRoots . ','
         . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar,'
         . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc,'
-        . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc-view-harness {'
+        . 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc-view-harness,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc-view-harness,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc-view-harness,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc-view-harness {'
         . 'background: var(--lp-dark-surface) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . 'color: var(--lp-dark-text-secondary) !important;'
@@ -3022,62 +3014,96 @@ function getPortalThemeCalendarDarkCss(): string
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-scrollgrid,'
         . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid,'
-        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard .fc-scrollgrid {'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard .fc-scrollgrid,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-scrollgrid,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-scrollgrid,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-scrollgrid {'
         . 'background: var(--lp-dark-surface) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-col-header-cell,'
-        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day {'
+        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-daygrid-day,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-daygrid-day,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-daygrid-day {'
         . 'background: var(--lp-dark-surface) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-col-header-cell-cushion,'
-        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number {'
+        . 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-daygrid-day-number {'
         . 'color: var(--lp-dark-text-secondary) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
-        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title {'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-toolbar-title {'
         . 'color: #fff !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-day-today {'
+    $css .= 'body.legalpro-dark-mode #dashboardCalendar .fc .fc-day-today,'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-today,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-day-today,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-day-today,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-day-today {'
         . 'background: rgba(' . $rgb . ', 0.12) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard td,'
         . 'body.legalpro-dark-mode #courtTrackingCalendar .fc-theme-standard th,'
-        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > * {'
+        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-scrollgrid-section > *,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc-theme-standard td,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc-theme-standard th,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc-theme-standard td,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc-theme-standard th,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc-theme-standard td,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc-theme-standard th {'
         . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell {'
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-col-header-cell,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-col-header-cell,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-col-header-cell {'
         . 'background: var(--lp-dark-surface-raised) !important;'
         . 'border-color: var(--lp-dark-border) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-col-header-cell-cushion,'
-        . 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day-number {'
-        . 'color: var(--lp-dark-text-secondary) !important;'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-col-header-cell-cushion,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-col-header-cell-cushion,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-col-header-cell-cushion {'
+        . 'color: var(--lp-dark-text-muted) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-other .fc-daygrid-day-number {'
+    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-other .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-day-other .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-day-other .fc-daygrid-day-number,'
+        . 'body.legalpro-dark-mode #appointmentsCalendar .fc .fc-day-other .fc-daygrid-day-number {'
         . 'color: var(--lp-dark-text-subtle) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-daygrid-day {'
-        . 'background: var(--lp-dark-surface) !important;'
-        . 'border-color: var(--lp-dark-border) !important;'
+    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-day.lp-cal-day-has-events:hover,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-day.fc-day-has-events:not(.fc-day-today):hover {'
+        . 'background: rgba(' . $rgb . ', 0.14) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode #courtTrackingCalendar .fc .fc-day-today {'
-        . 'background: rgba(' . $rgb . ', 0.12) !important;'
+    $css .= 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:hover .dashboard-cal-event__text,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-daygrid-event:focus .dashboard-cal-event__text,'
+        . 'body.legalpro-dark-mode .dashboard-calendar-hub .fc-list-event:hover .dashboard-cal-event__text {'
+        . 'color: var(--lp-dark-text) !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc .fc-day-today {'
-        . 'background: rgba(255, 255, 255, 0.06) !important;'
+        . 'background: rgba(' . $rgb . ', 0.12) !important;'
         . '}';
 
     return $css;
@@ -3160,7 +3186,6 @@ function renderPortalThemeCss(): string
 
     $primarySelectors = '.bg-gradient-primary,'
         . '.btn.bg-gradient-primary,'
-        . '.badge.bg-gradient-primary,'
         . '.lp-card-header-primary,'
         . '.modal-header.bg-gradient-primary,'
         . '.icon-shape.bg-gradient-primary';
@@ -3371,6 +3396,33 @@ function renderPortalThemeCss(): string
     if (isEffectivePortalThemeDark()) {
         $css .= renderPortalThemeDarkCss($primary, $rgb);
     }
+
+    $css .= renderModernSoftBadgeCss($primary);
+
+    return $css;
+}
+
+function renderModernSoftBadgeCss(string $primary): string
+{
+    $primarySoft = portalThemeHexToRgba($primary, 0.14);
+    $primarySoftDark = portalThemeHexToRgba($primary, 0.22);
+    $primaryText = $primary;
+
+    $css = '.badge.bg-gradient-primary:not(.filter),'
+        . '.badge.bg-gradient-info:not(.filter) {'
+        . 'background: ' . $primarySoft . ' !important;'
+        . 'background-image: none !important;'
+        . 'color: ' . $primaryText . ' !important;'
+        . 'border: none !important;'
+        . 'font-weight: 700 !important;'
+        . 'border-radius: 999px !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .badge.bg-gradient-primary:not(.filter),'
+        . 'body.legalpro-dark-mode .badge.bg-gradient-info:not(.filter) {'
+        . 'background: ' . $primarySoftDark . ' !important;'
+        . 'color: ' . portalThemeMixHex($primary, '#ffffff', 0.55) . ' !important;'
+        . '}';
 
     return $css;
 }

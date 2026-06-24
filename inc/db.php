@@ -6,7 +6,7 @@
 $DB_HOST = '127.0.0.1';
 $DB_NAME = 'case_management';
 $DB_USER = 'root';
-$DB_PASS = ''; // change if you have a password
+$DB_PASS = '1234'; // change if you have a password
 
 try {
     $pdo = new PDO("mysql:host=$DB_HOST;dbname=$DB_NAME;charset=utf8mb4", $DB_USER, $DB_PASS, [
@@ -370,6 +370,7 @@ function buildCaseCategoryFieldHtml($currentCategory, $fallback = 'Civil') {
 }
 
 require_once __DIR__ . '/../lib/branding.php';
+require_once __DIR__ . '/../lib/bank_accounts.php';
 require_once __DIR__ . '/../lib/portal-theme.php';
 require_once __DIR__ . '/../lib/client-locale.php';
 

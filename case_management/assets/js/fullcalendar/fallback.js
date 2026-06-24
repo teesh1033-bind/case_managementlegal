@@ -79,6 +79,23 @@ class SimpleCalendar {
         `;
 
         this.element.innerHTML = html;
+
+        this.element.querySelectorAll('.calendar-day.has-events').forEach((dayEl) => {
+            dayEl.addEventListener('click', (e) => {
+                if (e.target.closest('.day-event')) {
+                    return;
+                }
+                const dateStr = dayEl.getAttribute('data-date');
+                if (!dateStr) {
+                    return;
+                }
+                const events = this.getEventsForDate(new Date(dateStr + 'T00:00:00'));
+                if (!events.length || typeof viewCourtDate !== 'function') {
+                    return;
+                }
+                viewCourtDate(events[0].id);
+            });
+        });
     }
 
     getEventsForDate(date) {

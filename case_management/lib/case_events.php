@@ -413,7 +413,7 @@ class CaseEvents {
                 <div class="timeline-content">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="text-dark text-sm font-weight-bold mb-0">' . htmlspecialchars($event['event_description']) . '</h6>
-                        <span class="badge badge-sm ' . $badgeClass . '">' . $eventTypeLabel . '</span>
+                        <span class="lp-pill ' . $badgeClass . '">' . $eventTypeLabel . '</span>
                     </div>
                     <div class="text-xs text-muted mb-2">
                         <i class="ni ni-single-02 me-1"></i>' . htmlspecialchars($userDisplay) . '
@@ -447,22 +447,23 @@ class CaseEvents {
      */
     private static function getEventBadgeClass($eventType) {
         $badgeClasses = [
-            'case_created' => 'bg-gradient-success',
-            'case_updated' => 'bg-gradient-info',
-            'service_added' => 'bg-gradient-primary',
-            'service_updated' => 'bg-gradient-warning',
-            'service_deleted' => 'bg-gradient-danger',
-            'payment_added' => 'bg-gradient-warning',
-            'document_uploaded' => 'bg-gradient-primary',
-            'document_deleted' => 'bg-gradient-danger',
-            'comment_added' => 'bg-gradient-secondary',
-            'lawyer_assigned' => 'bg-gradient-success',
-            'lawyer_unassigned' => 'bg-gradient-warning',
-            'appointment_created' => 'bg-gradient-primary',
-            'appointment_updated' => 'bg-gradient-warning'
+            'case_created' => 'lp-pill--status-active',
+            'case_updated' => 'lp-pill--status-progress',
+            'service_added' => 'lp-pill--status-progress',
+            'service_updated' => 'lp-pill--status-pending',
+            'service_deleted' => 'lp-pill--status-declined',
+            'payment_added' => 'lp-pill--status-pending',
+            'document_uploaded' => 'lp-pill--status-progress',
+            'document_deleted' => 'lp-pill--status-declined',
+            'comment_added' => 'lp-pill--status-default',
+            'lawyer_assigned' => 'lp-pill--status-active',
+            'lawyer_unassigned' => 'lp-pill--status-pending',
+            'appointment_created' => 'lp-pill--status-progress',
+            'appointment_updated' => 'lp-pill--status-pending',
+            'appointment_deleted' => 'lp-pill--status-declined',
         ];
 
-        return isset($badgeClasses[$eventType]) ? $badgeClasses[$eventType] : 'bg-gradient-secondary';
+        return isset($badgeClasses[$eventType]) ? $badgeClasses[$eventType] : 'lp-pill--status-default';
     }
 
     /**

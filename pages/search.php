@@ -250,7 +250,7 @@ $resultsQueryClass = 'search-results-query';
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <?php else: ?>
     <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
     <?php legalpro_icons_asset_links(); ?>
     <?php if ($portal === 'lawyer'): ?>
     <?php include __DIR__ . '/../inc/lawyer-portal-badges-css.php'; ?>

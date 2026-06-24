@@ -33,13 +33,19 @@ function clientInvoiceStatusBadge(array $meta): string
     return '<span class="ca-status-pill ' . htmlspecialchars($pill) . '">' . htmlspecialchars($meta['label']) . '</span>';
 }
 
-function clientQuotationStatusBadge(array $meta): string
-{
-    return clientInvoiceStatusBadge($meta);
-}
-
 $message = '';
 $messageType = '';
+
+if (isset($_GET['msg']) && (string) $_GET['msg'] !== '') {
+    $message = (string) $_GET['msg'];
+    if (isset($_GET['err'])) {
+        $messageType = 'danger';
+    } elseif (isset($_GET['ok'])) {
+        $messageType = 'success';
+    } else {
+        $messageType = 'info';
+    }
+}
 
 try {
     // Get all invoices for this client
@@ -240,7 +246,7 @@ if (empty($payments)) {
 // Build quotations table rows
 $quotationsRows = '';
 if (empty($quotations)) {
-    $quotationsRows = '<tr><td colspan="7" class="border-0">
+    $quotationsRows = '<tr><td colspan="6" class="border-0">
         <div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . $iconQuotationEmpty . '</div>
             <h5>No quotations yet</h5>
@@ -254,11 +260,6 @@ if (empty($quotations)) {
             : 'QUO-' . str_pad((string) $quotation['id'], 4, '0', STR_PAD_LEFT);
         $quoteTitle = trim((string) ($quotation['title'] ?? '')) ?: 'Quotation';
         $caseTitle = $quotation['case_title'] ?: '—';
-        $statusMeta = client_quotation_status_meta(
-            (string) ($quotation['status'] ?? 'sent'),
-            !empty($quotation['valid_until']) ? (string) $quotation['valid_until'] : null
-        );
-        $statusBadge = clientQuotationStatusBadge($statusMeta);
         $issuedDate = !empty($quotation['created_at'])
             ? date('M j, Y', strtotime($quotation['created_at']))
             : '—';
@@ -270,13 +271,18 @@ if (empty($quotations)) {
             $quoteNumber,
             $quoteTitle,
             $caseTitle,
-            $statusMeta['label'],
             $issuedDate,
             $validUntilDate,
             (string) $quotation['total_amount'],
         ]));
 
-        $quotationsRows .= '<tr class="cp-quotation-row cp-search-row" data-search="' . htmlspecialchars($quoteHay, ENT_QUOTES, 'UTF-8') . '">
+        $quoteId = (int) $quotation['id'];
+        $actionsCell = '<div class="cp-quotation-actions">'
+            . '<a href="client-quotation-view.php?id=' . $quoteId . '&view=1" class="btn-cp-link" target="_blank" rel="noopener">View</a>'
+            . '<a href="client-quotation-view.php?id=' . $quoteId . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">PDF</a>'
+            . '</div>';
+
+        $quotationsRows .= '<tr class="cp-quotation-row cp-search-row" data-quotation-id="' . $quoteId . '" data-search="' . htmlspecialchars($quoteHay, ENT_QUOTES, 'UTF-8') . '">
             <td class="ps-4">
                 <div class="d-flex align-items-center gap-3 py-1">
                     <div class="cp-row-icon flex-shrink-0">' . $iconQuotationRow . '</div>
@@ -298,11 +304,8 @@ if (empty($quotations)) {
             <td class="text-end">
                 <span class="text-xs font-weight-bold">' . formatCurrency($quotation['total_amount']) . '</span>
             </td>
-            <td class="align-middle text-center">
-                ' . $statusBadge . '
-            </td>
             <td class="align-middle text-center pe-4">
-                <a href="client-quotation-view.php?id=' . (int) $quotation['id'] . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">Download PDF</a>
+                ' . $actionsCell . '
             </td>
         </tr>';
     }
@@ -352,7 +355,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-    <link href="../assets/css/client-portal-pages.css?v=1" rel="stylesheet" />
+    <link href="../assets/css/client-portal-pages.css?v=4" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-payments-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
@@ -432,7 +435,7 @@ $html = <<<'HTML'
                 <div class="cp-panel-hdr">
                     <div>
                         <h5>Quotations</h5>
-                        <p>Fee quotes sent by your firm for review.</p>
+                        <p>Fee quotes from your firm.</p>
                     </div>
                     <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
                         <span class="cp-count" id="cpQuotationCount">{QUOTATION_COUNT} total</span>
@@ -447,8 +450,7 @@ $html = <<<'HTML'
                                 <th>Issued</th>
                                 <th>Valid until</th>
                                 <th style="text-align:right">Amount</th>
-                                <th style="text-align:center">Status</th>
-                                <th style="text-align:center;padding-right:1.5rem">View</th>
+                                <th style="text-align:center;padding-right:1.5rem">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -493,6 +495,22 @@ $html = <<<'HTML'
             filterRows('.cp-invoice-row.cp-search-row', 'cpInvoiceCount', 'invoice', 'invoices');
             filterRows('.cp-quotation-row.cp-search-row', 'cpQuotationCount', 'quotation', 'quotations');
             filterRows('.cp-payment-row.cp-search-row', 'cpPaymentCount', 'payment', 'payments');
+
+            if (window.location.hash === '#quotations') {
+                var quotationsPanel = document.getElementById('quotations');
+                if (quotationsPanel) {
+                    quotationsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            var quoteId = (params.get('quote') || '').trim();
+            if (quoteId) {
+                var quoteRow = document.querySelector('.cp-quotation-row[data-quotation-id="' + quoteId + '"]');
+                if (quoteRow) {
+                    quoteRow.classList.add('cp-quotation-row--highlight');
+                    quoteRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         }
         document.addEventListener('DOMContentLoaded', applyPaymentsPageSearch);
     })();

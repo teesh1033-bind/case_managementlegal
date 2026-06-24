@@ -455,7 +455,7 @@ function legalpro_client_case_overview_html(array $state): string
         )
         . legalpro_client_case_detail_item(
             'Estimated fees',
-            '$' . number_format((float) $case['estimated_fees'], 2),
+            htmlspecialchars(formatCurrency((float) $case['estimated_fees'])),
             'credit-card'
         )
         . legalpro_client_case_detail_item(
@@ -495,7 +495,7 @@ function legalpro_client_case_services_html(array $state): string
 
     if (!empty($services)) {
         foreach ($services as $service) {
-            $pricePill = '<span class="ca-status-pill ca-status-pill--muted">$ ' . number_format((float) $service['price'], 2) . '</span>';
+            $pricePill = '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars(formatCurrency((float) $service['price'])) . '</span>';
             $servicesHtml .= '<li class="list-group-item border-0 px-0">
                 <div class="d-flex align-items-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-3 min-width-0">
@@ -507,7 +507,7 @@ function legalpro_client_case_services_html(array $state): string
             </li>';
             $totalFees += (float) $service['price'];
         }
-        $totalPill = '<span class="ca-status-pill ca-status-pill--done">$ ' . number_format($totalFees, 2) . '</span>';
+        $totalPill = '<span class="ca-status-pill ca-status-pill--done">' . htmlspecialchars(formatCurrency($totalFees)) . '</span>';
         $servicesHtml .= '<li class="list-group-item border-0 px-0 pt-3">
             <div class="d-flex align-items-center justify-content-between gap-3">
                 <span class="text-sm font-weight-bold">Total Fees</span>

@@ -357,6 +357,86 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
 }
 
 /**
+ * Merge appointment busy blocks into slot list for a specific date.
+ */
+function appendAppointmentBusySlots(PDO $pdo, int $lawyerId, string $date, array $slots): array
+{
+    if ($lawyerId <= 0 || $date === '') {
+        return $slots;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT starts_at, ends_at
+        FROM appointments
+        WHERE lawyer_id = ?
+          AND DATE(starts_at) = ?
+          AND LOWER(COALESCE(status, 'pending')) NOT IN ('rejected', 'cancelled')
+          AND starts_at IS NOT NULL
+    ");
+    $stmt->execute([$lawyerId, $date]);
+
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $startsAt = strtotime((string) $row['starts_at']);
+        if ($startsAt === false) {
+            continue;
+        }
+        $endsAtRaw = $row['ends_at'] ?? '';
+        $endsAt = $endsAtRaw !== '' ? strtotime((string) $endsAtRaw) : strtotime('+1 hour', $startsAt);
+        if ($endsAt === false || $endsAt <= $startsAt) {
+            $endsAt = strtotime('+1 hour', $startsAt);
+        }
+
+        $busyStart = formatSlotTimeForBooking(date('H:i:s', $startsAt));
+        $busyEnd = formatSlotTimeForBooking(date('H:i:s', $endsAt));
+
+        $duplicate = false;
+        foreach ($slots as $slot) {
+            if (($slot['type'] ?? '') === 'unavailable'
+                && ($slot['start'] ?? '') === $busyStart
+                && ($slot['end'] ?? '') === $busyEnd) {
+                $duplicate = true;
+                break;
+            }
+        }
+        if (!$duplicate) {
+            $slots[] = [
+                'start' => $busyStart,
+                'end' => $busyEnd,
+                'type' => 'unavailable',
+            ];
+        }
+    }
+
+    return $slots;
+}
+
+/**
+ * Slots for one lawyer on one date (matches client booking UI rules).
+ */
+function legalpro_get_lawyer_slots_for_booking_date(PDO $pdo, int $lawyerId, string $date): array
+{
+    if ($lawyerId <= 0 || $date === '') {
+        return [];
+    }
+
+    $maps = loadLawyerAvailabilityForBooking($pdo, [$lawyerId]);
+    $byDate = $maps['byDate'][$lawyerId] ?? [];
+    $byDay = $maps['byDay'][$lawyerId] ?? [];
+    $dayKey = strtolower(date('l', strtotime($date)));
+
+    if (!empty($byDate[$date])) {
+        $slots = $byDate[$date];
+    } else {
+        $slots = $byDate[$date] ?? [];
+        if (!empty($byDay[$dayKey])) {
+            $slots = array_merge($slots, $byDay[$dayKey]);
+        }
+    }
+
+    return appendAppointmentBusySlots($pdo, $lawyerId, $date, $slots);
+}
+
+/**
  * True when another non-rejected appointment overlaps the requested window.
  */
 function lawyerHasOverlappingAppointment(
@@ -539,6 +619,21 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
             'message' => 'No available times on this date. Choose another date.',
         ];
     } elseif (!$hasWorkingHours && !lawyerHasPublishedAvailabilitySchedule($pdo, $lawyerId)) {
+        if (!isAppointmentWithinWorkingHours(getDefaultWorkingHoursSchedule(), $dayOfWeek, $requestedTime, $endTime)) {
+            $daySchedule = getDefaultWorkingHoursSchedule()[$dayOfWeek] ?? null;
+            if (!$daySchedule || empty($daySchedule['enabled'])) {
+                return [
+                    'ok' => false,
+                    'message' => 'This lawyer is not available on the selected day. Please choose a weekday between 9:00 AM and 5:00 PM.',
+                ];
+            }
+
+            return [
+                'ok' => false,
+                'message' => 'Selected time is outside standard business hours (9:00 AM – 5:00 PM). Please choose another time.',
+            ];
+        }
+
         if (lawyerHasOverlappingAppointment($pdo, $lawyerId, $appointmentDate, $appointmentTime, $durationMinutes, $excludeAppointmentId)) {
             return [
                 'ok' => false,

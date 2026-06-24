@@ -533,7 +533,7 @@ if (empty($recentPayments)) {
                 </div>
             </td>
             <td class="text-center text-sm font-weight-bold">' . formatCurrency($payment['amount']) . '</td>
-            <td class="text-center"><span class="badge badge-sm bg-gradient-secondary">' . htmlspecialchars($methodLabel) . '</span></td>
+            <td class="text-center"><span class="lp-pill lp-pill--status-default">' . htmlspecialchars($methodLabel) . '</span></td>
             <td class="text-center text-sm">' . htmlspecialchars($payment['payment_date']) . '</td>
             <td class="text-end text-xs pe-4">' . $notesPreview . '</td>
         </tr>';
@@ -576,7 +576,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
+    <link href="../assets/css/legalpro-finance-pages.css?v=4" rel="stylesheet" />
     <style>
         .payments-summary-card .card-header {
             padding: 1.25rem 1.5rem 0.75rem;

@@ -1,0 +1,103 @@
+/**
+ * Court date details modal — populate & open (admin, lawyer, client).
+ */
+(function () {
+    'use strict';
+
+    var STATUS_LABELS = {
+        scheduled: 'Scheduled',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+        postponed: 'Postponed'
+    };
+
+    function formatCourtDateDisplay(dateStr) {
+        var d = new Date(dateStr);
+        if (isNaN(d.getTime())) {
+            return dateStr || '—';
+        }
+        var datePart = d.toLocaleDateString('en-GB', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        var timePart = d.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        return datePart + ' · ' + timePart;
+    }
+
+    function statusClass(statusKey, pillMode) {
+        var key = String(statusKey || 'scheduled').toLowerCase();
+        if (pillMode === 'lp') {
+            var lp = {
+                scheduled: 'lp-pill lp-pill--status-progress',
+                completed: 'lp-pill lp-pill--status-closed',
+                cancelled: 'lp-pill lp-pill--status-declined',
+                postponed: 'lp-pill lp-pill--status-pending'
+            };
+            return lp[key] || 'lp-pill lp-pill--status-default';
+        }
+        return 'legalpro-court-detail__status legalpro-court-detail__status--' + (['scheduled', 'completed', 'cancelled', 'postponed'].indexOf(key) !== -1 ? key : 'scheduled');
+    }
+
+    function setText(id, value, fallback) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.textContent = value || fallback || '—';
+        }
+    }
+
+    window.legalproOpenCourtDateViewModal = function (eventData, options) {
+        options = options || {};
+        if (!eventData) {
+            return;
+        }
+
+        var statusKey = String(eventData.status || 'scheduled').toLowerCase();
+        var statusEl = document.getElementById('view_status');
+        var titleEl = document.getElementById('viewCourtDateModalLabel');
+        var descWrap = document.getElementById('view_description_wrap');
+
+        if (titleEl) {
+            titleEl.textContent = eventData.title || 'Court date';
+        }
+        setText('view_datetime', formatCourtDateDisplay(eventData.court_date));
+        setText('view_case_title', eventData.case_title);
+        setText('view_client_name', eventData.client_name);
+        setText('view_location', eventData.location, 'Not specified');
+        setText('view_created_by', eventData.created_by_name, 'Unknown');
+
+        var roleEl = document.getElementById('view_creator_role');
+        if (roleEl) {
+            var role = eventData.creator_role
+                ? String(eventData.creator_role).charAt(0).toUpperCase() + String(eventData.creator_role).slice(1)
+                : '';
+            roleEl.textContent = role ? role : '';
+            roleEl.style.display = role ? '' : 'none';
+        }
+
+        var description = (eventData.description || '').trim();
+        setText('view_description', description, 'No description provided.');
+        if (descWrap) {
+            descWrap.classList.toggle('legalpro-court-detail__notes--empty', !description);
+        }
+
+        if (statusEl) {
+            statusEl.textContent = STATUS_LABELS[statusKey] || (statusKey.charAt(0).toUpperCase() + statusKey.slice(1));
+            statusEl.className = statusClass(statusKey, options.pillMode || 'detail');
+        }
+
+        var modalEl = document.getElementById('viewCourtDateModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            if (typeof legalproInitIcons === 'function') {
+                legalproInitIcons(modalEl);
+            } else if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ attrs: { 'stroke-width': 1.75 }, nameAttr: 'data-lucide', root: modalEl });
+            }
+        }
+    };
+})();

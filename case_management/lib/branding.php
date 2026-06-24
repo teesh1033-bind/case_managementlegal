@@ -43,6 +43,58 @@ function getCompanyBranding(): array
 }
 
 /**
+ * Absolute filesystem path to the configured company logo (for PDF generation).
+ */
+function getCompanyLogoAbsolutePath(): string
+{
+    $relative = ltrim(getCompanyLogoRelativePath(), '/\\');
+
+    return dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relative);
+}
+
+/**
+ * Base64 data URI for embedding the company logo in PDF/HTML documents.
+ */
+function legalpro_company_logo_data_uri(): ?string
+{
+    static $cached = false;
+    static $value = null;
+
+    if ($cached) {
+        return $value;
+    }
+
+    $cached = true;
+    $path = getCompanyLogoAbsolutePath();
+    if (!is_readable($path)) {
+        return null;
+    }
+
+    $mimeMap = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'svg' => 'image/svg+xml',
+    ];
+
+    $ext = strtolower((string) pathinfo($path, PATHINFO_EXTENSION));
+    if (!isset($mimeMap[$ext])) {
+        return null;
+    }
+
+    $data = file_get_contents($path);
+    if ($data === false || $data === '') {
+        return null;
+    }
+
+    $value = 'data:' . $mimeMap[$ext] . ';base64,' . base64_encode($data);
+
+    return $value;
+}
+
+/**
  * Footer copyright line (year via JS). Uses company name from Settings, default LegalPro.
  */
 function legalpro_copyright_line(): string

@@ -135,12 +135,13 @@ try {
 }
 
 // Build appointment table rows
+$iconApptRow = legalpro_icon('calendar-clock');
 $appointmentsRows = '';
 if (empty($appointments)) {
     $appointmentsRows = '<tr><td colspan="5" class="text-center py-5">
         <div class="text-center">
-            <i class="ni ni-calendar-grid-58 text-muted" style="font-size: 3rem;"></i>
-            <p class="text-muted mt-3 mb-0">No appointments booked yet.</p>
+            <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary d-inline-flex align-items-center justify-content-center mb-3" style="width:3rem;height:3rem;min-width:3rem;">' . legalpro_icon('calendar-clock') . '</div>
+            <p class="text-muted mt-0 mb-0">No appointments booked yet.</p>
             <p class="text-xs text-muted mb-0">Use the New Appointment page to book your first appointment.</p>
         </div>
     </td></tr>';
@@ -172,10 +173,8 @@ if (empty($appointments)) {
         $appointmentsRows .= '
         <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
             <td class="align-middle ps-3">
-                <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-info shadow text-center border-radius-md me-2">
-                        <i class="ni ni-folder-17 text-white text-xs opacity-10"></i>
-                    </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconApptRow . '</div>
                     <div>
                         <h6 class="text-sm mb-0">' . htmlspecialchars($caseDisplay) . '</h6>
                         <p class="text-xs text-muted mb-0">' . htmlspecialchars($clientName) . '</p>
@@ -324,12 +323,13 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
-	<link href="../assets/css/dashboard-enhancements.css?v=10" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=33" rel="stylesheet" />
+	<link href="../assets/css/dashboard-enhancements.css?v=16" rel="stylesheet" />
 	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
 	<?php legalpro_icons_asset_links(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-appointments-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-appointments-page<?php echo legalpro_portal_theme_body_class(); ?>">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
@@ -465,9 +465,9 @@ $html = <<<'HTML'
 					</div>
 					<div class="mb-3">
 						<label class="text-xs text-uppercase text-muted">Notes</label>
-						<div id="appointmentModalNotes" class="p-3 rounded" style="background:#f8fafc;font-size:.83rem;color:#64748b;min-height:52px;white-space:pre-wrap;"></div>
+						<div id="appointmentModalNotes" class="appointment-modal-notes p-3 rounded"></div>
 					</div>
-					<a id="appointmentModalEditLink" href="new_appointment.php" class="btn btn-sm bg-gradient-dark w-100 mb-0">Edit appointment</a>
+					<a id="appointmentModalEditLink" href="new_appointment.php" class="btn btn-sm bg-gradient-dark appointment-modal-edit-btn w-100 mb-0">Edit appointment</a>
 				</div>
 			</div>
 		</div>
@@ -589,7 +589,7 @@ $html = <<<'HTML'
 				nowIndicator: true,
 				fixedWeekCount: false,
 				dayMaxEvents: 3,
-				moreLinkClick: 'day',
+				moreLinkClick: 'popover',
 				buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
 				eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
 				dayHeaderFormat: { weekday: 'short' },
@@ -600,11 +600,26 @@ $html = <<<'HTML'
 				},
 				events: appointmentEvents,
 				eventContent: renderAppointmentEvent,
+				dateClick: function(info) {
+					if (window.legalproHandleCalendarDateClick) {
+						window.legalproHandleCalendarDateClick(info, function(event) {
+							openAppointmentModal(event);
+						});
+					}
+				},
+				dayCellDidMount: function(info) {
+					if (window.legalproMountCalendarDayCell) {
+						window.legalproMountCalendarDayCell(info);
+					}
+				},
 				eventClick: function (info) {
 					info.jsEvent.preventDefault();
 					openAppointmentModal(info.event);
 				},
 				eventDidMount: function (info) {
+					if (window.legalproMountCalendarEventClickable) {
+						window.legalproMountCalendarEventClickable(info);
+					}
 					var props = info.event.extendedProps || {};
 					var tip = info.event.title;
 					if (props.client) {

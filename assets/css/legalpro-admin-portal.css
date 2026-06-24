@@ -479,6 +479,8 @@ body.legalpro-admin-portal .navbar-main .dashboard-quick-actions + .legalpro-nav
 }
 
 body.legalpro-dark-mode .legalpro-notif-item__hover-caption {
+    background: #5e72e4 !important;
+    color: #fff !important;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
@@ -911,7 +913,7 @@ body.legalpro-admin-portal .dashboard-calendar-hub .lp-card-header-primary {
 body.admin-court-tracking-page .dashboard-calendar-hub,
 body.admin-appointments-page .dashboard-calendar-hub {
     border-radius: var(--lp-admin-card-radius) !important;
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid rgba(0, 0, 0, 0.08);
     background: #fff;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -962,7 +964,7 @@ body.admin-appointments-page .dashboard-upcoming-panel {
 body.admin-court-tracking-page #courtTrackingCalendar,
 body.admin-appointments-page #appointmentsCalendar {
     border-radius: calc(var(--lp-admin-card-radius) - 2px);
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* —— Search portal (admin) —— */
@@ -1401,6 +1403,19 @@ body.admin-court-tracking-page .ct-row-icon.dashboard-stat-icon-wrap {
     box-shadow: none;
 }
 
+body.admin-appointments-page .appt-row-icon.dashboard-stat-icon-wrap {
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    border-radius: 12px;
+    box-shadow: none;
+}
+
+body.admin-appointments-page .appt-row-icon.dashboard-stat-icon-wrap .lp-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
 body.admin-court-tracking-page .dashboard-upcoming-empty .dashboard-stat-icon-wrap {
     width: 2.75rem;
     height: 2.75rem;
@@ -1745,4 +1760,32 @@ body.legalpro-dark-mode.legalpro-admin-portal .navbar-main .dashboard-welcome-su
 body.legalpro-dark-mode.legalpro-dashboard-page .navbar-main .dashboard-welcome-sub,
 body.legalpro-dark-mode.admin-court-tracking-page .navbar-main .dashboard-welcome-sub {
     color: var(--lp-dark-text-muted, #d4dcea) !important;
+}
+
+/* —— Appointment detail modal (calendar) —— */
+.appointment-modal-notes {
+    background: #f8fafc;
+    font-size: 0.83rem;
+    color: #64748b;
+    min-height: 52px;
+    white-space: pre-wrap;
+}
+
+body.legalpro-dark-mode .appointment-modal-notes {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--lp-dark-text-muted, #c5cedb) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-dark-mode .appointment-modal-edit-btn.bg-gradient-dark {
+    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(94, 114, 228, 0.28) !important;
+}
+
+body.legalpro-dark-mode .appointment-modal-edit-btn.bg-gradient-dark:hover,
+body.legalpro-dark-mode .appointment-modal-edit-btn.bg-gradient-dark:focus {
+    background: linear-gradient(135deg, #6d7fe8 0%, #916fef 100%) !important;
+    color: #fff !important;
 }

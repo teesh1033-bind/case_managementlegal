@@ -24,6 +24,11 @@ legalpro_require_financial_document_access(
     isset($quotation['client_id']) ? (int) $quotation['client_id'] : null
 );
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['client_id'])) {
+    header('Location: client-payments.php#quotations');
+    exit;
+}
+
 $items = fetch_quotation_items($pdo, $quotationId);
 $quotationNumber = $quotation['quotation_number'] ?: ('QUO-' . str_pad((string) $quotationId, 4, '0', STR_PAD_LEFT));
 $title = trim((string) ($quotation['title'] ?? '')) ?: 'Quotation';
