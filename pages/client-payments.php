@@ -367,7 +367,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-    <link href="../assets/css/client-portal-pages.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/client-portal-pages.css?v=6" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-payments-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
@@ -394,6 +394,7 @@ $html = <<<'HTML'
                             <a href="client-cases.php" class="btn-cp-link">My cases</a>
                         </div>
                     </div>
+                    <div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cp-invoice-row" data-portal-per-page="10" data-portal-show-page-global="cpInvoiceShowPage">
                     <div class="table-responsive">
                         <table class="cp-table">
                             <thead>
@@ -412,6 +413,11 @@ $html = <<<'HTML'
                             </tbody>
                         </table>
                     </div>
+                    <nav class="cp-portal-pagination" data-portal-pagination aria-label="Invoices pagination" hidden>
+                        <p class="cp-portal-pagination__info" data-portal-range></p>
+                        <div class="cp-portal-pagination__controls" data-portal-pages></div>
+                    </nav>
+                    </div>
                 </div>
 
                 <div class="cp-panel">
@@ -425,6 +431,7 @@ $html = <<<'HTML'
                             <a href="client-dashboard.php" class="btn-cp-link">Dashboard</a>
                         </div>
                     </div>
+                    <div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cp-payment-row" data-portal-per-page="10" data-portal-show-page-global="cpPaymentShowPage">
                     <div class="table-responsive">
                         <table class="cp-table">
                             <thead>
@@ -442,6 +449,11 @@ $html = <<<'HTML'
                             </tbody>
                         </table>
                     </div>
+                    <nav class="cp-portal-pagination" data-portal-pagination aria-label="Payments pagination" hidden>
+                        <p class="cp-portal-pagination__info" data-portal-range></p>
+                        <div class="cp-portal-pagination__controls" data-portal-pages></div>
+                    </nav>
+                    </div>
                 </div>
             </div>
 
@@ -455,6 +467,7 @@ $html = <<<'HTML'
                         <span class="cp-count" id="cpQuotationCount">{QUOTATION_COUNT} total</span>
                     </div>
                 </div>
+                <div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cp-quotation-row" data-portal-per-page="10" data-portal-show-page-global="cpQuotationShowPage">
                 <div class="table-responsive">
                     <table class="cp-table">
                         <thead>
@@ -471,6 +484,11 @@ $html = <<<'HTML'
                             {QUOTATIONS_ROWS}
                         </tbody>
                     </table>
+                </div>
+                <nav class="cp-portal-pagination" data-portal-pagination aria-label="Quotations pagination" hidden>
+                    <p class="cp-portal-pagination__info" data-portal-range></p>
+                    <div class="cp-portal-pagination__controls" data-portal-pages></div>
+                </nav>
                 </div>
             </div>
             </div>
@@ -516,6 +534,9 @@ $html = <<<'HTML'
             filterRows('.cp-invoice-row.cp-search-row', 'cpInvoiceCount', 'invoice', 'invoices');
             filterRows('.cp-quotation-row.cp-search-row', 'cpQuotationCount', 'quotation', 'quotations');
             filterRows('.cp-payment-row.cp-search-row', 'cpPaymentCount', 'payment', 'payments');
+            if (typeof legalproResetClientTablePaginations === 'function') {
+                legalproResetClientTablePaginations();
+            }
 
             var params = new URLSearchParams(window.location.search);
             if (window.location.hash === '#quotations') {
