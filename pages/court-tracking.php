@@ -252,15 +252,8 @@ if (empty($upcomingCourtDates)) {
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-<<<<<<< HEAD
-    <link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
-=======
-    <link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
->>>>>>> a16ef36d67d25b0507f30aa54630c12fcfd9225e
-    <link href="../assets/css/calendar-toolbar-visible.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-admin-portal.css?v=28" rel="stylesheet" />
-    <?php legalpro_icons_asset_links(); ?>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
     <style>
         .court-date-modal .modal-dialog {
             max-width: 640px;
