@@ -21,6 +21,8 @@ return [
     'settings.theme_mode' => 'Mode d\'affichage',
     'settings.light' => 'Clair',
     'settings.dark' => 'Sombre',
+    'theme.switch_dark' => 'Passer en mode sombre',
+    'theme.switch_light' => 'Passer en mode clair',
     'settings.language' => 'Langue',
     'settings.language_label' => 'Langue d\'affichage',
     'settings.language_help' => 'Met à jour les libellés de navigation et des paramètres du portail client.',

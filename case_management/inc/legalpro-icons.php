@@ -24,7 +24,7 @@ function legalpro_icons_asset_links(): void
         return;
     }
     define('LEGALPRO_ICONS_HEAD', true);
-    echo '<link href="../assets/css/legalpro-icons.css?v=2" rel="stylesheet" />' . "\n";
+    echo '<link href="../assets/css/legalpro-icons.css?v=3" rel="stylesheet" />' . "\n";
 }
 
 function legalpro_icons_head_scripts(): void
