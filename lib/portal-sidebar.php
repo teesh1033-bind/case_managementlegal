@@ -10,7 +10,7 @@ require_once dirname(__DIR__) . '/lib/portal-theme.php';
 
 function legalpro_sidebar_stylesheet_tag(): string
 {
-    return '<link href="../assets/css/legalpro-sidebar-nav.css?v=22" rel="stylesheet" />';
+    return '<link href="../assets/css/legalpro-sidebar-nav.css?v=23" rel="stylesheet" />';
 }
 
 function legalpro_sidebar_resolve_label(array $item): string
