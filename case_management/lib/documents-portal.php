@@ -737,7 +737,12 @@ function legalpro_documents_subnav_html(string $activeKey): string
 {
     $pages = legalpro_documents_portal_pages();
     $html = '<nav class="legalpro-doc-subnav" aria-label="Documents sections">';
+    $overviewActive = $activeKey === 'documents' ? ' is-active' : '';
+    $html .= '<a class="legalpro-doc-subnav__link' . $overviewActive . '" href="documents.php">Overview</a>';
     foreach ($pages as $key => $page) {
+        if ($key === 'documents') {
+            continue;
+        }
         $active = $key === $activeKey ? ' is-active' : '';
         $html .= '<a class="legalpro-doc-subnav__link' . $active . '" href="' . htmlspecialchars($page['file']) . '">'
             . htmlspecialchars($page['title']) . '</a>';
@@ -930,6 +935,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
     $page = $pages[$pageKey] ?? $pages['documents'];
     $navTitle = $page['nav'];
     $bodyClass = legalpro_portal_theme_body_class();
+    $subnav = $pageKey === 'documents' ? '' : legalpro_documents_subnav_html($pageKey);
 
     $html = '<!DOCTYPE html>
 <html lang="en">
@@ -968,7 +974,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
         </nav>
         <div class="container-fluid py-4">
             ' . legalpro_documents_message_html($state) . '
-            ' . legalpro_documents_subnav_html($pageKey) . '
+            ' . $subnav . '
             ' . $contentHtml . '
         </div>
     </main>

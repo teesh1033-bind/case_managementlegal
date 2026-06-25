@@ -731,7 +731,7 @@ function legalpro_settings_render_page(string $pageKey, string $contentHtml, arr
     $page = $pages[$pageKey] ?? $pages['settings'];
     $navTitle = $page['nav'];
     $bodyClass = legalpro_portal_theme_body_class();
-    $subnav = legalpro_settings_subnav_html($pageKey);
+    $subnav = $pageKey === 'settings' ? '' : legalpro_settings_subnav_html($pageKey);
 
     $html = '<!DOCTYPE html>
 <html lang="en">

@@ -301,7 +301,8 @@
 }
 
 body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav__link,
-body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link {
+body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link,
+body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav__link {
     color: var(--lp-dark-text-muted, #94a3b8);
 }
 
@@ -311,7 +312,8 @@ body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav__link {
 }
 
 body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav__link:hover,
-body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link:hover {
+body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link:hover,
+body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav__link:hover {
     background: var(--lp-dark-surface-hover, #464f68);
     color: var(--lp-dark-text, #f8f9fc);
 }
@@ -325,6 +327,7 @@ body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav__link:hover {
 body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-subnav,
 body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav,
 body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav,
+body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav,
 body.legalpro-dark-mode.legalpro-client-portal .legalpro-doc-subnav,
 body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav,
 body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-action-card,
@@ -337,6 +340,7 @@ body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-template-card {
 body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link.is-active,
+body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.legalpro-client-portal .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav__link.is-active {
     background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 100%)) !important;

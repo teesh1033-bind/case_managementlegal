@@ -85,7 +85,7 @@ if ($role === 'client') {
     ]);
 }
 
-$welcomeHint = '<br><span class="cb-hint">' . htmlspecialchars($welcomeText) . '</span>';
+$welcomeHint = '<br><span class="text-muted">' . htmlspecialchars($welcomeText) . '</span>';
 
 $mainContentHtml = '';
 if ($role === 'client') {
@@ -534,10 +534,11 @@ HTML;
 
 $html = str_replace('{ASSISTANT_NAME}', htmlspecialchars($assistantName), $html);
 $html = str_replace('{ASSISTANT_NAME_JSON}', json_encode($assistantName, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT), $html);
-$html = str_replace('{DISPLAY_NAME}', $displayName, $html);
-$html = str_replace('{ROLE_LABEL}', ucfirst($role), $html);
-$html = str_replace('{WELCOME_TEXT}', '<br><span class="text-muted">' . htmlspecialchars($welcomeText) . '</span>', $html);
 $mainContentHtml = str_replace('{SHORTCUTS_HTML}', $shortcutsHtml, $mainContentHtml);
+$mainContentHtml = str_replace('{ASSISTANT_NAME}', htmlspecialchars($assistantName), $mainContentHtml);
+$mainContentHtml = str_replace('{DISPLAY_NAME}', $displayName, $mainContentHtml);
+$mainContentHtml = str_replace('{ROLE_LABEL}', ucfirst($role), $mainContentHtml);
+$mainContentHtml = str_replace('{WELCOME_TEXT}', $welcomeHint, $mainContentHtml);
 $html = str_replace('{MAIN_CONTENT}', $mainContentHtml, $html);
 $html = str_replace('{SHORTCUTS_HTML}', $shortcutsHtml, $html);
 $html = str_replace('{PORTAL_BODY_CLASS}', $portalBodyClass, $html);
