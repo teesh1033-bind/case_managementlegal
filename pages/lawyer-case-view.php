@@ -6,6 +6,9 @@ require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
 require_once __DIR__ . '/../lib/case_quotations.php';
 require_once __DIR__ . '/../lib/case_quotations_ui.php';
+require_once __DIR__ . '/../lib/lawyer_portal_vocab.php';
+
+ensure_lawyer_case_vocabulary($pdo);
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -242,8 +245,8 @@ try {
 // Fetch case events for this case
 $caseEvents = CaseEvents::getCaseEvents($caseId);
 
-$statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
-$priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+$statusBadge = lawyer_case_status_badge((string) ($case['status'] ?? ''));
+$priorityBadge = lawyer_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
 $categoryLabel = trim((string) ($case['category'] ?? ''));
 $categoryBadge = $categoryLabel !== ''
     ? '<span class="lc-category-pill">' . htmlspecialchars($categoryLabel) . '</span>'

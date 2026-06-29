@@ -3,9 +3,11 @@ session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/task_helpers.php';
+require_once __DIR__ . '/../lib/lawyer_portal_vocab.php';
 
 ensure_task_support_schema($pdo);
 ensure_task_comment_files_schema($pdo);
+ensure_lawyer_task_vocabulary($pdo);
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -45,7 +47,7 @@ $taskForm = [
     'case_id' => 0,
     'task_title' => '',
     'task_description' => '',
-    'task_priority' => 'medium',
+    'task_priority' => 'normal',
     'due_date' => '',
     'task_comment' => '',
 ];
@@ -71,8 +73,8 @@ try {
               `assigned_lawyer_id` INT NOT NULL,
               `title` VARCHAR(255) NOT NULL,
               `description` TEXT,
-              `status` ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
-              `priority` ENUM('low', 'medium', 'high') DEFAULT 'medium',
+              `status` ENUM('active', 'pending', 'under_review', 'closed') DEFAULT 'pending',
+              `priority` ENUM('normal', 'high', 'urgent') DEFAULT 'normal',
               `due_date` DATE NULL,
               `created_by` INT NULL,
               `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -100,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $taskId = isset($_POST['task_id']) ? (int)$_POST['task_id'] : 0;
     $newStatus = isset($_POST['status']) ? $_POST['status'] : '';
 
-    if ($taskId > 0 && in_array($newStatus, ['pending', 'in_progress', 'completed', 'cancelled'])) {
+    if ($taskId > 0 && in_array($newStatus, lawyer_task_status_keys(), true)) {
         try {
             // Get current task status for tracking
             $stmt = $pdo->prepare("SELECT status, title FROM tasks WHERE id = ?");
@@ -109,9 +111,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
             if ($currentTask && lawyer_has_task_access($pdo, $taskId, $lawyerId)) {
                 $oldStatus = $currentTask['status'];
+                $newStatus = lawyer_normalize_task_status($newStatus);
 
                 // Update task status
-                if ($newStatus === 'completed') {
+                if ($newStatus === 'closed') {
                     $stmt = $pdo->prepare("UPDATE tasks SET status = ?, completed_at = NOW() WHERE id = ?");
                     $stmt->execute([$newStatus, $taskId]);
                 } else {
@@ -131,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 if ($taskData) {
                     CaseEvents::trackTaskUpdated($taskData['case_id'], $taskId, $oldStatus, $newStatus, $currentTask['title']);
 
-                    if ($newStatus === 'completed') {
+                    if ($newStatus === 'closed') {
                         CaseEvents::trackTaskCompleted($taskData['case_id'], $currentTask);
                     }
                 }
@@ -154,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $caseId = isset($_POST['case_id']) ? (int)$_POST['case_id'] : 0;
     $taskTitle = trim(isset($_POST['task_title']) ? $_POST['task_title'] : '');
     $taskDescription = trim(isset($_POST['task_description']) ? $_POST['task_description'] : '');
-    $taskPriority = isset($_POST['task_priority']) ? $_POST['task_priority'] : 'medium';
+    $taskPriority = lawyer_normalize_task_priority(isset($_POST['task_priority']) ? $_POST['task_priority'] : 'normal');
     $dueDate = trim(isset($_POST['due_date']) ? $_POST['due_date'] : '');
     $taskComment = trim(isset($_POST['task_comment']) ? $_POST['task_comment'] : '');
 
@@ -169,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     ];
     $showTaskModalOnLoad = true;
 
-    if ($taskTitle === '' || $caseId <= 0 || !in_array($taskPriority, ['low', 'medium', 'high'], true)) {
+    if ($taskTitle === '' || $caseId <= 0 || !in_array($taskPriority, lawyer_task_priority_keys(), true)) {
         $message = 'Please provide a valid title, case, and priority.';
         $messageType = 'danger';
     } elseif ($dueDate !== '' && $dueDate < $minDueDate && $taskId <= 0) {
@@ -240,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             'case_id' => 0,
                             'task_title' => '',
                             'task_description' => '',
-                            'task_priority' => 'medium',
+                            'task_priority' => 'normal',
                             'due_date' => '',
                             'task_comment' => '',
                         ];
@@ -278,7 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         'case_id' => 0,
                         'task_title' => '',
                         'task_description' => '',
-                        'task_priority' => 'medium',
+                        'task_priority' => 'normal',
                         'due_date' => '',
                         'task_comment' => '',
                     ];
@@ -347,9 +350,10 @@ if ($dueSql !== '') {
 
 $query .= " ORDER BY
     CASE t.priority
-        WHEN 'high' THEN 1
-        WHEN 'medium' THEN 2
-        WHEN 'low' THEN 3
+        WHEN 'urgent' THEN 1
+        WHEN 'high' THEN 2
+        WHEN 'normal' THEN 3
+        ELSE 4
     END,
     t.due_date ASC,
     t.created_at DESC";
@@ -436,8 +440,8 @@ if (empty($tasks)) {
     </div>';
 } else {
     foreach ($tasks as $task) {
-        $statusBadge = legalpro_task_status_badge((string) ($task['status'] ?? ''));
-        $priorityBadge = legalpro_task_priority_badge((string) ($task['priority'] ?? 'medium'));
+        $statusBadge = lawyer_task_status_badge((string) ($task['status'] ?? ''));
+        $priorityBadge = lawyer_task_priority_badge((string) ($task['priority'] ?? 'normal'));
         $dueLabel = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
         $dueState = lawyer_task_due_state($task['due_date'] ?? null, (string) ($task['status'] ?? ''));
         $dueAlertBadge = lawyer_render_task_due_alert_badge($dueState);
@@ -451,6 +455,13 @@ if (empty($tasks)) {
         $caseNumber = 'C-' . str_pad((string) $task['case_id'], 4, '0', STR_PAD_LEFT);
         $taskFiles = $taskAttachmentsById[(int) $task['id']] ?? [];
         $commentFilesHtml = lawyer_render_task_comment_files_html($taskFiles);
+
+        $taskStatusKey = lawyer_normalize_task_status((string) ($task['status'] ?? ''));
+        $statusSelectOptions = '';
+        foreach (lawyer_task_status_options() as $statusValue => $statusLabel) {
+            $selected = $taskStatusKey === $statusValue ? ' selected' : '';
+            $statusSelectOptions .= '<option value="' . htmlspecialchars($statusValue) . '"' . $selected . '>' . htmlspecialchars($statusLabel) . '</option>';
+        }
 
         $tasksListHtml .= '
         <div class="lt-task-row' . $rowStateClass . '">
@@ -486,10 +497,7 @@ if (empty($tasks)) {
                             <input type="hidden" name="action" value="update_status">
                             <input type="hidden" name="task_id" value="' . (int) $task['id'] . '">
                             <select name="status" class="form-select form-select-sm lawyer-tasks-status-select mb-0" onchange="this.form.submit()" aria-label="Update task status">
-                                <option value="pending"' . ($task['status'] === 'pending' ? ' selected' : '') . '>Pending</option>
-                                <option value="in_progress"' . ($task['status'] === 'in_progress' ? ' selected' : '') . '>In Progress</option>
-                                <option value="completed"' . ($task['status'] === 'completed' ? ' selected' : '') . '>Completed</option>
-                                <option value="cancelled"' . ($task['status'] === 'cancelled' ? ' selected' : '') . '>Cancelled</option>
+                                ' . $statusSelectOptions . '
                             </select>
                         </form>
                     </div>
@@ -746,19 +754,19 @@ $html = <<<'HTML'
                                     <label class="form-label">Status</label>
                                     <select class="form-select" name="status">
                                         <option value="all"{STATUS_ALL}>All Status</option>
+                                        <option value="active"{STATUS_ACTIVE}>Active</option>
                                         <option value="pending"{STATUS_PENDING}>Pending</option>
-                                        <option value="in_progress"{STATUS_IN_PROGRESS}>In Progress</option>
-                                        <option value="completed"{STATUS_COMPLETED}>Completed</option>
-                                        <option value="cancelled"{STATUS_CANCELLED}>Cancelled</option>
+                                        <option value="under_review"{STATUS_UNDER_REVIEW}>Under review</option>
+                                        <option value="closed"{STATUS_CLOSED}>Closed</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-2 col-md-3">
                                     <label class="form-label">Priority</label>
                                     <select class="form-select" name="priority">
                                         <option value="all"{PRIORITY_ALL}>All Priorities</option>
+                                        <option value="normal"{PRIORITY_NORMAL}>Normal</option>
                                         <option value="high"{PRIORITY_HIGH}>High</option>
-                                        <option value="medium"{PRIORITY_MEDIUM}>Medium</option>
-                                        <option value="low"{PRIORITY_LOW}>Low</option>
+                                        <option value="urgent"{PRIORITY_URGENT}>Urgent</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-2 col-md-3">
@@ -841,9 +849,9 @@ $html = <<<'HTML'
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Priority</label>
                                 <select class="form-control" name="task_priority" id="task_priority">
-                                    <option value="low" {TASK_PRIORITY_LOW}>Low</option>
-                                    <option value="medium" {TASK_PRIORITY_MEDIUM}>Medium</option>
+                                    <option value="normal" {TASK_PRIORITY_NORMAL}>Normal</option>
                                     <option value="high" {TASK_PRIORITY_HIGH}>High</option>
+                                    <option value="urgent" {TASK_PRIORITY_URGENT}>Urgent</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -915,7 +923,7 @@ $html = <<<'HTML'
             document.getElementById('task_description').value = '';
             document.getElementById('task_comment').value = '';
             document.getElementById('task_comment_file').value = '';
-            document.getElementById('task_priority').value = 'medium';
+            document.getElementById('task_priority').value = 'normal';
             document.getElementById('task_due_date').value = '';
             applyTaskDueDateMin();
             document.getElementById('task_case_id').value = '';
@@ -932,7 +940,7 @@ $html = <<<'HTML'
             document.getElementById('task_description').value = description || '';
             document.getElementById('task_comment').value = '';
             document.getElementById('task_comment_file').value = '';
-            document.getElementById('task_priority').value = priority || 'medium';
+            document.getElementById('task_priority').value = priority || 'normal';
             document.getElementById('task_due_date').value = dueDate || '';
             applyTaskDueDateMin();
             setTaskCommentVisible(false);
@@ -970,21 +978,21 @@ $replacements = [
     '{TASK_FORM_DUE_DATE}' => htmlspecialchars($taskForm['due_date']),
     '{MIN_DUE_DATE}' => htmlspecialchars($minDueDate),
     '{MIN_DUE_DATE_JSON}' => json_encode($minDueDate),
-    '{TASK_PRIORITY_LOW}' => $taskForm['task_priority'] === 'low' ? 'selected' : '',
-    '{TASK_PRIORITY_MEDIUM}' => $taskForm['task_priority'] === 'medium' ? 'selected' : '',
-    '{TASK_PRIORITY_HIGH}' => $taskForm['task_priority'] === 'high' ? 'selected' : '',
+    '{TASK_PRIORITY_NORMAL}' => lawyer_normalize_task_priority((string) $taskForm['task_priority']) === 'normal' ? 'selected' : '',
+    '{TASK_PRIORITY_HIGH}' => lawyer_normalize_task_priority((string) $taskForm['task_priority']) === 'high' ? 'selected' : '',
+    '{TASK_PRIORITY_URGENT}' => lawyer_normalize_task_priority((string) $taskForm['task_priority']) === 'urgent' ? 'selected' : '',
     '{SHOW_TASK_MODAL}' => $showTaskModalOnLoad
         ? 'setTimeout(function(){ setTaskCommentVisible(true); new bootstrap.Modal(document.getElementById("taskModal")).show(); }, 120);'
         : '',
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
+    '{STATUS_ACTIVE}' => $statusFilter === 'active' ? ' selected' : '',
     '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
-    '{STATUS_IN_PROGRESS}' => $statusFilter === 'in_progress' ? ' selected' : '',
-    '{STATUS_COMPLETED}' => $statusFilter === 'completed' ? ' selected' : '',
-    '{STATUS_CANCELLED}' => $statusFilter === 'cancelled' ? ' selected' : '',
+    '{STATUS_UNDER_REVIEW}' => $statusFilter === 'under_review' ? ' selected' : '',
+    '{STATUS_CLOSED}' => $statusFilter === 'closed' ? ' selected' : '',
     '{PRIORITY_ALL}' => $priorityFilter === 'all' ? ' selected' : '',
+    '{PRIORITY_NORMAL}' => $priorityFilter === 'normal' ? ' selected' : '',
     '{PRIORITY_HIGH}' => $priorityFilter === 'high' ? ' selected' : '',
-    '{PRIORITY_MEDIUM}' => $priorityFilter === 'medium' ? ' selected' : '',
-    '{PRIORITY_LOW}' => $priorityFilter === 'low' ? ' selected' : '',
+    '{PRIORITY_URGENT}' => $priorityFilter === 'urgent' ? ' selected' : '',
     '{DUE_ALL}' => $dueFilter === 'all' ? ' selected' : '',
     '{DUE_OVERDUE}' => $dueFilter === 'overdue' ? ' selected' : '',
     '{DUE_TODAY}' => $dueFilter === 'today' ? ' selected' : '',

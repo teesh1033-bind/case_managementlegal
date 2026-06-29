@@ -446,7 +446,7 @@ function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit
             WHERE " . lawyer_task_access_sql() . "
               AND t.due_date IS NOT NULL
               AND t.due_date < CURDATE()
-              AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('completed', 'cancelled')
+              AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('closed', 'completed', 'cancelled')
             ORDER BY t.due_date ASC
             LIMIT 8
         ");
@@ -486,7 +486,7 @@ function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit
             INNER JOIN cases c ON c.id = t.case_id
             WHERE " . lawyer_task_access_sql() . "
               AND t.due_date = CURDATE()
-              AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('completed', 'cancelled')
+              AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('closed', 'completed', 'cancelled')
             ORDER BY t.due_date ASC
             LIMIT 8
         ");

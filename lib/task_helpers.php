@@ -121,9 +121,9 @@ function lawyer_task_week_bounds(): array
 
 function lawyer_task_is_open_status(string $status): bool
 {
-    $status = strtolower(trim($status));
+    $status = strtolower(str_replace(' ', '_', trim($status)));
 
-    return !in_array($status, ['completed', 'cancelled'], true);
+    return !in_array($status, ['closed', 'completed', 'cancelled'], true);
 }
 
 function lawyer_task_due_state(?string $dueDate, string $status): string
@@ -161,7 +161,7 @@ function lawyer_task_due_filter_sql(string $dueFilter): array
     }
 
     $base = " AND t.due_date IS NOT NULL
-        AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('completed', 'cancelled')";
+        AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('closed', 'completed', 'cancelled')";
 
     if ($dueFilter === 'overdue') {
         return [$base . ' AND t.due_date < CURDATE()', []];
@@ -193,7 +193,7 @@ function lawyer_task_due_counts(PDO $pdo, int $lawyerId): array
         FROM tasks t
         WHERE " . lawyer_task_access_sql() . "
           AND t.due_date IS NOT NULL
-          AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('completed', 'cancelled')
+          AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('closed', 'completed', 'cancelled')
     ";
 
     try {

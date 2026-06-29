@@ -2,6 +2,9 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../lib/lawyer_portal_vocab.php';
+
+ensure_lawyer_case_vocabulary($pdo);
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -14,6 +17,7 @@ $lawyerName = $_SESSION['lawyer_name'];
 
 // Get filter parameters
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
+$priorityFilter = isset($_GET['priority']) ? strtolower(trim((string) $_GET['priority'])) : 'all';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 // Build query
@@ -32,6 +36,16 @@ $params = [$lawyerId];
 if ($statusFilter !== 'all') {
     $query .= " AND c.status = ?";
     $params[] = $statusFilter;
+}
+
+if ($priorityFilter !== 'all' && in_array($priorityFilter, lawyer_task_priority_keys(), true)) {
+    if ($priorityFilter === 'normal') {
+        $query .= " AND LOWER(TRIM(c.priority)) IN ('normal', 'medium', 'low')";
+    } elseif ($priorityFilter === 'high') {
+        $query .= " AND LOWER(TRIM(c.priority)) = 'high'";
+    } else {
+        $query .= " AND LOWER(TRIM(c.priority)) = 'urgent'";
+    }
 }
 
 if (!empty($search)) {
@@ -62,12 +76,12 @@ if (empty($cases)) {
     $casesTable = '<tr><td colspan="7" class="border-0"><div class="text-center py-5 px-4">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseEmpty . '</div>
         <h5 class="font-weight-bolder mt-3 mb-2">No cases found</h5>
-        <p class="text-sm text-muted mb-0">Try adjusting your search or status filter.</p>
+        <p class="text-sm text-muted mb-0">Try adjusting your search, status or priority filter.</p>
     </div></td></tr>';
 } else {
     foreach ($cases as $case) {
-        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
-        $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+        $statusBadge = lawyer_case_status_badge((string) ($case['status'] ?? ''));
+        $priorityBadge = lawyer_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
         $categoryLabel = trim((string) ($case['category'] ?? ''));
         $categoryPill = $categoryLabel !== ''
             ? '<span class="lc-category-pill">' . htmlspecialchars($categoryLabel) . '</span>'
@@ -152,28 +166,38 @@ $html = <<<'HTML'
                 <div class="col-12">
                     <div class="card">
                         <div class="card-body p-3">
-                            <form method="GET" class="row align-items-end">
-                                <div class="col-md-4">
+                            <form method="GET" class="row align-items-end g-3">
+                                <div class="col-lg-3 col-md-6">
                                     <label class="form-label">Search Cases</label>
                                     <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="Case title or client name">
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Status Filter</label>
+                                <div class="col-lg-2 col-md-3">
+                                    <label class="form-label">Status</label>
                                     <select class="form-select" name="status">
                                         <option value="all"{STATUS_ALL}>All Cases</option>
-                                        <option value="open"{STATUS_OPEN}>Open</option>
-                                        <option value="in_progress"{STATUS_IN_PROGRESS}>In Progress</option>
+                                        <option value="active"{STATUS_ACTIVE}>Active</option>
+                                        <option value="pending"{STATUS_PENDING}>Pending</option>
+                                        <option value="under_review"{STATUS_UNDER_REVIEW}>Under review</option>
                                         <option value="closed"{STATUS_CLOSED}>Closed</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-lg-2 col-md-3">
+                                    <label class="form-label">Priority</label>
+                                    <select class="form-select" name="priority">
+                                        <option value="all"{PRIORITY_ALL}>All Priorities</option>
+                                        <option value="normal"{PRIORITY_NORMAL}>Normal</option>
+                                        <option value="high"{PRIORITY_HIGH}>High</option>
+                                        <option value="urgent"{PRIORITY_URGENT}>Urgent</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
                                     <label class="form-label d-block invisible">Actions</label>
                                     <div class="lp-lawyer-filter-actions">
                                         <button type="submit" class="btn btn-primary mb-0">Filter</button>
                                         <a href="lawyer-cases.php" class="btn btn-outline-secondary mb-0">Reset</a>
                                     </div>
                                 </div>
-                                <div class="col-md-2 text-end">
+                                <div class="col-lg-2 col-md-12 text-lg-end">
                                     <p class="text-sm text-muted mb-0">Total: {TOTAL_CASES} cases</p>
                                 </div>
                             </form>
@@ -248,9 +272,14 @@ $replacements = [
     '{NAVIGATION}' => $navHtml,
     '{SEARCH_VALUE}' => htmlspecialchars($search),
     '{STATUS_ALL}' => $statusFilter === 'all' ? ' selected' : '',
-    '{STATUS_OPEN}' => $statusFilter === 'open' ? ' selected' : '',
-    '{STATUS_IN_PROGRESS}' => $statusFilter === 'in_progress' ? ' selected' : '',
+    '{STATUS_ACTIVE}' => $statusFilter === 'active' ? ' selected' : '',
+    '{STATUS_PENDING}' => $statusFilter === 'pending' ? ' selected' : '',
+    '{STATUS_UNDER_REVIEW}' => $statusFilter === 'under_review' ? ' selected' : '',
     '{STATUS_CLOSED}' => $statusFilter === 'closed' ? ' selected' : '',
+    '{PRIORITY_ALL}' => $priorityFilter === 'all' ? ' selected' : '',
+    '{PRIORITY_NORMAL}' => $priorityFilter === 'normal' ? ' selected' : '',
+    '{PRIORITY_HIGH}' => $priorityFilter === 'high' ? ' selected' : '',
+    '{PRIORITY_URGENT}' => $priorityFilter === 'urgent' ? ' selected' : '',
     '{TOTAL_CASES}' => count($cases),
     '{CASES_TABLE}' => $casesTable,
     '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),

@@ -617,7 +617,10 @@ function legalpro_task_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
+        'active' => ['label' => 'Active', 'class' => 'lp-pill--status-progress'],
         'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'under_review' => ['label' => 'Under review', 'class' => 'lp-pill--status-progress'],
+        'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
         'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
         'completed' => ['label' => 'Completed', 'class' => 'lp-pill--status-active'],
         'cancelled' => ['label' => 'Cancelled', 'class' => 'lp-pill--status-declined'],
@@ -636,10 +639,11 @@ function legalpro_task_priority_badge(string $priority): string
 {
     $key = strtolower(trim($priority));
     $map = [
-        'low' => ['label' => 'Low', 'class' => 'lp-pill--status-closed'],
-        'medium' => ['label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
+        'normal' => ['label' => 'Normal', 'class' => 'lp-pill--priority-medium'],
         'high' => ['label' => 'High', 'class' => 'lp-pill--priority-high'],
         'urgent' => ['label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
+        'low' => ['label' => 'Low', 'class' => 'lp-pill--status-closed'],
+        'medium' => ['label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
     ];
 
     if (!isset($map[$key])) {

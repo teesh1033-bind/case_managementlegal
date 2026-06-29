@@ -2,6 +2,9 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../lib/lawyer_portal_vocab.php';
+
+ensure_lawyer_case_vocabulary($pdo);
 
 if (!isset($_SESSION['lawyer_id'])) {
     header('Location: lawyer-login.php');
@@ -142,8 +145,8 @@ if (empty($recentCases)) {
         $title = htmlspecialchars($case['title']);
         $clientName = htmlspecialchars(trim($case['first_name'] . ' ' . $case['last_name']));
         $created = date('M j, Y', strtotime($case['created_at']));
-        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
-        $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+        $statusBadge = lawyer_case_status_badge((string) ($case['status'] ?? ''));
+        $priorityBadge = lawyer_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
 
         $recentCasesHtml .= '<a href="lawyer-case-view.php?id=' . (int) $case['id'] . '" class="ld-list-row">'
             . '<div class="ld-list-row__icon">' . $iconRowCase . '</div>'

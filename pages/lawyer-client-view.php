@@ -2,6 +2,9 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../lib/lawyer_portal_vocab.php';
+
+ensure_lawyer_case_vocabulary($pdo);
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -158,8 +161,8 @@ if (empty($clientCases)) {
 } else {
     $casesHtml = '<div class="lcv-case-grid">';
     foreach ($clientCases as $case) {
-        $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
-        $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
+        $statusBadge = lawyer_case_status_badge((string) ($case['status'] ?? ''));
+        $priorityBadge = lawyer_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
         $primaryBadge = $case['is_primary'] ? '<span class="ca-status-pill ca-status-pill--pending">Primary</span>' : '';
         $description = trim((string) ($case['description'] ?? ''));
         if ($description === '') {
