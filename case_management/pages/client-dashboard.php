@@ -249,7 +249,7 @@ $html = <<<'HTML'
             <div class="cd-kpi" style="--kpi-accent: #2dce89;">
                 <div>
                     <div class="cd-kpi__val">{OPEN_CASES}</div>
-                    <div class="cd-kpi__lbl">Open</div>
+                    <div class="cd-kpi__lbl">Active</div>
                 </div>
                 <div class="cd-kpi__icon">{KPI_ICON_ACTIVITY}</div>
             </div>

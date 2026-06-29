@@ -823,7 +823,7 @@ function client_case_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
-        'open' => ['label' => 'Open', 'pill' => 'ca-status-pill--scheduled'],
+        'open' => ['label' => 'Active', 'pill' => 'ca-status-pill--scheduled'],
         'in_progress' => ['label' => 'In Progress', 'pill' => 'ca-status-pill--scheduled'],
         'closed' => ['label' => 'Closed', 'pill' => 'ca-status-pill--done'],
         'pending' => ['label' => 'Pending', 'pill' => 'ca-status-pill--pending'],
