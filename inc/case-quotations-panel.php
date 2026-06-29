@@ -37,6 +37,18 @@ if (!isset($quotationsView) || !is_array($quotationsView)) {
                     <label class="form-label text-sm">Tax Rate (%)</label>
                     <input type="number" class="form-control" name="quotation_tax_rate" id="quotation_tax_rate" min="0" step="0.01" value="0">
                 </div>
+                <div class="col-md-6">
+                    <label class="form-label text-sm">Bank account on quotation</label>
+                    <?php echo legalpro_render_bank_account_select('bank_account_slot', getDefaultBankAccountSlot(), 'quotation_bank_account_slot'); ?>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-sm">Payment terms</label>
+                    <input type="text" class="form-control" name="payment_terms" value="<?php echo htmlspecialchars(getDefaultPaymentTerms(), ENT_QUOTES, 'UTF-8'); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-sm">Payment instructions</label>
+                    <input type="text" class="form-control" name="payment_instructions" value="<?php echo htmlspecialchars(getDefaultPaymentInstructions(), ENT_QUOTES, 'UTF-8'); ?>" placeholder="Optional">
+                </div>
             </div>
             <button type="submit" class="btn btn-dark btn-sm mt-3 mb-0" id="case-quotation-submit-btn">Save Quotation</button>
         </form>

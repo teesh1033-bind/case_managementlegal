@@ -83,7 +83,8 @@ function legalpro_render_portal_header_utilities(
     string $extraMenuHtml = '',
     bool $notifPanelMode = false,
     ?int $notifBadgeCount = null,
-    bool $adminNotifApiMode = false
+    bool $adminNotifApiMode = false,
+    string $prependActionsHtml = ''
 ): string {
     $initials = legalpro_portal_initials($displayName);
     $notifCount = $notifBadgeCount ?? count($notifications);
@@ -117,6 +118,7 @@ function legalpro_render_portal_header_utilities(
 
     return '
     <div class="legalpro-navbar-actions d-flex align-items-center gap-3 flex-shrink-0">
+        ' . $prependActionsHtml . '
         ' . $notifControl . '
         <div class="legalpro-header-user dropdown">
             <button type="button" class="legalpro-header-user__toggle" aria-expanded="false" aria-haspopup="true" aria-controls="legalproHeaderUserMenuList">
@@ -364,6 +366,33 @@ function legalpro_render_admin_notification_dropdown(): string
         . '</template>';
 }
 
+function legalpro_render_lawyer_theme_toggle(): string
+{
+    if (!isset($_SESSION['lawyer_id'])) {
+        return '';
+    }
+
+    if (!function_exists('getLawyerPortalThemeMode')) {
+        require_once __DIR__ . '/../lib/portal-theme.php';
+    }
+
+    $currentMode = getLawyerPortalThemeMode((int) $_SESSION['lawyer_id']);
+    $isDark = $currentMode === 'dark';
+    $iconName = $isDark ? 'sun' : 'moon';
+    $switchLight = 'Switch to light mode';
+    $switchDark = 'Switch to dark mode';
+    $label = $isDark ? $switchLight : $switchDark;
+
+    return '<button type="button" class="legalpro-header-theme-toggle" id="lawyerThemeToggle"'
+        . ' data-theme-mode="' . htmlspecialchars($currentMode, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-label-light="' . htmlspecialchars($switchLight, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-label-dark="' . htmlspecialchars($switchDark, ENT_QUOTES, 'UTF-8') . '"'
+        . ' title="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '"'
+        . ' aria-label="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '">'
+        . legalpro_icon($iconName)
+        . '</button>';
+}
+
 function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
 {
     $lawyerId = isset($_SESSION['lawyer_id']) ? (int) $_SESSION['lawyer_id'] : 0;
@@ -379,8 +408,50 @@ function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
         'lawyer-notifications.php',
         'lawyer-logout.php',
         'lawyer-profile.php',
-        '<li><a class="dropdown-item" href="lawyer-settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>'
+        '<li><a class="dropdown-item" href="lawyer-settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
+        false,
+        null,
+        false,
+        legalpro_render_lawyer_theme_toggle()
     );
+}
+
+function legalpro_render_client_theme_toggle(): string
+{
+    if (!isset($_SESSION['client_id'])) {
+        return '';
+    }
+
+    if (!function_exists('getClientPortalThemeMode')) {
+        require_once __DIR__ . '/../lib/portal-theme.php';
+    }
+
+    $currentMode = getClientPortalThemeMode((int) $_SESSION['client_id']);
+    $isDark = $currentMode === 'dark';
+    $iconName = $isDark ? 'sun' : 'moon';
+    $labelKey = $isDark ? 'theme.switch_light' : 'theme.switch_dark';
+    $label = function_exists('client_t') ? client_t($labelKey) : ($isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    if ($label === $labelKey) {
+        $label = $isDark ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+
+    $switchLight = function_exists('client_t') ? client_t('theme.switch_light') : 'Switch to light mode';
+    if ($switchLight === 'theme.switch_light') {
+        $switchLight = 'Switch to light mode';
+    }
+    $switchDark = function_exists('client_t') ? client_t('theme.switch_dark') : 'Switch to dark mode';
+    if ($switchDark === 'theme.switch_dark') {
+        $switchDark = 'Switch to dark mode';
+    }
+
+    return '<button type="button" class="legalpro-header-theme-toggle" id="clientThemeToggle"'
+        . ' data-theme-mode="' . htmlspecialchars($currentMode, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-label-light="' . htmlspecialchars($switchLight, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-label-dark="' . htmlspecialchars($switchDark, ENT_QUOTES, 'UTF-8') . '"'
+        . ' title="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '"'
+        . ' aria-label="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '">'
+        . legalpro_icon($iconName)
+        . '</button>';
 }
 
 function legalpro_render_client_header_utilities(?PDO $pdo = null): string
@@ -403,7 +474,9 @@ function legalpro_render_client_header_utilities(?PDO $pdo = null): string
         'client-profile.php',
         '<li><a class="dropdown-item" href="client-settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars($settingsLabel) . '</a></li>',
         true,
-        legalpro_client_notification_count($pdo, $clientId)
+        legalpro_client_notification_count($pdo, $clientId),
+        false,
+        legalpro_render_client_theme_toggle()
     );
 }
 

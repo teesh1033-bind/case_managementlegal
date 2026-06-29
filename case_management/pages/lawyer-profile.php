@@ -200,7 +200,7 @@ $html = <<<'HTML'
     <link href="../assets/css/app-font-montserrat.css?v=3" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-profile-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-profile-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/lawyer-menunav.php'; ?>
 
@@ -352,6 +352,7 @@ $html = str_replace('{NEW_PASSWORD_INVALID_CLASS}', $passwordInvalidClass, $html
 $html = str_replace('{CONFIRM_PASSWORD_INVALID_CLASS}', $confirmInvalidClass, $html);
 $html = str_replace('{NEW_PASSWORD_ERROR}', $passwordErrorHtml, $html);
 $html = str_replace('{CONFIRM_PASSWORD_ERROR}', $confirmErrorHtml, $html);
+$html = str_replace('{PORTAL_THEME_BODY_CLASS}', legalpro_portal_theme_body_class(), $html);
 
 require_once __DIR__ . '/../inc/lawyer-sidebar.php';
 $html = inject_lawyer_portal_head($html);

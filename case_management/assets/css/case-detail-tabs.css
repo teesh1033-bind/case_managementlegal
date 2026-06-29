@@ -551,18 +551,33 @@ body.legalpro-dark-mode .case-quotation-totals {
     background: rgba(255, 255, 255, 0.04) !important;
 }
 
+body.legalpro-dark-mode.admin-case-view-page .case-detail-tab-actions .btn.bg-gradient-dark,
 body.legalpro-dark-mode.admin-case-view-page #quotations .btn.bg-gradient-dark,
-body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-card .btn-dark {
+body.legalpro-dark-mode.admin-case-view-page #comments .btn.bg-gradient-dark,
+body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-card .btn-dark,
+body.legalpro-dark-mode.admin-case-view-page #stages #case-summary-form-card .btn-dark,
+body.legalpro-dark-mode.admin-case-view-page #case-comment-form-card .btn-dark,
+body.legalpro-dark-mode.admin-case-view-page #comments .case-detail-form-card .btn-dark {
     background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
     border: none !important;
     color: #fff !important;
     box-shadow: 0 4px 12px rgba(94, 114, 228, 0.28) !important;
 }
 
+body.legalpro-dark-mode.admin-case-view-page .case-detail-tab-actions .btn.bg-gradient-dark:hover,
+body.legalpro-dark-mode.admin-case-view-page .case-detail-tab-actions .btn.bg-gradient-dark:focus,
 body.legalpro-dark-mode.admin-case-view-page #quotations .btn.bg-gradient-dark:hover,
 body.legalpro-dark-mode.admin-case-view-page #quotations .btn.bg-gradient-dark:focus,
+body.legalpro-dark-mode.admin-case-view-page #comments .btn.bg-gradient-dark:hover,
+body.legalpro-dark-mode.admin-case-view-page #comments .btn.bg-gradient-dark:focus,
 body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-card .btn-dark:hover,
-body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-card .btn-dark:focus {
+body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-card .btn-dark:focus,
+body.legalpro-dark-mode.admin-case-view-page #stages #case-summary-form-card .btn-dark:hover,
+body.legalpro-dark-mode.admin-case-view-page #stages #case-summary-form-card .btn-dark:focus,
+body.legalpro-dark-mode.admin-case-view-page #case-comment-form-card .btn-dark:hover,
+body.legalpro-dark-mode.admin-case-view-page #case-comment-form-card .btn-dark:focus,
+body.legalpro-dark-mode.admin-case-view-page #comments .case-detail-form-card .btn-dark:hover,
+body.legalpro-dark-mode.admin-case-view-page #comments .case-detail-form-card .btn-dark:focus {
     background: linear-gradient(135deg, #6d7fe8 0%, #916fef 100%) !important;
     color: #fff !important;
 }

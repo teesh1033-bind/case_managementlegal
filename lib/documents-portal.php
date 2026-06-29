@@ -517,12 +517,12 @@ function legalpro_documents_portal_build_fragments(array &$state): void
     }
 
     if (empty($templates)) {
-        $state['templatesRows'] = '<tr><td colspan="3" class="text-center text-muted py-3">No templates yet.</td></tr>';
+        $state['templatesRows'] = '<tr class="lp-admin-pagination-skip"><td colspan="3" class="text-center text-muted py-3">No templates yet.</td></tr>';
     } else {
         $templatesRows = '';
         foreach ($templates as $template) {
             $templatesRows .= '
-            <tr>
+            <tr class="legalpro-admin-list-row">
                 <td>
                     <strong>' . htmlspecialchars($template['name']) . '</strong>
                     <p class="text-xs text-muted mb-0">' . htmlspecialchars($template['description'] ?? '') . '</p>
@@ -737,7 +737,12 @@ function legalpro_documents_subnav_html(string $activeKey): string
 {
     $pages = legalpro_documents_portal_pages();
     $html = '<nav class="legalpro-doc-subnav" aria-label="Documents sections">';
+    $overviewActive = $activeKey === 'documents' ? ' is-active' : '';
+    $html .= '<a class="legalpro-doc-subnav__link' . $overviewActive . '" href="documents.php">Overview</a>';
     foreach ($pages as $key => $page) {
+        if ($key === 'documents') {
+            continue;
+        }
         $active = $key === $activeKey ? ' is-active' : '';
         $html .= '<a class="legalpro-doc-subnav__link' . $active . '" href="' . htmlspecialchars($page['file']) . '">'
             . htmlspecialchars($page['title']) . '</a>';
@@ -930,6 +935,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
     $page = $pages[$pageKey] ?? $pages['documents'];
     $navTitle = $page['nav'];
     $bodyClass = legalpro_portal_theme_body_class();
+    $subnav = $pageKey === 'documents' ? '' : legalpro_documents_subnav_html($pageKey);
 
     $html = '<!DOCTYPE html>
 <html lang="en">
@@ -968,7 +974,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
         </nav>
         <div class="container-fluid py-4">
             ' . legalpro_documents_message_html($state) . '
-            ' . legalpro_documents_subnav_html($pageKey) . '
+            ' . $subnav . '
             ' . $contentHtml . '
         </div>
     </main>

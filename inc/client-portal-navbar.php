@@ -96,31 +96,10 @@ function legalpro_render_client_page_navbar(
     }
     $welcomeName = htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8');
 
-    $includeSearch = (bool) ($options['include_search'] ?? ($searchPlaceholder !== ''));
-    $searchValueRaw = (string) ($options['search_value'] ?? legalpro_client_page_search_query());
-    $searchValue = htmlspecialchars($searchValueRaw, ENT_QUOTES, 'UTF-8');
-    $searchPlaceholderEsc = htmlspecialchars($searchPlaceholder, ENT_QUOTES, 'UTF-8');
-    $searchAction = (string) ($options['search_action'] ?? '');
-    if ($includeSearch && $searchAction === '') {
-        $searchAction = basename((string) ($_SERVER['PHP_SELF'] ?? 'search.php'));
-    }
-    $searchActionEsc = htmlspecialchars($searchAction, ENT_QUOTES, 'UTF-8');
-
     $pageTitleEsc = htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
     $breadcrumbEsc = htmlspecialchars($breadcrumbActive, ENT_QUOTES, 'UTF-8');
     $parentLabelEsc = htmlspecialchars($parentLabel, ENT_QUOTES, 'UTF-8');
     $parentUrlEsc = htmlspecialchars($parentUrl, ENT_QUOTES, 'UTF-8');
-
-    $searchHtml = '';
-    if ($includeSearch) {
-        $searchHtml = '
-                    <form class="ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search" method="get" action="' . $searchActionEsc . '" role="search">
-                        <div class="input-group">
-                            <span class="input-group-text text-body"><i class="fas fa-search" aria-hidden="true"></i></span>
-                            <input type="search" name="q" class="form-control" placeholder="' . $searchPlaceholderEsc . '" value="' . $searchValue . '" autocomplete="off" maxlength="200" aria-label="Search">
-                        </div>
-                    </form>';
-    }
 
     return '
         <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
@@ -132,8 +111,8 @@ function legalpro_render_client_page_navbar(
                     </ol>
                     <' . $titleTag . ' class="font-weight-bolder mb-0 text-white">' . $pageTitleEsc . '</' . $titleTag . '>
                 </nav>
-                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">' . $searchHtml . '
-                    <ul class="navbar-nav justify-content-end">
+                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
+                    <ul class="navbar-nav justify-content-end ms-md-auto">
                         <li class="nav-item d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
                                 <i class="fa fa-user me-sm-1"></i>

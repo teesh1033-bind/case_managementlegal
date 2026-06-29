@@ -10,6 +10,41 @@ function getDefaultCompanyLogoPath(): string
     return 'assets/img/logo-ct-dark.png';
 }
 
+/**
+ * Resolve configured logo path to a file that exists on disk.
+ */
+function legalpro_resolve_company_logo_relative_path(): string
+{
+    $root = dirname(__DIR__);
+    $candidates = [];
+
+    $configured = trim((string) getSetting('company_logo', ''));
+    if ($configured !== '') {
+        $candidates[] = ltrim($configured, '/\\');
+    }
+
+    $candidates[] = getDefaultCompanyLogoPath();
+
+    foreach ($candidates as $relative) {
+        $absolute = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relative);
+        if (is_file($absolute)) {
+            return str_replace('\\', '/', $relative);
+        }
+    }
+
+    $brandingDir = $root . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'branding';
+    $brandingMatches = is_dir($brandingDir)
+        ? (glob($brandingDir . DIRECTORY_SEPARATOR . 'company-logo.*') ?: [])
+        : [];
+    foreach ($brandingMatches as $absolute) {
+        if (is_file($absolute)) {
+            return 'uploads/branding/' . basename($absolute);
+        }
+    }
+
+    return getDefaultCompanyLogoPath();
+}
+
 function getCompanyName(): string
 {
     $name = trim((string) getSetting('company_name', ''));
@@ -18,8 +53,7 @@ function getCompanyName(): string
 
 function getCompanyLogoRelativePath(): string
 {
-    $path = trim((string) getSetting('company_logo', ''));
-    return $path !== '' ? $path : getDefaultCompanyLogoPath();
+    return legalpro_resolve_company_logo_relative_path();
 }
 
 function getCompanyLogoUrl(): string

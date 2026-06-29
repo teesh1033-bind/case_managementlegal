@@ -159,7 +159,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
-    <link href="../assets/css/client-portal-pages.css?v=4" rel="stylesheet" />
+    <link href="../assets/css/client-portal-pages.css?v=6" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-documents-page{PORTAL_THEME_BODY_CLASS}">
 <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
@@ -190,7 +190,13 @@ $html = <<<'HTML'
         </div>
         <div class="cp-panel">
             {PANEL_HEADER}
+            <div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cdoc-row" data-portal-per-page="10" data-portal-show-page-global="cdocShowPage">
             <div>{DOCUMENT_ROWS}</div>
+            <nav class="cp-portal-pagination" data-portal-pagination aria-label="Documents pagination" hidden>
+                <p class="cp-portal-pagination__info" data-portal-range></p>
+                <div class="cp-portal-pagination__controls" data-portal-pages></div>
+            </nav>
+            </div>
         </div>
         </div>
     </div>

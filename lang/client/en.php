@@ -21,6 +21,8 @@ return [
     'settings.theme_mode' => 'Theme mode',
     'settings.light' => 'Light',
     'settings.dark' => 'Dark',
+    'theme.switch_dark' => 'Switch to dark mode',
+    'theme.switch_light' => 'Switch to light mode',
     'settings.language' => 'Language',
     'settings.language_label' => 'Display language',
     'settings.language_help' => 'Updates navigation labels and settings across the client portal.',

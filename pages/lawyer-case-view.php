@@ -250,6 +250,17 @@ $categoryBadge = $categoryLabel !== ''
     : '<span class="ca-status-pill ca-status-pill--muted">—</span>';
 $iconDocRow = legalpro_icon('file-text');
 $iconCommentEmpty = legalpro_icon('message-circle');
+$iconBriefcase = legalpro_icon('briefcase');
+$iconMail = legalpro_icon('mail');
+$iconPhone = legalpro_icon('phone');
+$iconUser = legalpro_icon('user');
+$iconCalendar = legalpro_icon('calendar');
+$iconArrowLeft = legalpro_icon('arrow-left');
+$iconLayers = legalpro_icon('layers');
+$iconClock = legalpro_icon('clock');
+$iconQuote = legalpro_icon('receipt');
+$iconActivity = legalpro_icon('activity');
+$iconUpload = legalpro_icon('upload');
 
 // Build services HTML
 $servicesHtml = '';
@@ -266,8 +277,8 @@ if (empty($services)) {
         $totalFees += $service['price'];
     }
     $servicesHtml .= '
-    <tr class="table-active">
-        <td><strong>Total Estimated Fees</strong></td>
+    <tr class="lcv-table-total">
+        <td><strong>Total estimated fees</strong></td>
         <td class="text-end"><strong>' . formatCurrency($totalFees) . '</strong></td>
     </tr>';
 }
@@ -362,6 +373,59 @@ if (empty($documents)) {
     }
 }
 
+$clientFullName = trim($case['first_name'] . ' ' . $case['last_name']);
+$clientId = (int) ($case['client_id'] ?? 0);
+$caseInitials = legalpro_portal_initials((string) $case['title'], 'CS');
+$caseNumber = 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
+$servicesCount = count($services);
+$stagesCount = count($stages);
+$appointmentsCount = count($appointments);
+$documentsCount = count($documents);
+$commentsCount = count($comments);
+
+$clientDetailsHtml = '';
+$clientRows = [
+    ['icon' => $iconUser, 'label' => 'Client', 'value' => $clientFullName],
+    ['icon' => $iconMail, 'label' => 'Email', 'value' => $case['email'] ?: 'Not provided'],
+    ['icon' => $iconPhone, 'label' => 'Phone', 'value' => $case['phone'] ?: 'Not provided'],
+];
+foreach ($clientRows as $row) {
+    $clientDetailsHtml .= '
+    <div class="lcv-detail-item">
+        <div class="lcv-detail-item__icon">' . $row['icon'] . '</div>
+        <div class="min-width-0">
+            <span class="lcv-detail-item__label">' . htmlspecialchars($row['label']) . '</span>
+            <span class="lcv-detail-item__value">' . htmlspecialchars($row['value']) . '</span>
+        </div>
+    </div>';
+}
+
+$caseDetailsHtml = '';
+$caseRows = [
+    ['icon' => $iconCalendar, 'label' => 'Created', 'value' => date('M d, Y', strtotime($case['created_at']))],
+    ['icon' => $iconClock, 'label' => 'Last updated', 'value' => date('M d, Y', strtotime(!empty($case['updated_at']) ? $case['updated_at'] : $case['created_at']))],
+    ['icon' => $iconUser, 'label' => 'Assigned lawyers', 'value' => $case['assigned_lawyers'] ?: 'Not assigned'],
+];
+foreach ($caseRows as $row) {
+    $caseDetailsHtml .= '
+    <div class="lcv-detail-item">
+        <div class="lcv-detail-item__icon">' . $row['icon'] . '</div>
+        <div class="min-width-0">
+            <span class="lcv-detail-item__label">' . htmlspecialchars($row['label']) . '</span>
+            <span class="lcv-detail-item__value">' . htmlspecialchars($row['value']) . '</span>
+        </div>
+    </div>';
+}
+
+$caseDescHeroHtml = '';
+if (!empty($case['description'])) {
+    $caseDescHeroHtml = '
+    <div class="lcv-case-desc">
+        <h6>Description</h6>
+        <p>' . nl2br(htmlspecialchars((string) $case['description'])) . '</p>
+    </div>';
+}
+
 ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
@@ -382,96 +446,8 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
-    <style>
-        .lawyer-case-comments .cc-comment-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            max-height: min(32rem, 55vh);
-            overflow-y: auto;
-            padding-right: 0.15rem;
-        }
-        .lawyer-case-comments .cc-comment-list::-webkit-scrollbar { width: 6px; }
-        .lawyer-case-comments .cc-comment-list::-webkit-scrollbar-thumb {
-            background: rgba(45, 206, 137, 0.35);
-            border-radius: 999px;
-        }
-        .lawyer-case-comments .cc-comment-item-inner {
-            background: #fff;
-            border: 1px solid rgba(0,0,0,.06);
-            border-radius: 0.75rem;
-            padding: 1rem 1.15rem;
-            border-left: 4px solid #8392ab;
-            box-shadow: 0 1px 4px rgba(0,0,0,.04);
-            width: 100%;
-            max-width: 100%;
-        }
-        .lawyer-case-comments .cc-comment-item--client .cc-comment-item-inner { border-left-color: #8898aa; }
-        .lawyer-case-comments .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
-        .lawyer-case-comments .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
-        .lawyer-case-comments .cc-comment-item--staff .cc-comment-item-inner { border-left-color: #8898aa; }
-        .lawyer-case-comments .cc-comment-item--yours .cc-comment-item-inner {
-            background: #f8fdfb;
-            border-color: rgba(45, 206, 137, 0.25);
-        }
-        .lawyer-case-comments .cc-comment-head {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 1rem;
-            margin-bottom: 0.65rem;
-            flex-wrap: wrap;
-        }
-        .lawyer-case-comments .cc-comment-head-main {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.35rem;
-            min-width: 0;
-        }
-        .lawyer-case-comments .cc-comment-author {
-            font-size: 0.875rem;
-            font-weight: 700;
-            color: #344767;
-        }
-        .lawyer-case-comments .cc-comment-time {
-            font-size: 0.75rem;
-            color: #8392ab;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        .lawyer-case-comments .cc-comment-text {
-            font-size: 0.875rem;
-            line-height: 1.6;
-            color: #525f7f;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            margin: 0;
-        }
-        .lawyer-case-comments .cc-comment-form textarea {
-            border-radius: 0.65rem;
-            resize: vertical;
-            min-height: 6rem;
-        }
-        .lawyer-case-comments .cc-comment-head-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
-        .lawyer-case-comments .cc-comment-delete-form {
-            display: inline-flex;
-            margin: 0;
-        }
-        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link,
-        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link:hover,
-        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link:focus,
-        body.lawyer-case-view-page:not(.legalpro-dark-mode) #caseTabs .nav-link.active {
-            color: #344767 !important;
-        }
-    </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-case-view-page">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-case-view-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -491,222 +467,254 @@ $html = <<<'HTML'
         </nav>
 
         <div class="container-fluid py-4">
-            <!-- Case Overview -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-0">Case Overview</h5>
-                                    <p class="text-sm text-muted mb-0">Case #{CASE_ID} - {CASE_TITLE}</p>
-                                </div>
-                                <div>
-                                    {STATUS_BADGE} {PRIORITY_BADGE} {CATEGORY_BADGE}
-                                </div>
+            <div class="card lcv-hero mb-4">
+                <div class="lcv-hero__gradient">
+                    <a href="lawyer-cases.php" class="lcv-back">{ICON_ARROW_LEFT} Back to cases</a>
+                    <div class="lcv-hero__main">
+                        <div class="lcv-avatar" aria-hidden="true">{CASE_INITIALS}</div>
+                        <div class="min-width-0">
+                            <h1 class="lcv-hero__name">{CASE_TITLE}</h1>
+                            <p class="lcv-hero__meta">{CASE_NUMBER} · Client: {CLIENT_NAME}</p>
+                            <div class="lcv-hero__badges">{STATUS_BADGE} {PRIORITY_BADGE} {CATEGORY_BADGE}</div>
+                        </div>
+                    </div>
+                    {CASE_DESC_HERO}
+                </div>
+            </div>
+
+            <div class="lcv-glance">
+                <div class="lcv-glance__item">
+                    <div>
+                        <div class="lcv-glance__val">{SERVICES_COUNT}</div>
+                        <div class="lcv-glance__lbl">Services</div>
+                    </div>
+                    <div class="lcv-glance__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_BRIEFCASE}</div>
+                </div>
+                <div class="lcv-glance__item">
+                    <div>
+                        <div class="lcv-glance__val">{APPOINTMENTS_COUNT}</div>
+                        <div class="lcv-glance__lbl">Appointments</div>
+                    </div>
+                    <div class="lcv-glance__icon" style="background:rgba(17,205,239,.12);color:#11cdef;">{ICON_CALENDAR}</div>
+                </div>
+                <div class="lcv-glance__item">
+                    <div>
+                        <div class="lcv-glance__val">{DOCUMENTS_COUNT}</div>
+                        <div class="lcv-glance__lbl">Documents</div>
+                    </div>
+                    <div class="lcv-glance__icon" style="background:rgba(251,99,64,.12);color:#fb6340;">{ICON_DOC_ROW}</div>
+                </div>
+                <div class="lcv-glance__item">
+                    <div>
+                        <div class="lcv-glance__val">{COMMENTS_COUNT}</div>
+                        <div class="lcv-glance__lbl">Comments</div>
+                    </div>
+                    <div class="lcv-glance__icon" style="background:rgba(45,206,137,.12);color:#2dce89;">{ICON_COMMENT_EMPTY}</div>
+                </div>
+            </div>
+
+            <div class="row mb-4 g-4">
+                <div class="col-lg-6">
+                    <div class="card lcv-panel h-100">
+                        <div class="lcv-panel__head">
+                            <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_USER}</div>
+                            <div>
+                                <h6>Client information</h6>
+                                <p>Contact details for this case</p>
+                            </div>
+                            {CLIENT_VIEW_LINK}
+                        </div>
+                        <div class="lcv-panel__body">
+                            <div class="lcv-detail-grid">{CLIENT_DETAILS}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card lcv-panel h-100">
+                        <div class="lcv-panel__head">
+                            <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_BRIEFCASE}</div>
+                            <div>
+                                <h6>Case information</h6>
+                                <p>Timeline and assignment details</p>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6 class="text-sm font-weight-bold mb-3">Client Information</h6>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Name:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CLIENT_NAME}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Email:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CLIENT_EMAIL}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Phone:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CLIENT_PHONE}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Assigned Lawyers:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{ASSIGNED_LAWYERS}</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6 class="text-sm font-weight-bold mb-3">Case Information</h6>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Created:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{CREATED_DATE}</span>
-                                    </div>
-                                    <div class="mb-2">
-                                        <span class="text-sm text-muted">Last Updated:</span>
-                                        <span class="text-sm font-weight-bold ms-2">{UPDATED_DATE}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            {CASE_DESCRIPTION}
+                        <div class="lcv-panel__body">
+                            <div class="lcv-detail-grid">{CASE_DETAILS}</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Case Details Tabs -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <ul class="nav nav-tabs" id="caseTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab">Services & Fees</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="stages-tab" data-bs-toggle="tab" data-bs-target="#stages" type="button" role="tab">Case Stages</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button" role="tab">Appointments</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#case-documents" type="button" role="tab">Documents</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="quotations-tab" data-bs-toggle="tab" data-bs-target="#quotations" type="button" role="tab">Quotations ({QUOTATION_COUNT})</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="case-comments-tab" data-bs-toggle="tab" data-bs-target="#case-comments" type="button" role="tab">Comments ({COMMENT_COUNT})</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">Track of Events</button>
-                                </li>
-                            </ul>
+            <div class="card lcv-panel">
+                <div class="lcv-panel__head">
+                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_LAYERS}</div>
+                    <div>
+                        <h6>Case workspace</h6>
+                        <p>Services, documents, quotations, and activity for this case</p>
+                    </div>
+                </div>
+                <div class="lcv-tabs-wrap">
+                    <ul class="nav lcv-tabs" id="caseTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab">
+                                Services <span class="lcv-tab-badge">{SERVICES_COUNT}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="stages-tab" data-bs-toggle="tab" data-bs-target="#stages" type="button" role="tab">
+                                Stages <span class="lcv-tab-badge">{STAGES_COUNT}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button" role="tab">
+                                Appointments <span class="lcv-tab-badge">{APPOINTMENTS_COUNT}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#case-documents" type="button" role="tab">
+                                Documents <span class="lcv-tab-badge">{DOCUMENTS_COUNT}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="quotations-tab" data-bs-toggle="tab" data-bs-target="#quotations" type="button" role="tab">
+                                Quotations <span class="lcv-tab-badge">{QUOTATION_COUNT}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="case-comments-tab" data-bs-toggle="tab" data-bs-target="#case-comments" type="button" role="tab">
+                                Comments <span class="lcv-tab-badge">{COMMENTS_COUNT}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">Events</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="lcv-panel__body pt-3">
+                    <div class="tab-content" id="caseTabsContent">
+                        <div class="tab-pane fade show active" id="services" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table lcv-table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Service</th>
+                                            <th class="text-end">Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {SERVICES_HTML}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <div class="tab-content" id="caseTabsContent">
-                                <!-- Services Tab -->
-                                <div class="tab-pane fade show active" id="services" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped align-items-center mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Service</th>
-                                                    <th class="text-end">Price</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {SERVICES_HTML}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
 
-                                <!-- Stages Tab -->
-                                <div class="tab-pane fade" id="stages" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped align-items-center mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Stage #</th>
-                                                    <th>Title</th>
-                                                    <th>Description</th>
-                                                    <th>Result</th>
-                                                    <th>Start Date</th>
-                                                    <th>End Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {STAGES_HTML}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                        <div class="tab-pane fade" id="stages" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table lcv-table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Stage #</th>
+                                            <th>Title</th>
+                                            <th>Description</th>
+                                            <th>Result</th>
+                                            <th>Start date</th>
+                                            <th>End date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {STAGES_HTML}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                                <!-- Appointments Tab -->
-                                <div class="tab-pane fade" id="appointments" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table class="table table-striped align-items-center mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>Time</th>
-                                                    <th>Description</th>
-                                                    <th>Location</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {APPOINTMENTS_HTML}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                        <div class="tab-pane fade" id="appointments" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table lcv-table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Description</th>
+                                            <th>Location</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {APPOINTMENTS_HTML}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                                <!-- Documents Tab -->
-                                <div class="tab-pane fade" id="case-documents" role="tabpanel">
-                                    <div class="d-flex justify-content-end mb-3">
-                                        <button type="button"
-                                                class="btn btn-sm bg-gradient-success mb-0"
-                                                id="lawyerUploadDocToggle"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target="#lawyerUploadDocPanel"
-                                                aria-expanded="false"
-                                                aria-controls="lawyerUploadDocPanel">
-                                            Upload Document
-                                        </button>
-                                    </div>
-                                    <div id="lawyerUploadDocPanel" class="collapse mb-4">
-                                        <div class="card border shadow-none">
-                                            <div class="card-body">
-                                                <form method="POST" action="" enctype="multipart/form-data">
-                                                    <div class="row g-3 align-items-end">
-                                                        <div class="col-md-8">
-                                                            <label for="lawyer-doc-file-label" class="form-label text-sm mb-1">Description</label>
-                                                            <input type="text" class="form-control" id="lawyer-doc-file-label" name="file_label" placeholder="Document description (optional)">
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <label for="lawyer-doc-file-input" class="form-label text-sm mb-1">File</label>
-                                                            <input type="file" class="form-control" id="lawyer-doc-file-input" name="file" required>
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-flex justify-content-end gap-2 mt-3">
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-toggle="collapse" data-bs-target="#lawyerUploadDocPanel">Cancel</button>
-                                                        <button type="submit" class="btn btn-sm bg-gradient-success mb-0">Upload File</button>
-                                                    </div>
-                                                </form>
+                        <div class="tab-pane fade" id="case-documents" role="tabpanel">
+                            <div class="d-flex justify-content-end mb-3">
+                                <button type="button"
+                                        class="btn btn-sm btn-primary mb-0 d-inline-flex align-items-center gap-1"
+                                        id="lawyerUploadDocToggle"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#lawyerUploadDocPanel"
+                                        aria-expanded="false"
+                                        aria-controls="lawyerUploadDocPanel">
+                                    {ICON_UPLOAD} Upload document
+                                </button>
+                            </div>
+                            <div id="lawyerUploadDocPanel" class="collapse">
+                                <div class="lcv-upload-card">
+                                    <form method="POST" action="" enctype="multipart/form-data">
+                                        <div class="row g-3 align-items-end">
+                                            <div class="col-md-8">
+                                                <label for="lawyer-doc-file-label" class="form-label text-sm mb-1">Description</label>
+                                                <input type="text" class="form-control" id="lawyer-doc-file-label" name="file_label" placeholder="Document description (optional)">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="lawyer-doc-file-input" class="form-label text-sm mb-1">File</label>
+                                                <input type="file" class="form-control" id="lawyer-doc-file-input" name="file" required>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-striped align-items-center mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Document</th>
-                                                    <th class="text-center">Type</th>
-                                                    <th class="text-center">Size</th>
-                                                    <th class="text-end">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {DOCUMENTS_HTML}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <!-- Quotations Tab -->
-                                <div class="tab-pane fade" id="quotations" role="tabpanel">
-                                    {QUOTATIONS_PANEL}
-                                </div>
-                                <!-- Comments Tab -->
-                                <div class="tab-pane fade" id="case-comments" role="tabpanel">
-                                    <div id="lawyer-case-comments" class="lawyer-case-comments">
-                                        <p class="text-sm text-muted mb-3">Discussion and files shared on this case</p>
-                                        {COMMENTS_HTML}
-                                        <form method="POST" action="" class="cc-comment-form mt-4 pt-4 border-top">
-                                            <label for="lawyer-case-comment-input" class="form-label text-sm font-weight-bold mb-2">Add a comment</label>
-                                            <textarea id="lawyer-case-comment-input" class="form-control" name="comment" rows="4" placeholder="Write your comment here…" required></textarea>
-                                            <div class="d-flex justify-content-end mt-3">
-                                                <button type="submit" class="btn bg-gradient-success mb-0">Post comment</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                                <!-- Events Tab -->
-                                <div class="tab-pane fade" id="events" role="tabpanel">
-                                    {EVENTS_HTML}
+                                        <div class="d-flex justify-content-end gap-2 mt-3">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-toggle="collapse" data-bs-target="#lawyerUploadDocPanel">Cancel</button>
+                                            <button type="submit" class="btn btn-sm btn-primary mb-0">Upload file</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
+                            <div class="table-responsive">
+                                <table class="table lcv-table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Document</th>
+                                            <th class="text-center">Type</th>
+                                            <th class="text-center">Size</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {DOCUMENTS_HTML}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="quotations" role="tabpanel">
+                            {QUOTATIONS_PANEL}
+                        </div>
+
+                        <div class="tab-pane fade" id="case-comments" role="tabpanel">
+                            <div id="lawyer-case-comments" class="lawyer-case-comments">
+                                <p class="text-sm text-muted mb-3">Discussion and updates shared on this case</p>
+                                {COMMENTS_HTML}
+                                <form method="POST" action="" class="cc-comment-form mt-4 pt-4 border-top">
+                                    <label for="lawyer-case-comment-input" class="form-label text-sm font-weight-bold mb-2">Add a comment</label>
+                                    <textarea id="lawyer-case-comment-input" class="form-control" name="comment" rows="4" placeholder="Write your comment here…" required></textarea>
+                                    <div class="d-flex justify-content-end mt-3">
+                                        <button type="submit" class="btn btn-primary mb-0">Post comment</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="events" role="tabpanel">
+                            {EVENTS_HTML}
                         </div>
                     </div>
                 </div>
@@ -746,10 +754,10 @@ $html = <<<'HTML'
         var uploadPanel = document.getElementById('lawyerUploadDocPanel');
         if (uploadToggle && uploadPanel && typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
             uploadPanel.addEventListener('show.bs.collapse', function () {
-                uploadToggle.textContent = 'Hide upload';
+                uploadToggle.innerHTML = '{ICON_UPLOAD} Hide upload';
             });
             uploadPanel.addEventListener('hide.bs.collapse', function () {
-                uploadToggle.textContent = 'Upload Document';
+                uploadToggle.innerHTML = '{ICON_UPLOAD} Upload document';
             });
         }
     });
@@ -830,31 +838,29 @@ if (!empty($comments)) {
 // Build events HTML using the new CaseEvents class
 $eventsHtml = CaseEvents::renderEventsTimeline($caseId);
 
-$descriptionHtml = '';
-if (!empty($case['description'])) {
-    $descriptionHtml = '
-    <div class="row mt-4">
-        <div class="col-12">
-            <h6 class="text-sm font-weight-bold mb-2">Case Description</h6>
-            <p class="text-sm">' . nl2br(htmlspecialchars($case['description'])) . '</p>
-        </div>
-    </div>';
-}
+$clientViewLinkHtml = $clientId > 0
+    ? '<a href="lawyer-client-view.php?id=' . $clientId . '" class="lcv-panel__head-actions btn btn-sm btn-outline-primary mb-0">View client</a>'
+    : '';
 
 $replacements = [
     '{NAVIGATION}' => $navHtml,
     '{CASE_ID}' => $caseId,
+    '{CASE_NUMBER}' => htmlspecialchars($caseNumber),
     '{CASE_TITLE}' => htmlspecialchars($case['title']),
-    '{CLIENT_NAME}' => htmlspecialchars($case['first_name'] . ' ' . $case['last_name']),
-    '{CLIENT_EMAIL}' => htmlspecialchars($case['email']),
-    '{CLIENT_PHONE}' => htmlspecialchars($case['phone'] ?: 'Not provided'),
-    '{ASSIGNED_LAWYERS}' => htmlspecialchars($case['assigned_lawyers']),
-    '{CREATED_DATE}' => date('M d, Y', strtotime($case['created_at'])),
-    '{UPDATED_DATE}' => date('M d, Y', strtotime(!empty($case['updated_at']) ? $case['updated_at'] : $case['created_at'])),
+    '{CASE_INITIALS}' => htmlspecialchars($caseInitials),
+    '{CLIENT_NAME}' => htmlspecialchars($clientFullName),
+    '{CLIENT_DETAILS}' => $clientDetailsHtml,
+    '{CASE_DETAILS}' => $caseDetailsHtml,
+    '{CASE_DESC_HERO}' => $caseDescHeroHtml,
+    '{CLIENT_VIEW_LINK}' => $clientViewLinkHtml,
     '{STATUS_BADGE}' => $statusBadge,
     '{PRIORITY_BADGE}' => $priorityBadge,
     '{CATEGORY_BADGE}' => $categoryBadge,
-    '{CASE_DESCRIPTION}' => $descriptionHtml,
+    '{SERVICES_COUNT}' => (string) $servicesCount,
+    '{STAGES_COUNT}' => (string) $stagesCount,
+    '{APPOINTMENTS_COUNT}' => (string) $appointmentsCount,
+    '{DOCUMENTS_COUNT}' => (string) $documentsCount,
+    '{COMMENTS_COUNT}' => (string) $commentsCount,
     '{SERVICES_HTML}' => $servicesHtml,
     '{STAGES_HTML}' => $stagesHtml,
     '{APPOINTMENTS_HTML}' => $appointmentsHtml,
@@ -863,7 +869,15 @@ $replacements = [
     '{EVENTS_HTML}' => $eventsHtml,
     '{QUOTATIONS_PANEL}' => $quotationsPanelHtml,
     '{QUOTATION_COUNT}' => (string) $quotationsView['count'],
-    '{COMMENT_COUNT}' => (string) count($comments),
+    '{ICON_ARROW_LEFT}' => $iconArrowLeft,
+    '{ICON_BRIEFCASE}' => $iconBriefcase,
+    '{ICON_CALENDAR}' => $iconCalendar,
+    '{ICON_DOC_ROW}' => $iconDocRow,
+    '{ICON_COMMENT_EMPTY}' => $iconCommentEmpty,
+    '{ICON_USER}' => $iconUser,
+    '{ICON_LAYERS}' => $iconLayers,
+    '{ICON_UPLOAD}' => $iconUpload,
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

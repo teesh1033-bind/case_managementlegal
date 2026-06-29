@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 
+ensure_invoice_bank_columns($pdo);
+
 $message = '';
 $messageType = '';
 if (isset($_GET['msg']) && isset($_GET['type'])) {
@@ -71,10 +73,14 @@ $formData = [
     'client_id' => $selectedClientId ?: '',
     'case_id' => $selectedCaseId ?: '',
     'amount' => $prefillAmount > 0 ? $prefillAmount : '',
+    'tax_rate' => 0,
     'issue_date' => date('Y-m-d'),
     'due_date' => date('Y-m-d', strtotime('+14 days')),
     'status' => 'sent',
-    'notes' => ''
+    'notes' => '',
+    'bank_account_slot' => getDefaultBankAccountSlot(),
+    'payment_terms' => getDefaultPaymentTerms(),
+    'payment_instructions' => getDefaultPaymentInstructions(),
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -88,16 +94,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dueDate = isset($_POST['due_date']) ? $_POST['due_date'] : '';
         $status = isset($_POST['status']) ? strtolower(trim($_POST['status'])) : 'draft';
         $notes = trim(isset($_POST['notes']) ? $_POST['notes'] : '');
+        $bankFields = bank_account_fields_from_post($_POST);
+        $taxRate = isset($_POST['tax_rate']) ? max(0, (float) $_POST['tax_rate']) : 0;
 
         $formData = [
             'invoice_id' => $invoiceId ?: '',
             'client_id' => $clientId,
             'case_id' => $caseId,
             'amount' => $amount,
+            'tax_rate' => $taxRate,
             'issue_date' => $issueDate,
             'due_date' => $dueDate,
             'status' => $status,
-            'notes' => $notes
+            'notes' => $notes,
+            'bank_account_slot' => $bankFields['bank_account_slot'],
+            'payment_terms' => $bankFields['payment_terms'],
+            'payment_instructions' => $bankFields['payment_instructions'],
         ];
 
         $previousStatus = null;
@@ -133,18 +145,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($invoiceId) {
                     $stmt = $pdo->prepare("
                         UPDATE invoices 
-                        SET client_id = ?, case_id = ?, amount = ?, status = ?, issue_date = ?, due_date = ?, notes = ?
+                        SET client_id = ?, case_id = ?, amount = ?, tax_rate = ?, status = ?, issue_date = ?, due_date = ?, notes = ?,
+                            bank_account_slot = ?, payment_terms = ?, payment_instructions = ?
                         WHERE id = ?
                     ");
-                    $stmt->execute([$clientId, $caseId ?: null, $amount, $status, $issueDate ?: null, $dueDate ?: null, $notes, $invoiceId]);
+                    $stmt->execute([
+                        $clientId, $caseId ?: null, $amount, $taxRate, $status, $issueDate ?: null, $dueDate ?: null, $notes,
+                        $bankFields['bank_account_slot'], $bankFields['payment_terms'] ?: null, $bankFields['payment_instructions'] ?: null,
+                        $invoiceId,
+                    ]);
                     $msg = 'Invoice updated successfully.';
                 } else {
                     $invoiceNumber = getNextInvoiceNumber($pdo);
                     $stmt = $pdo->prepare("
-                        INSERT INTO invoices (invoice_number, client_id, case_id, amount, status, issue_date, due_date, notes)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO invoices (invoice_number, client_id, case_id, amount, tax_rate, status, issue_date, due_date, notes, bank_account_slot, payment_terms, payment_instructions)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
-                    $stmt->execute([$invoiceNumber, $clientId, $caseId ?: null, $amount, $status, $issueDate ?: null, $dueDate ?: null, $notes]);
+                    $stmt->execute([
+                        $invoiceNumber, $clientId, $caseId ?: null, $amount, $taxRate, $status, $issueDate ?: null, $dueDate ?: null, $notes,
+                        $bankFields['bank_account_slot'], $bankFields['payment_terms'] ?: null, $bankFields['payment_instructions'] ?: null,
+                    ]);
                     $msg = 'Invoice created successfully.';
                     $invoiceId = (int)$pdo->lastInsertId();
                 }
@@ -229,10 +249,14 @@ if (isset($_GET['id']) && ctype_digit($_GET['id'])) {
                 'client_id' => $invoice['client_id'],
                 'case_id' => $invoice['case_id'],
                 'amount' => $invoice['amount'],
+                'tax_rate' => $invoice['tax_rate'] ?? 0,
                 'issue_date' => $invoice['issue_date'],
                 'due_date' => $invoice['due_date'],
                 'status' => $invoice['status'],
-                'notes' => $invoice['notes']
+                'notes' => $invoice['notes'],
+                'bank_account_slot' => (int) ($invoice['bank_account_slot'] ?? getDefaultBankAccountSlot()),
+                'payment_terms' => (string) ($invoice['payment_terms'] ?? getDefaultPaymentTerms()),
+                'payment_instructions' => (string) ($invoice['payment_instructions'] ?? getDefaultPaymentInstructions()),
             ];
         } else {
             $message = 'Invoice not found.';
@@ -427,7 +451,8 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
+    <link href="../assets/css/legalpro-finance-pages.css?v=4" rel="stylesheet" />
+    <?php echo legalpro_bank_accounts_stylesheet_tag(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -513,16 +538,21 @@ $html = <<<'HTML'
                                         <label class="form-label">Amount</label>
                                         <input type="number" step="0.01" min="0" class="form-control" name="amount" value="{FORM_AMOUNT}" placeholder="0.00" required>
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">VAT Rate (%)</label>
+                                        <input type="number" step="0.01" min="0" class="form-control" name="tax_rate" value="{FORM_TAX_RATE}">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
                                         <label class="form-label">Status</label>
                                         <select class="form-select" name="status">
                                             {STATUS_OPTIONS}
                                         </select>
                                     </div>
                                 </div>
+                                {INVOICE_BANK_SECTION}
                                 <div class="mb-3">
                                     <label class="form-label">Notes</label>
-                                    <textarea class="form-control" rows="3" name="notes" placeholder="Payment terms, highlights...">{FORM_NOTES}</textarea>
+                                    <textarea class="form-control" rows="3" name="notes" placeholder="Additional notes...">{FORM_NOTES}</textarea>
                                 </div>
                                 <button class="btn btn-dark w-100">{FORM_BUTTON}</button>
                             </form>
@@ -536,6 +566,7 @@ $html = <<<'HTML'
                         </div>
                         <div class="card-body px-0 pt-0 pb-2">
                             {INVOICES_SEARCH}
+                            <div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
                             <div class="table-responsive">
                                 <table class="table align-items-center mb-0">
                                     <thead>
@@ -555,6 +586,8 @@ $html = <<<'HTML'
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                            <nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Invoices pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
                             </div>
                         </div>
                     </div>
@@ -582,6 +615,7 @@ $html = <<<'HTML'
     <script>
         (function() {
             var caseFinancialData = {CASE_FINANCIAL_JSON};
+            var bankAccountsData = {BANK_ACCOUNTS_JSON};
             var currencyZero = '{CURRENCY_ZERO}';
             var caseSelect = document.getElementById('invoice_case_id');
             var clientSelect = document.getElementById('invoice_client_id');
@@ -636,6 +670,34 @@ $html = <<<'HTML'
                 caseSelect.addEventListener('change', syncInvoiceCasePrefill);
                 syncInvoiceCasePrefill();
             }
+
+            var bankSelect = document.getElementById('invoice_bank_account_slot');
+            var bankPreview = document.getElementById('invoice-bank-preview');
+            var bankPreviewKicker = document.getElementById('invoice-bank-preview-kicker');
+            var bankPreviewValue = document.getElementById('invoice-bank-preview-value');
+            var bankPreviewMeta = document.getElementById('invoice-bank-preview-meta');
+            function renderBankPreview() {
+                if (!bankSelect || !bankPreview) return;
+                var account = bankAccountsData[bankSelect.value];
+                if (!account || account.configured !== '1') {
+                    bankPreview.hidden = true;
+                    return;
+                }
+                bankPreview.hidden = false;
+                if (bankPreviewKicker) bankPreviewKicker.textContent = 'Account number';
+                if (bankPreviewValue) bankPreviewValue.textContent = account.account_number || '—';
+                if (bankPreviewMeta) {
+                    var parts = [];
+                    if (account.account_name) parts.push(account.account_name);
+                    if (account.bank_name) parts.push(account.bank_name);
+                    if (account.sort_code) parts.push('Sort code ' + account.sort_code);
+                    bankPreviewMeta.textContent = parts.join(' · ');
+                }
+            }
+            if (bankSelect) {
+                bankSelect.addEventListener('change', renderBankPreview);
+                renderBankPreview();
+            }
         })();
     </script>
     {INVOICES_SEARCH_SCRIPT}
@@ -650,6 +712,12 @@ $invoicesSearchHtml = legalpro_render_admin_featured_list_search(
 );
 $invoicesSearchScript = legalpro_admin_list_search_script('invoicesSearchInput', 'invoicesTableBody', 'invoicesFilterEmpty');
 
+$invoiceBankSectionHtml = legalpro_render_invoice_bank_section(
+    (int) $formData['bank_account_slot'],
+    (string) ($formData['payment_terms'] ?? ''),
+    (string) ($formData['payment_instructions'] ?? '')
+);
+
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{FORM_TITLE}', htmlspecialchars($formTitle), $html);
 $html = str_replace('{FORM_BUTTON}', htmlspecialchars($formButtonLabel), $html);
@@ -658,6 +726,11 @@ $html = str_replace('{INVOICE_NUMBER_FIELD}', $invoiceNumberField, $html);
 $html = str_replace('{CLIENT_OPTIONS}', $clientOptions, $html);
 $html = str_replace('{CASE_OPTIONS}', $caseOptions, $html);
 $html = str_replace('{FORM_AMOUNT}', htmlspecialchars($formData['amount']), $html);
+$html = str_replace('{FORM_TAX_RATE}', htmlspecialchars((string) ($formData['tax_rate'] ?? 0)), $html);
+$html = str_replace('{FORM_PAYMENT_TERMS}', htmlspecialchars((string) ($formData['payment_terms'] ?? '')), $html);
+$html = str_replace('{FORM_PAYMENT_INSTRUCTIONS}', htmlspecialchars((string) ($formData['payment_instructions'] ?? '')), $html);
+$html = str_replace('{INVOICE_BANK_SECTION}', $invoiceBankSectionHtml, $html);
+$html = str_replace('{BANK_ACCOUNTS_JSON}', json_encode(legalpro_bank_accounts_json_for_js()), $html);
 $html = str_replace('{FORM_ISSUE_DATE}', htmlspecialchars($formData['issue_date']), $html);
 $html = str_replace('{FORM_DUE_DATE}', htmlspecialchars($formData['due_date']), $html);
 $html = str_replace('{FORM_NOTES}', htmlspecialchars($formData['notes']), $html);

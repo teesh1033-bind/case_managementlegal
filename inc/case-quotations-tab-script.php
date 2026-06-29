@@ -41,6 +41,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (amountInput) amountInput.value = data.amount != null ? data.amount : '';
         form.querySelector('[name="quotation_valid_until"]').value = data.valid_until || '';
         document.getElementById('quotation_tax_rate').value = data.tax_rate != null ? data.tax_rate : 0;
+        var bankSelect = document.getElementById('quotation_bank_account_slot');
+        if (bankSelect) bankSelect.value = data.bank_account_slot != null ? String(data.bank_account_slot) : bankSelect.value;
+        var termsInput = form.querySelector('[name="payment_terms"]');
+        if (termsInput) termsInput.value = data.payment_terms || termsInput.value;
+        var instructionsInput = form.querySelector('[name="payment_instructions"]');
+        if (instructionsInput) instructionsInput.value = data.payment_instructions || '';
         var titleEl = document.getElementById('case-quotation-form-title');
         var submitBtn = document.getElementById('case-quotation-submit-btn');
         if (titleEl) titleEl.textContent = 'Edit Quotation';

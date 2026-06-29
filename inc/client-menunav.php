@@ -90,6 +90,6 @@ echo legalpro_render_portal_sidebar([
 <?php echo $navbarUtilitiesMount; ?>
 <?php echo legalpro_client_render_bottom_nav($currentPage); ?>
 
-<script src="../assets/js/client-portal.js?v=8"></script>
+<script src="../assets/js/client-portal.js?v=12"></script>
 <script src="../assets/js/legalpro-search-clear.js?v=1"></script>
 <?php legalpro_icons_footer_scripts(); ?>

@@ -237,27 +237,27 @@
 
 body.legalpro-dark-mode .badge.bg-gradient-primary:not(.filter),
 body.legalpro-dark-mode .badge.bg-gradient-info:not(.filter) {
-    background: rgba(94, 114, 228, 0.22) !important;
-    color: #a5b4fc !important;
+    background: #3f4c77 !important;
+    color: #b0bcff !important;
 }
 
 body.legalpro-dark-mode .badge.bg-gradient-success:not(.filter) {
-    background: rgba(45, 206, 137, 0.2) !important;
-    color: #8ce8c0 !important;
+    background: #2d4a4a !important;
+    color: #7ef2c6 !important;
 }
 
 body.legalpro-dark-mode .badge.bg-gradient-danger:not(.filter) {
-    background: rgba(245, 54, 92, 0.22) !important;
-    color: #ff9eb5 !important;
+    background: #4a2d38 !important;
+    color: #ffb3c7 !important;
 }
 
 body.legalpro-dark-mode .badge.bg-gradient-warning:not(.filter) {
-    background: rgba(251, 140, 0, 0.2) !important;
-    color: #ffc978 !important;
+    background: #3f4c77 !important;
+    color: #b0bcff !important;
 }
 
 body.legalpro-dark-mode .badge.bg-gradient-secondary:not(.filter),
 body.legalpro-dark-mode .badge.bg-gradient-dark:not(.filter) {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: var(--lp-dark-text-muted, #a0aec0) !important;
+    background: #363d4d !important;
+    color: #a8b3cf !important;
 }

@@ -173,20 +173,7 @@ body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .legalpro-sidebar-foote
     padding: 0.65rem 0.5rem;
 }
 
-/* Admin collapsed main content offset */
-body.legalpro-admin-portal.legalpro-sidebar-collapsed .main-content,
-body.legalpro-sidebar-collapsed.legalpro-admin-portal .main-content {
-    margin-left: var(--lp-portal-sidebar-collapsed) !important;
-    width: calc(100% - var(--lp-portal-sidebar-collapsed)) !important;
-}
-
-body.legalpro-admin-portal.legalpro-sidebar-collapsed .navbar-main,
-body.legalpro-admin-portal.legalpro-sidebar-collapsed #navbarBlur {
-    margin-left: var(--lp-portal-sidebar-collapsed) !important;
-    width: calc(100% - var(--lp-portal-sidebar-collapsed)) !important;
-}
-
-/* Admin scrollbar styling (matches prior nav-wrap behavior) */
+/* Admin layout offsets live in legalpro-admin-portal.css (fixed navbar uses left, not margin). */
 body.legalpro-admin-portal #sidenav-main.lp-sidebar .lp-sidebar__scroll {
     scrollbar-width: none;
 }

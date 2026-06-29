@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/case_events.php';
+require_once __DIR__ . '/../lib/admin-payments-activity-portal.php';
 
 $message = '';
 $messageType = '';
@@ -370,7 +371,6 @@ $cases = [];
 $caseOptions = '<option value="">Select case</option>';
 $ledgerOptions = '<option value="">View case...</option>';
 $caseLedger = [];
-$outstandingRows = '';
 $outstandingCount = 0;
 
 try {
@@ -435,31 +435,7 @@ foreach ($cases as $case) {
     if ($balance > 0.01) {
         $outstandingCount++;
         $totalOutstanding += $balance;
-
-        $searchBlob = strtolower(
-            $caseNumber . ' ' . ($case['title'] ?? '') . ' ' . $clientName . ' '
-            . formatCurrency($estimated) . ' ' . formatCurrency($paid) . ' '
-            . formatCurrency($balance) . ' ' . $lastPayment
-        );
-
-        $outstandingRows .= '
-        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td class="ps-4">
-                <div class="d-flex flex-column">
-                    <span class="text-sm font-weight-bold mb-0">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</span>
-                    <small class="text-muted">' . htmlspecialchars($clientName) . '</small>
-                </div>
-            </td>
-            <td class="text-center text-sm">' . formatCurrency($estimated) . '</td>
-            <td class="text-center text-sm text-success font-weight-bold">' . formatCurrency($paid) . '</td>
-            <td class="text-center text-sm font-weight-bold text-warning">' . formatCurrency($balance) . '</td>
-            <td class="text-end text-xs pe-4">' . ($lastPayment !== '—' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
-        </tr>';
     }
-}
-
-if (!$outstandingRows) {
-    $outstandingRows = '<tr><td colspan="5" class="text-center py-4 text-muted">All cases are fully paid.</td></tr>';
 }
 
 // Totals
@@ -480,65 +456,8 @@ try {
     $paymentsThisMonth = 0;
 }
 
-// Recent payments
-$recentPaymentsRows = '';
-try {
-    $stmt = $pdo->query("
-        SELECT 
-            p.*,
-            c.title AS case_title,
-            CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
-            i.invoice_number
-        FROM payments p
-        LEFT JOIN cases c ON c.id = p.case_id
-        LEFT JOIN clients cl ON cl.id = p.client_id
-        LEFT JOIN invoices i ON i.id = p.invoice_id
-        ORDER BY p.payment_date DESC, p.id DESC
-        LIMIT 12
-    ");
-    $recentPayments = $stmt->fetchAll();
-} catch (PDOException $e) {
-    $recentPayments = [];
-}
-
-if (empty($recentPayments)) {
-    $recentPaymentsRows = '<tr><td colspan="5" class="text-center py-4 text-muted">No payments recorded yet.</td></tr>';
-} else {
-    foreach ($recentPayments as $payment) {
-        $caseNumber = 'C-' . str_pad($payment['case_id'], 4, '0', STR_PAD_LEFT);
-        $clientName = isset($payment['client_name']) && $payment['client_name'] ? $payment['client_name'] : 'Unknown Client';
-        $methodLabel = isset($allowedMethods[$payment['method']]) ? $allowedMethods[$payment['method']] : ucfirst($payment['method']);
-        $notesRaw = isset($payment['notes']) ? trim($payment['notes']) : '';
-        $notesPreview = $notesRaw !== ''
-            ? '<span class="text-xs text-secondary d-inline-block text-truncate payments-notes-cell" title="' . htmlspecialchars($notesRaw) . '">' . htmlspecialchars($notesRaw) . '</span>'
-            : '<span class="text-muted">—</span>';
-
-        $invoiceLabel = !empty($payment['invoice_number']) ? $payment['invoice_number'] : '';
-        $searchBlob = strtolower(
-            $clientName . ' ' . $caseNumber . ' ' . ($payment['case_title'] ?? '') . ' '
-            . $invoiceLabel . ' ' . $methodLabel . ' ' . ($payment['payment_date'] ?? '') . ' '
-            . formatCurrency($payment['amount']) . ' ' . $notesRaw
-        );
-        $caseSubtitle = $caseNumber . ' · ' . ($payment['case_title'] ?: 'No case');
-        if ($invoiceLabel !== '') {
-            $caseSubtitle .= ' · ' . $invoiceLabel;
-        }
-
-        $recentPaymentsRows .= '
-        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td class="ps-4">
-                <div class="d-flex flex-column">
-                    <span class="text-sm font-weight-bold mb-0">' . htmlspecialchars($clientName) . '</span>
-                    <small class="text-muted">' . htmlspecialchars($caseSubtitle) . '</small>
-                </div>
-            </td>
-            <td class="text-center text-sm font-weight-bold">' . formatCurrency($payment['amount']) . '</td>
-            <td class="text-center"><span class="lp-pill lp-pill--status-default">' . htmlspecialchars($methodLabel) . '</span></td>
-            <td class="text-center text-sm">' . htmlspecialchars($payment['payment_date']) . '</td>
-            <td class="text-end text-xs pe-4">' . $notesPreview . '</td>
-        </tr>';
-    }
-}
+$activityCounts = legalpro_payments_activity_counts($pdo);
+$paymentsActivityHubHtml = legalpro_payments_activity_hub_cards_html($activityCounts);
 
 $messageHtml = '';
 if (!empty($message)) {
@@ -577,32 +496,12 @@ $html = <<<'HTML'
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
     <link href="../assets/css/legalpro-finance-pages.css?v=4" rel="stylesheet" />
+    <link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />
     <style>
-        .payments-summary-card .card-header {
-            padding: 1.25rem 1.5rem 0.75rem;
-        }
-        .payments-summary-card .card-header h6 {
-            margin-bottom: 0;
-            font-weight: 700;
-        }
-        .payments-summary-card .table thead th {
-            font-size: 0.65rem;
-            letter-spacing: 0.04em;
-            padding-top: 0.75rem;
-            padding-bottom: 0.75rem;
-            background: rgba(248, 249, 250, 0.9);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        }
-        .payments-summary-card .table tbody td {
-            vertical-align: middle;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-        }
-        .payments-summary-card .table tbody tr:last-child td {
-            border-bottom: 0;
-        }
-        .payments-notes-cell {
-            max-width: 16rem;
-        }
+        .legalpro-doc-hub-card { transition: transform 0.15s ease, box-shadow 0.15s ease; border: 1px solid #e9ecf3; }
+        .legalpro-doc-hub-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
+        body.legalpro-dark-mode .legalpro-doc-hub-card { border-color: var(--lp-dark-border); }
+        body.legalpro-dark-mode .legalpro-doc-hub-card h6 { color: var(--lp-dark-text) !important; }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
@@ -818,60 +717,11 @@ $html = <<<'HTML'
                 <div class="col-12">
                     <div class="card payments-summary-card mb-0">
                         <div class="card-header pb-0">
-                            <h6>Recent Payments</h6>
-                            <p class="text-sm text-muted mb-0">Latest payment activity across all cases.</p>
+                            <h6>Payment activity</h6>
+                            <p class="text-sm text-muted mb-0">Open a section to browse recent payments or outstanding balances.</p>
                         </div>
-                        <div class="card-body px-0 pt-2 pb-2">
-                            {PAYMENTS_SEARCH}
-                            <div class="table-responsive">
-                                <table class="table align-items-center mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Client / Case</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Amount</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Method</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Date</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end opacity-7 pe-4">Notes</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="paymentsTableBody">
-                                        {RECENT_PAYMENTS}
-                                        <tr id="paymentsFilterEmpty" class="d-none">
-                                            <td colspan="5" class="text-center text-muted text-sm py-4">No payments match your search.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="card payments-summary-card mb-0">
-                        <div class="card-header pb-0">
-                            <h6>Outstanding Balances</h6>
-                            <p class="text-sm text-muted mb-0">Track cases still on a payment plan.</p>
-                        </div>
-                        <div class="card-body px-0 pt-2 pb-2">
-                            {OUTSTANDING_SEARCH}
-                            <div class="table-responsive">
-                                <table class="table align-items-center mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Case</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Fee</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Paid</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Balance</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-end opacity-7 pe-4">Last Payment</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="outstandingTableBody">
-                                        {OUTSTANDING_ROWS}
-                                        <tr id="outstandingFilterEmpty" class="d-none">
-                                            <td colspan="5" class="text-center text-muted text-sm py-4">No outstanding balances match your search.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="card-body pt-3">
+                            {PAYMENTS_ACTIVITY_HUB}
                         </div>
                     </div>
                 </div>
@@ -1093,16 +943,9 @@ $html = <<<'HTML'
             }
         })();
     </script>
-    {PAYMENTS_SEARCH_SCRIPT}
-    {OUTSTANDING_SEARCH_SCRIPT}
 </body>
 </html>
 HTML;
-
-$paymentsSearchHtml = legalpro_render_admin_list_search('paymentsSearchInput', 'Search payments...');
-$paymentsSearchScript = legalpro_admin_list_search_script('paymentsSearchInput', 'paymentsTableBody', 'paymentsFilterEmpty');
-$outstandingSearchHtml = legalpro_render_admin_list_search('outstandingSearchInput', 'Search outstanding balances...');
-$outstandingSearchScript = legalpro_admin_list_search_script('outstandingSearchInput', 'outstandingTableBody', 'outstandingFilterEmpty');
 
 $casesPaidOff = 0;
 foreach ($cases as $case) {
@@ -1123,12 +966,7 @@ $html = str_replace('{FORM_REFERENCE}', htmlspecialchars($formData['reference'])
 $html = str_replace('{FORM_NOTES}', htmlspecialchars($formData['notes']), $html);
 $html = str_replace('{FORM_RECORDED_BY}', htmlspecialchars($formData['recorded_by']), $html);
 $html = str_replace('{METHOD_OPTIONS}', $methodsOptions, $html);
-$html = str_replace('{PAYMENTS_SEARCH}', $paymentsSearchHtml, $html);
-$html = str_replace('{PAYMENTS_SEARCH_SCRIPT}', $paymentsSearchScript, $html);
-$html = str_replace('{RECENT_PAYMENTS}', $recentPaymentsRows, $html);
-$html = str_replace('{OUTSTANDING_SEARCH}', $outstandingSearchHtml, $html);
-$html = str_replace('{OUTSTANDING_SEARCH_SCRIPT}', $outstandingSearchScript, $html);
-$html = str_replace('{OUTSTANDING_ROWS}', $outstandingRows, $html);
+$html = str_replace('{PAYMENTS_ACTIVITY_HUB}', $paymentsActivityHubHtml, $html);
 $html = str_replace('{TOTAL_COLLECTED}', formatCurrency($totalCollected), $html);
 $html = str_replace('{TOTAL_OUTSTANDING}', formatCurrency($totalOutstanding), $html);
 $html = str_replace('{ACTIVE_PLANS}', $activePaymentPlans, $html);

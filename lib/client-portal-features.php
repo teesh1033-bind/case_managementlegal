@@ -1037,9 +1037,19 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
     return array_slice($items, 0, $limit);
 }
 
-function legalpro_client_render_activity_feed_html(array $items): string
+function legalpro_client_activity_feed_per_page(): int
+{
+    return 6;
+}
+
+function legalpro_client_render_activity_feed_html(array $items, ?int $perPage = null): string
 {
     require_once __DIR__ . '/../inc/legalpro-icons.php';
+
+    if ($perPage === null) {
+        $perPage = legalpro_client_activity_feed_per_page();
+    }
+    $perPage = max(1, $perPage);
 
     if (empty($items)) {
         return '<div class="cp-activity-empty">'
@@ -1049,7 +1059,13 @@ function legalpro_client_render_activity_feed_html(array $items): string
             . '</div>';
     }
 
-    $html = '<div class="cp-activity-feed">';
+    $total = count($items);
+    $needsPagination = $total > $perPage;
+
+    $html = '<div class="cd-activity-feed-wrap"'
+        . ' data-activity-per-page="' . (int) $perPage . '"'
+        . ' data-activity-total="' . (int) $total . '">';
+    $html .= '<div class="cp-activity-feed">';
     foreach ($items as $item) {
         $icon = htmlspecialchars((string) ($item['icon'] ?? 'bell'));
         $title = htmlspecialchars((string) ($item['title'] ?? ''));
@@ -1064,15 +1080,24 @@ function legalpro_client_render_activity_feed_html(array $items): string
             'UTF-8'
         );
 
-        $html .= '<a href="' . $url . '" class="cp-activity-item ' . $typeClass . '" data-search="' . $searchHay . '">
-            <span class="cp-activity-item__icon" data-icon="' . $icon . '"></span>
-            <span class="cp-activity-item__body">
-                <span class="cp-activity-item__title">' . $title . '</span>
-                <span class="cp-activity-item__sub">' . $subtitle . '</span>
-            </span>
-            <time class="cp-activity-item__time">' . $time . '</time>
-        </a>';
+        $html .= '<a href="' . $url . '" class="cp-activity-item ' . $typeClass . '" data-search="' . $searchHay . '">'
+            . '<span class="cp-activity-item__icon" data-icon="' . $icon . '"></span>'
+            . '<span class="cp-activity-item__body">'
+            . '<span class="cp-activity-item__title">' . $title . '</span>'
+            . '<span class="cp-activity-item__sub">' . $subtitle . '</span>'
+            . '</span>'
+            . '<time class="cp-activity-item__time">' . $time . '</time>'
+            . '</a>';
     }
+    $html .= '</div>';
+
+    if ($needsPagination) {
+        $html .= '<nav class="cd-activity-pagination" aria-label="Activity pagination">'
+            . '<p class="cd-activity-pagination__info" data-activity-range></p>'
+            . '<div class="cd-activity-pagination__controls" data-activity-pages></div>'
+            . '</nav>';
+    }
+
     $html .= '</div>';
 
     return $html;

@@ -75,7 +75,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
             'case_title'   => $apt['case_title'] ?: 'Appointment',
             'lawyer_name'  => $apt['lawyer_name'] ?: 'TBD',
             'starts_at'    => date('M j, Y g:i A', $startsAt),
+            'starts_at_raw' => (string) $apt['starts_at'],
             'ends_at'      => $endsAt ? date('M j, Y g:i A', $endsAt) : null,
+            'ends_at_raw'  => !empty($apt['ends_at']) ? (string) $apt['ends_at'] : null,
             'status'       => $apt['status'],
             'status_label' => $meta['label'],
             'status_pill'  => $meta['pill'],
@@ -91,6 +93,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
 
 $message     = '';
 $messageType = '';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['msg'])) {
+    $message     = (string) $_GET['msg'];
+    $messageType = isset($_GET['type']) ? (string) $_GET['type'] : 'success';
+}
 
 // ── POST handling ─────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -161,6 +168,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $messageType = 'danger';
             }
         }
+    }
+
+    if ($message !== '') {
+        header('Location: client-appointments.php?msg=' . urlencode($message) . '&type=' . urlencode($messageType));
+        exit;
     }
 }
 
@@ -544,6 +556,91 @@ ob_start(); ?>
         .ca-table thead th:last-child  { padding-right: 1.5rem; text-align: right; }
         .ca-table tbody tr { border-bottom: 1px solid #f8fafc; transition: background .1s; }
         .ca-table tbody tr:hover { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04); }
+        .ca-table tbody .ca-row.ca-row--off-page { display: none; }
+        .ca-appt-table-wrap { padding: 0 0 0.25rem; }
+        .ca-appt-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding: 0.9rem 1.5rem 1.1rem;
+            margin-top: 0;
+            border-top: 1px solid #f1f5f9;
+        }
+        .ca-appt-pagination__info {
+            margin: 0;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+        .ca-appt-pagination__controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+        .ca-appt-pagination__btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 0.55rem;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+            color: #8392ab;
+            font-size: 0.76rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+        }
+        .ca-appt-pagination__btn:hover:not(:disabled) {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            color: var(--ca-primary);
+            transform: translateY(-1px);
+        }
+        .ca-appt-pagination__btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+        }
+        .ca-appt-pagination__btn--active {
+            background: var(--ca-gradient);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+        }
+        .ca-appt-pagination__btn--active:hover:not(:disabled) {
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .ca-appt-pagination__btn--nav { min-width: auto; padding: 0 0.75rem; }
+        .ca-appt-pagination__btn:disabled { opacity: 0.42; cursor: not-allowed; transform: none; box-shadow: none; }
+        .ca-appt-pagination__ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.5rem;
+            height: 2rem;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-appt-pagination {
+            border-top-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-appt-pagination__btn {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.28);
+            color: #c5cede;
+        }
+        body.legalpro-dark-mode.client-appointments-page .ca-appt-pagination__btn:hover:not(:disabled) {
+            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+            color: #f8f9fc;
+        }
         .ca-table tbody tr:last-child { border-bottom: none; }
         .ca-table tbody td { padding: .8rem 1rem; vertical-align: middle; }
         .ca-table tbody td:first-child { padding-left: 1.5rem; }
@@ -1284,6 +1381,7 @@ ob_start(); ?>
                         </div>
                         <span class="ca-count" id="caCount"><?= $apptTotal ?> total</span>
                     </div>
+                    <div class="ca-appt-table-wrap" id="clientAppointmentsTableWrap" data-appt-per-page="10">
                     <div class="table-responsive">
                         <table class="ca-table">
                             <thead>
@@ -1299,6 +1397,11 @@ ob_start(); ?>
                                 <?= $appointmentsRows ?>
                             </tbody>
                         </table>
+                    </div>
+                    <nav class="ca-appt-pagination" id="clientAppointmentsPagination" aria-label="Appointments pagination" hidden>
+                        <p class="ca-appt-pagination__info" data-appt-range></p>
+                        <div class="ca-appt-pagination__controls" data-appt-pages></div>
+                    </nav>
                     </div>
                 </div>
 
@@ -1367,21 +1470,7 @@ ob_start(); ?>
     </main>
 
     <!-- Details modal -------------------------------------------------------->
-    <div class="modal fade ca-modal" id="aptModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Appointment details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="aptModalBody">
-                    <div class="text-center py-4">
-                        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?php include __DIR__ . '/../inc/client-appointment-view-modal.php'; ?>
 
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
@@ -1392,6 +1481,7 @@ ob_start(); ?>
     <?php legalpro_render_availability_date_picker_script(); ?>
 
     <script src="../assets/js/appointment-slot-window.js?v=2"></script>
+    <script src="../assets/js/client-appointment-view-modal.js?v=1"></script>
     <script>
     var clientAppointmentEvents = <?= $appointmentCalendarEventsJson ?>;
     var clientAppointmentsCalendar = null;
@@ -1402,7 +1492,6 @@ ob_start(); ?>
     var lawyerHasWorkingHours    = <?= json_encode($lawyerHasWorkingHours) ?>;
     var lawyerSlotsCache         = {};
     var selectedTime             = null;
-    var aptModalInstance         = null;
     var APPOINTMENT_DURATION_MINUTES = 60;
 
     function getDurationMinutes() {
@@ -1894,15 +1983,7 @@ ob_start(); ?>
         return d.innerHTML;
     }
 
-    function getModal() {
-        if (!aptModalInstance) aptModalInstance = new bootstrap.Modal(document.getElementById('aptModal'));
-        return aptModalInstance;
-    }
-
     function viewAppointmentDetails(id) {
-        var body = document.getElementById('aptModalBody');
-        body.innerHTML = '<div class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary" role="status"></span><p class="text-sm text-muted mt-2 mb-0">Loading…</p></div>';
-        getModal().show();
         fetch('client-appointments.php?ajax=appointment_details&id=' + id, {
             headers: { 'Accept': 'application/json' },
             credentials: 'same-origin'
@@ -1914,34 +1995,135 @@ ob_start(); ?>
             });
         })
         .then(function(d) {
-            body.innerHTML =
-                '<div style="display:flex;flex-direction:column;gap:1rem">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem">' +
-                        '<div>' +
-                            '<p style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin:0 0 3px">Matter</p>' +
-                            '<p style="font-size:15px;font-weight:700;color:#1e293b;margin:0">' + escapeHtml(d.case_title) + '</p>' +
-                        '</div>' +
-                        '<span class="ca-badge ' + escapeHtml(d.status_pill || 'b-muted') + '">' +
-                            '<span class="ca-badge-dot"></span>' + escapeHtml(d.status_label) +
-                        '</span>' +
-                    '</div>' +
-                    '<div class="ca-detail-row">' +
-                        '<div class="ca-detail-field"><p class="lbl">Lawyer</p><p class="val">' + escapeHtml(d.lawyer_name) + '</p></div>' +
-                        '<div class="ca-detail-field"><p class="lbl">Requested</p><p class="val">' + escapeHtml(d.requested_at || '—') + '</p></div>' +
-                        '<div class="ca-detail-field"><p class="lbl">Starts</p><p class="val">' + escapeHtml(d.starts_at) + '</p></div>' +
-                        '<div class="ca-detail-field"><p class="lbl">Ends</p><p class="val">' + escapeHtml(d.ends_at || '—') + '</p></div>' +
-                    '</div>' +
-                    '<div>' +
-                        '<p style="font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin:0 0 4px">Notes</p>' +
-                        (d.notes
-                            ? '<p style="font-size:13px;color:#1e293b;margin:0">' + escapeHtml(d.notes) + '</p>'
-                            : '<p style="font-size:13px;color:#94a3b8;margin:0">No notes provided.</p>') +
-                    '</div>' +
-                '</div>';
+            if (typeof legalproOpenAppointmentViewModal === 'function') {
+                legalproOpenAppointmentViewModal(d);
+            }
         })
         .catch(function(err) {
-            body.innerHTML = '<div style="background:#fee2e2;color:#991b1b;border-radius:8px;padding:.75rem 1rem;font-size:13px">' + escapeHtml(err.message) + '</div>';
+            window.alert(err.message || 'Could not load appointment');
         });
+    }
+
+    function initClientAppointmentsTablePagination() {
+        var wrap = document.getElementById('clientAppointmentsTableWrap');
+        var nav = document.getElementById('clientAppointmentsPagination');
+        if (!wrap || !nav) {
+            return;
+        }
+
+        var perPage = parseInt(wrap.getAttribute('data-appt-per-page') || '10', 10);
+        var rows = Array.prototype.slice.call(document.querySelectorAll('.ca-table tbody .ca-row'));
+        var rangeEl = nav.querySelector('[data-appt-range]');
+        var pagesEl = nav.querySelector('[data-appt-pages]');
+
+        if (!rows.length || rows.length <= perPage) {
+            nav.hidden = true;
+            return;
+        }
+
+        nav.hidden = false;
+        var currentPage = 1;
+        var totalPages = Math.ceil(rows.length / perPage);
+
+        function pageButton(label, page, options) {
+            options = options || {};
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ca-appt-pagination__btn';
+            if (options.nav) {
+                btn.className += ' ca-appt-pagination__btn--nav';
+            }
+            if (options.active) {
+                btn.className += ' ca-appt-pagination__btn--active';
+            }
+            btn.textContent = label;
+            btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
+            if (options.disabled) {
+                btn.disabled = true;
+            } else if (page) {
+                btn.addEventListener('click', function() {
+                    showPage(page);
+                });
+            }
+            return btn;
+        }
+
+        function ellipsis() {
+            var span = document.createElement('span');
+            span.className = 'ca-appt-pagination__ellipsis';
+            span.textContent = '…';
+            span.setAttribute('aria-hidden', 'true');
+            return span;
+        }
+
+        function visiblePages() {
+            if (totalPages <= 7) {
+                var all = [];
+                for (var p = 1; p <= totalPages; p++) {
+                    all.push(p);
+                }
+                return all;
+            }
+            var pages = [1];
+            var start = Math.max(2, currentPage - 1);
+            var end = Math.min(totalPages - 1, currentPage + 1);
+            if (start > 2) {
+                pages.push('gap');
+            }
+            for (var i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            if (end < totalPages - 1) {
+                pages.push('gap');
+            }
+            pages.push(totalPages);
+            return pages;
+        }
+
+        function renderControls() {
+            if (!pagesEl) {
+                return;
+            }
+            pagesEl.innerHTML = '';
+            pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
+                nav: true,
+                disabled: currentPage === 1,
+                ariaLabel: 'Previous page'
+            }));
+            visiblePages().forEach(function(page) {
+                if (page === 'gap') {
+                    pagesEl.appendChild(ellipsis());
+                    return;
+                }
+                pagesEl.appendChild(pageButton(String(page), page, {
+                    active: page === currentPage,
+                    ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
+                }));
+            });
+            pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
+                nav: true,
+                disabled: currentPage === totalPages,
+                ariaLabel: 'Next page'
+            }));
+        }
+
+        function showPage(page) {
+            currentPage = Math.max(1, Math.min(totalPages, page));
+            rows.forEach(function(row, index) {
+                var rowPage = Math.floor(index / perPage) + 1;
+                row.classList.toggle('ca-row--off-page', rowPage !== currentPage);
+            });
+
+            var start = (currentPage - 1) * perPage + 1;
+            var end = Math.min(currentPage * perPage, rows.length);
+            if (rangeEl) {
+                rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
+            }
+            renderControls();
+        }
+
+        window.caApptShowPage = showPage;
+        showPage(1);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -2153,9 +2335,41 @@ ob_start(); ?>
                 }
             });
         }
+
+        initClientAppointmentsTablePagination();
     });
     </script>
-    <?= legalpro_render_client_page_search_script('.ca-table tbody .ca-row[data-search]', '#caCount', 'appointment', 'appointments', ' total') ?>
+    <script>
+    (function () {
+        function applyClientPageSearch() {
+            var params = new URLSearchParams(window.location.search);
+            var q = (params.get('q') || '').trim().toLowerCase();
+            var rows = document.querySelectorAll('.ca-table tbody .ca-row[data-search]');
+            var visible = 0;
+            rows.forEach(function (row) {
+                if (!q) {
+                    row.style.display = '';
+                    visible++;
+                    return;
+                }
+                var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
+                var show = hay.indexOf(q) !== -1;
+                row.style.display = show ? '' : 'none';
+                if (show) {
+                    visible++;
+                }
+            });
+            var countEl = document.querySelector('#caCount');
+            if (countEl) {
+                countEl.textContent = visible + ' ' + (visible === 1 ? 'appointment' : 'appointments') + ' total';
+            }
+            if (typeof window.caApptShowPage === 'function') {
+                window.caApptShowPage(1);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', applyClientPageSearch);
+    })();
+    </script>
 </body>
 </html>
 <?php

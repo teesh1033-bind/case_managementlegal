@@ -266,6 +266,7 @@ $html = <<<'HTML'
 							</select>
 						</div>
 						<div class="card-body px-0 pt-0 pb-2 legalpro-cases-table-wrap">
+							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-cases-row">
 							<div class="table-responsive">
 								<table class="table legalpro-cases-table mb-0" id="casesTable">
 									<thead>
@@ -288,6 +289,8 @@ $html = <<<'HTML'
 										</tr>
 									</tbody>
 								</table>
+							</div>
+							<nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Cases pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
 							</div>
 						</div>
 					</div>
@@ -343,7 +346,7 @@ $html = <<<'HTML'
 				if (priority && row.getAttribute('data-priority') !== priority) {
 					match = false;
 				}
-				row.style.display = match ? '' : 'none';
+				row.classList.toggle('lp-admin-row-filtered', !match);
 				if (match) {
 					visible++;
 				}
@@ -351,6 +354,11 @@ $html = <<<'HTML'
 
 			if (emptyNote) {
 				emptyNote.classList.toggle('d-none', visible > 0 || rows.length === 0);
+			}
+
+			var paginateWrap = tbody.closest('[data-lp-admin-paginate]');
+			if (paginateWrap && window.LegalproAdminTablePagination) {
+				window.LegalproAdminTablePagination.refresh(paginateWrap);
 			}
 		}
 

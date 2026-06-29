@@ -208,16 +208,6 @@ if ($message) {
     </div>';
 }
 
-$upcomingCount = 0;
-foreach ($appointments as $apt) {
-    if (!empty($apt['starts_at']) && strtotime($apt['starts_at']) >= time()) {
-        $upcomingCount++;
-    }
-}
-$appointmentsSubtitle = $upcomingCount === 1
-    ? '1 upcoming'
-    : $upcomingCount . ' upcoming';
-
 // Calendar events (appointments only)
 $appointmentCalendarEvents = [];
 foreach ($appointments as $row) {
@@ -303,11 +293,6 @@ if (empty($upcomingForCalendar)) {
     }
 }
 
-$pageToolbar = legalpro_render_page_toolbar(
-    'Appointment list',
-    'View appointments on the calendar or in the list below.'
-);
-
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -337,13 +322,11 @@ $html = <<<'HTML'
 			<div class="container-fluid py-1 px-3">
 				<div>
 					<h6 class="font-weight-bolder mb-0"><i class="ni ni-calendar-grid-58 me-2 text-primary"></i>Appointments</h6>
-					<p class="dashboard-welcome-sub mb-0 mt-1">{APPOINTMENTS_SUBTITLE}</p>
 				</div>
 			</div>
 		</nav>
 		<div class="container-fluid py-4">
 			{MESSAGE}
-			{PAGE_TOOLBAR}
 
 			<div class="row mb-4">
 				<div class="col-12">
@@ -398,6 +381,7 @@ $html = <<<'HTML'
 						</div>
 						<div class="card-body px-0 pt-0 pb-2">
 							{APPOINTMENTS_SEARCH}
+							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
 							<div class="table-responsive">
 								<table class="table align-items-center mb-0">
 									<thead>
@@ -416,6 +400,8 @@ $html = <<<'HTML'
 										</tr>
 									</tbody>
 								</table>
+							</div>
+							<nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Appointments pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
 							</div>
 						</div>
 					</div>
@@ -750,8 +736,6 @@ $appointmentsSearchHtml = legalpro_render_admin_featured_list_search(
 $appointmentsSearchScript = legalpro_admin_list_search_script('appointmentsSearchInput', 'appointmentsTableBody', 'appointmentsFilterEmpty');
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
-$html = str_replace('{PAGE_TOOLBAR}', $pageToolbar, $html);
-$html = str_replace('{APPOINTMENTS_SUBTITLE}', htmlspecialchars($appointmentsSubtitle), $html);
 $html = str_replace('{APPOINTMENT_ROWS}', $appointmentsRows, $html);
 $html = str_replace('{UPCOMING_APPOINTMENTS_CALENDAR}', $upcomingAppointmentsCalendarHtml, $html);
 $html = str_replace('{APPOINTMENT_CALENDAR_EVENTS_JSON}', $appointmentCalendarEventsJson, $html);

@@ -869,6 +869,33 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: var(--lp-dark-text) !important;'
         . '}';
 
+    $css .= 'body.legalpro-dark-mode .form-control:focus,'
+        . 'body.legalpro-dark-mode .form-select:focus,'
+        . 'body.legalpro-dark-mode textarea.form-control:focus,'
+        . 'body.legalpro-dark-mode input.form-control:focus {'
+        . 'background-color: var(--lp-dark-input-bg) !important;'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode input.form-control:-webkit-autofill,'
+        . 'body.legalpro-dark-mode input.form-control:-webkit-autofill:hover,'
+        . 'body.legalpro-dark-mode input.form-control:-webkit-autofill:focus,'
+        . 'body.legalpro-dark-mode input.form-control:-webkit-autofill:active,'
+        . 'body.legalpro-dark-mode textarea.form-control:-webkit-autofill,'
+        . 'body.legalpro-dark-mode textarea.form-control:-webkit-autofill:hover,'
+        . 'body.legalpro-dark-mode textarea.form-control:-webkit-autofill:focus,'
+        . 'body.legalpro-dark-mode textarea.form-control:-webkit-autofill:active,'
+        . 'body.legalpro-dark-mode select.form-select:-webkit-autofill,'
+        . 'body.legalpro-dark-mode select.form-select:-webkit-autofill:hover,'
+        . 'body.legalpro-dark-mode select.form-select:-webkit-autofill:focus {'
+        . '-webkit-box-shadow: 0 0 0 1000px var(--lp-dark-input-bg) inset !important;'
+        . 'box-shadow: 0 0 0 1000px var(--lp-dark-input-bg) inset !important;'
+        . '-webkit-text-fill-color: var(--lp-dark-text) !important;'
+        . 'caret-color: var(--lp-dark-text) !important;'
+        . 'border-color: var(--lp-dark-border-strong) !important;'
+        . 'transition: background-color 600000s ease-in-out 0s;'
+        . '}';
+
     $css .= 'body.legalpro-dark-mode .form-control::placeholder,'
         . 'body.legalpro-dark-mode textarea::placeholder {'
         . 'color: var(--lp-dark-text-subtle) !important;'
@@ -3487,13 +3514,18 @@ function renderPortalSidebarPaintBlock(): string
 function renderPortalThemeHeadEarly(): void
 {
     static $done = false;
-    if ($done || !isEffectivePortalThemeDark()) {
+    if ($done) {
         return;
     }
     $done = true;
 
-    echo '<style>html.legalpro-theme-dark{background:#2a3040;}</style>';
-    echo '<script>(function(){var d=document;d.documentElement.classList.add("legalpro-theme-dark");var apply=function(){if(d.body&&!d.body.classList.contains("legalpro-dark-mode")){d.body.classList.add("legalpro-dark-mode");}};if(d.body){apply();}else{d.addEventListener("DOMContentLoaded",apply);}})();</script>';
+    if (isEffectivePortalThemeDark()) {
+        echo '<style>html.legalpro-theme-dark{background:#2a3040;}</style>';
+        echo '<script>(function(){var d=document;d.documentElement.classList.add("legalpro-theme-dark");var apply=function(){if(d.body&&!d.body.classList.contains("legalpro-dark-mode")){d.body.classList.add("legalpro-dark-mode");}};if(d.body){apply();}else{d.addEventListener("DOMContentLoaded",apply);}})();</script>';
+        return;
+    }
+
+    echo '<script>(function(){var d=document;d.documentElement.classList.remove("legalpro-theme-dark");var apply=function(){if(d.body){d.body.classList.remove("legalpro-dark-mode");}};if(d.body){apply();}else{d.addEventListener("DOMContentLoaded",apply);}})();</script>';
 }
 
 function renderPortalThemeHead(): void

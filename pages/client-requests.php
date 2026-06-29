@@ -45,7 +45,7 @@ if (!$requests) {
     $rowsHtml = '<tr><td colspan="5" class="text-center text-muted py-4">No requests yet. Use the <a href="chatbot.php">AI assistant</a> to request a callback or ask a billing question.</td></tr>';
 } else {
     foreach ($requests as $r) {
-        $rowsHtml .= '<tr>'
+        $rowsHtml .= '<tr class="cr-request-row">'
             . '<td>' . htmlspecialchars(ucfirst((string) $r['request_type'])) . '</td>'
             . '<td>' . htmlspecialchars((string) ($r['subject'] ?? '')) . '</td>'
             . '<td>' . htmlspecialchars((string) ($r['case_title'] ?? '—')) . '</td>'
@@ -66,6 +66,7 @@ $html = <<<'HTML'
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 	<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 	{CLIENT_PORTAL_HEAD}
+	<link href="../assets/css/client-portal-pages.css?v=6" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-requests-page">
 	<div class="min-height-300 bg-primary position-absolute w-100"></div>
@@ -82,6 +83,7 @@ $html = <<<'HTML'
 					<a href="chatbot.php" class="btn btn-sm btn-primary mb-0">Ask AI assistant</a>
 				</div>
 				<div class="card-body px-0 pt-0 pb-2">
+					<div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cr-request-row" data-portal-per-page="10" data-portal-show-page-global="crRequestShowPage">
 					<div class="table-responsive p-0">
 						<table class="table align-items-center mb-0">
 							<thead>
@@ -95,6 +97,11 @@ $html = <<<'HTML'
 							</thead>
 							<tbody>{ROWS}</tbody>
 						</table>
+					</div>
+					<nav class="cp-portal-pagination" data-portal-pagination aria-label="Requests pagination" hidden>
+						<p class="cp-portal-pagination__info" data-portal-range></p>
+						<div class="cp-portal-pagination__controls" data-portal-pages></div>
+					</nav>
 					</div>
 				</div>
 			</div>

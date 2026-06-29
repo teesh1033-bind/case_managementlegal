@@ -15,6 +15,7 @@ $content = '
         <p class="text-sm text-muted mb-0">Reusable legal drafts with merge placeholders.</p>
     </div>
     <div class="card-body px-0 pt-0 pb-0">
+        <div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
         <div class="table-responsive">
             <table class="table align-items-center mb-0">
                 <thead>
@@ -26,6 +27,8 @@ $content = '
                 </thead>
                 <tbody>' . $state['templatesRows'] . '</tbody>
             </table>
+        </div>
+        <nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Templates pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
         </div>
         <hr class="my-3">
         <div class="px-3 pb-3">
