@@ -66,7 +66,7 @@ require_once __DIR__ . '/../lib/client-portal-page-ui.php';
 function modern_status_badge(string $status): string {
     $map = [
         'active'        => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'Active'],
-        'open'          => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'Open'],
+        'open'          => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'Active'],
         'in_progress'   => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'In progress'],
         'pending'       => ['cls' => 'badge-pending', 'dot' => '#ca8a04', 'label' => 'Pending'],
         'under review'  => ['cls' => 'badge-review',  'dot' => 'currentColor', 'label' => 'Under review'],
@@ -85,12 +85,11 @@ function modern_status_badge(string $status): string {
 function modern_priority_badge(string $priority): string {
     $map = [
         'high'   => 'pri-high',
-        'medium' => 'pri-med',
+        'urgent' => 'pri-high',
         'normal' => 'pri-med',
-        'low'    => 'pri-low',
     ];
     $key = strtolower(trim($priority));
-    $cls = $map[$key] ?? 'pri-low';
+    $cls = $map[$key] ?? 'pri-med';
     return '<span class="' . $cls . '">' . htmlspecialchars(ucfirst($priority)) . '</span>';
 }
 
@@ -276,7 +275,6 @@ ob_start(); ?>
                     </div>
                     <select id="ccStatus" class="cp-filter-select" onchange="ccFilter()">
                         <option value="">All statuses</option>
-                        <option>Open</option>
                         <option>Active</option>
                         <option>Pending</option>
                         <option>Under review</option>
@@ -285,9 +283,8 @@ ob_start(); ?>
                     <select id="ccPriority" class="cp-filter-select" onchange="ccFilter()">
                         <option value="">All priorities</option>
                         <option>High</option>
-                        <option>Medium</option>
+                        <option>Urgent</option>
                         <option>Normal</option>
-                        <option>Low</option>
                     </select>
                 </div>
             </section>
@@ -332,6 +329,11 @@ ob_start(); ?>
 <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 
     <script>
+    function ccStatusKey(s) {
+        s = (s || '').toLowerCase().replace(/_/g, ' ').trim();
+        if (s === 'open' || s === 'in progress') return 'active';
+        return s;
+    }
     function ccFilter() {
         var q  = document.getElementById('ccSearch').value.toLowerCase();
         var st = document.getElementById('ccStatus').value.toLowerCase();
@@ -342,7 +344,7 @@ ob_start(); ?>
             var hay = r.dataset.search || (r.dataset.title + ' ' + r.dataset.category);
             var rowStatus = (r.dataset.status || '').toLowerCase().replace(/_/g, ' ');
             var titleMatch    = !q  || hay.includes(q);
-            var statusMatch   = !st || rowStatus === st || rowStatus.replace(/ /g, '_') === st.replace(/ /g, '_');
+            var statusMatch   = !st || ccStatusKey(rowStatus) === ccStatusKey(st);
             var priorityMatch = !pr || (r.dataset.priority || '').toLowerCase() === pr;
             var show = titleMatch && statusMatch && priorityMatch;
             r.style.display = show ? '' : 'none';
