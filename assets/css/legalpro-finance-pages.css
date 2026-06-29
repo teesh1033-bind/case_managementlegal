@@ -131,6 +131,17 @@ body.legalpro-finance-page .payments-summary-card .table thead th {
     background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.06);
 }
 
+body.legalpro-finance-page .lp-payments-hub-card__title {
+    color: #1e293b;
+}
+
+body.legalpro-finance-page .lp-payments-hub-card__badge {
+    background: rgba(15, 23, 42, 0.06);
+    color: #334155;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    font-weight: 700;
+}
+
 body.legalpro-finance-page:not(.legalpro-dark-mode) .payments-summary-card .lp-pill {
     background: rgba(103, 116, 142, 0.14) !important;
     color: #3d4d63 !important;
@@ -155,6 +166,16 @@ body.legalpro-dark-mode.legalpro-finance-page .card-header {
 body.legalpro-dark-mode.legalpro-finance-page .card-header h6,
 body.legalpro-dark-mode.legalpro-finance-page .fin-hero-title {
     color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .lp-payments-hub-card__title {
+    color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode.legalpro-finance-page .lp-payments-hub-card__badge {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--lp-dark-text, #f8f9fc);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 body.legalpro-dark-mode.legalpro-finance-page .card-header p,
