@@ -91,6 +91,7 @@ try {
 $message = '';
 $messageType = '';
 $caseId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$allowedCaseStatuses = ['active', 'pending', 'under_review', 'closed'];
 
 if (!$caseId) {
     header('Location: tables.php?msg=' . urlencode('Invalid case ID') . '&type=danger');
@@ -152,7 +153,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $clientId = isset($_POST['client_id']) ? (int)$_POST['client_id'] : 0;
         $lawyerIds = isset($_POST['lawyer_ids']) ? $_POST['lawyer_ids'] : [];
         $description = trim(isset($_POST['description']) ? $_POST['description'] : '');
-        $status = isset($_POST['status']) ? strtolower(trim($_POST['status'])) : 'open';
+        $status = isset($_POST['status']) ? strtolower(trim($_POST['status'])) : 'active';
+        if ($status === 'in_progress') {
+            $status = 'active';
+        }
+        if ($status === 'open') {
+            $status = 'active';
+        }
+        if (!in_array($status, $allowedCaseStatuses, true)) {
+            $status = 'active';
+        }
         $priority = isset($_POST['priority']) ? $_POST['priority'] : 'Normal';
         $category = resolveSubmittedCaseCategory('Civil');
         $startDate = isset($_POST['start_date']) ? $_POST['start_date'] : '';
@@ -926,8 +936,9 @@ $html = <<<'HTML'
                                     <div class="col-md-6 mb-3">
                                         <label class="form-control-label text-sm font-weight-bold">Status</label>
                                         <select class="form-control" name="status">
-                                            <option value="open" {STATUS_OPEN}>Open</option>
-                                            <option value="in_progress" {STATUS_IN_PROGRESS}>In Progress</option>
+                                            <option value="active" {STATUS_ACTIVE}>Active</option>
+                                            <option value="pending" {STATUS_PENDING}>Pending</option>
+                                            <option value="under_review" {STATUS_UNDER_REVIEW}>Under Review</option>
                                             <option value="closed" {STATUS_CLOSED}>Closed</option>
                                         </select>
                                     </div>
@@ -1489,8 +1500,9 @@ $replacements = [
     '{CLIENT_OPTIONS}' => $clientOptions,
     '{LAWYER_CHECKBOXES}' => $lawyerCheckboxes,
     '{TASK_LAWYER_CHECKBOXES}' => $taskLawyerCheckboxes,
-    '{STATUS_OPEN}' => ($case['status'] === 'open') ? 'selected' : '',
-    '{STATUS_IN_PROGRESS}' => ($case['status'] === 'in_progress') ? 'selected' : '',
+    '{STATUS_ACTIVE}' => in_array((string) $case['status'], ['active', 'in_progress', 'open'], true) ? 'selected' : '',
+    '{STATUS_PENDING}' => ($case['status'] === 'pending') ? 'selected' : '',
+    '{STATUS_UNDER_REVIEW}' => ($case['status'] === 'under_review') ? 'selected' : '',
     '{STATUS_CLOSED}' => ($case['status'] === 'closed') ? 'selected' : '',
     '{PRIORITY_NORMAL}' => ($case['priority'] === 'Normal') ? 'selected' : '',
     '{PRIORITY_HIGH}' => ($case['priority'] === 'High') ? 'selected' : '',

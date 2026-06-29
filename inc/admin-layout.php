@@ -152,7 +152,8 @@ function legalpro_navbar_utilities_mount(string $utilitiesHtml): string
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     var mount = document.getElementById("legalproNavbarUtilitiesMount");
-    var nav = document.querySelector("main .navbar-main .container-fluid");
+    var nav = document.querySelector("main .navbar-main .container-fluid")
+        || document.querySelector(".navbar-main .container-fluid");
     if (!mount || !nav) {
         return;
     }
@@ -215,9 +216,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    if (!nav.querySelector(".legalpro-navbar-actions")) {
-        nav.appendChild(actions);
+    var existingActions = nav.querySelector(".legalpro-navbar-actions");
+    if (existingActions) {
+        existingActions.remove();
     }
+    nav.appendChild(actions);
     mount.remove();
 
     var userRoot = nav.querySelector(".legalpro-header-user");
@@ -337,8 +340,36 @@ function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
         '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
         false,
         $unreadCount,
-        true
+        true,
+        legalpro_render_admin_theme_toggle()
     );
+}
+
+function legalpro_render_admin_theme_toggle(): string
+{
+    if (!isset($_SESSION['admin_id'])) {
+        return '';
+    }
+
+    if (!function_exists('getPortalTheme')) {
+        require_once __DIR__ . '/../lib/portal-theme.php';
+    }
+
+    $currentMode = (string) (getPortalTheme()['mode'] ?? 'light');
+    $isDark = $currentMode === 'dark';
+    $iconName = $isDark ? 'sun' : 'moon';
+    $switchLight = 'Switch to light mode';
+    $switchDark = 'Switch to dark mode';
+    $label = $isDark ? $switchLight : $switchDark;
+
+    return '<button type="button" class="legalpro-header-theme-toggle" id="adminThemeToggle"'
+        . ' data-theme-mode="' . htmlspecialchars($currentMode, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-label-light="' . htmlspecialchars($switchLight, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-label-dark="' . htmlspecialchars($switchDark, ENT_QUOTES, 'UTF-8') . '"'
+        . ' title="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '"'
+        . ' aria-label="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '">'
+        . legalpro_icon($iconName)
+        . '</button>';
 }
 
 function legalpro_render_admin_notification_dropdown(): string
@@ -565,8 +596,8 @@ function legalpro_case_priority_badge(string $priority): string
         $class = $key === 'urgent' ? 'lp-pill--priority-urgent' : 'lp-pill--priority-high';
     } else {
         $class = 'lp-pill--priority-medium';
-        if ($key === 'normal') {
-            $label = 'Medium';
+        if (!in_array($key, ['normal', 'high', 'urgent'], true)) {
+            $label = 'Normal';
         }
     }
 
@@ -577,9 +608,11 @@ function legalpro_case_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
-        'open' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'open' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'active' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
         'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
-        'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
+        'in_progress' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'under_review' => ['label' => 'Under Review', 'class' => 'lp-pill--status-waiting'],
         'waiting_for_client' => ['label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
         'on_hold' => ['label' => 'On Hold', 'class' => 'lp-pill--status-waiting'],
         'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
@@ -827,7 +860,7 @@ function client_case_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
-        'open' => ['label' => 'Open', 'pill' => 'ca-status-pill--scheduled'],
+        'open' => ['label' => 'Active', 'pill' => 'ca-status-pill--scheduled'],
         'in_progress' => ['label' => 'In Progress', 'pill' => 'ca-status-pill--scheduled'],
         'closed' => ['label' => 'Closed', 'pill' => 'ca-status-pill--done'],
         'pending' => ['label' => 'Pending', 'pill' => 'ca-status-pill--pending'],

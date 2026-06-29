@@ -153,7 +153,20 @@ if (empty($cases)) {
         $serviceDisplay = htmlspecialchars((string) $serviceName);
 
         $priority = isset($case['priority']) ? (string) $case['priority'] : 'Normal';
-        $status = isset($case['status']) ? strtolower((string) $case['status']) : 'open';
+        $rawStatus = isset($case['status']) ? strtolower((string) $case['status']) : 'active';
+
+        // Normalize legacy statuses to the admin status set.
+        if (in_array($rawStatus, ['open', 'in_progress', 'active'], true)) {
+            $status = 'active';
+        } elseif (in_array($rawStatus, ['under_review', 'in_review', 'waiting_for_client', 'on_hold'], true)) {
+            $status = 'under_review';
+        } elseif ($rawStatus === 'pending') {
+            $status = 'pending';
+        } elseif ($rawStatus === 'closed') {
+            $status = 'closed';
+        } else {
+            $status = 'active';
+        }
 
         $feeDisplay = legalpro_format_case_fee($case['estimated_fees'] ?? 0);
 
@@ -164,6 +177,9 @@ if (empty($cases)) {
 
         $searchBlob = strtolower($caseNumber . ' ' . ($case['title'] ?? '') . ' ' . $clientName . ' ' . $serviceName . ' ' . $category);
         $priorityFilter = strtolower($priority);
+        if (!in_array($priorityFilter, ['normal', 'high', 'urgent'], true)) {
+            $priorityFilter = 'normal';
+        }
         $statusFilter = $status;
 
         $casesRows .= '
@@ -253,15 +269,15 @@ $html = <<<'HTML'
 							</div>
 							<select class="form-select" id="casesStatusFilter" aria-label="Filter by status">
 								<option value="">All statuses</option>
-								<option value="open">Pending</option>
-								<option value="in_progress">In Progress</option>
-								<option value="waiting_for_client">Waiting For Client</option>
+								<option value="active">Active</option>
+								<option value="pending">Pending</option>
+								<option value="under_review">Under Review</option>
 								<option value="closed">Closed</option>
 							</select>
 							<select class="form-select" id="casesPriorityFilter" aria-label="Filter by priority">
 								<option value="">All priorities</option>
+								<option value="normal">Normal</option>
 								<option value="high">High</option>
-								<option value="normal">Medium</option>
 								<option value="urgent">Urgent</option>
 							</select>
 						</div>

@@ -251,9 +251,9 @@ function legalpro_payments_activity_hub_cards_html(array $counts): string
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
                         <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--' . $meta['accent'] . '">' . legalpro_icon($meta['icon']) . '</div>
-                        <span class="badge bg-light text-dark">' . (int) $meta['count'] . ' ' . htmlspecialchars($meta['countLabel']) . '</span>
+                        <span class="badge lp-payments-hub-card__badge">' . (int) $meta['count'] . ' ' . htmlspecialchars($meta['countLabel']) . '</span>
                     </div>
-                    <h6 class="mb-1 text-dark">' . htmlspecialchars($page['nav']) . '</h6>
+                    <h6 class="mb-1 lp-payments-hub-card__title">' . htmlspecialchars($page['nav']) . '</h6>
                     <p class="text-sm text-muted mb-0">' . htmlspecialchars($meta['desc']) . '</p>
                 </div>
             </a>
@@ -304,8 +304,21 @@ function legalpro_payments_activity_table_styles(): string
         .payments-notes-cell { max-width: 16rem; }
         .legalpro-doc-hub-card { transition: transform 0.15s ease, box-shadow 0.15s ease; border: 1px solid #e9ecf3; }
         .legalpro-doc-hub-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
+        .legalpro-doc-hub-card .lp-payments-hub-card__title { color: #1e293b; }
+        .legalpro-doc-hub-card .lp-payments-hub-card__badge {
+            background: #eef2ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+            font-weight: 700;
+        }
         body.legalpro-dark-mode .legalpro-doc-hub-card { border-color: var(--lp-dark-border); }
-        body.legalpro-dark-mode .legalpro-doc-hub-card h6 { color: var(--lp-dark-text) !important; }
+        body.legalpro-dark-mode .legalpro-doc-hub-card h6,
+        body.legalpro-dark-mode .legalpro-doc-hub-card .lp-payments-hub-card__title { color: var(--lp-dark-text) !important; }
+        body.legalpro-dark-mode .legalpro-doc-hub-card .lp-payments-hub-card__badge {
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--lp-dark-text) !important;
+            border-color: rgba(255, 255, 255, 0.24);
+        }
 CSS;
 }
 
@@ -409,7 +422,7 @@ function legalpro_payments_activity_render_page(string $pageKey, string $content
     ob_start();
     include dirname(__DIR__) . '/inc/admin-portal-head.php';
     $html .= ob_get_clean();
-    $html .= '<link href="../assets/css/legalpro-finance-pages.css?v=4" rel="stylesheet" />'
+    $html .= '<link href="../assets/css/legalpro-finance-pages.css?v=5" rel="stylesheet" />'
         . '<link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />'
         . '<style>' . legalpro_payments_activity_table_styles() . '</style>
 </head>

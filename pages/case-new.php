@@ -111,13 +111,15 @@ $formData = [
     'user_id' => '',
     'title' => '',
     'description' => '',
-    'status' => 'open',
+    'status' => 'active',
     'priority' => 'Normal',
     'category' => 'Civil',
     'estimated_fees' => '0.00',
     'start_date' => '',
     'expected_completion' => ''
 ];
+
+$allowedCaseStatuses = ['active', 'pending', 'under_review', 'closed'];
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -130,7 +132,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $lawyerIds = isset($_POST['lawyer_ids']) ? $_POST['lawyer_ids'] : [];
         $title = isset($_POST['title']) ? trim($_POST['title']) : '';
         $description = isset($_POST['description']) ? trim($_POST['description']) : '';
-        $status = isset($_POST['status']) ? trim($_POST['status']) : 'open';
+        $status = isset($_POST['status']) ? strtolower(trim($_POST['status'])) : 'active';
+        if ($status === 'in_progress') {
+            $status = 'active';
+        }
+        if ($status === 'open') {
+            $status = 'active';
+        }
+        if (!in_array($status, $allowedCaseStatuses, true)) {
+            $status = 'active';
+        }
         $priority = isset($_POST['priority']) ? trim($_POST['priority']) : 'Normal';
         $category = resolveSubmittedCaseCategory('Civil');
         $startDate = isset($_POST['start_date']) ? trim($_POST['start_date']) : null;
@@ -350,7 +361,7 @@ if (empty($formData['case_id']) && isset($_GET['id']) && ctype_digit($_GET['id']
             'user_id' => isset($case['user_id']) ? $case['user_id'] : '',
             'title' => $case['title'],
             'description' => isset($case['description']) ? $case['description'] : '',
-            'status' => isset($case['status']) ? $case['status'] : 'open',
+            'status' => isset($case['status']) && strtolower((string) $case['status']) === 'open' ? 'active' : (isset($case['status']) ? $case['status'] : 'active'),
             'priority' => isset($case['priority']) ? $case['priority'] : 'Normal',
             'category' => isset($case['category']) ? $case['category'] : 'Civil',
             'estimated_fees' => isset($case['estimated_fees']) ? $case['estimated_fees'] : '',
@@ -532,8 +543,9 @@ $html = <<<'HTML'
 										<div class="form-group">
 											<label class="form-control-label">Status</label>
 											<select class="form-control" name="status">
-												<option value="open"{STATUS_OPEN}>Open</option>
-												<option value="in_progress"{STATUS_IN_PROGRESS}>In Progress</option>
+												<option value="active"{STATUS_ACTIVE}>Active</option>
+												<option value="pending"{STATUS_PENDING}>Pending</option>
+												<option value="under_review"{STATUS_UNDER_REVIEW}>Under Review</option>
 												<option value="closed"{STATUS_CLOSED}>Closed</option>
 											</select>
 										</div>
@@ -846,8 +858,9 @@ $totalFeesDisplay = $currencySymbol . number_format($totalFeesValue, 2);
 $html = str_replace('{TOTAL_FEES_DISPLAY}', htmlspecialchars($totalFeesDisplay), $html);
 
 // Status selected
-$html = str_replace('{STATUS_OPEN}', ($formData['status'] === 'open') ? ' selected' : '', $html);
-$html = str_replace('{STATUS_IN_PROGRESS}', ($formData['status'] === 'in_progress') ? ' selected' : '', $html);
+$html = str_replace('{STATUS_ACTIVE}', (in_array($formData['status'], ['active', 'in_progress', 'open'], true)) ? ' selected' : '', $html);
+$html = str_replace('{STATUS_PENDING}', ($formData['status'] === 'pending') ? ' selected' : '', $html);
+$html = str_replace('{STATUS_UNDER_REVIEW}', ($formData['status'] === 'under_review') ? ' selected' : '', $html);
 $html = str_replace('{STATUS_CLOSED}', ($formData['status'] === 'closed') ? ' selected' : '', $html);
 
 // Priority selected
