@@ -37,16 +37,19 @@ function legalpro_client_requests_ensure_tables(?PDO $pdo = null): void
 function legalpro_client_submit_request(PDO $pdo, int $clientId, array $data, $file = null): array
 {
     legalpro_client_requests_ensure_tables($pdo);
+    if (!function_exists('client_t')) {
+        require_once __DIR__ . '/client-locale.php';
+    }
 
     $type = strtolower(trim((string) ($data['request_type'] ?? '')));
     $allowed = ['callback', 'billing', 'evidence'];
     if (!in_array($type, $allowed, true)) {
-        return ['ok' => false, 'message' => 'Invalid request type.'];
+        return ['ok' => false, 'message' => client_t('self_service.invalid_type')];
     }
 
     $message = trim((string) ($data['message'] ?? ''));
     if ($message === '') {
-        return ['ok' => false, 'message' => 'Please describe your request.'];
+        return ['ok' => false, 'message' => client_t('self_service.describe_request')];
     }
 
     $caseId = (int) ($data['case_id'] ?? 0);
@@ -62,7 +65,7 @@ function legalpro_client_submit_request(PDO $pdo, int $clientId, array $data, $f
 
     $subject = trim((string) ($data['subject'] ?? ''));
     if ($subject === '') {
-        $subject = ucfirst($type) . ' request';
+        $subject = client_t('self_service.request_subject', ['type' => ucfirst($type)]);
     }
 
     $preferred = trim((string) ($data['preferred_callback_time'] ?? ''));
@@ -79,18 +82,18 @@ function legalpro_client_submit_request(PDO $pdo, int $clientId, array $data, $f
             $pdo,
             $clientId,
             'request_submitted',
-            'Request received',
-            'We received your ' . $type . ' request and will respond soon.',
+            client_t('self_service.request_received'),
+            client_t('self_service.request_notify_body', ['type' => $type]),
             'client-requests.php',
             'clipboard',
             'client_request',
             $requestId
         );
 
-        return ['ok' => true, 'message' => 'Request submitted.', 'request_id' => $requestId];
+        return ['ok' => true, 'message' => client_t('self_service.request_submitted'), 'request_id' => $requestId];
     } catch (PDOException $e) {
         error_log('submit client request: ' . $e->getMessage());
-        return ['ok' => false, 'message' => 'Could not save your request. Please try again.'];
+        return ['ok' => false, 'message' => client_t('self_service.save_error')];
     }
 }
 

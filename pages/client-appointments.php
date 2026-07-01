@@ -2,6 +2,8 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
+require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/client-portal-i18n.php';
 
 if (!isset($_SESSION['client_id'])) {
     header('Location: login.php');
@@ -16,21 +18,21 @@ function clientAppointmentStatusMeta(string $status, int $startsAt, ?int $endsAt
 {
     $now = time();
     if ($status === 'pending') {
-        return ['key' => 'pending', 'label' => 'Pending', 'pill' => 'b-pending'];
+        return ['key' => 'pending', 'label' => client_t('appointments.status.pending'), 'pill' => 'b-pending'];
     }
     if ($status === 'accepted') {
         if ($endsAt && $endsAt < $now) {
-            return ['key' => 'completed', 'label' => 'Completed', 'pill' => 'b-done'];
+            return ['key' => 'completed', 'label' => client_t('appointments.status.completed'), 'pill' => 'b-done'];
         }
         if ($startsAt <= $now && (!$endsAt || $endsAt >= $now)) {
-            return ['key' => 'in_progress', 'label' => 'In progress', 'pill' => 'b-inprogress'];
+            return ['key' => 'in_progress', 'label' => client_t('appointments.status.in_progress'), 'pill' => 'b-inprogress'];
         }
-        return ['key' => 'upcoming', 'label' => 'Upcoming', 'pill' => 'b-upcoming'];
+        return ['key' => 'upcoming', 'label' => client_t('appointments.status.upcoming'), 'pill' => 'b-upcoming'];
     }
     if ($status === 'rejected') {
-        return ['key' => 'rejected', 'label' => 'Rejected', 'pill' => 'b-declined'];
+        return ['key' => 'rejected', 'label' => client_t('appointments.status.rejected'), 'pill' => 'b-declined'];
     }
-    return ['key' => 'unknown', 'label' => ucfirst($status ?: 'Unknown'), 'pill' => 'b-muted'];
+    return ['key' => 'unknown', 'label' => client_t('appointments.status.unknown'), 'pill' => 'b-muted'];
 }
 
 function clientAppointmentStatusBadge(array $meta): string
@@ -47,7 +49,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
     $appointmentId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
     if ($appointmentId <= 0) {
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid appointment ID']);
+        echo json_encode(['error' => client_t('appointments.ajax_invalid_id')]);
         exit;
     }
     try {
@@ -64,7 +66,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
         $apt = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$apt) {
             http_response_code(404);
-            echo json_encode(['error' => 'Appointment not found']);
+            echo json_encode(['error' => client_t('appointments.ajax_not_found')]);
             exit;
         }
         $startsAt = strtotime($apt['starts_at']);
@@ -72,8 +74,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
         $meta     = clientAppointmentStatusMeta(strtolower((string) ($apt['status'] ?? '')), $startsAt, $endsAt);
         echo json_encode([
             'id'           => (int) $apt['id'],
-            'case_title'   => $apt['case_title'] ?: 'Appointment',
-            'lawyer_name'  => $apt['lawyer_name'] ?: 'TBD',
+            'case_title'   => $apt['case_title'] ?: client_t('js.appointment'),
+            'lawyer_name'  => $apt['lawyer_name'] ?: client_t('common.tbd'),
             'starts_at'    => date('M j, Y g:i A', $startsAt),
             'starts_at_raw' => (string) $apt['starts_at'],
             'ends_at'      => $endsAt ? date('M j, Y g:i A', $endsAt) : null,
@@ -86,7 +88,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
         ]);
     } catch (PDOException $e) {
         http_response_code(500);
-        echo json_encode(['error' => 'Could not load appointment details']);
+        echo json_encode(['error' => client_t('appointments.ajax_load_error')]);
     }
     exit;
 }
@@ -113,14 +115,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($appointment && $appointment['status'] === 'rejected') {
                     $stmt = $pdo->prepare("DELETE FROM appointments WHERE id = ? AND client_id = ? AND status = 'rejected'");
                     $stmt->execute([$appointment_id, $client_id]);
-                    $message     = 'Rejected appointment removed.';
+                    $message     = client_t('appointments.msg_deleted');
                     $messageType = 'success';
                 } else {
-                    $message     = 'Appointment not found or cannot be deleted.';
+                    $message     = client_t('appointments.msg_not_found');
                     $messageType = 'danger';
                 }
             } catch (PDOException $e) {
-                $message     = 'Error deleting appointment.';
+                $message     = client_t('appointments.msg_delete_error');
                 $messageType = 'danger';
             }
         }
@@ -132,14 +134,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notes            = trim($_POST['notes'] ?? '');
 
         if (!$lawyer_id || !$case_id || !$appointment_date || !$appointment_time) {
-            $message     = 'Please fill in all required fields.';
+            $message     = client_t('appointments.msg_required');
             $messageType = 'danger';
         } else {
             try {
                 $stmt = $pdo->prepare("SELECT id FROM cases WHERE id = ? AND client_id = ?");
                 $stmt->execute([$case_id, $client_id]);
                 if (!$stmt->fetch()) {
-                    $message = 'Invalid case selected.';
+                    $message = client_t('appointments.msg_invalid_case');
                     $messageType = 'danger';
                 } else {
                     $availabilityResult = validateLawyerBookingAvailability($pdo, $lawyer_id, $appointment_date, $appointment_time);
@@ -159,12 +161,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'ends_at'   => $endDateTime,
                             'status'    => 'pending',
                         ]);
-                        $message     = 'Appointment request submitted. Waiting for lawyer approval.';
+                        $message     = client_t('appointments.msg_submitted');
                         $messageType = 'success';
                     }
                 }
             } catch (PDOException $e) {
-                $message     = 'Error booking appointment.';
+                $message     = client_t('appointments.msg_book_error');
                 $messageType = 'danger';
             }
         }
@@ -193,7 +195,7 @@ try {
     $stmt->execute([$client_id]);
     $appointments = $stmt->fetchAll();
 } catch (PDOException $e) {
-    $message      = 'Error loading appointments.';
+    $message      = client_t('appointments.msg_load_error');
     $messageType  = 'danger';
     $clientCases  = [];
     $appointments = [];
@@ -210,19 +212,19 @@ foreach ($appointments as $_apt) {
 require_once __DIR__ . '/../lib/client-portal-page-ui.php';
 
 $heroHtml = client_portal_render_hero([
-    'kicker' => 'Calendar',
-    'title' => 'My appointments',
-    'subtitle' => 'Track meetings with your legal team and request new sessions below.',
+    'kicker' => client_t('appointments.kicker'),
+    'title' => client_t('appointments.title'),
+    'subtitle' => client_t('appointments.subtitle'),
     'show_date' => true,
-    'aria_label' => 'Appointments overview',
+    'aria_label' => client_t('appointments.aria'),
     'stats' => [
-        ['num' => (string) $apptTotal, 'lbl' => 'Total'],
-        ['num' => (string) $apptPending, 'lbl' => 'Pending'],
-        ['num' => (string) $apptUpcoming, 'lbl' => 'Upcoming'],
+        ['num' => (string) $apptTotal, 'lbl' => client_t('common.total')],
+        ['num' => (string) $apptPending, 'lbl' => client_t('status.pending')],
+        ['num' => (string) $apptUpcoming, 'lbl' => client_t('appointments.upcoming')],
     ],
     'actions' => [
-        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
-        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+        ['url' => 'client-dashboard.php', 'label' => client_t('nav.dashboard'), 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => client_t('nav.my_cases'), 'icon' => 'briefcase'],
     ],
 ]);
 
@@ -269,12 +271,12 @@ try {
 } catch (PDOException $e) {}
 
 // ── Build selects ─────────────────────────────────────────────────────────────
-$caseOptions = '<option value="">Select a case</option>';
+$caseOptions = '<option value="">' . htmlspecialchars(client_t('common.select_case')) . '</option>';
 foreach ($clientCases as $c) {
     $caseOptions .= '<option value="' . $c['id'] . '">' . htmlspecialchars($c['title']) . '</option>';
 }
 
-$lawyerOptions = '<option value="">Select a lawyer</option>';
+$lawyerOptions = '<option value="">' . htmlspecialchars(client_t('common.select_lawyer')) . '</option>';
 foreach ($availableLawyers as $l) {
     $lawyerOptions .= '<option value="' . $l['id'] . '">' . htmlspecialchars($l['first_name'] . ' ' . $l['last_name']) . '</option>';
 }
@@ -290,15 +292,15 @@ if (empty($appointments)) {
                     <path d="M16 2v4M8 2v4M3 10h18"/>
                 </svg>
             </div>
-            <h5>No appointments yet</h5>
-            <p>Use the booking panel to request a time with your counsel.</p>
+            <h5>' . htmlspecialchars(client_t('appointments.empty_title')) . '</h5>
+            <p>' . htmlspecialchars(client_t('appointments.empty_sub')) . '</p>
         </div>
     </td></tr>';
 } else {
     foreach ($appointments as $apt) {
         $aid         = (int) $apt['id'];
-        $caseTitle   = $apt['case_title'] ?: 'Appointment';
-        $lawyerName  = $apt['lawyer_name'] ?: 'TBD';
+        $caseTitle   = $apt['case_title'] ?: client_t('common.general_appointment');
+        $lawyerName  = $apt['lawyer_name'] ?: client_t('common.tbd');
         $displayDate = date('M j, Y', strtotime($apt['starts_at']));
         $displayTime = date('g:i A', strtotime($apt['starts_at']));
         $meta        = clientAppointmentStatusMeta(
@@ -313,10 +315,10 @@ if (empty($appointments)) {
 
         $deleteBtn = '';
         if ($isRejected) {
-            $deleteBtn = '<form method="POST" style="display:inline" onsubmit="return confirm(\'Remove this rejected appointment?\')">
+            $deleteBtn = '<form method="POST" style="display:inline" onsubmit="return confirm(' . json_encode(client_t('appointments.delete_confirm'), JSON_UNESCAPED_UNICODE) . ')">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="appointment_id" value="' . $aid . '">
-                <button type="submit" class="btn-del cdoc-touch-btn">Delete</button>
+                <button type="submit" class="btn-del cdoc-touch-btn">' . htmlspecialchars(client_t('appointments.delete')) . '</button>
             </form>';
         }
 
@@ -353,7 +355,7 @@ if (empty($appointments)) {
             </td>
             <td>
                 <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">
-                    <button type="button" class="btn-det cdoc-touch-btn" onclick="viewAppointmentDetails(' . $aid . ')">Details</button>
+                    <button type="button" class="btn-det cdoc-touch-btn" onclick="viewAppointmentDetails(' . $aid . ')">' . htmlspecialchars(client_t('appointments.details')) . '</button>
                     ' . $deleteBtn . '
                 </div>
             </td>
@@ -369,7 +371,7 @@ foreach ($appointments as $row) {
     }
 
     $status = strtolower((string) ($row['status'] ?? 'pending'));
-    $caseTitle = $row['case_title'] ?: 'Appointment';
+    $caseTitle = $row['case_title'] ?: client_t('js.appointment');
     $lawyerName = trim((string) ($row['lawyer_name'] ?? ''));
     $notes = trim((string) ($row['notes'] ?? ''));
     $startsLabel = date('M j, Y g:i A', strtotime($row['starts_at']));
@@ -429,7 +431,7 @@ if (empty($upcomingForCalendar)) {
     });
     foreach (array_slice($upcomingForCalendar, 0, 8) as $row) {
         $status = strtolower((string) ($row['status'] ?? 'pending'));
-        $caseTitle = $row['case_title'] ?: 'Appointment';
+        $caseTitle = $row['case_title'] ?: client_t('js.appointment');
         $lawyerName = trim((string) ($row['lawyer_name'] ?? ''));
         $lawyerName = $lawyerName !== '' ? $lawyerName : 'TBD';
         $hourLabel = date('g:i A', strtotime($row['starts_at']));
@@ -460,21 +462,21 @@ if ($message) {
 
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
 $clientPageNavbar = legalpro_render_client_page_navbar(
-    'Appointments',
-    'Appointments',
-    'Search appointments…',
+    client_t('appointments.navbar'),
+    client_t('appointments.navbar'),
+    client_t('appointments.search_placeholder'),
     legalpro_client_page_search_options('client-appointments.php')
 );
 
 ob_start(); ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(client_portal_html_lang()) ?>">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro – My Appointments</title>
+    <title>LegalPro – <?= htmlspecialchars(client_t('appointments.page_title')) ?></title>
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -1330,16 +1332,16 @@ ob_start(); ?>
             <div class="dashboard-calendar-hub ca-calendar-hub">
                 <div class="dashboard-calendar-hub__head">
                     <div class="ca-calendar-hub__intro">
-                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Appointments Calendar</h6>
-                        <p class="text-sm mb-0 text-muted">Use the search bar below to find appointments quickly, or click a calendar event</p>
+                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title"><?= htmlspecialchars(client_t('appointments.calendar_hub_title')) ?></h6>
+                        <p class="text-sm mb-0 text-muted"><?= htmlspecialchars(client_t('appointments.calendar_hub_sub')) ?></p>
                         <div class="dashboard-legend-pills">
-                            <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
-                            <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
-                            <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
+                            <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> <?= htmlspecialchars(client_t('appointments.legend_pending')) ?></span>
+                            <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> <?= htmlspecialchars(client_t('appointments.legend_accepted')) ?></span>
+                            <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> <?= htmlspecialchars(client_t('appointments.legend_rejected')) ?></span>
                         </div>
                     </div>
                     <div class="ca-cal-search-wrap ca-cal-search-wrap--featured">
-                        <label class="ca-cal-search-label" for="caCalSearchInput">Search appointments</label>
+                        <label class="ca-cal-search-label" for="caCalSearchInput"><?= htmlspecialchars(client_t('appointments.search_label')) ?></label>
                         <div class="ca-cal-search-field">
                             <span class="ca-cal-search-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
@@ -1348,7 +1350,7 @@ ob_start(); ?>
                                 </svg>
                             </span>
                             <input type="search" id="caCalSearchInput" class="ca-cal-search-input"
-                                   placeholder="Search by matter, lawyer, date, status…" autocomplete="off">
+                                   placeholder="<?= htmlspecialchars(client_t('appointments.search_placeholder_long')) ?>" autocomplete="off">
                         </div>
                         <div class="ca-cal-search-results" id="caCalSearchResults" hidden></div>
                     </div>
@@ -1358,8 +1360,8 @@ ob_start(); ?>
                         <div id="clientAppointmentsCalendar"></div>
                         <aside class="dashboard-upcoming-panel">
                             <div class="dashboard-upcoming-panel__title">
-                                <span>Upcoming</span>
-                                <a href="#caAppointmentsTable" class="text-xs font-weight-bold" style="color:var(--ca-primary)">View list</a>
+                                <span><?= htmlspecialchars(client_t('appointments.upcoming')) ?></span>
+                                <a href="#caAppointmentsTable" class="text-xs font-weight-bold" style="color:var(--ca-primary)"><?= htmlspecialchars(client_t('appointments.view_list')) ?></a>
                             </div>
                             <div class="dashboard-upcoming-list" id="clientUpcomingAppointmentsList">
                                 <?= $upcomingAppointmentsCalendarHtml ?>
@@ -1376,21 +1378,21 @@ ob_start(); ?>
                 <div class="ca-panel" id="caAppointmentsTable">
                     <div class="ca-panel-hdr">
                         <div>
-                            <h5>Your appointments</h5>
-                            <p>Newest activity first.</p>
+                            <h5><?= htmlspecialchars(client_t('appointments.list_title')) ?></h5>
+                            <p><?= htmlspecialchars(client_t('appointments.list_sub_newest')) ?></p>
                         </div>
-                        <span class="ca-count" id="caCount"><?= $apptTotal ?> total</span>
+                        <span class="ca-count" id="caCount"><?= $apptTotal ?> <?= htmlspecialchars(client_t('payments.word_total')) ?></span>
                     </div>
                     <div class="ca-appt-table-wrap" id="clientAppointmentsTableWrap" data-appt-per-page="10">
                     <div class="table-responsive">
                         <table class="ca-table">
                             <thead>
                                 <tr>
-                                    <th>Appointment</th>
-                                    <th>Lawyer</th>
-                                    <th style="text-align:center">Status</th>
-                                    <th>Notes</th>
-                                    <th style="text-align:right">Actions</th>
+                                    <th><?= htmlspecialchars(client_t('appointments.col_appointment')) ?></th>
+                                    <th><?= htmlspecialchars(client_t('appointments.col_lawyer')) ?></th>
+                                    <th style="text-align:center"><?= htmlspecialchars(client_t('appointments.col_status')) ?></th>
+                                    <th><?= htmlspecialchars(client_t('appointments.col_notes')) ?></th>
+                                    <th style="text-align:right"><?= htmlspecialchars(client_t('appointments.col_actions')) ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1398,7 +1400,7 @@ ob_start(); ?>
                             </tbody>
                         </table>
                     </div>
-                    <nav class="ca-appt-pagination" id="clientAppointmentsPagination" aria-label="Appointments pagination" hidden>
+                    <nav class="ca-appt-pagination" id="clientAppointmentsPagination" aria-label="<?= htmlspecialchars(client_t('appointments.pagination_aria')) ?>" hidden>
                         <p class="ca-appt-pagination__info" data-appt-range></p>
                         <div class="ca-appt-pagination__controls" data-appt-pages></div>
                     </nav>
@@ -1408,57 +1410,57 @@ ob_start(); ?>
                 <!-- Booking panel -->
                 <div class="ca-book-card" style="position:sticky;top:1rem">
                     <div class="ca-book-hdr">
-                        <h5>Book appointment</h5>
-                        <p>Pick counsel, matter, date and time.</p>
+                        <h5><?= htmlspecialchars(client_t('appointments.book_title')) ?></h5>
+                        <p><?= htmlspecialchars(client_t('appointments.book_sub')) ?></p>
                     </div>
                     <div class="ca-book-body">
                         <form method="POST" action="" onsubmit="return validateFormWrapper(event)">
                             <div class="ca-fld">
-                                <label>Lawyer</label>
+                                <label><?= htmlspecialchars(client_t('appointments.lawyer')) ?></label>
                                 <select name="lawyer_id" id="lawyer_id" required onchange="onLawyerChange()">
                                     <?= $lawyerOptions ?>
                                 </select>
                             </div>
                             <div class="ca-fld">
-                                <label>Case</label>
+                                <label><?= htmlspecialchars(client_t('appointments.case')) ?></label>
                                 <select name="case_id" id="case_id" required>
                                     <?= $caseOptions ?>
                                 </select>
                             </div>
                             <div class="ca-fld">
-                                <label>Date</label>
+                                <label><?= htmlspecialchars(client_t('appointments.date')) ?></label>
                                 <div class="ca-date-picker-wrap">
                                     <input type="text" name="appointment_date" id="appointment_date"
-                                           placeholder="Select date" autocomplete="off" readonly required>
+                                           placeholder="<?= htmlspecialchars(client_t('appointments.select_date')) ?>" autocomplete="off" readonly required>
                                 </div>
-                                <div id="caDateAlert" class="ca-avail-alert info">Select a lawyer, then choose an available date.</div>
+                                <div id="caDateAlert" class="ca-avail-alert info"><?= htmlspecialchars(client_t('appointments.date_hint')) ?></div>
                             </div>
                             <div class="ca-fld">
-                                <label>Time</label>
+                                <label><?= htmlspecialchars(client_t('appointments.time')) ?></label>
                                 <div class="ca-time-dd" id="caTimeDd">
                                     <button type="button" class="ca-time-dd-trigger" id="caTimeTrigger" disabled
                                             aria-haspopup="listbox" aria-expanded="false" aria-labelledby="caTimeLabel">
-                                        <span id="caTimeLabel">Select a time</span>
+                                        <span id="caTimeLabel"><?= htmlspecialchars(client_t('appointments.select_time')) ?></span>
                                         <svg class="ca-time-dd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                             <polyline points="6 9 12 15 18 9"></polyline>
                                         </svg>
                                     </button>
-                                    <ul class="ca-time-dd-menu" id="caTimeMenu" role="listbox" aria-label="Available times"></ul>
+                                    <ul class="ca-time-dd-menu" id="caTimeMenu" role="listbox" aria-label="<?= htmlspecialchars(client_t('appointments.aria_available_times')) ?>"></ul>
                                     <input type="hidden" name="appointment_time" id="appointment_time" value="">
                                 </div>
                                 <div class="ca-avail-hint" style="display:flex;align-items:center;gap:.4rem">
                                     <span class="ca-avail-hint-dot" aria-hidden="true"></span>
-                                    Green times are available to book.
+                                    <?= htmlspecialchars(client_t('appointments.avail_hint')) ?>
                                 </div>
                             </div>
                             <div class="ca-fld">
-                                <label>Notes
-                                    <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span>
+                                <label><?= htmlspecialchars(client_t('appointments.col_notes')) ?>
+                                    <span style="font-weight:400;text-transform:none;letter-spacing:0"><?= htmlspecialchars(client_t('appointments.notes_optional')) ?></span>
                                 </label>
-                                <textarea name="notes" placeholder="Topics you want to cover…"></textarea>
+                                <textarea name="notes" placeholder="<?= htmlspecialchars(client_t('appointments.notes_placeholder')) ?>"></textarea>
                             </div>
                             <button type="submit" id="caBookBtn" class="ca-book-btn" disabled>
-                                Request appointment
+                                <?= htmlspecialchars(client_t('appointments.request_btn')) ?>
                             </button>
                         </form>
                     </div>
@@ -1493,6 +1495,11 @@ ob_start(); ?>
     var lawyerSlotsCache         = {};
     var selectedTime             = null;
     var APPOINTMENT_DURATION_MINUTES = 60;
+
+    function i18n(key, fallback) {
+        var dict = window.clientPortalI18n || {};
+        return dict[key] || fallback || key;
+    }
 
     function getDurationMinutes() {
         return APPOINTMENT_DURATION_MINUTES;
@@ -1578,7 +1585,7 @@ ob_start(); ?>
         .then(function(response) {
             return response.json().then(function(body) {
                 if (!response.ok || !body.ok) {
-                    throw new Error((body && body.error) ? body.error : 'Could not load availability');
+                    throw new Error((body && body.error) ? body.error : i18n('load_availability_error', 'Could not load availability'));
                 }
                 return body;
             });
@@ -1727,7 +1734,7 @@ ob_start(); ?>
         var label = document.getElementById('caTimeLabel');
         trigger.disabled = true;
         trigger.classList.remove('has-value');
-        label.textContent = 'Select a time';
+        label.textContent = i18n('select_time', 'Select a time');
         closeTimeMenu();
         document.querySelectorAll('.ca-time-dd-opt').forEach(function(opt) {
             opt.className = 'ca-time-dd-opt';
@@ -1858,7 +1865,7 @@ ob_start(); ?>
         var trigger = document.getElementById('caTimeTrigger');
         if (!lawyerId) return;
         if (!dateVal) {
-            showDateAlert('info', 'Select a date to see available times.');
+            showDateAlert('info', i18n('select_date_times', 'Select a date to see available times.'));
             trigger.disabled = true;
             return;
         }
@@ -1869,12 +1876,12 @@ ob_start(); ?>
                 if (fp) fp.clear();
             }
             trigger.disabled = true;
-            showDateAlert('warning', 'This date is not available. Please choose another date.');
+            showDateAlert('warning', i18n('date_unavailable', 'This date is not available. Please choose another date.'));
             return;
         }
 
         trigger.disabled = true;
-        showDateAlert('info', 'Loading available times…');
+        showDateAlert('info', i18n('loading_times', 'Loading available times…'));
 
         fetchLawyerSlotsForDate(lawyerId, dateVal)
             .then(function(allSlots) {
@@ -1882,7 +1889,7 @@ ob_start(); ?>
             })
             .catch(function(err) {
                 trigger.disabled = true;
-                showDateAlert('warning', err.message || 'Could not load available times.');
+                showDateAlert('warning', err.message || i18n('load_times_error', 'Could not load available times.'));
             });
     }
 
@@ -1894,27 +1901,27 @@ ob_start(); ?>
 
         if (hasWorkingHoursConfig(lawyerId) && (!dayHours || !dayHours.enabled)) {
             trigger.disabled = true;
-            showDateAlert('warning', 'This lawyer does not work on the selected day.');
+            showDateAlert('warning', i18n('lawyer_not_working', 'This lawyer does not work on the selected day.'));
             return;
         }
 
         if (!hasWorkingHoursConfig(lawyerId) && !published
             && !LegalproAppointmentSlots.isDefaultBusinessDayEnabled(getDayOfWeekFromDate(dateVal))) {
             trigger.disabled = true;
-            showDateAlert('warning', 'This lawyer is available on weekdays between 9:00 AM and 5:00 PM.');
+            showDateAlert('warning', i18n('lawyer_weekday_hours', 'This lawyer is available on weekdays between 9:00 AM and 5:00 PM.'));
             return;
         }
 
         if (published && !availableSlots.length && !hasWorkingHoursConfig(lawyerId)) {
             trigger.disabled = true;
-            showDateAlert('warning', 'No available times on this date. Choose another date.');
+            showDateAlert('warning', i18n('no_times_date', 'No available times on this date. Choose another date.'));
             return;
         }
 
         if (hasWorkingHoursConfig(lawyerId)) {
-            showDateAlert('info', 'Times are limited to the lawyer\'s working hours.');
+            showDateAlert('info', i18n('times_limited_hours', 'Times are limited to the lawyer\'s working hours.'));
         } else if (!published) {
-            showDateAlert('info', 'Standard business hours are 9:00 AM – 5:00 PM on weekdays.');
+            showDateAlert('info', i18n('standard_hours', 'Standard business hours are 9:00 AM – 5:00 PM on weekdays.'));
         } else {
             hideDateAlert();
         }
@@ -1934,7 +1941,7 @@ ob_start(); ?>
         });
         trigger.disabled = !anyAvail;
         if (!anyAvail) {
-            showDateAlert('warning', 'No matching times available. Choose another date.');
+            showDateAlert('warning', i18n('no_matching_times', 'No matching times available. Choose another date.'));
         }
     }
 
@@ -1943,26 +1950,26 @@ ob_start(); ?>
         var caseId   = document.getElementById('case_id').value;
         var dateVal  = document.getElementById('appointment_date').value;
         var timeVal  = document.getElementById('appointment_time').value;
-        if (!lawyerId) { alert('Please select a lawyer.'); return false; }
-        if (!caseId)   { alert('Please select a case.');   return false; }
-        if (!dateVal)  { alert('Please select a date.');   return false; }
+        if (!lawyerId) { alert(i18n('select_lawyer', 'Please select a lawyer.')); return false; }
+        if (!caseId)   { alert(i18n('select_case', 'Please select a case.'));   return false; }
+        if (!dateVal)  { alert(i18n('select_date', 'Please select a date.'));   return false; }
         if (isDateUnavailable(dateVal)) {
-            alert('The selected date is not available. Please choose another date.');
+            alert(i18n('date_unavailable', 'This date is not available. Please choose another date.'));
             return false;
         }
-        if (!timeVal)  { alert('Please select a time slot.'); return false; }
+        if (!timeVal)  { alert(i18n('select_time_slot', 'Please select a time slot.')); return false; }
         return fetchLawyerSlotsForDate(lawyerId, dateVal)
             .then(function(allSlots) {
                 var published = hasSchedule(lawyerId);
                 var availableSlots = allSlots.filter(function(s) { return s.type === 'available'; });
                 if (!isTimeBookable(lawyerId, dateVal, timeVal, allSlots, availableSlots, published)) {
-                    alert('Selected time is not available. Please choose another slot.');
+                    alert(i18n('time_unavailable', 'Selected time is not available. Please choose another slot.'));
                     return false;
                 }
                 return true;
             })
             .catch(function() {
-                alert('Could not verify availability. Please try again.');
+                alert(i18n('verify_availability_error', 'Could not verify availability. Please try again.'));
                 return false;
             });
     }
@@ -1990,7 +1997,7 @@ ob_start(); ?>
         })
         .then(function(r) {
             return r.json().then(function(b) {
-                if (!r.ok) throw new Error(b.error || 'Could not load appointment');
+                if (!r.ok) throw new Error(b.error || i18n('load_appointment_error', 'Could not load appointment'));
                 return b;
             });
         })
@@ -2000,7 +2007,7 @@ ob_start(); ?>
             }
         })
         .catch(function(err) {
-            window.alert(err.message || 'Could not load appointment');
+            window.alert(err.message || i18n('load_appointment_error', 'Could not load appointment'));
         });
     }
 
@@ -2085,10 +2092,10 @@ ob_start(); ?>
                 return;
             }
             pagesEl.innerHTML = '';
-            pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
+            pagesEl.appendChild(pageButton(i18n('prev_short', '‹ Prev'), currentPage - 1, {
                 nav: true,
                 disabled: currentPage === 1,
-                ariaLabel: 'Previous page'
+                ariaLabel: i18n('prev_page', 'Previous page')
             }));
             visiblePages().forEach(function(page) {
                 if (page === 'gap') {
@@ -2097,13 +2104,13 @@ ob_start(); ?>
                 }
                 pagesEl.appendChild(pageButton(String(page), page, {
                     active: page === currentPage,
-                    ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
+                    ariaLabel: i18n('page', 'Page') + ' ' + page + (page === currentPage ? ', ' + i18n('current', 'current') : '')
                 }));
             });
-            pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
+            pagesEl.appendChild(pageButton(i18n('next_short', 'Next ›'), currentPage + 1, {
                 nav: true,
                 disabled: currentPage === totalPages,
-                ariaLabel: 'Next page'
+                ariaLabel: i18n('next_page', 'Next page')
             }));
         }
 
@@ -2117,7 +2124,8 @@ ob_start(); ?>
             var start = (currentPage - 1) * perPage + 1;
             var end = Math.min(currentPage * perPage, rows.length);
             if (rangeEl) {
-                rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
+                rangeEl.textContent = i18n('showing_range', 'Showing :start–:end of :total')
+                    .replace(':start', start).replace(':end', end).replace(':total', rows.length);
             }
             renderControls();
         }
@@ -2169,7 +2177,7 @@ ob_start(); ?>
             var props = arg.event.extendedProps || {};
             var statusKey = appointmentStatusKey(props.status);
             var timeText = arg.timeText || '';
-            var title = arg.event.title || 'Appointment';
+            var title = arg.event.title || i18n('appointment_fallback', 'Appointment');
             if (title.length > 22) {
                 title = title.slice(0, 19) + '...';
             }
@@ -2264,7 +2272,7 @@ ob_start(); ?>
                     return;
                 }
                 if (!matches.length) {
-                    resultsEl.innerHTML = '<div class="ca-cal-search-empty">No appointments match your search.</div>';
+                    resultsEl.innerHTML = '<div class="ca-cal-search-empty">' + i18n('no_appt_search_match', 'No appointments match your search.') + '</div>';
                     resultsEl.hidden = false;
                     return;
                 }
@@ -2273,14 +2281,14 @@ ob_start(); ?>
                 matches.slice(0, 12).forEach(function(ev) {
                     var props = ev.extendedProps || {};
                     var statusKey = appointmentStatusKey(props.status);
-                    var title = ev.title || 'Appointment';
+                    var title = ev.title || i18n('appointment_fallback', 'Appointment');
                     var when = props.startsLabel || '';
                     var lawyer = props.lawyer || 'TBD';
                     html += '<button type="button" class="ca-cal-search-item" data-appointment-id="' + escapeHtml(props.appointmentId || ev.id) + '" data-start="' + escapeHtml(ev.start || '') + '">' +
                         '<span class="ca-cal-search-item__dot ca-cal-search-item__dot--' + escapeHtml(statusKey) + '" aria-hidden="true"></span>' +
                         '<span class="ca-cal-search-item__body">' +
                             '<p class="ca-cal-search-item__title">' + escapeHtml(title) + '</p>' +
-                            '<p class="ca-cal-search-item__sub">' + escapeHtml(when) + ' · ' + escapeHtml(lawyer) + ' · ' + escapeHtml(props.statusLabel || props.status || 'Pending') + '</p>' +
+                            '<p class="ca-cal-search-item__sub">' + escapeHtml(when) + ' · ' + escapeHtml(lawyer) + ' · ' + escapeHtml(props.statusLabel || props.status || i18n('status_pending', 'Pending')) + '</p>' +
                         '</span>' +
                     '</button>';
                 });

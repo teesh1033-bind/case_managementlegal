@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/finance-document-templates.php';
+require_once __DIR__ . '/../lib/finance-document-i18n.php';
 
 $invoiceId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($invoiceId <= 0) {
@@ -16,10 +17,17 @@ try {
             CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
             cl.email AS client_email,
             cl.phone AS client_phone,
-            c.title AS case_title
+            c.title AS case_title,
+            COALESCE(p.total_paid, 0) AS total_paid
         FROM invoices inv
         LEFT JOIN clients cl ON cl.id = inv.client_id
         LEFT JOIN cases c ON c.id = inv.case_id
+        LEFT JOIN (
+            SELECT invoice_id, SUM(amount) AS total_paid
+            FROM payments
+            WHERE invoice_id IS NOT NULL
+            GROUP BY invoice_id
+        ) p ON p.invoice_id = inv.id
         WHERE inv.id = ?
     ");
     $stmt->execute([$invoiceId]);
@@ -40,12 +48,15 @@ legalpro_require_financial_document_access(
     isset($invoice['client_id']) ? (int) $invoice['client_id'] : null
 );
 
+$clientId = isset($invoice['client_id']) ? (int) $invoice['client_id'] : 0;
+legalpro_finance_doc_begin($clientId > 0 ? $clientId : null);
+
 $invoiceNumber = $invoice['invoice_number'] ?: ('INV-' . str_pad((string) $invoiceId, 4, '0', STR_PAD_LEFT));
 $bodyHtml = legalpro_render_invoice_document_html($invoice, $invoiceId);
 $fileName = 'invoice-' . legalpro_finance_safe_filename($invoiceNumber) . '.pdf';
 
 legalpro_deliver_finance_document(
-    $invoiceNumber . ' · Invoice',
+    fin_doc_t('title_invoice', ['number' => $invoiceNumber]),
     $bodyHtml,
     $fileName,
     'invoice-download.php'

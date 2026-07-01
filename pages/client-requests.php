@@ -2,6 +2,8 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/client-self-service.php';
+require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/client-portal-i18n.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
 
 if (!isset($_SESSION['client_id'])) {
@@ -31,8 +33,8 @@ try {
 }
 
 $clientPageNavbar = legalpro_render_client_page_navbar(
-    'My requests',
-    'My requests',
+    client_t('requests.navbar'),
+    client_t('requests.navbar'),
     '',
     [
         'client_name' => $clientName,
@@ -40,9 +42,12 @@ $clientPageNavbar = legalpro_render_client_page_navbar(
     ]
 );
 
+$assistantLink = '<a href="chatbot.php">' . htmlspecialchars(client_t('requests.open_assistant')) . '</a>';
 $rowsHtml = '';
 if (!$requests) {
-    $rowsHtml = '<tr><td colspan="5" class="text-center text-muted py-4">No requests yet. Use the <a href="chatbot.php">AI assistant</a> to request a callback or ask a billing question.</td></tr>';
+    $rowsHtml = '<tr><td colspan="5" class="text-center text-muted py-4">'
+        . client_t('requests.empty', ['assistant' => $assistantLink])
+        . '</td></tr>';
 } else {
     foreach ($requests as $r) {
         $rowsHtml .= '<tr class="cr-request-row">'
@@ -57,11 +62,11 @@ if (!$requests) {
 
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<title>My requests · Client portal</title>
+	<title>{PAGE_TITLE} · LegalPro</title>
 	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 	<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
@@ -77,10 +82,10 @@ $html = <<<'HTML'
 			<div class="card">
 				<div class="card-header pb-0 d-flex justify-content-between align-items-center">
 					<div>
-						<h6 class="mb-0">My requests</h6>
-						<p class="text-sm text-muted mb-0">Callbacks, billing questions, and evidence requests</p>
+						<h6 class="mb-0">{LBL_TITLE}</h6>
+						<p class="text-sm text-muted mb-0">{LBL_SUBTITLE}</p>
 					</div>
-					<a href="chatbot.php" class="btn btn-sm btn-primary mb-0">Ask AI assistant</a>
+					<a href="chatbot.php" class="btn btn-sm btn-primary mb-0">{LBL_ASK_AI}</a>
 				</div>
 				<div class="card-body px-0 pt-0 pb-2">
 					<div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cr-request-row" data-portal-per-page="10" data-portal-show-page-global="crRequestShowPage">
@@ -88,17 +93,17 @@ $html = <<<'HTML'
 						<table class="table align-items-center mb-0">
 							<thead>
 								<tr>
-									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Type</th>
-									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Subject</th>
-									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case</th>
-									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Submitted</th>
+									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_TYPE}</th>
+									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_SUBJECT}</th>
+									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_CASE}</th>
+									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_STATUS}</th>
+									<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_DATE}</th>
 								</tr>
 							</thead>
 							<tbody>{ROWS}</tbody>
 						</table>
 					</div>
-					<nav class="cp-portal-pagination" data-portal-pagination aria-label="Requests pagination" hidden>
+					<nav class="cp-portal-pagination" data-portal-pagination aria-label="{PAGINATION_ARIA}" hidden>
 						<p class="cp-portal-pagination__info" data-portal-range></p>
 						<div class="cp-portal-pagination__controls" data-portal-pages></div>
 					</nav>
@@ -114,6 +119,18 @@ $html = <<<'HTML'
 </body>
 </html>
 HTML;
+
+$html = str_replace('{HTML_LANG}', client_portal_html_lang(), $html);
+$html = str_replace('{PAGE_TITLE}', htmlspecialchars(client_t('requests.page_title')), $html);
+$html = str_replace('{LBL_TITLE}', htmlspecialchars(client_t('requests.title')), $html);
+$html = str_replace('{LBL_SUBTITLE}', htmlspecialchars(client_t('requests.subtitle')), $html);
+$html = str_replace('{LBL_ASK_AI}', htmlspecialchars(client_t('requests.ask_ai')), $html);
+$html = str_replace('{COL_TYPE}', htmlspecialchars(client_t('requests.col_type')), $html);
+$html = str_replace('{COL_SUBJECT}', htmlspecialchars(client_t('requests.col_subject')), $html);
+$html = str_replace('{COL_CASE}', htmlspecialchars(client_t('requests.col_case')), $html);
+$html = str_replace('{COL_STATUS}', htmlspecialchars(client_t('requests.col_status')), $html);
+$html = str_replace('{COL_DATE}', htmlspecialchars(client_t('requests.col_date')), $html);
+$html = str_replace('{PAGINATION_ARIA}', htmlspecialchars(client_t('requests.pagination_aria')), $html);
 
 ob_start();
 include __DIR__ . '/../inc/client-portal-head.php';

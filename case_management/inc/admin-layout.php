@@ -152,7 +152,8 @@ function legalpro_navbar_utilities_mount(string $utilitiesHtml): string
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     var mount = document.getElementById("legalproNavbarUtilitiesMount");
-    var nav = document.querySelector("main .navbar-main .container-fluid");
+    var nav = document.querySelector("main .navbar-main .container-fluid")
+        || document.querySelector(".navbar-main .container-fluid");
     if (!mount || !nav) {
         return;
     }
@@ -215,9 +216,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    if (!nav.querySelector(".legalpro-navbar-actions")) {
-        nav.appendChild(actions);
+    var existingActions = nav.querySelector(".legalpro-navbar-actions");
+    if (existingActions) {
+        existingActions.remove();
     }
+    nav.appendChild(actions);
     mount.remove();
 
     var userRoot = nav.querySelector(".legalpro-header-user");
@@ -337,8 +340,36 @@ function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
         '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
         false,
         $unreadCount,
-        true
+        true,
+        legalpro_render_admin_theme_toggle()
     );
+}
+
+function legalpro_render_admin_theme_toggle(): string
+{
+    if (!isset($_SESSION['admin_id'])) {
+        return '';
+    }
+
+    if (!function_exists('getPortalTheme')) {
+        require_once __DIR__ . '/../lib/portal-theme.php';
+    }
+
+    $currentMode = (string) (getPortalTheme()['mode'] ?? 'light');
+    $isDark = $currentMode === 'dark';
+    $iconName = $isDark ? 'sun' : 'moon';
+    $switchLight = 'Switch to light mode';
+    $switchDark = 'Switch to dark mode';
+    $label = $isDark ? $switchLight : $switchDark;
+
+    return '<button type="button" class="legalpro-header-theme-toggle" id="adminThemeToggle"'
+        . ' data-theme-mode="' . htmlspecialchars($currentMode, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-label-light="' . htmlspecialchars($switchLight, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-label-dark="' . htmlspecialchars($switchDark, ENT_QUOTES, 'UTF-8') . '"'
+        . ' title="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '"'
+        . ' aria-label="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '">'
+        . legalpro_icon($iconName)
+        . '</button>';
 }
 
 function legalpro_render_admin_notification_dropdown(): string
@@ -565,8 +596,8 @@ function legalpro_case_priority_badge(string $priority): string
         $class = $key === 'urgent' ? 'lp-pill--priority-urgent' : 'lp-pill--priority-high';
     } else {
         $class = 'lp-pill--priority-medium';
-        if ($key === 'normal') {
-            $label = 'Medium';
+        if (!in_array($key, ['normal', 'high', 'urgent'], true)) {
+            $label = 'Normal';
         }
     }
 
@@ -577,9 +608,11 @@ function legalpro_case_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
-        'open' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'open' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'active' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
         'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
-        'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
+        'in_progress' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'under_review' => ['label' => 'Under Review', 'class' => 'lp-pill--status-waiting'],
         'waiting_for_client' => ['label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
         'on_hold' => ['label' => 'On Hold', 'class' => 'lp-pill--status-waiting'],
         'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
@@ -617,7 +650,10 @@ function legalpro_task_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
+        'active' => ['label' => 'Active', 'class' => 'lp-pill--status-progress'],
         'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'under_review' => ['label' => 'Under review', 'class' => 'lp-pill--status-progress'],
+        'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
         'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
         'completed' => ['label' => 'Completed', 'class' => 'lp-pill--status-active'],
         'cancelled' => ['label' => 'Cancelled', 'class' => 'lp-pill--status-declined'],
@@ -636,10 +672,11 @@ function legalpro_task_priority_badge(string $priority): string
 {
     $key = strtolower(trim($priority));
     $map = [
-        'low' => ['label' => 'Low', 'class' => 'lp-pill--status-closed'],
-        'medium' => ['label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
+        'normal' => ['label' => 'Normal', 'class' => 'lp-pill--priority-medium'],
         'high' => ['label' => 'High', 'class' => 'lp-pill--priority-high'],
         'urgent' => ['label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
+        'low' => ['label' => 'Low', 'class' => 'lp-pill--status-closed'],
+        'medium' => ['label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
     ];
 
     if (!isset($map[$key])) {
@@ -804,44 +841,50 @@ function client_court_date_status_badge(string $status): string
 {
     $key = strtolower(trim($status));
     $map = [
-        'scheduled' => ['label' => 'Scheduled', 'pill' => 'ca-status-pill--scheduled'],
-        'completed' => ['label' => 'Completed', 'pill' => 'ca-status-pill--done'],
-        'cancelled' => ['label' => 'Cancelled', 'pill' => 'ca-status-pill--declined'],
-        'postponed' => ['label' => 'Postponed', 'pill' => 'ca-status-pill--pending'],
+        'scheduled' => ['label_key' => 'badge.court_scheduled', 'pill' => 'ca-status-pill--scheduled'],
+        'completed' => ['label_key' => 'badge.court_completed', 'pill' => 'ca-status-pill--done'],
+        'cancelled' => ['label_key' => 'badge.court_cancelled', 'pill' => 'ca-status-pill--declined'],
+        'postponed' => ['label_key' => 'badge.court_postponed', 'pill' => 'ca-status-pill--pending'],
     ];
 
     if (!isset($map[$key])) {
-        $label = ucwords(str_replace('_', ' ', $key));
+        $label = function_exists('client_status_label') ? client_status_label($status) : ucwords(str_replace('_', ' ', $key));
 
         return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $label = function_exists('client_t') ? client_t($map[$key]['label_key']) : $map[$key]['label_key'];
+
+    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($label) . '</span>';
 }
 
 function client_case_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
-        'open' => ['label' => 'Active', 'pill' => 'ca-status-pill--scheduled'],
-        'in_progress' => ['label' => 'In Progress', 'pill' => 'ca-status-pill--scheduled'],
-        'closed' => ['label' => 'Closed', 'pill' => 'ca-status-pill--done'],
-        'pending' => ['label' => 'Pending', 'pill' => 'ca-status-pill--pending'],
+        'open' => ['label_key' => 'status.active', 'pill' => 'ca-status-pill--scheduled'],
+        'in_progress' => ['label_key' => 'status.in_progress', 'pill' => 'ca-status-pill--scheduled'],
+        'closed' => ['label_key' => 'status.closed', 'pill' => 'ca-status-pill--done'],
+        'pending' => ['label_key' => 'status.pending', 'pill' => 'ca-status-pill--pending'],
     ];
 
     if (!isset($map[$key])) {
-        $label = ucwords(str_replace('_', ' ', $key));
+        $label = function_exists('client_status_label') ? client_status_label($status) : ucwords(str_replace('_', ' ', $key));
 
         return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $label = function_exists('client_t') ? client_t($map[$key]['label_key']) : $map[$key]['label_key'];
+
+    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($label) . '</span>';
 }
 
 function client_case_priority_badge(string $priority): string
 {
     $key = strtolower(trim($priority));
-    $label = $priority !== '' ? $priority : 'Normal';
+    $label = function_exists('client_priority_label')
+        ? client_priority_label($priority)
+        : ($priority !== '' ? $priority : 'Normal');
 
     if ($key === 'high' || $key === 'urgent') {
         $pill = 'ca-status-pill--declined';
@@ -849,9 +892,6 @@ function client_case_priority_badge(string $priority): string
         $pill = 'ca-status-pill--muted';
     } else {
         $pill = 'ca-status-pill--pending';
-        if ($key === 'normal') {
-            $label = 'Normal';
-        }
     }
 
     return '<span class="ca-status-pill ' . $pill . '">' . htmlspecialchars($label) . '</span>';
@@ -895,23 +935,33 @@ function client_appointment_status_badge(array $appointment): string
     $now = time();
 
     if ($status === 'pending') {
-        return '<span class="ca-status-pill ca-status-pill--pending">Awaiting confirmation</span>';
+        $label = function_exists('client_t') ? client_t('badge.appt_awaiting') : 'Awaiting confirmation';
+
+        return '<span class="ca-status-pill ca-status-pill--pending">' . htmlspecialchars($label) . '</span>';
     }
     if ($status === 'rejected') {
-        return '<span class="ca-status-pill ca-status-pill--declined">Declined</span>';
+        $label = function_exists('client_t') ? client_t('badge.appt_declined') : 'Declined';
+
+        return '<span class="ca-status-pill ca-status-pill--declined">' . htmlspecialchars($label) . '</span>';
     }
     if ($status === 'accepted') {
         if ($startsAt > 0 && $startsAt < $now) {
-            return '<span class="ca-status-pill ca-status-pill--done">Completed</span>';
+            $label = function_exists('client_t') ? client_t('badge.appt_completed') : 'Completed';
+
+            return '<span class="ca-status-pill ca-status-pill--done">' . htmlspecialchars($label) . '</span>';
         }
         if ($startsAt > 0 && date('Y-m-d', $startsAt) === date('Y-m-d')) {
-            return '<span class="ca-status-pill ca-status-pill--scheduled">Today</span>';
+            $label = function_exists('client_t') ? client_t('badge.appt_today') : 'Today';
+
+            return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
         }
 
-        return '<span class="ca-status-pill ca-status-pill--scheduled">Confirmed</span>';
+        $label = function_exists('client_t') ? client_t('badge.appt_confirmed') : 'Confirmed';
+
+        return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
     }
 
-    $label = ucwords(str_replace('_', ' ', $status));
+    $label = function_exists('client_status_label') ? client_status_label($status) : ucwords(str_replace('_', ' ', $status));
 
     return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
 }
@@ -934,6 +984,27 @@ function legalpro_render_admin_list_search(string $inputId, string $placeholder 
 /**
  * Client-side filter for rows with class + data-search (matches cases table behavior).
  */
+function legalpro_render_admin_table_pagination_nav(string $ariaLabel = 'Table pagination'): string
+{
+    return '<nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="'
+        . htmlspecialchars($ariaLabel, ENT_QUOTES, 'UTF-8') . '" hidden>'
+        . '<p class="lp-admin-pagination__info" data-lp-range></p>'
+        . '<div class="lp-admin-pagination__controls" data-lp-pages></div>'
+        . '</nav>';
+}
+
+function legalpro_admin_table_pagination_open(int $perPage = 10, string $rowSelector = '.legalpro-admin-list-row'): string
+{
+    return '<div class="lp-admin-table-paginate" data-lp-admin-paginate'
+        . ' data-lp-per-page="' . (int) $perPage . '"'
+        . ' data-lp-row="' . htmlspecialchars($rowSelector, ENT_QUOTES, 'UTF-8') . '">';
+}
+
+function legalpro_admin_table_pagination_close(string $ariaLabel = 'Table pagination'): string
+{
+    return legalpro_render_admin_table_pagination_nav($ariaLabel) . '</div>';
+}
+
 function legalpro_admin_list_search_script(
     string $inputId,
     string $tbodyId,
@@ -955,10 +1026,14 @@ function legalpro_admin_list_search_script(
         . 'var visible=0;'
         . 'rows.forEach(function(row){'
         . 'var match=!q||row.getAttribute("data-search").indexOf(q)!==-1;'
-        . 'row.style.display=match?"":"none";'
+        . 'row.classList.toggle("lp-admin-row-filtered",!match);'
         . 'if(match){visible++;}'
         . '});'
         . 'if(emptyNote){emptyNote.classList.toggle("d-none",visible>0||rows.length===0);}'
+        . 'var paginateWrap=tbody.closest("[data-lp-admin-paginate]");'
+        . 'if(paginateWrap&&window.LegalproAdminTablePagination){'
+        . 'window.LegalproAdminTablePagination.refresh(paginateWrap);'
+        . '}'
         . '}'
         . 'if(searchInput){searchInput.addEventListener("input",applyAdminListSearch);}'
         . '})();</script>';

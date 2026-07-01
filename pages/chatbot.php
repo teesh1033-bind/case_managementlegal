@@ -4,26 +4,34 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/chatbot_assistant.php';
 require_once __DIR__ . '/../lib/chatbot_ai.php';
 
-$aiModeLabel = ChatbotAI::openAiConfigured() ? 'AI powered' : 'Smart assistant';
-$aiHeroSub = ChatbotAI::openAiConfigured()
-    ? 'AI-powered assistant with live access to your account — I answer naturally, analyze your cases and billing, navigate the portal, and book appointments when you ask.'
-    : 'Smart assistant powered by your live account data. I analyze your cases, billing, and court dates, redirect you anywhere in the portal, and update your profile or book appointments when you ask. Add an OpenAI API key in Settings for full AI responses.';
-
 $context = ChatbotAssistant::resolveContextFromSession();
 if ($context['role'] === 'guest') {
     header('Location: login.php');
     exit;
 }
 
+$role = $context['role'];
+if ($role === 'client') {
+    require_once __DIR__ . '/../lib/client-locale.php';
+}
+
 $companyBranding = getCompanyBranding();
 $assistantName = $companyBranding['name'];
-$role = $context['role'];
 $displayName = htmlspecialchars($context['display_name'], ENT_QUOTES, 'UTF-8');
+
+$aiModeLabel = ChatbotAI::openAiConfigured()
+    ? ($role === 'client' ? client_t('chatbot.ai_powered') : 'AI powered')
+    : ($role === 'client' ? client_t('chatbot.smart_assistant') : 'Smart assistant');
+$aiHeroSub = ChatbotAI::openAiConfigured()
+    ? ($role === 'client' ? client_t('chatbot.hero_sub_ai') : 'AI-powered assistant with live access to your account — I answer naturally, analyze your cases and billing, navigate the portal, and book appointments when you ask.')
+    : ($role === 'client'
+        ? client_t('chatbot.hero_sub_smart')
+        : 'Smart assistant powered by your live account data. I analyze your cases, billing, and court dates, redirect you anywhere in the portal, and update your profile or book appointments when you ask. Add an OpenAI API key in Settings for full AI responses.');
 
 $welcomeExamples = [
     'admin' => 'Try: "How many active cases?" · "Upcoming appointments" · "Case C-0001" · "Pending invoices"',
     'lawyer' => 'Try: "Show my active cases" · "My appointments" · "My tasks" · "Case C-0001"',
-    'client' => 'Try: "Update the dispute case" · "Take me to payments" · "How many cases are closed?"',
+    'client' => client_t('chatbot.welcome_hint'),
 ];
 $welcomeText = $welcomeExamples[$role] ?? $welcomeExamples['admin'];
 
@@ -44,13 +52,13 @@ if ($role === 'admin') {
         <a href="lawyer-cases.php" class="btn btn-outline-dark btn-sm">Open cases</a>';
 } else {
     $shortcutsHtml = '
-        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Give me a full summary of my cases and what I should focus on this week">Weekly summary</button>
-        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="What invoices do I owe and how can I pay?">Pay invoices</button>
-        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="How should I prepare for my next court date?">Court prep</button>
-        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Please request a callback from my lawyer">Request callback</button>
-        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Take me to my payments">Go to payments</button>
-        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Open my appointments">Appointments</button>
-        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Open case C-0001">Open a case</button>';
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Give me a full summary of my cases and what I should focus on this week">' . htmlspecialchars(client_t('chatbot.shortcut_weekly')) . '</button>
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="What invoices do I owe and how can I pay?">' . htmlspecialchars(client_t('chatbot.shortcut_pay')) . '</button>
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="How should I prepare for my next court date?">' . htmlspecialchars(client_t('chatbot.shortcut_court')) . '</button>
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Please request a callback from my lawyer">' . htmlspecialchars(client_t('chatbot.shortcut_callback')) . '</button>
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Take me to my payments">' . htmlspecialchars(client_t('chatbot.shortcut_payments')) . '</button>
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Open my appointments">' . htmlspecialchars(client_t('chatbot.shortcut_appointments')) . '</button>
+        <button type="button" class="cb-shortcut chat-shortcut" data-prompt="Open case C-0001">' . htmlspecialchars(client_t('chatbot.shortcut_open_case')) . '</button>';
 }
 
 $portalBodyClass = 'g-sidenav-show bg-gray-100';
@@ -79,7 +87,7 @@ $topNavbarHtml = '
 		</nav>';
 if ($role === 'client') {
     require_once __DIR__ . '/../inc/client-portal-navbar.php';
-    $topNavbarHtml = legalpro_render_client_page_navbar('AI Assistant', 'AI Assistant', '', [
+    $topNavbarHtml = legalpro_render_client_page_navbar(client_t('chatbot.title'), client_t('chatbot.title'), '', [
         'client_name' => $context['display_name'],
         'include_search' => false,
     ]);
@@ -89,21 +97,22 @@ $welcomeHint = '<br><span class="text-muted">' . htmlspecialchars($welcomeText) 
 
 $mainContentHtml = '';
 if ($role === 'client') {
+    $welcomeMsg = client_t('chatbot.welcome_msg', ['name' => $displayName]);
     $mainContentHtml = '
 			<div class="cb-hero-card">
-				<p class="cb-hero-kicker">AI Assistant</p>
-				<h4 class="cb-hero-title">Chat with ' . htmlspecialchars($assistantName) . '</h4>
+				<p class="cb-hero-kicker">' . htmlspecialchars(client_t('chatbot.title')) . '</p>
+				<h4 class="cb-hero-title">' . htmlspecialchars(client_t('chatbot.hero_title', ['name' => $assistantName])) . '</h4>
 				<p class="cb-hero-sub">' . htmlspecialchars($aiHeroSub) . '</p>
-				<p class="cb-hero-meta">Logged in as ' . $displayName . ' · <span class="cb-mode-badge">' . htmlspecialchars($aiModeLabel) . '</span></p>
+				<p class="cb-hero-meta">' . htmlspecialchars(client_t('chatbot.logged_in_as', ['name' => $context['display_name']])) . ' · <span class="cb-mode-badge">' . htmlspecialchars($aiModeLabel) . '</span></p>
 			</div>
 			<div class="cb-layout">
 				<div class="cb-panel">
 					<div class="cb-panel-hdr d-flex justify-content-between align-items-start flex-wrap gap-2">
 						<div>
-							<h5>Conversation</h5>
-							<p>Long messages supported · Enter to send · Shift+Enter for new line</p>
+							<h5>' . htmlspecialchars(client_t('chatbot.conversation')) . '</h5>
+							<p>' . htmlspecialchars(client_t('chatbot.conversation_sub')) . '</p>
 						</div>
-						<button type="button" id="clearChatBtn" class="btn btn-sm btn-outline-secondary">Clear chat</button>
+						<button type="button" id="clearChatBtn" class="btn btn-sm btn-outline-secondary">' . htmlspecialchars(client_t('chatbot.clear_chat')) . '</button>
 					</div>
 					<div class="cb-panel-body">
 						<div id="chatWindow" class="chat-window mb-3">
@@ -111,28 +120,28 @@ if ($role === 'client') {
 								<div class="cb-bot-avatar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
 								<div class="chat-bubble">
 									<span class="chat-bubble-label">' . htmlspecialchars($assistantName) . ':</span>
-									<div class="chat-bubble-body">Hello ' . $displayName . '! I\'m your smart legal assistant. I read your live cases, invoices, appointments, and court dates — then advise you, open pages for you, update your profile, book appointments, and submit requests. No API key needed.' . $welcomeHint . '</div>
+									<div class="chat-bubble-body">' . htmlspecialchars($welcomeMsg) . $welcomeHint . '</div>
 								</div>
 							</div>
 						</div>
 						<div class="chat-compose chat-compose--textarea">
-							<textarea id="chatInput" class="form-control chat-input" rows="2" placeholder="Ask me anything… paste long notes, describe your situation, or request an update." autocomplete="off"></textarea>
-							<button type="button" id="sendBtn" class="cb-send-btn">Send</button>
+							<textarea id="chatInput" class="form-control chat-input" rows="2" placeholder="' . htmlspecialchars(client_t('chatbot.input_placeholder')) . '" autocomplete="off"></textarea>
+							<button type="button" id="sendBtn" class="cb-send-btn">' . htmlspecialchars(client_t('chatbot.send')) . '</button>
 						</div>
 					</div>
 				</div>
 				<div class="cb-side">
 					<div class="cb-panel mb-4">
-						<div class="cb-panel-hdr"><h5>Quick prompts</h5></div>
+						<div class="cb-panel-hdr"><h5>' . htmlspecialchars(client_t('chatbot.quick_prompts')) . '</h5></div>
 						<div class="cb-panel-body chat-shortcut-grid">{SHORTCUTS_HTML}</div>
 					</div>
 					<div class="cb-panel">
-						<div class="cb-panel-hdr"><h5>Tips</h5></div>
+						<div class="cb-panel-hdr"><h5>' . htmlspecialchars(client_t('chatbot.tips')) . '</h5></div>
 						<div class="cb-panel-body cb-tips chat-tips">
-							<p>• &ldquo;Update the dispute case&rdquo; — opens case &amp; notifies lawyer</p>
-							<p>• &ldquo;Take me to payments&rdquo; — redirects instantly</p>
-							<p>• &ldquo;How many cases are closed?&rdquo;</p>
-							<p class="mb-0">• &ldquo;Weekly summary&rdquo; — full account briefing</p>
+							<p>• ' . htmlspecialchars(client_t('chatbot.tip_1')) . '</p>
+							<p>• ' . htmlspecialchars(client_t('chatbot.tip_2')) . '</p>
+							<p>• ' . htmlspecialchars(client_t('chatbot.tip_3')) . '</p>
+							<p class="mb-0">• ' . htmlspecialchars(client_t('chatbot.tip_4')) . '</p>
 						</div>
 					</div>
 				</div>
@@ -556,6 +565,11 @@ if ($role === 'client') {
     $portalHeadCss = ob_get_clean();
 }
 $html = str_replace('{PORTAL_HEAD_CSS}', $portalHeadCss, $html);
+
+if ($role === 'client') {
+    $html = str_replace('<html lang="en">', '<html lang="' . htmlspecialchars(client_portal_html_lang()) . '">', $html);
+    $html = str_replace('{ASSISTANT_NAME} · AI Assistant', htmlspecialchars($assistantName) . ' · ' . htmlspecialchars(client_t('chatbot.title')), $html);
+}
 
 if ($role === 'lawyer') {
     ob_start();

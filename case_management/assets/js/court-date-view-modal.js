@@ -4,25 +4,36 @@
 (function () {
     'use strict';
 
-    var STATUS_LABELS = {
-        scheduled: 'Scheduled',
-        completed: 'Completed',
-        cancelled: 'Cancelled',
-        postponed: 'Postponed'
-    };
+    function i18n(key, fallback) {
+        var dict = window.clientPortalI18n || {};
+        return dict[key] || fallback || key;
+    }
+
+    function dateLocale() {
+        return (window.clientPortalI18n && window.clientPortalI18n.date_locale) || 'en-GB';
+    }
+
+    function STATUS_LABELS() {
+        return {
+            scheduled: i18n('status_scheduled', 'Scheduled'),
+            completed: i18n('status_completed', 'Completed'),
+            cancelled: i18n('status_cancelled', 'Cancelled'),
+            postponed: i18n('status_postponed', 'Postponed')
+        };
+    }
 
     function formatCourtDateDisplay(dateStr) {
         var d = new Date(dateStr);
         if (isNaN(d.getTime())) {
             return dateStr || '—';
         }
-        var datePart = d.toLocaleDateString('en-GB', {
+        var datePart = d.toLocaleDateString(dateLocale(), {
             weekday: 'long',
             day: 'numeric',
             month: 'long',
             year: 'numeric'
         });
-        var timePart = d.toLocaleTimeString('en-GB', {
+        var timePart = d.toLocaleTimeString(dateLocale(), {
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -60,15 +71,16 @@
         var statusEl = document.getElementById('view_status');
         var titleEl = document.getElementById('viewCourtDateModalLabel');
         var descWrap = document.getElementById('view_description_wrap');
+        var labels = STATUS_LABELS();
 
         if (titleEl) {
-            titleEl.textContent = eventData.title || 'Court date';
+            titleEl.textContent = eventData.title || i18n('court_date_fallback', 'Court date');
         }
         setText('view_datetime', formatCourtDateDisplay(eventData.court_date));
         setText('view_case_title', eventData.case_title);
         setText('view_client_name', eventData.client_name);
-        setText('view_location', eventData.location, 'Not specified');
-        setText('view_created_by', eventData.created_by_name, 'Unknown');
+        setText('view_location', eventData.location, i18n('not_specified', 'Not specified'));
+        setText('view_created_by', eventData.created_by_name, i18n('unknown', 'Unknown'));
 
         var roleEl = document.getElementById('view_creator_role');
         if (roleEl) {
@@ -80,13 +92,13 @@
         }
 
         var description = (eventData.description || '').trim();
-        setText('view_description', description, 'No description provided.');
+        setText('view_description', description, i18n('no_description', 'No description provided.'));
         if (descWrap) {
             descWrap.classList.toggle('legalpro-court-detail__notes--empty', !description);
         }
 
         if (statusEl) {
-            statusEl.textContent = STATUS_LABELS[statusKey] || (statusKey.charAt(0).toUpperCase() + statusKey.slice(1));
+            statusEl.textContent = labels[statusKey] || (statusKey.charAt(0).toUpperCase() + statusKey.slice(1));
             statusEl.className = statusClass(statusKey, options.pillMode || 'detail');
         }
 
