@@ -2,21 +2,43 @@
 
 function lawyer_task_status_options(): array
 {
-    return [
+    $options = [
         'active' => 'Active',
         'pending' => 'Pending',
         'under_review' => 'Under review',
         'closed' => 'Closed',
     ];
+
+    if (!function_exists('lawyer_tf')) {
+        return $options;
+    }
+
+    $translated = [];
+    foreach ($options as $key => $fallback) {
+        $translated[$key] = lawyer_tf('status.' . $key, $fallback);
+    }
+
+    return $translated;
 }
 
 function lawyer_task_priority_options(): array
 {
-    return [
+    $options = [
         'normal' => 'Normal',
         'high' => 'High',
         'urgent' => 'Urgent',
     ];
+
+    if (!function_exists('lawyer_tf')) {
+        return $options;
+    }
+
+    $translated = [];
+    foreach ($options as $key => $fallback) {
+        $translated[$key] = lawyer_tf('priority.' . $key, $fallback);
+    }
+
+    return $translated;
 }
 
 function lawyer_case_status_options(): array
@@ -157,31 +179,37 @@ function lawyer_normalize_task_priority(string $priority): string
 
 function lawyer_task_status_badge(string $status): string
 {
+    if (!function_exists('lawyer_status_label')) {
+        require_once __DIR__ . '/lawyer-portal-i18n.php';
+    }
+
     $key = lawyer_normalize_task_status($status);
-    $map = [
-        'active' => ['label' => 'Active', 'class' => 'ca-status-pill--scheduled'],
-        'pending' => ['label' => 'Pending', 'class' => 'ca-status-pill--pending'],
-        'under_review' => ['label' => 'Under review', 'class' => 'ca-status-pill--scheduled'],
-        'closed' => ['label' => 'Closed', 'class' => 'ca-status-pill--done'],
+    $classes = [
+        'active' => 'ca-status-pill--scheduled',
+        'pending' => 'ca-status-pill--pending',
+        'under_review' => 'ca-status-pill--scheduled',
+        'closed' => 'ca-status-pill--done',
     ];
+    $class = $classes[$key] ?? 'ca-status-pill--muted';
 
-    $meta = $map[$key] ?? ['label' => ucwords(str_replace('_', ' ', $key)), 'class' => 'ca-status-pill--muted'];
-
-    return '<span class="ca-status-pill ' . $meta['class'] . '">' . htmlspecialchars($meta['label']) . '</span>';
+    return '<span class="ca-status-pill ' . $class . '">' . htmlspecialchars(lawyer_status_label($status)) . '</span>';
 }
 
 function lawyer_task_priority_badge(string $priority): string
 {
+    if (!function_exists('lawyer_priority_label')) {
+        require_once __DIR__ . '/lawyer-portal-i18n.php';
+    }
+
     $key = lawyer_normalize_task_priority($priority);
-    $map = [
-        'normal' => ['label' => 'Normal', 'class' => 'ca-status-pill--pending'],
-        'high' => ['label' => 'High', 'class' => 'ca-status-pill--declined'],
-        'urgent' => ['label' => 'Urgent', 'class' => 'ca-status-pill--declined'],
+    $classes = [
+        'normal' => 'ca-status-pill--pending',
+        'high' => 'ca-status-pill--declined',
+        'urgent' => 'ca-status-pill--declined',
     ];
+    $class = $classes[$key] ?? 'ca-status-pill--pending';
 
-    $meta = $map[$key] ?? ['label' => 'Normal', 'class' => 'ca-status-pill--pending'];
-
-    return '<span class="ca-status-pill ' . $meta['class'] . '">' . htmlspecialchars($meta['label']) . '</span>';
+    return '<span class="ca-status-pill ' . $class . '">' . htmlspecialchars(lawyer_priority_label($priority)) . '</span>';
 }
 
 function lawyer_case_status_badge(string $status): string

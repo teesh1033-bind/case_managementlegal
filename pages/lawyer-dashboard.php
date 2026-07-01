@@ -77,11 +77,11 @@ try {
 
 $hour = (int) date('G');
 if ($hour < 12) {
-    $greeting = 'Good morning';
+    $greeting = lawyer_tf('dashboard.greeting_morning', 'Good morning');
 } elseif ($hour < 17) {
-    $greeting = 'Good afternoon';
+    $greeting = lawyer_tf('dashboard.greeting_afternoon', 'Good afternoon');
 } else {
-    $greeting = 'Good evening';
+    $greeting = lawyer_tf('dashboard.greeting_evening', 'Good evening');
 }
 
 $firstName = htmlspecialchars(explode(' ', trim((string) $lawyerName))[0] ?: $lawyerName);
@@ -103,8 +103,10 @@ $iconCalendarClock = legalpro_icon('calendar-clock');
 $iconUser = legalpro_icon('user');
 
 $heroGlanceHtml = '<div class="ld-hero-glance">'
-    . '<span class="ld-hero-glance__item"><strong>' . $activeCases . '</strong> active ' . ($activeCases === 1 ? 'case' : 'cases') . '</span>'
-    . '<span class="ld-hero-glance__item"><strong>' . $upcomingCount . '</strong> upcoming ' . ($upcomingCount === 1 ? 'meeting' : 'meetings') . '</span>'
+    . '<span class="ld-hero-glance__item"><strong>' . $activeCases . '</strong> '
+    . ($activeCases === 1 ? lawyer_tf('dashboard.active_case', 'active case') : lawyer_tf('dashboard.active_cases', 'active cases')) . '</span>'
+    . '<span class="ld-hero-glance__item"><strong>' . $upcomingCount . '</strong> '
+    . ($upcomingCount === 1 ? lawyer_tf('dashboard.upcoming_meeting', 'upcoming meeting') : lawyer_tf('dashboard.upcoming_meetings', 'upcoming meetings')) . '</span>'
     . '</div>';
 
 $nextApptBanner = '';
@@ -112,16 +114,17 @@ if ($nextAppt) {
     $dt = date('l, j F · g:i A', strtotime($nextAppt['starts_at']));
     $nextApptBanner = '<div class="ld-next-appt">'
         . $iconCalendarClock
-        . '<span>Next: <strong>' . htmlspecialchars($dt) . '</strong> · ' . htmlspecialchars($nextAppt['case_title'] ?: 'Appointment') . '</span>'
+        . '<span>' . htmlspecialchars(lawyer_tf('dashboard.next_prefix', 'Next:')) . ' <strong>' . htmlspecialchars($dt) . '</strong> · '
+        . htmlspecialchars($nextAppt['case_title'] ?: lawyer_tf('common.appointment', 'Appointment')) . '</span>'
         . '</div>';
 }
 
 $quickActionsHtml = '';
 $quickActions = [
-    ['url' => 'lawyer-cases.php', 'icon' => 'briefcase', 'tone' => '', 'label' => 'My cases', 'desc' => 'All assigned matters'],
-    ['url' => 'lawyer-clients.php', 'icon' => 'users', 'tone' => 'info', 'label' => 'My clients', 'desc' => 'Client directory'],
-    ['url' => 'lawyer-appointments.php', 'icon' => 'calendar', 'tone' => 'success', 'label' => 'Appointments', 'desc' => 'Schedule & requests'],
-    ['url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'tone' => 'warning', 'label' => 'Court tracking', 'desc' => 'Hearings & dates'],
+    ['url' => 'lawyer-cases.php', 'icon' => 'briefcase', 'tone' => '', 'label' => lawyer_tf('dashboard.quick_my_cases', 'My cases'), 'desc' => lawyer_tf('dashboard.quick_my_cases_desc', 'All assigned matters')],
+    ['url' => 'lawyer-clients.php', 'icon' => 'users', 'tone' => 'info', 'label' => lawyer_tf('dashboard.quick_my_clients', 'My clients'), 'desc' => lawyer_tf('dashboard.quick_my_clients_desc', 'Client directory')],
+    ['url' => 'lawyer-appointments.php', 'icon' => 'calendar', 'tone' => 'success', 'label' => lawyer_tf('dashboard.quick_appointments', 'Appointments'), 'desc' => lawyer_tf('dashboard.quick_appointments_desc', 'Schedule & requests')],
+    ['url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'tone' => 'warning', 'label' => lawyer_tf('dashboard.quick_court', 'Court tracking'), 'desc' => lawyer_tf('dashboard.quick_court_desc', 'Hearings & dates')],
 ];
 foreach ($quickActions as $action) {
     $iconClass = $action['tone'] !== '' ? ' ld-quick-card__icon--' . $action['tone'] : '';
@@ -136,8 +139,8 @@ $recentCasesHtml = '';
 if (empty($recentCases)) {
     $recentCasesHtml = '<div class="ld-empty-state">'
         . '<div class="ld-empty-icon">' . legalpro_icon('folder-open') . '</div>'
-        . '<p class="ld-empty-title">No cases assigned yet</p>'
-        . '<p class="ld-empty-sub">Cases assigned to you will appear here.</p>'
+        . '<p class="ld-empty-title">' . htmlspecialchars(lawyer_tf('dashboard.no_cases_title', 'No cases assigned yet')) . '</p>'
+        . '<p class="ld-empty-sub">' . htmlspecialchars(lawyer_tf('dashboard.no_cases_sub', 'Cases assigned to you will appear here.')) . '</p>'
         . '</div>';
 } else {
     foreach ($recentCases as $case) {
@@ -152,7 +155,7 @@ if (empty($recentCases)) {
             . '<div class="ld-list-row__icon">' . $iconRowCase . '</div>'
             . '<div class="ld-list-row__body">'
             . '<div class="ld-list-row__title">' . $num . ' · ' . $title . '</div>'
-            . '<div class="ld-list-row__meta">' . $clientName . ' · Assigned ' . $created . '</div>'
+            . '<div class="ld-list-row__meta">' . $clientName . ' · ' . htmlspecialchars(lawyer_tf('dashboard.assigned_on', 'Assigned')) . ' ' . $created . '</div>'
             . '</div>'
             . '<div class="ld-list-row__aside">' . $statusBadge . $priorityBadge . '</div>'
             . '</a>';
@@ -163,14 +166,14 @@ $upcomingAppointmentsHtml = '';
 if (empty($upcomingAppointments)) {
     $upcomingAppointmentsHtml = '<div class="ld-empty-state">'
         . '<div class="ld-empty-icon">' . $iconRowAppt . '</div>'
-        . '<p class="ld-empty-title">No upcoming appointments</p>'
-        . '<p class="ld-empty-sub">Accepted appointments will appear here once scheduled.</p>'
+        . '<p class="ld-empty-title">' . htmlspecialchars(lawyer_tf('dashboard.no_appts_title', 'No upcoming appointments')) . '</p>'
+        . '<p class="ld-empty-sub">' . htmlspecialchars(lawyer_tf('dashboard.no_appts_sub', 'Accepted appointments will appear here once scheduled.')) . '</p>'
         . '</div>';
 } else {
     foreach ($upcomingAppointments as $appointment) {
         $dayLabel = date('M j', strtotime($appointment['starts_at']));
         $timeLabel = date('g:i A', strtotime($appointment['starts_at']));
-        $caseTitle = htmlspecialchars($appointment['case_title'] ?: 'Appointment');
+        $caseTitle = htmlspecialchars($appointment['case_title'] ?: lawyer_tf('common.appointment', 'Appointment'));
         $clientName = htmlspecialchars(trim($appointment['first_name'] . ' ' . $appointment['last_name']));
         $notesRaw = trim((string) ($appointment['description'] ?? ''));
         $notes = $notesRaw !== '' ? htmlspecialchars(mb_substr($notesRaw, 0, 68)) . (strlen($notesRaw) > 68 ? '…' : '') : '';
@@ -185,7 +188,7 @@ if (empty($upcomingAppointments)) {
             . '<div class="ld-appt-row__meta">' . $iconUser . $clientName . '</div>'
             . ($notes !== '' ? '<div class="ld-appt-row__notes">' . $notes . '</div>' : '')
             . '</div>'
-            . '<div class="ld-appt-row__badge"><span class="ld-appt-badge">Confirmed</span></div>'
+            . '<div class="ld-appt-row__badge"><span class="ld-appt-badge">' . htmlspecialchars(lawyer_tf('common.confirmed', 'Confirmed')) . '</span></div>'
             . '</a>';
     }
 }
@@ -194,15 +197,18 @@ ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
 
+$pageTitle = lawyer_tf('dashboard.page_title', 'Dashboard');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle, [], ['parent_url' => 'lawyer-dashboard.php']);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - Lawyer Dashboard</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -218,33 +224,24 @@ $html = <<<'HTML'
     {NAVIGATION}
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Dashboard</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Dashboard</h6>
-                </nav>
-            </div>
-        </nav>
+        {BREADCRUMB_NAVBAR}
 
         <div class="container-fluid py-4 px-4">
             <div class="ld-page">
-                <section class="ld-hero-card" aria-label="Dashboard overview">
+                <section class="ld-hero-card" aria-label="{HERO_ARIA}">
                     <div class="ld-hero-main">
                         <div class="ld-hero-top">
-                            <p class="ld-hero-kicker">Lawyer workspace</p>
+                            <p class="ld-hero-kicker">{HERO_KICKER}</p>
                             <span class="ld-hero-date">{HERO_DATE}</span>
                         </div>
                         <h1 class="ld-hero-title">{GREETING}, {LAWYER_FIRST_NAME}</h1>
-                        <p class="ld-hero-sub">Manage your cases, prepare for client meetings, and stay on top of court dates — all in one place.</p>
+                        <p class="ld-hero-sub">{HERO_SUB}</p>
                         {HERO_GLANCE}
                         {NEXT_APPT_BANNER}
                     </div>
                     <div class="ld-hero-actions">
-                        <a href="lawyer-cases.php" class="btn btn-primary-solid">View cases</a>
-                        <a href="lawyer-appointments.php" class="btn btn-ghost">Appointments</a>
+                        <a href="lawyer-cases.php" class="btn btn-primary-solid">{BTN_VIEW_CASES}</a>
+                        <a href="lawyer-appointments.php" class="btn btn-ghost">{BTN_APPOINTMENTS}</a>
                     </div>
                 </section>
 
@@ -256,28 +253,28 @@ $html = <<<'HTML'
                     <a href="lawyer-cases.php" class="ld-kpi" style="--kpi-accent: var(--ld-primary);">
                         <div>
                             <div class="ld-kpi__val">{TOTAL_CASES}</div>
-                            <div class="ld-kpi__lbl">Total cases</div>
+                            <div class="ld-kpi__lbl">{LBL_TOTAL_CASES}</div>
                         </div>
                         <div class="ld-kpi__icon">{ICON_STAT_CASES}</div>
                     </a>
                     <a href="lawyer-cases.php" class="ld-kpi" style="--kpi-accent: #2dce89;">
                         <div>
                             <div class="ld-kpi__val">{ACTIVE_CASES}</div>
-                            <div class="ld-kpi__lbl">Active cases</div>
+                            <div class="ld-kpi__lbl">{LBL_ACTIVE_CASES}</div>
                         </div>
                         <div class="ld-kpi__icon" style="background:rgba(45,206,137,.1);color:#2dce89;">{ICON_STAT_ACTIVE}</div>
                     </a>
                     <a href="lawyer-clients.php" class="ld-kpi" style="--kpi-accent: #11cdef;">
                         <div>
                             <div class="ld-kpi__val">{TOTAL_CLIENTS}</div>
-                            <div class="ld-kpi__lbl">My clients</div>
+                            <div class="ld-kpi__lbl">{LBL_MY_CLIENTS}</div>
                         </div>
                         <div class="ld-kpi__icon" style="background:rgba(17,205,239,.12);color:#11cdef;">{ICON_STAT_CLIENTS}</div>
                     </a>
                     <a href="lawyer-appointments.php" class="ld-kpi" style="--kpi-accent: #fb6340;">
                         <div>
                             <div class="ld-kpi__val">{UPCOMING_APPOINTMENTS_COUNT}</div>
-                            <div class="ld-kpi__lbl">This week</div>
+                            <div class="ld-kpi__lbl">{LBL_THIS_WEEK}</div>
                         </div>
                         <div class="ld-kpi__icon" style="background:rgba(251,99,64,.12);color:#fb6340;">{ICON_STAT_APPTS}</div>
                     </a>
@@ -289,11 +286,11 @@ $html = <<<'HTML'
                             <div class="ld-panel-hdr__left">
                                 <span class="ld-panel-hdr__icon">{ICON_PANEL_CASES}</span>
                                 <div>
-                                    <p class="ld-panel-title">Recent cases</p>
-                                    <p class="ld-panel-sub">Your most recently assigned matters</p>
+                                    <p class="ld-panel-title">{LBL_RECENT_CASES}</p>
+                                    <p class="ld-panel-sub">{LBL_RECENT_CASES_SUB}</p>
                                 </div>
                             </div>
-                            <a href="lawyer-cases.php" class="btn-ld-link">{ICON_ARROW} View all</a>
+                            <a href="lawyer-cases.php" class="btn-ld-link">{ICON_ARROW} {LBL_VIEW_ALL}</a>
                         </div>
                         <div class="ld-panel-body">
                             {RECENT_CASES}
@@ -304,11 +301,11 @@ $html = <<<'HTML'
                             <div class="ld-panel-hdr__left">
                                 <span class="ld-panel-hdr__icon" style="background:rgba(45,206,137,.1);color:#2dce89;">{ICON_PANEL_APPTS}</span>
                                 <div>
-                                    <p class="ld-panel-title">Upcoming appointments</p>
-                                    <p class="ld-panel-sub">Your next scheduled meetings</p>
+                                    <p class="ld-panel-title">{LBL_UPCOMING_APPTS}</p>
+                                    <p class="ld-panel-sub">{LBL_UPCOMING_APPTS_SUB}</p>
                                 </div>
                             </div>
-                            <a href="lawyer-appointments.php" class="btn-ld-link">{ICON_ARROW} View all</a>
+                            <a href="lawyer-appointments.php" class="btn-ld-link">{ICON_ARROW} {LBL_VIEW_ALL}</a>
                         </div>
                         <div class="ld-panel-body">
                             {UPCOMING_APPOINTMENTS}
@@ -342,6 +339,23 @@ $html = <<<'HTML'
 HTML;
 
 $replacements = [
+    '{HTML_LANG}' => lawyer_portal_html_lang(),
+    '{PAGE_TITLE}' => htmlspecialchars($pageTitle),
+    '{BREADCRUMB_NAVBAR}' => $breadcrumbNavbar,
+    '{HERO_ARIA}' => htmlspecialchars(lawyer_tf('dashboard.hero_overview', 'Dashboard overview')),
+    '{HERO_KICKER}' => htmlspecialchars(lawyer_tf('dashboard.lawyer_workspace', 'Lawyer workspace')),
+    '{HERO_SUB}' => htmlspecialchars(lawyer_tf('dashboard.hero_sub', 'Manage your cases, prepare for client meetings, and stay on top of court dates — all in one place.')),
+    '{BTN_VIEW_CASES}' => htmlspecialchars(lawyer_tf('dashboard.view_cases_btn', 'View cases')),
+    '{BTN_APPOINTMENTS}' => htmlspecialchars(lawyer_tf('dashboard.view_appointments_btn', 'Appointments')),
+    '{LBL_TOTAL_CASES}' => htmlspecialchars(lawyer_tf('dashboard.stat_total_cases', 'Total cases')),
+    '{LBL_ACTIVE_CASES}' => htmlspecialchars(lawyer_tf('dashboard.stat_active_cases', 'Active cases')),
+    '{LBL_MY_CLIENTS}' => htmlspecialchars(lawyer_tf('dashboard.stat_clients', 'Clients')),
+    '{LBL_THIS_WEEK}' => htmlspecialchars(lawyer_tf('dashboard.this_week', 'This week')),
+    '{LBL_RECENT_CASES}' => htmlspecialchars(lawyer_tf('dashboard.recent_cases', 'Recent cases')),
+    '{LBL_RECENT_CASES_SUB}' => htmlspecialchars(lawyer_tf('dashboard.panel_recent_sub', 'Your most recently assigned matters')),
+    '{LBL_UPCOMING_APPTS}' => htmlspecialchars(lawyer_tf('dashboard.upcoming_appointments', 'Upcoming appointments')),
+    '{LBL_UPCOMING_APPTS_SUB}' => htmlspecialchars(lawyer_tf('dashboard.panel_appts_sub', 'Your next scheduled meetings')),
+    '{LBL_VIEW_ALL}' => htmlspecialchars(lawyer_tf('dashboard.view_all', 'View all')),
     '{NAVIGATION}' => $navHtml,
     '{GREETING}' => $greeting,
     '{LAWYER_FIRST_NAME}' => $firstName,

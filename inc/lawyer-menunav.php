@@ -3,18 +3,19 @@
 
 require_once __DIR__ . '/admin-layout.php';
 require_once __DIR__ . '/../lib/portal-sidebar.php';
+require_once __DIR__ . '/../lib/lawyer-locale.php';
 
 $currentPage = basename($_SERVER['PHP_SELF'], '.php');
 
 $lawyerMenuItems = [
-    ['title' => 'Dashboard', 'url' => 'lawyer-dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'lawyer-dashboard'],
-    ['title' => 'My Tasks', 'url' => 'tasks.php', 'icon' => 'list-checks', 'id' => 'tasks'],
-    ['title' => 'My Cases', 'url' => 'lawyer-cases.php', 'icon' => 'briefcase', 'id' => 'lawyer-cases'],
-    ['title' => 'My Clients', 'url' => 'lawyer-clients.php', 'icon' => 'users', 'id' => 'lawyer-clients'],
-    ['title' => 'Appointments', 'url' => 'lawyer-appointments.php', 'icon' => 'calendar', 'id' => 'lawyer-appointments'],
-    ['title' => 'Court Tracking', 'url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'id' => 'lawyer-court-tracking'],
-    ['title' => 'My Availability', 'url' => 'lawyer-availability.php', 'icon' => 'clock', 'id' => 'lawyer-availability'],
-    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
+    ['title_key' => 'nav.dashboard', 'url' => 'lawyer-dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'lawyer-dashboard'],
+    ['title_key' => 'nav.my_tasks', 'url' => 'tasks.php', 'icon' => 'list-checks', 'id' => 'tasks'],
+    ['title_key' => 'nav.my_cases', 'url' => 'lawyer-cases.php', 'icon' => 'briefcase', 'id' => 'lawyer-cases'],
+    ['title_key' => 'nav.my_clients', 'url' => 'lawyer-clients.php', 'icon' => 'users', 'id' => 'lawyer-clients'],
+    ['title_key' => 'nav.appointments', 'url' => 'lawyer-appointments.php', 'icon' => 'calendar', 'id' => 'lawyer-appointments'],
+    ['title_key' => 'nav.court_tracking', 'url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'id' => 'lawyer-court-tracking'],
+    ['title_key' => 'nav.availability', 'url' => 'lawyer-availability.php', 'icon' => 'clock', 'id' => 'lawyer-availability'],
+    ['title_key' => 'nav.ai_assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
 
 if (!function_exists('lawyerNavIsActive')) {
@@ -59,7 +60,7 @@ if (!defined('LEGALPRO_LAWYER_PORTAL_HEAD')) {
 echo legalpro_render_portal_sidebar([
     'portal' => 'lawyer',
     'home_url' => 'lawyer-dashboard.php',
-    'role_label' => 'LAWYER',
+    'role_label' => legalpro_portal_translate('header.lawyer_role', 'LAWYER'),
     'company_name' => $companyName,
     'logo_url' => $companyLogoUrl,
     'current_page' => $currentPage,
@@ -69,5 +70,10 @@ echo legalpro_render_portal_sidebar([
 ?>
 
 <?php echo $navbarUtilitiesMount; ?>
+<script>window.legalproLawyerI18n=<?php echo json_encode([
+    'search' => legalpro_portal_translate('header.search', 'Search…'),
+    'searchReset' => legalpro_portal_translate('header.search_reset', 'Reset'),
+    'searchAria' => legalpro_portal_translate('header.search', 'Search'),
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;</script>
 <script src="../assets/js/lawyer-portal.js?v=1"></script>
 <?php legalpro_icons_footer_scripts(); ?>

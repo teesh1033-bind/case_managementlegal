@@ -316,7 +316,7 @@ function buildLawyerAppointmentCaseLink(array $appointment): string
         return '<span class="text-muted text-xs">—</span>';
     }
 
-    return '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-primary mb-0">Case</a>';
+    return '<a href="lawyer-case-view.php?id=' . $caseId . '" class="btn btn-sm btn-outline-primary mb-0">' . htmlspecialchars(lawyer_tf('appointments.case_link', 'Case')) . '</a>';
 }
 
 /**
@@ -339,16 +339,26 @@ function buildLawyerAppointmentActions(array $appointment): string
         . htmlspecialchars($defaultRescheduleStatus, ENT_QUOTES) . '\', '
         . $durationMinutes;
 
+    $confirmAccept = htmlspecialchars(lawyer_tf('appointments.confirm_accept', 'Accept this appointment?'), ENT_QUOTES);
+    $confirmReject = htmlspecialchars(lawyer_tf('appointments.confirm_reject', 'Reject this appointment?'), ENT_QUOTES);
+    $confirmPending = htmlspecialchars(lawyer_tf('appointments.confirm_pending', 'Keep this appointment as pending?'), ENT_QUOTES);
+    $lblAccept = htmlspecialchars(lawyer_tf('appointments.accept', 'Accept'));
+    $lblReject = htmlspecialchars(lawyer_tf('appointments.reject', 'Reject'));
+    $lblPending = htmlspecialchars(lawyer_tf('appointments.pending', 'Pending'));
+    $lblReschedule = htmlspecialchars(lawyer_tf('appointments.reschedule_btn', 'Reschedule'));
+    $lblLocked = htmlspecialchars(lawyer_tf('appointments.status_locked', 'Locked'));
+    $lblRejected = htmlspecialchars(lawyer_tf('appointments.status_rejected', 'Rejected'));
+
     $html = '<div class="lawyer-appointment-actions">';
 
     if ($status === 'accepted') {
-        $html .= '<span class="ca-status-pill ca-status-pill--done">Locked</span>';
+        $html .= '<span class="ca-status-pill ca-status-pill--done">' . $lblLocked . '</span>';
         $html .= '</div>';
         return $html;
     }
 
     if ($status === 'rejected') {
-        $html .= '<span class="ca-status-pill ca-status-pill--declined">Rejected</span>';
+        $html .= '<span class="ca-status-pill ca-status-pill--declined">' . $lblRejected . '</span>';
         $html .= '</div>';
         return $html;
     }
@@ -358,16 +368,16 @@ function buildLawyerAppointmentActions(array $appointment): string
         <form method="post" class="lawyer-appointment-actions__form">
             <input type="hidden" name="appointment_id" value="' . $id . '">
             <input type="hidden" name="appointment_action" value="accept">
-            <button type="submit" class="btn btn-sm btn-success mb-0" onclick="return confirm(\'Accept this appointment?\')">Accept</button>
+            <button type="submit" class="btn btn-sm btn-success mb-0" onclick="return confirm(\'' . $confirmAccept . '\')">' . $lblAccept . '</button>
         </form>
         <form method="post" class="lawyer-appointment-actions__form">
             <input type="hidden" name="appointment_id" value="' . $id . '">
             <input type="hidden" name="appointment_action" value="reject">
-            <button type="submit" class="btn btn-sm btn-danger mb-0" onclick="return confirm(\'Reject this appointment?\')">Reject</button>
+            <button type="submit" class="btn btn-sm btn-danger mb-0" onclick="return confirm(\'' . $confirmReject . '\')">' . $lblReject . '</button>
         </form>
         <button type="button" class="btn btn-sm btn-primary mb-0"
             onclick="openRescheduleModal(' . $rescheduleOnclickArgs . ')">
-            Reschedule
+            ' . $lblReschedule . '
         </button>';
         $html .= '</div>';
         return $html;
@@ -378,21 +388,21 @@ function buildLawyerAppointmentActions(array $appointment): string
         <form method="post" class="lawyer-appointment-actions__form">
             <input type="hidden" name="appointment_id" value="' . $id . '">
             <input type="hidden" name="appointment_action" value="accept">
-            <button type="submit" class="btn btn-sm btn-success mb-0" onclick="return confirm(\'Accept this appointment?\')">Accept</button>
+            <button type="submit" class="btn btn-sm btn-success mb-0" onclick="return confirm(\'' . $confirmAccept . '\')">' . $lblAccept . '</button>
         </form>
         <form method="post" class="lawyer-appointment-actions__form">
             <input type="hidden" name="appointment_id" value="' . $id . '">
             <input type="hidden" name="appointment_action" value="reject">
-            <button type="submit" class="btn btn-sm btn-danger mb-0" onclick="return confirm(\'Reject this appointment?\')">Reject</button>
+            <button type="submit" class="btn btn-sm btn-danger mb-0" onclick="return confirm(\'' . $confirmReject . '\')">' . $lblReject . '</button>
         </form>
         <form method="post" class="lawyer-appointment-actions__form">
             <input type="hidden" name="appointment_id" value="' . $id . '">
             <input type="hidden" name="appointment_action" value="pending">
-            <button type="submit" class="btn btn-sm btn-warning mb-0" onclick="return confirm(\'Keep this appointment as pending?\')">Pending</button>
+            <button type="submit" class="btn btn-sm btn-warning mb-0" onclick="return confirm(\'' . $confirmPending . '\')">' . $lblPending . '</button>
         </form>
         <button type="button" class="btn btn-sm btn-primary mb-0"
             onclick="openRescheduleModal(' . $rescheduleOnclickArgs . ')">
-            Reschedule
+            ' . $lblReschedule . '
         </button>';
 
     $html .= '</div>';
@@ -405,15 +415,17 @@ $iconApptEmpty = legalpro_icon('calendar');
 $iconCardHeader = legalpro_icon('calendar');
 
 $appointmentsCount = count($appointments);
-$appointmentsCountLabel = $appointmentsCount === 1 ? '1 appointment' : $appointmentsCount . ' appointments';
+$appointmentsCountLabel = $appointmentsCount === 1
+    ? lawyer_tf('appointments.count_one', '1 appointment')
+    : lawyer_tf('appointments.count_many', ':count appointments', ['count' => $appointmentsCount]);
 
 // Build appointments table HTML
 $appointmentsTable = '';
 if (empty($appointments)) {
     $appointmentsTable = '<tr><td colspan="7" class="border-0"><div class="text-center py-5 px-4">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconApptEmpty . '</div>
-        <h5 class="font-weight-bolder mt-3 mb-2">No appointments found</h5>
-        <p class="text-sm text-muted mb-0">No appointments found yet.</p>
+        <h5 class="font-weight-bolder mt-3 mb-2">' . htmlspecialchars(lawyer_tf('appointments.empty_title', 'No appointments found')) . '</h5>
+        <p class="text-sm text-muted mb-0">' . htmlspecialchars(lawyer_tf('appointments.empty_sub_table', 'No appointments found yet.')) . '</p>
     </div></td></tr>';
 } else {
     foreach ($appointments as $appointment) {
@@ -444,7 +456,7 @@ if (empty($appointments)) {
                 <span class="text-sm font-weight-bold">' . htmlspecialchars($appointmentDate) . '</span>
                 <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointmentTime) . '</p>
             </td>
-            <td class="align-middle">' . htmlspecialchars($appointment['notes'] ?: 'No notes') . '</td>
+            <td class="align-middle">' . htmlspecialchars($appointment['notes'] ?: lawyer_tf('appointments.no_notes', 'No notes')) . '</td>
             <td class="align-middle text-center">' . $statusBadge . '</td>
             <td class="align-middle text-center lawyer-appointment-case-cell">' . buildLawyerAppointmentCaseLink($appointment) . '</td>
             <td class="align-middle text-end lp-table-actions lawyer-appointment-actions-cell">' . buildLawyerAppointmentActions($appointment) . '</td>
@@ -469,7 +481,7 @@ foreach ($appointments as $row) {
     $clientName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
     $clientEmail = trim((string) ($row['email'] ?? ''));
     $notes = trim((string) ($row['notes'] ?? ''));
-    $startsLabel = date('M j, Y g:i A', strtotime($row['starts_at']));
+    $startsLabel = lawyer_portal_format_datetime($row['starts_at']);
     $durationMinutes = lawyerAppointmentDurationMinutes($row);
     $rescheduleDate = date('Y-m-d', strtotime($row['starts_at']));
     $rescheduleTime = date('H:i', strtotime($row['starts_at']));
@@ -489,7 +501,7 @@ foreach ($appointments as $row) {
             'clientEmail' => $clientEmail,
             'notes' => $notes,
             'status' => $status,
-            'statusLabel' => ucfirst($status),
+            'statusLabel' => lawyer_appointment_status_label($status),
             'appointmentId' => (int) $row['id'],
             'caseId' => $caseId,
             'durationMinutes' => $durationMinutes,
@@ -531,7 +543,7 @@ $upcomingForCalendar = array_values(array_filter($appointments, function ($row) 
 if (empty($upcomingForCalendar)) {
     $upcomingAppointmentsCalendarHtml = '<div class="dashboard-upcoming-empty">'
         . $iconApptEmpty
-        . '<span>No upcoming appointments</span></div>';
+        . '<span>' . htmlspecialchars(lawyer_tf('dashboard.no_appts_title', 'No upcoming appointments')) . '</span></div>';
 } else {
     usort($upcomingForCalendar, function ($a, $b) {
         return strtotime($a['starts_at']) <=> strtotime($b['starts_at']);
@@ -541,11 +553,17 @@ if (empty($upcomingForCalendar)) {
         if ($status === 'approved') {
             $status = 'accepted';
         }
-        $caseTitle = $row['case_title'] ?: 'Appointment';
+        $caseTitle = $row['case_title'] ?: lawyer_tf('common.appointment', 'Appointment');
         $clientName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
-        $clientName = $clientName !== '' ? $clientName : 'Client';
-        $hourLabel = date('g:i A', strtotime($row['starts_at']));
-        $dayLabel = date('M j', strtotime($row['starts_at']));
+        $clientName = $clientName !== '' ? $clientName : lawyer_tf('common.client', 'Client');
+        $hourLabel = lawyer_portal_format_time(date('H:i', strtotime($row['starts_at'])));
+        if (getLawyerPortalLocale() === 'fr') {
+            $months = ['', 'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+            $ts = strtotime($row['starts_at']);
+            $dayLabel = date('j', $ts) . ' ' . ($months[(int) date('n', $ts)] ?? date('M', $ts));
+        } else {
+            $dayLabel = date('M j', strtotime($row['starts_at']));
+        }
 
         $upcomingAppointmentsCalendarHtml .= '
         <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . '" data-appointment-id="' . (int) $row['id'] . '">
@@ -562,15 +580,30 @@ ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
 
+$pageTitle = lawyer_tf('appointments.page_title', 'My Appointments');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle);
+$apptI18nJson = json_encode([
+    'dateLocale' => lawyer_portal_js_date_locale(),
+    'fcLocale' => lawyer_portal_fc_locale(),
+    'fcButtons' => lawyer_portal_fc_button_text(),
+    'pending' => lawyer_appointment_status_label('pending'),
+    'accepted' => lawyer_appointment_status_label('accepted'),
+    'rejected' => lawyer_appointment_status_label('rejected'),
+    'client' => lawyer_tf('common.client', 'Client'),
+    'appointment' => lawyer_tf('common.appointment', 'Appointment'),
+    'noMatchSearch' => lawyer_tf('appointments.no_match_search', 'No appointments match your search.'),
+    'use24h' => getLawyerPortalLocale() === 'fr',
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - My Appointments</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -851,17 +884,7 @@ $html = <<<'HTML'
     {NAVIGATION}
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-dashboard.php">Lawyer Portal</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Appointments</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">My Appointments</h6>
-                </nav>
-            </div>
-        </nav>
+        {BREADCRUMB_NAVBAR}
 
         <div class="container-fluid py-4">
             {MESSAGE}
@@ -874,21 +897,21 @@ $html = <<<'HTML'
                             <div class="la-calendar-hub__intro">
                                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 w-100">
                                     <div>
-                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Appointments Calendar</h6>
-                                        <p class="text-sm mb-0 text-muted">Use the search bar below to find appointments quickly, or click a calendar event</p>
+                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">{LBL_CALENDAR_TITLE}</h6>
+                                        <p class="text-sm mb-0 text-muted">{LBL_CALENDAR_SUB}</p>
                                         <div class="dashboard-legend-pills">
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> {LBL_STATUS_PENDING}</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> {LBL_STATUS_ACCEPTED}</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> {LBL_STATUS_REJECTED}</span>
                                         </div>
                                     </div>
-                                    <button type="button" class="btn btn-success btn-sm mb-0" onclick="openCreateAppointmentModal()">
-                                        Schedule appointment
+                                    <button type="button" class="btn btn-sm bg-gradient-primary mb-0" onclick="openCreateAppointmentModal()">
+                                        {LBL_SCHEDULE}
                                     </button>
                                 </div>
                             </div>
                             <div class="la-cal-search-wrap la-cal-search-wrap--featured">
-                                <label class="la-cal-search-label" for="laCalSearchInput">Search appointments</label>
+                                <label class="la-cal-search-label" for="laCalSearchInput">{LBL_SEARCH_APPTS}</label>
                                 <div class="la-cal-search-field">
                                     <span class="la-cal-search-icon" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
@@ -897,8 +920,8 @@ $html = <<<'HTML'
                                         </svg>
                                     </span>
                                     <input type="search" id="laCalSearchInput" class="la-cal-search-input"
-                                           placeholder="Search by matter, client, date, status…" autocomplete="off">
-                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laCalSearchInput" aria-label="Reset search">Reset</button>
+                                           placeholder="{PH_SEARCH_CAL}" autocomplete="off">
+                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laCalSearchInput" aria-label="{LBL_RESET_SEARCH}">{LBL_RESET}</button>
                                 </div>
                                 <div class="la-cal-search-results" id="laCalSearchResults" hidden></div>
                             </div>
@@ -908,8 +931,8 @@ $html = <<<'HTML'
                                 <div id="lawyerAppointmentsCalendar"></div>
                                 <aside class="dashboard-upcoming-panel">
                                     <div class="dashboard-upcoming-panel__title">
-                                        <span>Upcoming</span>
-                                        <a href="#lawyerAppointmentsTable" class="text-xs text-primary font-weight-bold">View list</a>
+                                        <span>{LBL_UPCOMING}</span>
+                                        <a href="#lawyerAppointmentsTable" class="text-xs text-primary font-weight-bold">{LBL_VIEW_LIST}</a>
                                     </div>
                                     <div class="dashboard-upcoming-list" id="lawyerUpcomingAppointmentsList">
                                         {UPCOMING_APPOINTMENTS_CALENDAR}
@@ -929,8 +952,8 @@ $html = <<<'HTML'
                             <div class="d-flex align-items-center">
                                 <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                 <div>
-                                    <h6 class="mb-0">My Appointments</h6>
-                                    <p class="text-xs text-muted mb-0">Schedule meetings with clients, accept requests, or reschedule · <span id="lawyerApptTableCount">{APPOINTMENTS_COUNT_LABEL}</span></p>
+                                    <h6 class="mb-0">{PAGE_TITLE}</h6>
+                                    <p class="text-xs text-muted mb-0">{LBL_CARD_SUB} · <span id="lawyerApptTableCount">{APPOINTMENTS_COUNT_LABEL}</span></p>
                                 </div>
                             </div>
                         </div>
@@ -940,13 +963,13 @@ $html = <<<'HTML'
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Matter</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date & Time</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Notes</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case</th>
-                                            <th class="text-end text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_MATTER}</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_CLIENT}</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_DATETIME}</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_NOTES}</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_STATUS}</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_CASE}</th>
+                                            <th class="text-end text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_ACTIONS}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1029,7 +1052,7 @@ $html = <<<'HTML'
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary mb-0" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success mb-0" id="createAppointmentSubmit">Schedule</button>
+                        <button type="submit" class="btn btn-primary mb-0" id="createAppointmentSubmit">Schedule</button>
                     </div>
                 </form>
             </div>
@@ -1117,7 +1140,9 @@ $html = <<<'HTML'
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    {FC_LOCALE_SCRIPT}
     <script>
+        var apptI18n = {APPT_I18N_JSON};
         var lawyerAppointmentEvents = {APPOINTMENT_CALENDAR_EVENTS_JSON};
         var lawyerAppointmentsCalendar = null;
 
@@ -1302,7 +1327,7 @@ $html = <<<'HTML'
             var p = event.extendedProps || {};
             document.getElementById('lawyerApptModalTitle').textContent = event.title || 'Appointment';
             document.getElementById('lawyerApptModalClient').textContent = p.client || '—';
-            document.getElementById('lawyerApptModalStatus').textContent = p.statusLabel || p.status || 'Pending';
+            document.getElementById('lawyerApptModalStatus').textContent = p.statusLabel || p.status || apptI18n.pending;
             document.getElementById('lawyerApptModalNotes').textContent = p.notes || 'No notes added.';
 
             var start = event.start instanceof Date ? event.start : new Date(event.start);
@@ -1437,7 +1462,7 @@ $html = <<<'HTML'
                 var props = arg.event.extendedProps || {};
                 var statusKey = appointmentStatusKey(props.status);
                 var timeText = arg.timeText || '';
-                var title = arg.event.title || 'Appointment';
+                var title = arg.event.title || apptI18n.appointment;
                 if (title.length > 22) {
                     title = title.slice(0, 19) + '...';
                 }
@@ -1461,6 +1486,7 @@ $html = <<<'HTML'
 
             lawyerAppointmentsCalendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+                locale: apptI18n.fcLocale,
                 height: 'auto',
                 firstDay: 1,
                 navLinks: true,
@@ -1468,8 +1494,10 @@ $html = <<<'HTML'
                 fixedWeekCount: false,
                 dayMaxEvents: 3,
                 moreLinkClick: 'day',
-                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
-                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+                buttonText: apptI18n.fcButtons,
+                eventTimeFormat: apptI18n.use24h
+                    ? { hour: '2-digit', minute: '2-digit', hour12: false }
+                    : { hour: '2-digit', minute: '2-digit', hour12: false },
                 dayHeaderFormat: { weekday: 'short' },
                 headerToolbar: {
                     left: 'prev,next today',
@@ -1506,7 +1534,7 @@ $html = <<<'HTML'
                     var props = info.event.extendedProps || {};
                     var tip = info.event.title;
                     if (props.client) {
-                        tip += '\nClient: ' + props.client;
+                        tip += '\n' + apptI18n.client + ': ' + props.client;
                     }
                     info.el.setAttribute('title', tip);
                 }
@@ -1543,7 +1571,7 @@ $html = <<<'HTML'
                 });
 
                 if (!matches.length) {
-                    resultsEl.innerHTML = '<div class="la-cal-search-empty">No appointments match your search.</div>';
+                    resultsEl.innerHTML = '<div class="la-cal-search-empty">' + escapeHtmlLa(apptI18n.noMatchSearch) + '</div>';
                     resultsEl.hidden = false;
                     return;
                 }
@@ -1555,8 +1583,8 @@ $html = <<<'HTML'
                     html += '<button type="button" class="la-cal-search-item" data-appointment-id="' + escapeHtmlLa(props.appointmentId || ev.id) + '" data-start="' + escapeHtmlLa(ev.start || '') + '">' +
                         '<span class="la-cal-search-item__dot la-cal-search-item__dot--' + escapeHtmlLa(statusKey) + '" aria-hidden="true"></span>' +
                         '<span class="la-cal-search-item__body">' +
-                            '<p class="la-cal-search-item__title">' + escapeHtmlLa(ev.title || 'Appointment') + '</p>' +
-                            '<p class="la-cal-search-item__sub">' + escapeHtmlLa(props.startsLabel || '') + ' · ' + escapeHtmlLa(props.client || 'Client') + ' · ' + escapeHtmlLa(props.statusLabel || props.status || 'Pending') + '</p>' +
+                            '<p class="la-cal-search-item__title">' + escapeHtmlLa(ev.title || apptI18n.appointment) + '</p>' +
+                            '<p class="la-cal-search-item__sub">' + escapeHtmlLa(props.startsLabel || '') + ' · ' + escapeHtmlLa(props.client || apptI18n.client) + ' · ' + escapeHtmlLa(props.statusLabel || props.status || apptI18n.pending) + '</p>' +
                         '</span>' +
                     '</button>';
                 });
@@ -2061,6 +2089,31 @@ $html = <<<'HTML'
 HTML;
 
 $replacements = [
+    '{HTML_LANG}' => lawyer_portal_html_lang(),
+    '{PAGE_TITLE}' => htmlspecialchars($pageTitle),
+    '{BREADCRUMB_NAVBAR}' => $breadcrumbNavbar,
+    '{LBL_CALENDAR_TITLE}' => htmlspecialchars(lawyer_tf('appointments.calendar_title', 'Appointments Calendar')),
+    '{LBL_SEARCH_APPTS}' => htmlspecialchars(lawyer_tf('appointments.search_label', 'Search appointments')),
+    '{LBL_CALENDAR_SUB}' => htmlspecialchars(lawyer_tf('appointments.calendar_sub', 'Use the search bar below to find appointments quickly, or click a calendar event')),
+    '{LBL_STATUS_PENDING}' => htmlspecialchars(lawyer_appointment_status_label('pending')),
+    '{LBL_STATUS_ACCEPTED}' => htmlspecialchars(lawyer_appointment_status_label('accepted')),
+    '{LBL_STATUS_REJECTED}' => htmlspecialchars(lawyer_appointment_status_label('rejected')),
+    '{LBL_SCHEDULE}' => htmlspecialchars(lawyer_tf('appointments.schedule', 'Schedule appointment')),
+    '{PH_SEARCH_CAL}' => htmlspecialchars(lawyer_tf('appointments.search_placeholder_cal', 'Search by matter, client, date, status…')),
+    '{LBL_RESET}' => htmlspecialchars(lawyer_tf('calendar.reset', 'Reset')),
+    '{LBL_RESET_SEARCH}' => htmlspecialchars(lawyer_tf('calendar.reset_search', 'Reset search')),
+    '{LBL_UPCOMING}' => htmlspecialchars(lawyer_tf('appointments.upcoming', 'Upcoming')),
+    '{LBL_VIEW_LIST}' => htmlspecialchars(lawyer_tf('appointments.view_list', 'View list')),
+    '{COL_MATTER}' => htmlspecialchars(lawyer_tf('appointments.col_matter', 'Matter')),
+    '{COL_CLIENT}' => htmlspecialchars(lawyer_tf('appointments.col_client', 'Client')),
+    '{COL_DATETIME}' => htmlspecialchars(lawyer_tf('appointments.col_datetime', 'Date & Time')),
+    '{COL_NOTES}' => htmlspecialchars(lawyer_tf('appointments.col_notes', 'Notes')),
+    '{COL_STATUS}' => htmlspecialchars(lawyer_tf('appointments.col_status', 'Status')),
+    '{COL_CASE}' => htmlspecialchars(lawyer_tf('common.case', 'Case')),
+    '{COL_ACTIONS}' => htmlspecialchars(lawyer_tf('common.actions', 'Actions')),
+    '{APPT_I18N_JSON}' => $apptI18nJson,
+    '{FC_LOCALE_SCRIPT}' => lawyer_portal_fc_locale_script(),
+    '{LBL_CARD_SUB}' => htmlspecialchars(lawyer_tf('appointments.card_sub', 'Schedule meetings with clients, accept requests, or reschedule')),
     '{MESSAGE}' => $messageHtml,
     '{MIN_DATE}' => date('Y-m-d'),
     '{LAWYER_AVAILABILITY_BY_DATE_JSON}' => json_encode($rescheduleAvailabilityByDate, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP),

@@ -27,9 +27,7 @@ body.lawyer-client-view-page,
 body.lawyer-court-tracking-page,
 body.lawyer-tasks-page,
 body.lawyer-profile-page,
-body.lawyer-settings-page,
 body.lawyer-profile-page.bg-gray-100,
-body.lawyer-settings-page.bg-gray-100,
 .search-portal-page--lawyer {
     background: var(--lawyer-portal-content-bg) !important;
     background-color: var(--lawyer-portal-content-bg) !important;
@@ -48,7 +46,6 @@ body.lawyer-client-view-page > .min-height-300,
 body.lawyer-court-tracking-page > .min-height-300,
 body.lawyer-tasks-page > .min-height-300,
 body.lawyer-profile-page > .min-height-300,
-body.lawyer-settings-page > .min-height-300,
 .search-portal-page--lawyer > .min-height-300 {
     display: none !important;
 }
@@ -114,7 +111,77 @@ body.lawyer-profile-page:not(.legalpro-dark-mode) .main-content .card,
     background-color: #fff !important;
 }
 
-/* Lawyer settings hero — white text on gradient banner (light mode) */
+/* Lawyer settings — same shell as client settings (account page) */
+body.lawyer-settings-page > .min-height-300 {
+    display: none !important;
+}
+
+body.lawyer-settings-page .main-content.border-radius-lg {
+    border-radius: 0 !important;
+}
+
+/* Lawyer settings — hero gradient cards: white text (light mode) */
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cp-hero-card,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cp-hero-card .cp-hero-kicker,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cp-hero-card .cp-hero-title,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cp-hero-card .cp-hero-sub,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cp-hero-card .cp-hero-meta,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cp-stat-pill .num,
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cp-stat-pill .lbl {
+    color: #fff !important;
+}
+
+body.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card .btn-primary-solid {
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
+}
+
+html.legalpro-theme-dark body.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card {
+    background: linear-gradient(135deg, #464f68 0%, #3d455c 100%) !important;
+    background-image: none !important;
+}
+
+html.legalpro-theme-dark body.legalpro-lawyer-portal.lawyer-settings-page .cp-panel,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-panel {
+    background: var(--lp-dark-surface, #343b4f) !important;
+    background-color: var(--lp-dark-surface, #343b4f) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card .cp-hero-kicker,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card .cp-hero-title,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card .cp-hero-sub,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card .cp-hero-meta,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card .cp-hero-date,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-stat-pill .num,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-stat-pill .lbl,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card p {
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-hero-card .btn-primary-solid {
+    color: var(--lp-dark-surface, #464f68) !important;
+}
+
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-panel-header h5,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-panel-body,
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-panel-body .text-muted {
+    color: var(--lp-dark-text-secondary, #e2e8f2) !important;
+}
+
+body.legalpro-dark-mode.legalpro-lawyer-portal.lawyer-settings-page .cp-panel-header p {
+    color: var(--lp-dark-text-muted, #a8b3cf) !important;
+}
+
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page [class*="-hero-card"] .btn-primary-solid {
+    color: var(--legalpro-theme-primary, #5e72e4) !important;
+}
+
+body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cp-hero-card .cp-hero-date {
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* Legacy lawyer settings hero — white text on gradient banner (light mode) */
 body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cs-hero,
 body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cs-hero__title,
 body.legalpro-lawyer-portal:not(.legalpro-dark-mode).lawyer-settings-page .cs-hero__kicker,
@@ -524,8 +591,7 @@ body.legalpro-dark-mode.lawyer-case-view-page,
 body.legalpro-dark-mode.lawyer-client-view-page,
 body.legalpro-dark-mode.lawyer-court-tracking-page,
 body.legalpro-dark-mode.lawyer-tasks-page,
-body.legalpro-dark-mode.lawyer-profile-page,
-body.legalpro-dark-mode.lawyer-settings-page {
+body.legalpro-dark-mode.lawyer-profile-page {
     background: var(--lawyer-portal-content-bg, var(--lp-dark-bg, #2a3040)) !important;
     background-color: var(--lawyer-portal-content-bg, var(--lp-dark-bg, #2a3040)) !important;
 }
@@ -541,7 +607,6 @@ body.legalpro-dark-mode.lawyer-client-view-page .main-content .card,
 body.legalpro-dark-mode.lawyer-court-tracking-page .main-content .card,
 body.legalpro-dark-mode.lawyer-tasks-page .main-content .card,
 body.legalpro-dark-mode.lawyer-profile-page .main-content .card,
-body.legalpro-dark-mode.lawyer-settings-page .main-content .card,
 body.legalpro-dark-mode.search-portal-page--lawyer .main-content .card {
     background-color: var(--lp-dark-surface, #343b4f) !important;
     background: var(--lp-dark-surface, #343b4f) !important;
@@ -1069,16 +1134,25 @@ body.legalpro-dark-mode.legalpro-lawyer-portal .lp-lawyer-search-reset-btn:hover
     margin-top: auto;
 }
 
+.lawyer-client-view-page .lcv-panel__head:has(+ .lcv-tabs-wrap) {
+    padding-bottom: 0.5rem;
+}
+
+.lawyer-client-view-page .lcv-panel__head:has(+ .lcv-tabs-wrap) p {
+    margin-bottom: 0;
+}
+
 .lawyer-client-view-page .lcv-tabs-wrap {
-    padding: 0 1.35rem;
+    padding: 0 1.35rem 0.4rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    margin-top: 0.2rem;
 }
 
 .lawyer-client-view-page .lcv-tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    padding: 0.85rem 0 0;
+    padding: 0.25rem 0 0;
     border: 0;
 }
 
@@ -1558,16 +1632,25 @@ body.legalpro-dark-mode.lawyer-client-view-page .lcv-table tbody td {
     margin-top: auto;
 }
 
+.lawyer-case-view-page .lcv-panel__head:has(+ .lcv-tabs-wrap) {
+    padding-bottom: 0.5rem;
+}
+
+.lawyer-case-view-page .lcv-panel__head:has(+ .lcv-tabs-wrap) p {
+    margin-bottom: 0;
+}
+
 .lawyer-case-view-page .lcv-tabs-wrap {
-    padding: 0 1.35rem;
+    padding: 0 1.35rem 0.4rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    margin-top: 0.2rem;
 }
 
 .lawyer-case-view-page .lcv-tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    padding: 0.85rem 0 0;
+    padding: 0.25rem 0 0;
     border: 0;
 }
 

@@ -133,13 +133,21 @@ foreach ($timeSlots as $slot) {
     $endTime = substr($slot['end_time'], 0, 5);
     $appointmentId = isset($slot['appointment_id']) ? (int) $slot['appointment_id'] : 0;
     $isAppointment = $appointmentId > 0;
-    $timeLabel = date('g:i A', strtotime($slot['start_time'])) . ' - ' . date('g:i A', strtotime($slot['end_time']));
+    $timeLabel = lawyer_portal_format_time_range($slot['start_time'], $slot['end_time']);
     $statusKey = $isAppointment ? 'unavailable' : $slotType;
-    $startLabel = date('g:i A', strtotime($slot['start_time']));
-    $shortLabel = $isAppointment ? 'Appt · ' . $startLabel : ucfirst($slotType) . ' · ' . $startLabel;
-    $title = $isAppointment
-        ? 'Unavailable — Appointment ' . $timeLabel
-        : ucfirst($slotType) . ' — ' . $timeLabel;
+    $startLabel = lawyer_portal_format_time($slot['start_time']);
+    if ($isAppointment) {
+        $title = lawyer_tf('availability.unavailable_appt', 'Unavailable — Appointment :time', ['time' => $timeLabel]);
+        $shortLabel = lawyer_tf('availability.appt_short', 'Appt · :time', ['time' => $startLabel]);
+    } else {
+        $slotKey = $slotType === 'available' ? 'availability.available_slot' : 'availability.unavailable_slot';
+        $fallback = ($slotType === 'available' ? 'Available' : 'Unavailable') . ' — :time';
+        $title = lawyer_tf($slotKey, $fallback, ['time' => $timeLabel]);
+        $typeLabel = $slotType === 'available'
+            ? lawyer_tf('availability.legend_available', 'Available')
+            : lawyer_tf('availability.legend_unavailable', 'Unavailable');
+        $shortLabel = $typeLabel . ' · ' . $startLabel;
+    }
     $availabilityEvents[] = [
         'id' => (string)$slot['id'],
         'title' => $title,
@@ -167,7 +175,7 @@ foreach ($timeSlots as $slot) {
 
 function buildAvailabilityTimeSelectOptions(string $minTime = '06:00', string $maxTime = '22:00'): string
 {
-    $html = '<option value="">Select time</option>';
+    $html = '<option value="">' . htmlspecialchars(lawyer_tf('availability.select_time', 'Select time')) . '</option>';
     $startMinutes = (int) substr($minTime, 0, 2) * 60 + (int) substr($minTime, 3, 2);
     $endMinutes = (int) substr($maxTime, 0, 2) * 60 + (int) substr($maxTime, 3, 2);
     $step = 30;
@@ -176,7 +184,7 @@ function buildAvailabilityTimeSelectOptions(string $minTime = '06:00', string $m
         $hours = intdiv($minutes, 60);
         $mins = $minutes % 60;
         $value = sprintf('%02d:%02d', $hours, $mins);
-        $label = date('g:i A', strtotime($value));
+        $label = lawyer_portal_format_time($value);
         $html .= '<option value="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '">'
             . htmlspecialchars($label) . '</option>';
     }
@@ -186,19 +194,42 @@ function buildAvailabilityTimeSelectOptions(string $minTime = '06:00', string $m
 
 $availabilityTimeOptions = buildAvailabilityTimeSelectOptions();
 
+$pageTitle = lawyer_tf('availability.manage_title', 'Manage My Availability');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle);
+$availI18nJson = json_encode([
+    'dateLocale' => lawyer_portal_js_date_locale(),
+    'fcLocale' => lawyer_portal_fc_locale(),
+    'days' => lawyer_portal_day_names(),
+    'fcButtons' => lawyer_portal_fc_button_text(),
+    'noSlots' => lawyer_tf('availability.no_slots', 'No slots set'),
+    'noMatchSearch' => lawyer_tf('availability.no_match_search', 'No availability matches your search.'),
+    'slotLabel' => lawyer_tf('availability.slot_label', 'Slot'),
+    'addSlot' => lawyer_tf('availability.add_slot', 'Add Time Slot'),
+    'editSlot' => lawyer_tf('availability.edit_slot', 'Edit Time Slot'),
+    'saveSlot' => lawyer_tf('availability.save_slot', 'Save Slot'),
+    'updateSlot' => lawyer_tf('availability.update_slot', 'Update Slot'),
+    'deleteSlot' => lawyer_tf('availability.delete_slot', 'Delete slot'),
+    'confirmDeleteSlot' => lawyer_tf('availability.confirm_delete_slot', 'Delete this time slot?'),
+    'confirmDeleteAppt' => lawyer_tf('availability.confirm_delete_appt', 'Remove this appointment block? The linked appointment will be marked as rejected.'),
+    'confirmRemoveApptBlock' => lawyer_tf('availability.confirm_delete_appt', 'Remove this appointment block? The linked appointment will be marked as rejected.'),
+    'available' => lawyer_tf('availability.legend_available', 'Available'),
+    'unavailable' => lawyer_tf('availability.legend_unavailable', 'Unavailable'),
+    'use24h' => getLawyerPortalLocale() === 'fr',
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+
 ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
 
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - My Availability</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -447,19 +478,7 @@ $html = <<<'HTML'
     {NAVIGATION}
 
     <main class="main-content position-relative border-radius-lg">
-        <!-- Navbar -->
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Availability</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white">Manage My Availability</h6>
-                </nav>
-            </div>
-        </nav>
-        <!-- End Navbar -->
+        {BREADCRUMB_NAVBAR}
         <div class="container-fluid py-4">
             {$message}
 
@@ -470,20 +489,20 @@ $html = <<<'HTML'
                             <div class="la-availability-hub__intro">
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                     <div>
-                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Availability Calendar</h6>
-                                        <p class="text-sm mb-0 text-muted">Week view shows your detailed schedule; switch to month for the full calendar overview</p>
+                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">{LBL_CALENDAR_TITLE}</h6>
+                                        <p class="text-sm mb-0 text-muted">{LBL_CALENDAR_SUB}</p>
                                         <div class="dashboard-legend-pills mt-2">
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Available</span>
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Unavailable</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> {LBL_AVAILABLE}</span>
+                                            <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> {LBL_UNAVAILABLE}</span>
                                         </div>
                                     </div>
                                     <button type="button" class="btn btn-sm bg-gradient-primary mb-0" id="addSlotBtn">
-                                        <i class="fas fa-plus me-1"></i>Add Time Slot
+                                        <i class="fas fa-plus me-1"></i>{LBL_ADD_SLOT}
                                     </button>
                                 </div>
                             </div>
                             <div class="la-avail-search-wrap la-avail-search-wrap--featured">
-                                <label class="la-avail-search-label" for="laAvailSearchInput">Search availability</label>
+                                <label class="la-avail-search-label" for="laAvailSearchInput">{LBL_SEARCH_AVAIL}</label>
                                 <div class="la-avail-search-field">
                                     <span class="la-avail-search-icon" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
@@ -492,21 +511,21 @@ $html = <<<'HTML'
                                         </svg>
                                     </span>
                                     <input type="search" id="laAvailSearchInput" class="la-avail-search-input"
-                                           placeholder="Search by day, date, time, available, unavailable…" autocomplete="off">
-                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laAvailSearchInput" aria-label="Reset search">Reset</button>
+                                           placeholder="{PH_SEARCH_AVAIL}" autocomplete="off">
+                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laAvailSearchInput" aria-label="{LBL_RESET_SEARCH}">{LBL_RESET}</button>
                                 </div>
                             </div>
                         </div>
                         <div class="dashboard-calendar-hub__body">
                             <div class="availability-view-toggle" role="tablist" aria-label="Calendar view">
-                                <button type="button" class="availability-view-toggle__btn is-active" data-availability-view="week" role="tab" aria-selected="true">Week</button>
-                                <button type="button" class="availability-view-toggle__btn" data-availability-view="month" role="tab" aria-selected="false">Month</button>
+                                <button type="button" class="availability-view-toggle__btn is-active" data-availability-view="week" role="tab" aria-selected="true">{LBL_WEEK}</button>
+                                <button type="button" class="availability-view-toggle__btn" data-availability-view="month" role="tab" aria-selected="false">{LBL_MONTH}</button>
                             </div>
                             <div id="availabilityWeekPanel">
                                 <div class="availability-week-nav">
-                                    <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="prevWeekBtn">Previous Week</button>
+                                    <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="prevWeekBtn">{LBL_PREV_WEEK}</button>
                                     <span class="availability-fallback-week-label mb-0" id="weekRangeLabel"></span>
-                                    <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="nextWeekBtn">Next Week</button>
+                                    <button type="button" class="btn btn-primary btn-sm mb-0 text-white" id="nextWeekBtn">{LBL_NEXT_WEEK}</button>
                                 </div>
                                 <div id="availabilityWeekCalendar"></div>
                             </div>
@@ -524,7 +543,7 @@ $html = <<<'HTML'
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="availabilityModalTitle">Add Time Slot</h5>
+                    <h5 class="modal-title" id="availabilityModalTitle">{LBL_ADD_SLOT}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="">
@@ -533,35 +552,35 @@ $html = <<<'HTML'
                         <input type="hidden" name="slot_id" id="slot_id" value="">
                         <input type="hidden" name="day_of_week" id="day_of_week" value="">
                         <div class="mb-3">
-                            <label class="form-control-label">Date</label>
+                            <label class="form-control-label">{LBL_DATE}</label>
                             <input type="date" class="form-control" name="slot_date" id="slot_date" required>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-control-label">Start Time</label>
+                                <label class="form-control-label">{LBL_START_TIME}</label>
                                 <select class="form-control form-select" name="start_time" id="start_time" required>
                                     {AVAILABILITY_TIME_OPTIONS}
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-control-label">End Time</label>
+                                <label class="form-control-label">{LBL_END_TIME}</label>
                                 <select class="form-control form-select" name="end_time" id="end_time" required>
                                     {AVAILABILITY_TIME_OPTIONS}
                                 </select>
                             </div>
                         </div>
                         <div class="mb-0">
-                            <label class="form-control-label">Availability Status</label>
+                            <label class="form-control-label">{LBL_STATUS}</label>
                             <select class="form-control" name="slot_type" id="slot_type" required>
-                                <option value="available">Available for appointments</option>
-                                <option value="unavailable">Unavailable / break</option>
+                                <option value="available">{OPT_AVAILABLE}</option>
+                                <option value="unavailable">{OPT_UNAVAILABLE}</option>
                             </select>
-                            <small class="text-muted d-block mt-2">Use <strong>Available</strong> to open a time range for appointments, or <strong>Unavailable</strong> for breaks and blocked time.</small>
+                            <small class="text-muted d-block mt-2">{LBL_STATUS_HELP}</small>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="availabilitySaveButton">Save Slot</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{LBL_CANCEL}</button>
+                        <button type="submit" class="btn btn-primary" id="availabilitySaveButton">{LBL_SAVE_SLOT}</button>
                     </div>
                 </form>
             </div>
@@ -578,9 +597,11 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    {FC_LOCALE_SCRIPT}
     <script src="../assets/js/legalpro-sidenav-bootstrap.js?v=1"></script>
 <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
+        var availI18n = {AVAIL_I18N_JSON};
         var availabilityEvents = {AVAILABILITY_EVENTS_JSON};
         var availabilitySearchQuery = '';
         var availabilityCalendarInstance = null;
@@ -661,8 +682,9 @@ $html = <<<'HTML'
         function formatWeekRangeLabel(weekStartIso) {
             var weekStart = parseIsoDate(weekStartIso);
             var weekEnd = parseIsoDate(addDaysToIso(weekStartIso, 6));
-            var startStr = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            var endStr = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            var locale = availI18n.dateLocale || 'en-US';
+            var startStr = weekStart.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
+            var endStr = weekEnd.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
             return startStr + ' – ' + endStr;
         }
 
@@ -685,6 +707,9 @@ $html = <<<'HTML'
             var parts = String(timeValue).split(':');
             var hours = parseInt(parts[0], 10);
             var minutes = parts[1] || '00';
+            if (availI18n.use24h) {
+                return String(hours).padStart(2, '0') + ':' + minutes;
+            }
             var period = hours >= 12 ? 'PM' : 'AM';
             var displayHours = hours % 12;
             if (displayHours === 0) {
@@ -739,8 +764,8 @@ $html = <<<'HTML'
         }
 
         function openAvailabilityModal(day, slotId, slotDate, startTime, endTime, slotType) {
-            document.getElementById('availabilityModalTitle').textContent = slotId ? 'Edit Time Slot' : 'Add Time Slot';
-            document.getElementById('availabilitySaveButton').textContent = slotId ? 'Update Slot' : 'Save Slot';
+            document.getElementById('availabilityModalTitle').textContent = slotId ? availI18n.editSlot : availI18n.addSlot;
+            document.getElementById('availabilitySaveButton').textContent = slotId ? availI18n.updateSlot : availI18n.saveSlot;
             document.getElementById('slot_id').value = slotId || '';
             document.getElementById('slot_date').value = slotDate || '';
             var resolvedDay = day || (slotDate ? dayNameFromDate(parseIsoDate(slotDate)) : '');
@@ -764,8 +789,8 @@ $html = <<<'HTML'
                 return;
             }
             var confirmMessage = isAppointment
-                ? 'Remove this appointment block? The linked appointment will be marked as rejected.'
-                : 'Delete this time slot?';
+                ? availI18n.confirmDeleteAppt
+                : availI18n.confirmDeleteSlot;
             if (!confirm(confirmMessage)) {
                 return;
             }
@@ -789,7 +814,7 @@ $html = <<<'HTML'
         function renderAvailabilityMonthEvent(arg) {
             var props = arg.event.extendedProps || {};
             var statusKey = props.statusKey || availabilityStatusKey(props);
-            var label = props.shortLabel || arg.timeText || arg.event.title || 'Slot';
+            var label = props.shortLabel || arg.timeText || arg.event.title || availI18n.slotLabel;
             var wrap = document.createElement('div');
             wrap.className = 'dashboard-cal-event availability-cal-event';
             wrap.innerHTML =
@@ -813,6 +838,7 @@ $html = <<<'HTML'
 
             availabilityCalendarInstance = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                locale: availI18n.fcLocale,
                 height: 'auto',
                 firstDay: 0,
                 navLinks: true,
@@ -820,10 +846,12 @@ $html = <<<'HTML'
                 fixedWeekCount: false,
                 dayMaxEvents: 4,
                 moreLinkClick: 'popover',
-                eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
+                eventTimeFormat: availI18n.use24h
+                    ? { hour: '2-digit', minute: '2-digit', hour12: false }
+                    : { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
                 displayEventTime: true,
                 displayEventEnd: false,
-                buttonText: { today: 'Today' },
+                buttonText: availI18n.fcButtons,
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -839,7 +867,7 @@ $html = <<<'HTML'
                     var props = info.event.extendedProps || {};
                     var slotId = props.slotId || info.event.id;
                     if (props.readOnly) {
-                        if (slotId && confirm('Remove this appointment block? The linked appointment will be marked as rejected.')) {
+                        if (slotId && confirm(availI18n.confirmRemoveApptBlock)) {
                             deleteAvailabilitySlot(slotId, true);
                         }
                         return;
@@ -886,7 +914,7 @@ $html = <<<'HTML'
                 weekLabelEl.textContent = formatWeekRangeLabel(weekStartIso);
             }
 
-            var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            var dayNames = availI18n.days || ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             var visibleDays = [];
             var filteredEvents = getFilteredAvailabilityEvents();
 
@@ -915,7 +943,7 @@ $html = <<<'HTML'
             });
 
             if (availabilitySearchQuery && visibleDays.length === 0) {
-                calendarEl.innerHTML = '<div class="text-center text-muted py-4">No availability matches your search.</div>';
+                calendarEl.innerHTML = '<div class="text-center text-muted py-4">' + escapeHtmlAvailability(availI18n.noMatchSearch) + '</div>';
                 return;
             }
 
@@ -945,7 +973,7 @@ $html = <<<'HTML'
 
             visibleDays.forEach(function (day) {
                 var dayDate = parseIsoDate(day.dayDateIso);
-                var dateLabel = dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                var dateLabel = dayDate.toLocaleDateString(availI18n.dateLocale || 'en-US', { month: 'short', day: 'numeric' });
                 html += '<div><span class="availability-fallback-day-name">' + day.dayName + '</span>';
                 html += '<span class="availability-fallback-day-date">' + dateLabel + '</span></div>';
             });
@@ -954,7 +982,7 @@ $html = <<<'HTML'
             visibleDays.forEach(function (day) {
                 html += '<div class="availability-fallback-day" data-date="' + day.dayDateIso + '" data-search="' + day.dayHaystack + '">';
                 if (day.events.length === 0) {
-                    html += '<p class="text-sm text-muted mb-0">No slots set</p>';
+                    html += '<p class="text-sm text-muted mb-0">' + escapeHtmlAvailability(availI18n.noSlots) + '</p>';
                 } else {
                     day.events.forEach(function (event) {
                         var props = event.extendedProps || {};
@@ -974,7 +1002,7 @@ $html = <<<'HTML'
                             if (props.isAppointment) {
                                 html += ' data-is-appointment="1"';
                             }
-                            html += ' title="Delete slot" aria-label="Delete slot">&times;</button>';
+                            html += ' title="' + escapeHtmlAvailability(availI18n.deleteSlot) + '" aria-label="' + escapeHtmlAvailability(availI18n.deleteSlot) + '">&times;</button>';
                         }
                         html += '</div>';
                     });
@@ -1095,6 +1123,33 @@ $lawyerName = isset($_SESSION['lawyer_name']) ? $_SESSION['lawyer_name'] : 'Lawy
 
 $html = str_replace('{$message}', $messageHtml, $html);
 $html = str_replace('{NAVIGATION}', $navHtml, $html);
+$html = str_replace('{HTML_LANG}', lawyer_portal_html_lang(), $html);
+$html = str_replace('{PAGE_TITLE}', htmlspecialchars($pageTitle), $html);
+$html = str_replace('{BREADCRUMB_NAVBAR}', $breadcrumbNavbar, $html);
+$html = str_replace('{LBL_CALENDAR_TITLE}', htmlspecialchars(lawyer_tf('availability.calendar_title', 'Availability Calendar')), $html);
+$html = str_replace('{LBL_CALENDAR_SUB}', htmlspecialchars(lawyer_tf('availability.calendar_sub', 'Week view shows your detailed schedule; switch to month for the full calendar overview')), $html);
+$html = str_replace('{LBL_AVAILABLE}', htmlspecialchars(lawyer_tf('availability.legend_available', 'Available')), $html);
+$html = str_replace('{LBL_UNAVAILABLE}', htmlspecialchars(lawyer_tf('availability.legend_unavailable', 'Unavailable')), $html);
+$html = str_replace('{LBL_ADD_SLOT}', htmlspecialchars(lawyer_tf('availability.add_slot', 'Add Time Slot')), $html);
+$html = str_replace('{LBL_SEARCH_AVAIL}', htmlspecialchars(lawyer_tf('availability.search_label', 'Search availability')), $html);
+$html = str_replace('{PH_SEARCH_AVAIL}', htmlspecialchars(lawyer_tf('availability.search_placeholder', 'Search by day, date, time, available, unavailable…')), $html);
+$html = str_replace('{LBL_RESET}', htmlspecialchars(lawyer_tf('calendar.reset', 'Reset')), $html);
+$html = str_replace('{LBL_RESET_SEARCH}', htmlspecialchars(lawyer_tf('calendar.reset_search', 'Reset search')), $html);
+$html = str_replace('{LBL_WEEK}', htmlspecialchars(lawyer_tf('availability.week', 'Week')), $html);
+$html = str_replace('{LBL_MONTH}', htmlspecialchars(lawyer_tf('availability.month', 'Month')), $html);
+$html = str_replace('{LBL_PREV_WEEK}', htmlspecialchars(lawyer_tf('availability.prev_week', 'Previous Week')), $html);
+$html = str_replace('{LBL_NEXT_WEEK}', htmlspecialchars(lawyer_tf('availability.next_week', 'Next Week')), $html);
+$html = str_replace('{LBL_DATE}', htmlspecialchars(lawyer_tf('availability.date', 'Date')), $html);
+$html = str_replace('{LBL_START_TIME}', htmlspecialchars(lawyer_tf('availability.start_time', 'Start Time')), $html);
+$html = str_replace('{LBL_END_TIME}', htmlspecialchars(lawyer_tf('availability.end_time', 'End Time')), $html);
+$html = str_replace('{LBL_STATUS}', htmlspecialchars(lawyer_tf('availability.status_label', 'Availability Status')), $html);
+$html = str_replace('{OPT_AVAILABLE}', htmlspecialchars(lawyer_tf('availability.opt_available', 'Available for appointments')), $html);
+$html = str_replace('{OPT_UNAVAILABLE}', htmlspecialchars(lawyer_tf('availability.opt_unavailable', 'Unavailable / break')), $html);
+$html = str_replace('{LBL_STATUS_HELP}', htmlspecialchars(lawyer_tf('availability.status_help', 'Use Available to open a time range for appointments, or Unavailable for breaks and blocked time.')), $html);
+$html = str_replace('{LBL_CANCEL}', htmlspecialchars(lawyer_tf('common.cancel', 'Cancel')), $html);
+$html = str_replace('{LBL_SAVE_SLOT}', htmlspecialchars(lawyer_tf('availability.save_slot', 'Save Slot')), $html);
+$html = str_replace('{AVAIL_I18N_JSON}', $availI18nJson, $html);
+$html = str_replace('{FC_LOCALE_SCRIPT}', lawyer_portal_fc_locale_script(), $html);
 $html = str_replace('{$lawyerName}', htmlspecialchars($lawyerName), $html);
 $html = str_replace('{AVAILABILITY_EVENTS_JSON}', json_encode($availabilityEvents), $html);
 $html = str_replace('{AVAILABILITY_TIME_OPTIONS}', $availabilityTimeOptions, $html);

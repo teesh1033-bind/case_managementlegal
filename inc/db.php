@@ -373,6 +373,8 @@ require_once __DIR__ . '/../lib/branding.php';
 require_once __DIR__ . '/../lib/bank_accounts.php';
 require_once __DIR__ . '/../lib/portal-theme.php';
 require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/lawyer-locale.php';
+require_once __DIR__ . '/../lib/lawyer-portal-i18n.php';
 
 /**
  * Allow admin/lawyer staff, or the owning client, to access invoice/receipt downloads.

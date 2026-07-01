@@ -269,7 +269,7 @@ $iconUpload = legalpro_icon('upload');
 $servicesHtml = '';
 $totalFees = 0;
 if (empty($services)) {
-    $servicesHtml = '<tr><td colspan="2" class="text-center text-muted py-3">No services added yet</td></tr>';
+    $servicesHtml = '<tr><td colspan="2" class="text-center text-muted py-3">' . htmlspecialchars(lawyer_tf('case_view.no_services', 'No services added yet')) . '</td></tr>';
 } else {
     foreach ($services as $service) {
         $servicesHtml .= '
@@ -281,7 +281,7 @@ if (empty($services)) {
     }
     $servicesHtml .= '
     <tr class="lcv-table-total">
-        <td><strong>Total estimated fees</strong></td>
+        <td><strong>' . htmlspecialchars(lawyer_tf('case_view.total_fees', 'Total estimated fees')) . '</strong></td>
         <td class="text-end"><strong>' . formatCurrency($totalFees) . '</strong></td>
     </tr>';
 }
@@ -289,7 +289,7 @@ if (empty($services)) {
 // Build stages HTML
 $stagesHtml = '';
 if (empty($stages)) {
-    $stagesHtml = '<tr><td colspan="6" class="text-center text-muted py-3">No stages defined yet</td></tr>';
+    $stagesHtml = '<tr><td colspan="6" class="text-center text-muted py-3">' . htmlspecialchars(lawyer_tf('case_view.no_stages', 'No stages defined yet')) . '</td></tr>';
 } else {
     foreach ($stages as $stage) {
         $stagesHtml .= '
@@ -307,7 +307,7 @@ if (empty($stages)) {
 // Build appointments HTML
 $appointmentsHtml = '';
 if (empty($appointments)) {
-    $appointmentsHtml = '<tr><td colspan="4" class="text-center text-muted py-3">No appointments scheduled</td></tr>';
+    $appointmentsHtml = '<tr><td colspan="4" class="text-center text-muted py-3">' . htmlspecialchars(lawyer_tf('case_view.no_appointments', 'No appointments scheduled')) . '</td></tr>';
 } else {
     foreach ($appointments as $appointment) {
         $appointmentDate = date('M d, Y', strtotime($appointment['appointment_date']));
@@ -327,7 +327,7 @@ if (empty($appointments)) {
 // Build documents HTML
 $documentsHtml = '';
 if (empty($documents)) {
-    $documentsHtml = '<tr><td colspan="4" class="text-center text-muted py-3">No documents uploaded</td></tr>';
+    $documentsHtml = '<tr><td colspan="4" class="text-center text-muted py-3">' . htmlspecialchars(lawyer_tf('case_view.no_documents', 'No documents uploaded')) . '</td></tr>';
 } else {
     foreach ($documents as $document) {
         $documentId = (int) ($document['id'] ?? 0);
@@ -424,7 +424,7 @@ $caseDescHeroHtml = '';
 if (!empty($case['description'])) {
     $caseDescHeroHtml = '
     <div class="lcv-case-desc">
-        <h6>Description</h6>
+        <h6>' . htmlspecialchars(lawyer_tf('tasks.form_description', 'Description')) . '</h6>
         <p>' . nl2br(htmlspecialchars((string) $case['description'])) . '</p>
     </div>';
 }
@@ -433,15 +433,20 @@ ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
 
+$pageTitle = (string) ($case['title'] ?? lawyer_tf('case_view.page_title', 'Case Details'));
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle, [
+    ['label' => lawyer_tf('cases.page_title', 'My Cases'), 'url' => 'lawyer-cases.php'],
+]);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - Case Details</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -456,28 +461,17 @@ $html = <<<'HTML'
     {NAVIGATION}
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-dashboard.php">Lawyer Portal</a></li>
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-cases.php">My Cases</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Case #{CASE_ID}</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">{CASE_TITLE}</h6>
-                </nav>
-            </div>
-        </nav>
+        {BREADCRUMB_NAVBAR}
 
         <div class="container-fluid py-4">
             <div class="card lcv-hero mb-4">
                 <div class="lcv-hero__gradient">
-                    <a href="lawyer-cases.php" class="lcv-back">{ICON_ARROW_LEFT} Back to cases</a>
+                    <a href="lawyer-cases.php" class="lcv-back">{ICON_ARROW_LEFT} {LBL_BACK_TO_CASES}</a>
                     <div class="lcv-hero__main">
                         <div class="lcv-avatar" aria-hidden="true">{CASE_INITIALS}</div>
                         <div class="min-width-0">
                             <h1 class="lcv-hero__name">{CASE_TITLE}</h1>
-                            <p class="lcv-hero__meta">{CASE_NUMBER} · Client: {CLIENT_NAME}</p>
+                            <p class="lcv-hero__meta">{CASE_NUMBER} · {LBL_CLIENT_PREFIX} {CLIENT_NAME}</p>
                             <div class="lcv-hero__badges">{STATUS_BADGE} {PRIORITY_BADGE} {CATEGORY_BADGE}</div>
                         </div>
                     </div>
@@ -489,28 +483,28 @@ $html = <<<'HTML'
                 <div class="lcv-glance__item">
                     <div>
                         <div class="lcv-glance__val">{SERVICES_COUNT}</div>
-                        <div class="lcv-glance__lbl">Services</div>
+                        <div class="lcv-glance__lbl">{LBL_SERVICES}</div>
                     </div>
                     <div class="lcv-glance__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_BRIEFCASE}</div>
                 </div>
                 <div class="lcv-glance__item">
                     <div>
                         <div class="lcv-glance__val">{APPOINTMENTS_COUNT}</div>
-                        <div class="lcv-glance__lbl">Appointments</div>
+                        <div class="lcv-glance__lbl">{LBL_APPOINTMENTS}</div>
                     </div>
                     <div class="lcv-glance__icon" style="background:rgba(17,205,239,.12);color:#11cdef;">{ICON_CALENDAR}</div>
                 </div>
                 <div class="lcv-glance__item">
                     <div>
                         <div class="lcv-glance__val">{DOCUMENTS_COUNT}</div>
-                        <div class="lcv-glance__lbl">Documents</div>
+                        <div class="lcv-glance__lbl">{LBL_DOCUMENTS}</div>
                     </div>
                     <div class="lcv-glance__icon" style="background:rgba(251,99,64,.12);color:#fb6340;">{ICON_DOC_ROW}</div>
                 </div>
                 <div class="lcv-glance__item">
                     <div>
                         <div class="lcv-glance__val">{COMMENTS_COUNT}</div>
-                        <div class="lcv-glance__lbl">Comments</div>
+                        <div class="lcv-glance__lbl">{LBL_COMMENTS}</div>
                     </div>
                     <div class="lcv-glance__icon" style="background:rgba(45,206,137,.12);color:#2dce89;">{ICON_COMMENT_EMPTY}</div>
                 </div>
@@ -522,8 +516,8 @@ $html = <<<'HTML'
                         <div class="lcv-panel__head">
                             <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_USER}</div>
                             <div>
-                                <h6>Client information</h6>
-                                <p>Contact details for this case</p>
+                                <h6>{LBL_CLIENT_INFO}</h6>
+                                <p>{LBL_CLIENT_INFO_SUB}</p>
                             </div>
                             {CLIENT_VIEW_LINK}
                         </div>
@@ -537,8 +531,8 @@ $html = <<<'HTML'
                         <div class="lcv-panel__head">
                             <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_BRIEFCASE}</div>
                             <div>
-                                <h6>Case information</h6>
-                                <p>Timeline and assignment details</p>
+                                <h6>{LBL_CASE_INFO}</h6>
+                                <p>{LBL_CASE_INFO_SUB}</p>
                             </div>
                         </div>
                         <div class="lcv-panel__body">
@@ -552,44 +546,44 @@ $html = <<<'HTML'
                 <div class="lcv-panel__head">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_LAYERS}</div>
                     <div>
-                        <h6>Case workspace</h6>
-                        <p>Services, documents, quotations, and activity for this case</p>
+                        <h6>{LBL_WORKSPACE}</h6>
+                        <p>{LBL_WORKSPACE_SUB}</p>
                     </div>
                 </div>
                 <div class="lcv-tabs-wrap">
                     <ul class="nav lcv-tabs" id="caseTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab">
-                                Services <span class="lcv-tab-badge">{SERVICES_COUNT}</span>
+                                {LBL_TAB_SERVICES} <span class="lcv-tab-badge">{SERVICES_COUNT}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="stages-tab" data-bs-toggle="tab" data-bs-target="#stages" type="button" role="tab">
-                                Stages <span class="lcv-tab-badge">{STAGES_COUNT}</span>
+                                {LBL_TAB_STAGES} <span class="lcv-tab-badge">{STAGES_COUNT}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button" role="tab">
-                                Appointments <span class="lcv-tab-badge">{APPOINTMENTS_COUNT}</span>
+                                {LBL_TAB_APPOINTMENTS} <span class="lcv-tab-badge">{APPOINTMENTS_COUNT}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#case-documents" type="button" role="tab">
-                                Documents <span class="lcv-tab-badge">{DOCUMENTS_COUNT}</span>
+                                {LBL_TAB_DOCUMENTS} <span class="lcv-tab-badge">{DOCUMENTS_COUNT}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="quotations-tab" data-bs-toggle="tab" data-bs-target="#quotations" type="button" role="tab">
-                                Quotations <span class="lcv-tab-badge">{QUOTATION_COUNT}</span>
+                                {LBL_TAB_QUOTATIONS} <span class="lcv-tab-badge">{QUOTATION_COUNT}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="case-comments-tab" data-bs-toggle="tab" data-bs-target="#case-comments" type="button" role="tab">
-                                Comments <span class="lcv-tab-badge">{COMMENTS_COUNT}</span>
+                                {LBL_TAB_COMMENTS} <span class="lcv-tab-badge">{COMMENTS_COUNT}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">Events</button>
+                            <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab">{LBL_TAB_EVENTS}</button>
                         </li>
                     </ul>
                 </div>
@@ -600,8 +594,8 @@ $html = <<<'HTML'
                                 <table class="table lcv-table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Service</th>
-                                            <th class="text-end">Price</th>
+                                            <th>{LBL_COL_SERVICE}</th>
+                                            <th class="text-end">{LBL_COL_PRICE}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -616,12 +610,12 @@ $html = <<<'HTML'
                                 <table class="table lcv-table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Stage #</th>
-                                            <th>Title</th>
-                                            <th>Description</th>
-                                            <th>Result</th>
-                                            <th>Start date</th>
-                                            <th>End date</th>
+                                            <th>{LBL_COL_STAGE_NUM}</th>
+                                            <th>{LBL_COL_TITLE}</th>
+                                            <th>{LBL_COL_DESCRIPTION}</th>
+                                            <th>{LBL_COL_RESULT}</th>
+                                            <th>{LBL_COL_START_DATE}</th>
+                                            <th>{LBL_COL_END_DATE}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -636,10 +630,10 @@ $html = <<<'HTML'
                                 <table class="table lcv-table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Time</th>
-                                            <th>Description</th>
-                                            <th>Location</th>
+                                            <th>{LBL_COL_DATE}</th>
+                                            <th>{LBL_COL_TIME}</th>
+                                            <th>{LBL_COL_DESCRIPTION}</th>
+                                            <th>{LBL_COL_LOCATION}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -658,7 +652,7 @@ $html = <<<'HTML'
                                         data-bs-target="#lawyerUploadDocPanel"
                                         aria-expanded="false"
                                         aria-controls="lawyerUploadDocPanel">
-                                    {ICON_UPLOAD} Upload document
+                                    {ICON_UPLOAD} {LBL_UPLOAD_DOCUMENT}
                                 </button>
                             </div>
                             <div id="lawyerUploadDocPanel" class="collapse">
@@ -666,17 +660,17 @@ $html = <<<'HTML'
                                     <form method="POST" action="" enctype="multipart/form-data">
                                         <div class="row g-3 align-items-end">
                                             <div class="col-md-8">
-                                                <label for="lawyer-doc-file-label" class="form-label text-sm mb-1">Description</label>
-                                                <input type="text" class="form-control" id="lawyer-doc-file-label" name="file_label" placeholder="Document description (optional)">
+                                                <label for="lawyer-doc-file-label" class="form-label text-sm mb-1">{LBL_COL_DESCRIPTION}</label>
+                                                <input type="text" class="form-control" id="lawyer-doc-file-label" name="file_label" placeholder="{PH_DOC_DESC}">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="lawyer-doc-file-input" class="form-label text-sm mb-1">File</label>
+                                                <label for="lawyer-doc-file-input" class="form-label text-sm mb-1">{LBL_FILE}</label>
                                                 <input type="file" class="form-control" id="lawyer-doc-file-input" name="file" required>
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-end gap-2 mt-3">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-toggle="collapse" data-bs-target="#lawyerUploadDocPanel">Cancel</button>
-                                            <button type="submit" class="btn btn-sm btn-primary mb-0">Upload file</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary mb-0" data-bs-toggle="collapse" data-bs-target="#lawyerUploadDocPanel">{LBL_CANCEL}</button>
+                                            <button type="submit" class="btn btn-sm btn-primary mb-0">{LBL_UPLOAD_FILE}</button>
                                         </div>
                                     </form>
                                 </div>
@@ -833,7 +827,7 @@ if (!empty($comments)) {
     $commentsHtml = '
     <div class="cc-comments-empty text-center py-5 mb-0">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success mx-auto d-flex align-items-center justify-content-center">' . $iconCommentEmpty . '</div>
-        <h6 class="font-weight-bolder mt-4 mb-2">No comments yet</h6>
+        <h6 class="font-weight-bolder mt-4 mb-2">' . htmlspecialchars(lawyer_tf('case_view.no_comments', 'No comments yet')) . '</h6>
         <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Post a comment below to communicate with the client and your team about this case.</p>
     </div>';
 }
@@ -842,10 +836,48 @@ if (!empty($comments)) {
 $eventsHtml = CaseEvents::renderEventsTimeline($caseId);
 
 $clientViewLinkHtml = $clientId > 0
-    ? '<a href="lawyer-client-view.php?id=' . $clientId . '" class="lcv-panel__head-actions btn btn-sm btn-outline-primary mb-0">View client</a>'
+    ? '<a href="lawyer-client-view.php?id=' . $clientId . '" class="lcv-panel__head-actions btn btn-sm btn-outline-primary mb-0">' . htmlspecialchars(lawyer_tf('case_view.view_client', 'View client')) . '</a>'
     : '';
 
 $replacements = [
+    '{HTML_LANG}' => lawyer_portal_html_lang(),
+    '{PAGE_TITLE}' => htmlspecialchars($pageTitle),
+    '{BREADCRUMB_NAVBAR}' => $breadcrumbNavbar,
+    '{LBL_BACK_TO_CASES}' => htmlspecialchars(lawyer_tf('case_view.back_to_cases', 'Back to cases')),
+    '{LBL_CLIENT_PREFIX}' => htmlspecialchars(lawyer_tf('case_view.client_prefix', 'Client:')),
+    '{LBL_SERVICES}' => htmlspecialchars(lawyer_tf('common.services', 'Services')),
+    '{LBL_APPOINTMENTS}' => htmlspecialchars(lawyer_tf('nav.appointments', 'Appointments')),
+    '{LBL_DOCUMENTS}' => htmlspecialchars(lawyer_tf('common.documents', 'Documents')),
+    '{LBL_COMMENTS}' => htmlspecialchars(lawyer_tf('common.comments', 'Comments')),
+    '{LBL_CLIENT_INFO}' => htmlspecialchars(lawyer_tf('case_view.client_info', 'Client information')),
+    '{LBL_CLIENT_INFO_SUB}' => htmlspecialchars(lawyer_tf('case_view.client_info_sub', 'Contact details for this case')),
+    '{LBL_CASE_INFO}' => htmlspecialchars(lawyer_tf('case_view.case_info', 'Case information')),
+    '{LBL_CASE_INFO_SUB}' => htmlspecialchars(lawyer_tf('case_view.case_info_sub', 'Timeline and assignment details')),
+    '{LBL_WORKSPACE}' => htmlspecialchars(lawyer_tf('case_view.workspace', 'Case workspace')),
+    '{LBL_WORKSPACE_SUB}' => htmlspecialchars(lawyer_tf('case_view.workspace_sub', 'Services, documents, quotations, and activity for this case')),
+    '{LBL_TAB_SERVICES}' => htmlspecialchars(lawyer_tf('common.services', 'Services')),
+    '{LBL_TAB_STAGES}' => htmlspecialchars(lawyer_tf('case_view.tab_stages', 'Stages')),
+    '{LBL_TAB_APPOINTMENTS}' => htmlspecialchars(lawyer_tf('nav.appointments', 'Appointments')),
+    '{LBL_TAB_DOCUMENTS}' => htmlspecialchars(lawyer_tf('common.documents', 'Documents')),
+    '{LBL_TAB_QUOTATIONS}' => htmlspecialchars(lawyer_tf('case_view.tab_quotations', 'Quotations')),
+    '{LBL_TAB_COMMENTS}' => htmlspecialchars(lawyer_tf('common.comments', 'Comments')),
+    '{LBL_TAB_EVENTS}' => htmlspecialchars(lawyer_tf('case_view.tab_events', 'Events')),
+    '{LBL_COL_SERVICE}' => htmlspecialchars(lawyer_tf('case_view.col_service', 'Service')),
+    '{LBL_COL_PRICE}' => htmlspecialchars(lawyer_tf('case_view.col_price', 'Price')),
+    '{LBL_COL_STAGE_NUM}' => htmlspecialchars(lawyer_tf('case_view.col_stage_num', 'Stage #')),
+    '{LBL_COL_TITLE}' => htmlspecialchars(lawyer_tf('case_view.col_title', 'Title')),
+    '{LBL_COL_DESCRIPTION}' => htmlspecialchars(lawyer_tf('tasks.form_description', 'Description')),
+    '{LBL_COL_RESULT}' => htmlspecialchars(lawyer_tf('case_view.col_result', 'Result')),
+    '{LBL_COL_START_DATE}' => htmlspecialchars(lawyer_tf('case_view.col_start_date', 'Start date')),
+    '{LBL_COL_END_DATE}' => htmlspecialchars(lawyer_tf('case_view.col_end_date', 'End date')),
+    '{LBL_COL_DATE}' => htmlspecialchars(lawyer_tf('case_view.col_date', 'Date')),
+    '{LBL_COL_TIME}' => htmlspecialchars(lawyer_tf('case_view.col_time', 'Time')),
+    '{LBL_COL_LOCATION}' => htmlspecialchars(lawyer_tf('case_view.col_location', 'Location')),
+    '{LBL_UPLOAD_DOCUMENT}' => htmlspecialchars(lawyer_tf('case_view.upload_document', 'Upload document')),
+    '{PH_DOC_DESC}' => htmlspecialchars(lawyer_tf('case_view.doc_desc_placeholder', 'Document description (optional)')),
+    '{LBL_FILE}' => htmlspecialchars(lawyer_tf('case_view.file', 'File')),
+    '{LBL_CANCEL}' => htmlspecialchars(lawyer_tf('common.cancel', 'Cancel')),
+    '{LBL_UPLOAD_FILE}' => htmlspecialchars(lawyer_tf('case_view.upload_file', 'Upload file')),
     '{NAVIGATION}' => $navHtml,
     '{CASE_ID}' => $caseId,
     '{CASE_NUMBER}' => htmlspecialchars($caseNumber),

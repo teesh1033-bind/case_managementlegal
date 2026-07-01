@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../lib/lawyer-portal-i18n.php';
 require_once __DIR__ . '/../inc/password-validation.php';
 
 if (!isset($_SESSION['lawyer_id'])) {
@@ -9,7 +10,7 @@ if (!isset($_SESSION['lawyer_id'])) {
 }
 
 $lawyerId = (int) $_SESSION['lawyer_id'];
-$lawyerName = (string) ($_SESSION['lawyer_name'] ?? 'Lawyer');
+$lawyerName = (string) ($_SESSION['lawyer_name'] ?? lawyer_tf('header.lawyer', 'Lawyer'));
 $message = '';
 $messageType = '';
 
@@ -65,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $current = loadLawyerProfile($pdo, $lawyerId);
         if (!$current) {
-            throw new RuntimeException('Lawyer profile not found.');
+            throw new RuntimeException(lawyer_tf('profile.error_not_found', 'Lawyer profile not found.'));
         }
 
         if ($action === 'update_profile') {
@@ -80,13 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $officeAddress = trim((string) ($_POST['office_address'] ?? ''));
 
             if ($firstName === '' || $lastName === '') {
-                $message = 'First name and last name are required.';
+                $message = lawyer_tf('profile.error_name_required', 'First name and last name are required.');
                 $messageType = 'danger';
             } elseif ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $message = 'Please enter a valid email address.';
+                $message = lawyer_tf('profile.error_invalid_email', 'Please enter a valid email address.');
                 $messageType = 'danger';
             } elseif ($experienceYears < 0 || $experienceYears > 80) {
-                $message = 'Experience years must be between 0 and 80.';
+                $message = lawyer_tf('profile.error_experience_range', 'Experience years must be between 0 and 80.');
                 $messageType = 'danger';
             } else {
                 $stmt = $pdo->prepare("
@@ -116,12 +117,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $_SESSION['lawyer_name'] = trim($firstName . ' ' . $lastName);
                 $lawyerName = $_SESSION['lawyer_name'];
-                $message = 'Profile updated successfully.';
+                $message = lawyer_tf('profile.success_updated', 'Profile updated successfully.');
                 $messageType = 'success';
             }
         } elseif ($action === 'change_password') {
             if (empty($current['user_id'])) {
-                $message = 'No linked portal account found for this lawyer.';
+                $message = lawyer_tf('profile.error_no_portal_account', 'No linked portal account found for this lawyer.');
                 $messageType = 'danger';
             } else {
                 $currentPassword = (string) ($_POST['current_password'] ?? '');
@@ -129,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $confirmPassword = (string) ($_POST['confirm_password'] ?? '');
 
                 if (!password_verify($currentPassword, (string) ($current['user_password_hash'] ?? ''))) {
-                    $message = 'Current password is incorrect.';
+                    $message = lawyer_tf('profile.error_wrong_password', 'Current password is incorrect.');
                     $messageType = 'danger';
                 } else {
                     $passwordCheck = legalpro_validate_password_pair($newPassword, $confirmPassword);
@@ -144,14 +145,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
                         $stmt = $pdo->prepare('UPDATE users SET password = ? WHERE id = ?');
                         $stmt->execute([$newPasswordHash, $current['user_id']]);
-                        $message = 'Password updated successfully.';
+                        $message = lawyer_tf('profile.success_password_updated', 'Password updated successfully.');
                         $messageType = 'success';
                     }
                 }
             }
         }
     } catch (Throwable $e) {
-        $message = 'Error updating profile: ' . htmlspecialchars($e->getMessage());
+        $message = lawyer_t('profile.error_update_prefix', ['message' => $e->getMessage()]);
+        if ($message === 'profile.error_update_prefix') {
+            $message = str_replace(':message', $e->getMessage(), lawyer_tf('profile.error_update_prefix', 'Error updating profile: :message'));
+        }
         $messageType = 'danger';
     }
 }
@@ -159,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 try {
     $row = loadLawyerProfile($pdo, $lawyerId);
     if (!$row) {
-        throw new RuntimeException('Lawyer profile not found.');
+        throw new RuntimeException(lawyer_tf('profile.error_not_found', 'Lawyer profile not found.'));
     }
     $profile['first_name'] = (string) ($row['first_name'] ?? '');
     $profile['last_name'] = (string) ($row['last_name'] ?? '');
@@ -172,26 +176,36 @@ try {
     $profile['office_address'] = (string) ($row['office_address'] ?? '');
     $profile['username'] = (string) ($row['username'] ?? '');
 } catch (Throwable $e) {
-    $message = 'Error loading profile: ' . htmlspecialchars($e->getMessage());
+    $message = lawyer_t('profile.error_load_prefix', ['message' => $e->getMessage()]);
+    if ($message === 'profile.error_load_prefix') {
+        $message = str_replace(':message', $e->getMessage(), lawyer_tf('profile.error_load_prefix', 'Error loading profile: :message'));
+    }
     $messageType = 'danger';
 }
 
+$closeLabel = lawyer_tf('common.close', 'Close');
 $messageHtml = $message !== ''
     ? '<div class="alert alert-' . htmlspecialchars($messageType ?: 'info') . ' alert-dismissible fade show" role="alert">'
         . htmlspecialchars($message)
-        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars($closeLabel) . '"></button>'
     . '</div>'
     : '';
 
+$usernameDisplay = htmlspecialchars($profile['username'] !== '' ? $profile['username'] : lawyer_tf('common.not_applicable', 'N/A'));
+$usernamePrefix = lawyer_tf('profile.username_prefix', 'Username:');
+
+$pageTitle = lawyer_tf('profile.page_title', 'My Profile');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - My Profile</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -205,31 +219,16 @@ $html = <<<'HTML'
     <?php include __DIR__ . '/../inc/lawyer-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
-            <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <a href="javascript:;" class="nav-link text-body p-0 d-xl-none" id="iconNavbarSidenav">
-                        <div class="sidenav-toggler-inner">
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                            <i class="sidenav-toggler-line"></i>
-                        </div>
-                    </a>
-                    <div>
-                        <h6 class="font-weight-bolder mb-0">My Profile</h6>
-                        <p class="dashboard-welcome-sub mb-0 mt-1">Manage your professional details</p>
-                    </div>
-                </div>
-            </div>
-        </nav>
+        {BREADCRUMB_NAVBAR}
 
         <div class="container-fluid py-4">
+            <p class="dashboard-welcome-sub text-sm text-muted mb-3">{PAGE_SUBTITLE}</p>
             {MESSAGE}
             <div class="row">
                 <div class="col-lg-7 mb-4">
                     <div class="card">
                         <div class="card-header pb-0">
-                            <h6 class="mb-0">Professional information</h6>
+                            <h6 class="mb-0">{PROFESSIONAL_INFO}</h6>
                         </div>
                         <div class="card-body">
                             <form method="post">
@@ -237,13 +236,13 @@ $html = <<<'HTML'
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label class="form-control-label">First name</label>
+                                            <label class="form-control-label">{FIRST_NAME_LABEL}</label>
                                             <input class="form-control" type="text" name="first_name" value="{FIRST_NAME}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label class="form-control-label">Last name</label>
+                                            <label class="form-control-label">{LAST_NAME_LABEL}</label>
                                             <input class="form-control" type="text" name="last_name" value="{LAST_NAME}" required>
                                         </div>
                                     </div>
@@ -251,13 +250,13 @@ $html = <<<'HTML'
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label class="form-control-label">Email</label>
+                                            <label class="form-control-label">{EMAIL_LABEL}</label>
                                             <input class="form-control" type="email" name="email" value="{EMAIL}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label class="form-control-label">Phone</label>
+                                            <label class="form-control-label">{PHONE_LABEL}</label>
                                             <input class="form-control" type="text" name="phone" value="{PHONE}">
                                         </div>
                                     </div>
@@ -265,30 +264,30 @@ $html = <<<'HTML'
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label class="form-control-label">License number</label>
+                                            <label class="form-control-label">{LICENSE_LABEL}</label>
                                             <input class="form-control" type="text" name="license_number" value="{LICENSE_NUMBER}">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label class="form-control-label">Specialization</label>
+                                            <label class="form-control-label">{SPECIALIZATION_LABEL}</label>
                                             <input class="form-control" type="text" name="specialization" value="{SPECIALIZATION}">
                                         </div>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-control-label">Years of experience</label>
+                                    <label class="form-control-label">{EXPERIENCE_LABEL}</label>
                                     <input class="form-control" type="number" name="experience_years" value="{EXPERIENCE_YEARS}" min="0" max="80">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-control-label">Office address</label>
+                                    <label class="form-control-label">{OFFICE_ADDRESS_LABEL}</label>
                                     <textarea class="form-control" rows="2" name="office_address">{OFFICE_ADDRESS}</textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-control-label">Bio</label>
+                                    <label class="form-control-label">{BIO_LABEL}</label>
                                     <textarea class="form-control" rows="3" name="bio">{BIO}</textarea>
                                 </div>
-                                <button class="btn bg-gradient-primary mb-0">Save profile</button>
+                                <button class="btn bg-gradient-primary mb-0">{SAVE_PROFILE}</button>
                             </form>
                         </div>
                     </div>
@@ -296,29 +295,29 @@ $html = <<<'HTML'
                 <div class="col-lg-5 mb-4">
                     <div class="card">
                         <div class="card-header pb-0">
-                            <h6 class="mb-0">Security</h6>
+                            <h6 class="mb-0">{SECURITY_TITLE}</h6>
                         </div>
                         <div class="card-body">
-                            <p class="text-sm text-muted mb-2">Username: <strong>{USERNAME}</strong></p>
+                            <p class="text-sm text-muted mb-2">{USERNAME_PREFIX} <strong>{USERNAME}</strong></p>
                             <hr class="horizontal dark mt-0">
                             <form method="post">
                                 <input type="hidden" name="action" value="change_password">
                                 <div class="form-group">
-                                    <label class="form-control-label">Current password</label>
+                                    <label class="form-control-label">{CURRENT_PASSWORD_LABEL}</label>
                                     <input class="form-control" type="password" name="current_password" required autocomplete="current-password">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-control-label">New password</label>
+                                    <label class="form-control-label">{NEW_PASSWORD_LABEL}</label>
                                     <input class="form-control{NEW_PASSWORD_INVALID_CLASS}" type="password" name="new_password" required autocomplete="new-password" minlength="8" maxlength="128">
                                     {NEW_PASSWORD_ERROR}
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-control-label">Confirm new password</label>
+                                    <label class="form-control-label">{CONFIRM_PASSWORD_LABEL}</label>
                                     <input class="form-control{CONFIRM_PASSWORD_INVALID_CLASS}" type="password" name="confirm_password" required autocomplete="new-password" minlength="8" maxlength="128">
                                     {CONFIRM_PASSWORD_ERROR}
                                 </div>
-                                <div class="text-xs text-muted mb-3">Password rules: at least 8 chars, one uppercase and one lowercase letter.</div>
-                                <button class="btn btn-dark mb-0">Change password</button>
+                                <div class="text-xs text-muted mb-3">{PASSWORD_RULES}</div>
+                                <button class="btn btn-dark mb-0">{CHANGE_PASSWORD}</button>
                             </form>
                         </div>
                     </div>
@@ -337,22 +336,48 @@ $html = <<<'HTML'
 </html>
 HTML;
 
-$html = str_replace('{MESSAGE}', $messageHtml, $html);
-$html = str_replace('{FIRST_NAME}', htmlspecialchars($profile['first_name']), $html);
-$html = str_replace('{LAST_NAME}', htmlspecialchars($profile['last_name']), $html);
-$html = str_replace('{EMAIL}', htmlspecialchars($profile['email']), $html);
-$html = str_replace('{PHONE}', htmlspecialchars($profile['phone']), $html);
-$html = str_replace('{LICENSE_NUMBER}', htmlspecialchars($profile['license_number']), $html);
-$html = str_replace('{SPECIALIZATION}', htmlspecialchars($profile['specialization']), $html);
-$html = str_replace('{EXPERIENCE_YEARS}', htmlspecialchars($profile['experience_years']), $html);
-$html = str_replace('{BIO}', htmlspecialchars($profile['bio']), $html);
-$html = str_replace('{OFFICE_ADDRESS}', htmlspecialchars($profile['office_address']), $html);
-$html = str_replace('{USERNAME}', htmlspecialchars($profile['username'] !== '' ? $profile['username'] : 'N/A'), $html);
-$html = str_replace('{NEW_PASSWORD_INVALID_CLASS}', $passwordInvalidClass, $html);
-$html = str_replace('{CONFIRM_PASSWORD_INVALID_CLASS}', $confirmInvalidClass, $html);
-$html = str_replace('{NEW_PASSWORD_ERROR}', $passwordErrorHtml, $html);
-$html = str_replace('{CONFIRM_PASSWORD_ERROR}', $confirmErrorHtml, $html);
-$html = str_replace('{PORTAL_THEME_BODY_CLASS}', legalpro_portal_theme_body_class(), $html);
+$replacements = [
+    '{HTML_LANG}' => lawyer_portal_html_lang(),
+    '{PAGE_TITLE}' => htmlspecialchars($pageTitle),
+    '{PAGE_SUBTITLE}' => htmlspecialchars(lawyer_tf('profile.subtitle', 'Manage your professional details')),
+    '{BREADCRUMB_NAVBAR}' => $breadcrumbNavbar,
+    '{MESSAGE}' => $messageHtml,
+    '{PROFESSIONAL_INFO}' => htmlspecialchars(lawyer_tf('profile.professional_info', 'Professional information')),
+    '{FIRST_NAME_LABEL}' => htmlspecialchars(lawyer_tf('profile.first_name', 'First name')),
+    '{LAST_NAME_LABEL}' => htmlspecialchars(lawyer_tf('profile.last_name', 'Last name')),
+    '{EMAIL_LABEL}' => htmlspecialchars(lawyer_tf('profile.email', 'Email')),
+    '{PHONE_LABEL}' => htmlspecialchars(lawyer_tf('profile.phone', 'Phone')),
+    '{LICENSE_LABEL}' => htmlspecialchars(lawyer_tf('profile.license_number', 'License number')),
+    '{SPECIALIZATION_LABEL}' => htmlspecialchars(lawyer_tf('profile.specialization', 'Specialization')),
+    '{EXPERIENCE_LABEL}' => htmlspecialchars(lawyer_tf('profile.experience_years', 'Years of experience')),
+    '{OFFICE_ADDRESS_LABEL}' => htmlspecialchars(lawyer_tf('profile.office_address', 'Office address')),
+    '{BIO_LABEL}' => htmlspecialchars(lawyer_tf('profile.bio', 'Bio')),
+    '{SAVE_PROFILE}' => htmlspecialchars(lawyer_tf('profile.save_profile', 'Save profile')),
+    '{SECURITY_TITLE}' => htmlspecialchars(lawyer_tf('profile.security', 'Security')),
+    '{USERNAME_PREFIX}' => htmlspecialchars($usernamePrefix),
+    '{USERNAME}' => $usernameDisplay,
+    '{CURRENT_PASSWORD_LABEL}' => htmlspecialchars(lawyer_tf('profile.current_password', 'Current password')),
+    '{NEW_PASSWORD_LABEL}' => htmlspecialchars(lawyer_tf('profile.new_password', 'New password')),
+    '{CONFIRM_PASSWORD_LABEL}' => htmlspecialchars(lawyer_tf('profile.confirm_password', 'Confirm new password')),
+    '{PASSWORD_RULES}' => htmlspecialchars(lawyer_tf('profile.password_rules', 'Password rules: at least 8 chars, one uppercase and one lowercase letter.')),
+    '{CHANGE_PASSWORD}' => htmlspecialchars(lawyer_tf('profile.change_password', 'Change password')),
+    '{FIRST_NAME}' => htmlspecialchars($profile['first_name']),
+    '{LAST_NAME}' => htmlspecialchars($profile['last_name']),
+    '{EMAIL}' => htmlspecialchars($profile['email']),
+    '{PHONE}' => htmlspecialchars($profile['phone']),
+    '{LICENSE_NUMBER}' => htmlspecialchars($profile['license_number']),
+    '{SPECIALIZATION}' => htmlspecialchars($profile['specialization']),
+    '{EXPERIENCE_YEARS}' => htmlspecialchars($profile['experience_years']),
+    '{BIO}' => htmlspecialchars($profile['bio']),
+    '{OFFICE_ADDRESS}' => htmlspecialchars($profile['office_address']),
+    '{NEW_PASSWORD_INVALID_CLASS}' => $passwordInvalidClass,
+    '{CONFIRM_PASSWORD_INVALID_CLASS}' => $confirmInvalidClass,
+    '{NEW_PASSWORD_ERROR}' => $passwordErrorHtml,
+    '{CONFIRM_PASSWORD_ERROR}' => $confirmErrorHtml,
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
+];
+
+$html = str_replace(array_keys($replacements), array_values($replacements), $html);
 
 require_once __DIR__ . '/../inc/lawyer-sidebar.php';
 $html = inject_lawyer_portal_head($html);

@@ -286,6 +286,14 @@ function renderLawyerPortalSettingsFullHtml(?PDO $pdo, int $lawyerId): string
         }
     }
 
+    if (!function_exists('client_portal_render_hero')) {
+        require_once __DIR__ . '/client-portal-page-ui.php';
+    }
+
+    if (!function_exists('lawyer_tf')) {
+        require_once __DIR__ . '/lawyer-portal-i18n.php';
+    }
+
     if (!function_exists('getCompanyBranding')) {
         $brandingPath = __DIR__ . '/branding.php';
         if (is_file($brandingPath)) {
@@ -293,42 +301,47 @@ function renderLawyerPortalSettingsFullHtml(?PDO $pdo, int $lawyerId): string
         }
     }
 
-    if (!function_exists('legalpro_lawyer_notification_count') && $pdo instanceof PDO) {
-        $layoutPath = dirname(__DIR__) . '/inc/admin-layout.php';
-        if (is_file($layoutPath)) {
-            require_once $layoutPath;
-        }
-    }
-
     $snapshot = legalpro_lawyer_settings_snapshot($pdo, $lawyerId);
     $currentMode = getLawyerPortalThemeMode($lawyerId);
     $lightChecked = $currentMode === 'light' ? ' checked' : '';
     $darkChecked = $currentMode === 'dark' ? ' checked' : '';
+    $currentLocale = getLawyerPortalLocale($lawyerId);
+    $locales = getLawyerPortalLocales();
+
+    $localeOptions = '';
+    foreach ($locales as $code => $label) {
+        $selected = $code === $currentLocale ? ' selected' : '';
+        $localeOptions .= '<option value="' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '"' . $selected . '>'
+            . htmlspecialchars($label) . '</option>';
+    }
+
+    $t = static function (string $key, string $fallback): string {
+        return lawyer_tf($key, $fallback);
+    };
 
     $displayName = htmlspecialchars(trim((string) ($snapshot['display_name'] ?? '')) ?: 'Lawyer');
     $email = htmlspecialchars(trim((string) ($snapshot['email'] ?? '')) ?: '—');
     $phone = htmlspecialchars(trim((string) ($snapshot['phone'] ?? '')) ?: '—');
     $specialization = htmlspecialchars(trim((string) ($snapshot['specialization'] ?? '')) ?: '—');
     $memberSince = htmlspecialchars(trim((string) ($snapshot['member_since'] ?? '')) ?: '—');
-    $themeLabel = htmlspecialchars(ucfirst((string) ($snapshot['theme_mode'] ?? 'light')));
 
     $firm = function_exists('getCompanyBranding') ? getCompanyBranding() : ['name' => 'LegalPro', 'details' => ''];
     $firmName = htmlspecialchars((string) ($firm['name'] ?? 'LegalPro'));
     $firmDetails = trim((string) ($firm['details'] ?? ''));
     $firmDetailsHtml = $firmDetails !== ''
         ? '<p class="text-sm text-muted mb-0">' . nl2br(htmlspecialchars($firmDetails)) . '</p>'
-        : '<p class="text-sm text-muted mb-0">Contact your firm administrator for office details and support.</p>';
+        : '<p class="text-sm text-muted mb-0">' . htmlspecialchars($t('settings.firm_default', 'Contact your firm administrator for office details and support.')) . '</p>';
 
     $quickLinks = [
-        ['url' => 'lawyer-profile.php', 'icon' => 'user', 'label' => 'Profile'],
-        ['url' => 'lawyer-dashboard.php', 'icon' => 'layout-dashboard', 'label' => 'Dashboard'],
-        ['url' => 'tasks.php', 'icon' => 'list-checks', 'label' => 'My Tasks'],
-        ['url' => 'lawyer-cases.php', 'icon' => 'briefcase', 'label' => 'My Cases'],
-        ['url' => 'lawyer-clients.php', 'icon' => 'users', 'label' => 'My Clients'],
-        ['url' => 'lawyer-appointments.php', 'icon' => 'calendar', 'label' => 'Appointments'],
-        ['url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'label' => 'Court Tracking'],
-        ['url' => 'lawyer-availability.php', 'icon' => 'clock', 'label' => 'Availability'],
-        ['url' => 'chatbot.php', 'icon' => 'bot', 'label' => 'AI Assistant'],
+        ['url' => 'lawyer-profile.php', 'icon' => 'user', 'label' => $t('nav.profile', 'Profile')],
+        ['url' => 'lawyer-dashboard.php', 'icon' => 'layout-dashboard', 'label' => $t('nav.dashboard', 'Dashboard')],
+        ['url' => 'tasks.php', 'icon' => 'list-checks', 'label' => $t('nav.my_tasks', 'My Tasks')],
+        ['url' => 'lawyer-cases.php', 'icon' => 'briefcase', 'label' => $t('nav.my_cases', 'My Cases')],
+        ['url' => 'lawyer-clients.php', 'icon' => 'users', 'label' => $t('nav.my_clients', 'My Clients')],
+        ['url' => 'lawyer-appointments.php', 'icon' => 'calendar', 'label' => $t('nav.appointments', 'Appointments')],
+        ['url' => 'lawyer-court-tracking.php', 'icon' => 'landmark', 'label' => $t('nav.court_tracking', 'Court Tracking')],
+        ['url' => 'lawyer-availability.php', 'icon' => 'clock', 'label' => $t('nav.availability', 'Availability')],
+        ['url' => 'chatbot.php', 'icon' => 'bot', 'label' => $t('nav.ai_assistant', 'AI Assistant')],
     ];
 
     $quickLinksHtml = '';
@@ -344,101 +357,117 @@ function renderLawyerPortalSettingsFullHtml(?PDO $pdo, int $lawyerId): string
         return '<div class="cs-stat"><span class="cs-stat__num">' . htmlspecialchars($value) . '</span><span class="cs-stat__lbl">' . htmlspecialchars($label) . '</span></div>';
     };
 
-    $statsHtml = $stat((string) (int) ($snapshot['total_cases'] ?? 0), 'Cases')
-        . $stat((string) (int) ($snapshot['active_cases'] ?? 0), 'Active')
-        . $stat((string) (int) ($snapshot['total_clients'] ?? 0), 'Clients')
-        . $stat((string) (int) ($snapshot['upcoming_appointments'] ?? 0), 'Upcoming')
-        . $stat((string) (int) ($snapshot['open_tasks'] ?? 0), 'Open tasks')
-        . $stat((string) (int) ($snapshot['unread_notifications'] ?? 0), 'Alerts');
+    $statsHtml = $stat((string) (int) ($snapshot['total_cases'] ?? 0), $t('settings.stat_cases', 'Cases'))
+        . $stat((string) (int) ($snapshot['active_cases'] ?? 0), $t('settings.stat_active_cases', 'Active'))
+        . $stat((string) (int) ($snapshot['total_clients'] ?? 0), $t('settings.stat_clients', 'Clients'))
+        . $stat((string) (int) ($snapshot['upcoming_appointments'] ?? 0), $t('settings.stat_upcoming_appts', 'Upcoming'))
+        . $stat((string) (int) ($snapshot['open_tasks'] ?? 0), $t('settings.stat_open_tasks', 'Open tasks'))
+        . $stat((string) (int) ($snapshot['unread_notifications'] ?? 0), $t('settings.stat_unread', 'Alerts'));
+
+    $heroHtml = client_portal_render_hero([
+        'kicker' => $t('settings.title', 'Settings'),
+        'title' => $t('settings.hero_title', 'Personalize your portal'),
+        'subtitle' => $t('settings.hero_sub', 'Manage appearance and shortcuts for your lawyer account.'),
+        'meta' => $t('settings.member_since', 'Member since') . ' ' . $memberSince,
+        'show_date' => true,
+        'aria_label' => $t('settings.title', 'Settings'),
+        'stats' => [
+            ['num' => (string) (int) ($snapshot['total_cases'] ?? 0), 'lbl' => $t('settings.stat_cases', 'Cases')],
+            ['num' => (string) (int) ($snapshot['active_cases'] ?? 0), 'lbl' => $t('settings.stat_active_cases', 'Active')],
+            ['num' => (string) (int) ($snapshot['total_clients'] ?? 0), 'lbl' => $t('settings.stat_clients', 'Clients')],
+            ['num' => (string) (int) ($snapshot['upcoming_appointments'] ?? 0), 'lbl' => $t('settings.stat_upcoming_appts', 'Upcoming')],
+        ],
+        'actions' => [
+            ['url' => 'lawyer-profile.php', 'label' => $t('settings.edit_profile', 'Edit profile'), 'primary' => true, 'icon' => 'user'],
+            ['url' => 'lawyer-dashboard.php', 'label' => $t('nav.dashboard', 'Dashboard'), 'icon' => 'layout-dashboard'],
+        ],
+    ]);
+
+    $appearanceBody = '
+        <p class="text-sm text-muted mb-4">' . htmlspecialchars($t('settings.appearance_help', 'Choose light or dark mode and your preferred language.')) . '</p>
+        <div class="mb-4">
+            <label class="form-label d-block mb-2">' . htmlspecialchars($t('settings.theme_mode', 'Theme mode')) . '</label>
+            <div class="settings-theme-mode">
+                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars($t('settings.light', 'Light')) . '</label>
+                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars($t('settings.dark', 'Dark')) . '</label>
+            </div>
+        </div>
+        <div class="mb-0">
+            <label class="form-label d-block mb-2" for="lawyer_locale">' . htmlspecialchars($t('settings.language_label', 'Display language')) . '</label>
+            <select class="form-select" name="locale" id="lawyer_locale" required>' . $localeOptions . '</select>
+            <p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($t('settings.language_help', 'Updates navigation labels and settings across the lawyer portal.')) . '</p>
+        </div>';
+
+    $privacyBody = '
+        <ul class="cs-tip-list mb-3">
+            <li>' . htmlspecialchars($t('settings.privacy_tip_1', 'Never share your portal password with anyone, including colleagues or clients.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.privacy_tip_2', 'Sign out when using a shared or public device.')) . '</li>
+            <li>' . htmlspecialchars($t('settings.privacy_tip_3', 'Keep your profile contact details current so clients and staff can reach you.')) . '</li>
+        </ul>
+        <a href="lawyer-profile.php" class="btn btn-outline-primary btn-sm mb-0">' . htmlspecialchars($t('settings.manage_profile', 'Manage profile & password')) . '</a>';
+
+    $accountBody = '
+        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.account_help', 'Details tied to your lawyer portal login.')) . '</p>
+        <dl class="cs-account-dl mb-3">
+            <dt>' . htmlspecialchars($t('settings.account_name', 'Name')) . '</dt><dd>' . $displayName . '</dd>
+            <dt>' . htmlspecialchars($t('settings.account_email', 'Email')) . '</dt><dd>' . $email . '</dd>
+            <dt>' . htmlspecialchars($t('settings.account_phone', 'Phone')) . '</dt><dd>' . $phone . '</dd>
+            <dt>' . htmlspecialchars($t('settings.account_specialization', 'Specialization')) . '</dt><dd>' . $specialization . '</dd>
+            <dt>' . htmlspecialchars($t('settings.member_since', 'Member since')) . '</dt><dd>' . $memberSince . '</dd>
+        </dl>
+        <a href="lawyer-profile.php" class="btn btn-outline-primary btn-sm mb-0 w-100">' . htmlspecialchars($t('settings.edit_profile', 'Edit profile')) . '</a>';
+
+    $overviewBody = '<div class="cs-stats-grid">' . $statsHtml . '</div>';
+
+    $quickLinksBody = '
+        <p class="text-sm text-muted mb-3">' . htmlspecialchars($t('settings.quick_links_help', 'Jump to common areas of your lawyer portal.')) . '</p>
+        <div class="cs-quick-links">' . $quickLinksHtml . '</div>';
+
+    $firmBody = '<h6 class="mb-2">' . $firmName . '</h6>' . $firmDetailsHtml;
 
     return '
-    <div class="cs-hero mb-4">
-        <div class="cs-hero__body">
-            <p class="cs-hero__kicker">Settings</p>
-            <h4 class="cs-hero__title">Personalize your portal</h4>
-            <p class="cs-hero__sub">Manage appearance, review your account, and jump to common areas of the lawyer portal.</p>
-        </div>
-        <div class="cs-hero__meta">
-            <span>Member since ' . $memberSince . '</span>
-            <span>Theme: ' . $themeLabel . '</span>
-        </div>
-    </div>
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <form method="post" class="settings-theme-form">
-                <input type="hidden" name="action" value="save_appearance">
-                <div class="card mb-4">
-                    <div class="card-header pb-0"><h6>Appearance</h6></div>
-                    <div class="card-body">
-                        <p class="text-sm text-muted mb-4">Choose light or dark mode for your lawyer portal. This applies only to your account.</p>
-                        <div class="mb-0">
-                            <label class="form-control-label d-block mb-2">Theme mode</label>
-                            <div class="settings-theme-mode">
-                                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> Light</label>
-                                <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> Dark</label>
-                            </div>
-                        </div>
+    <div class="cp-page">
+        ' . $heroHtml . '
+        <div class="cp-account-layout">
+            <div class="cp-panel-stack">
+                <form method="post" class="lawyer-settings-form cp-panel-stack">
+                    <input type="hidden" name="action" value="save_preferences">
+                    ' . client_portal_render_panel([
+                        'title' => $t('settings.appearance', 'Appearance & language'),
+                        'subtitle' => $t('settings.appearance_help', 'Choose light or dark mode and your preferred language.'),
+                        'icon' => 'palette',
+                    ], $appearanceBody) . '
+                    <div class="cp-form-actions">
+                        <button type="submit" class="btn btn-primary">' . htmlspecialchars($t('settings.save_preferences', 'Save preferences')) . '</button>
                     </div>
-                </div>
-                <button type="submit" class="btn btn-primary mb-4">Save appearance</button>
-            </form>
-            <div class="card mb-4">
-                <div class="card-header pb-0"><h6>Notifications</h6></div>
-                <div class="card-body">
-                    <p class="text-sm text-muted mb-3">Stay on top of case activity from the bell menu in the top navigation bar.</p>
-                    <ul class="cs-tip-list text-sm text-muted mb-0">
-                        <li>New appointments, documents, and case updates appear in your notification dropdown.</li>
-                        <li>Click a notification to open the related case or page.</li>
-                        <li>Use <strong>Mark all read</strong> to clear your unread count when you are caught up.</li>
-                    </ul>
-                </div>
+                </form>
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.privacy_security', 'Privacy & security'),
+                    'subtitle' => $t('settings.privacy_tip_1', 'Never share your portal password with anyone, including colleagues or clients.'),
+                    'icon' => 'shield',
+                ], $privacyBody) . '
             </div>
-            <div class="card">
-                <div class="card-header pb-0"><h6>Privacy &amp; security</h6></div>
-                <div class="card-body">
-                    <ul class="cs-tip-list text-sm text-muted mb-3">
-                        <li>Never share your portal password with anyone, including colleagues or clients.</li>
-                        <li>Sign out when using a shared or public device.</li>
-                        <li>Keep your profile contact details current so clients and staff can reach you.</li>
-                    </ul>
-                    <a href="lawyer-profile.php" class="btn btn-outline-primary btn-sm mb-0">Manage profile &amp; password</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card mb-4">
-                <div class="card-header pb-0"><h6>Your account</h6></div>
-                <div class="card-body">
-                    <p class="text-sm text-muted mb-3">Details tied to your lawyer portal login.</p>
-                    <dl class="cs-account-dl mb-3">
-                        <dt>Name</dt><dd>' . $displayName . '</dd>
-                        <dt>Email</dt><dd>' . $email . '</dd>
-                        <dt>Phone</dt><dd>' . $phone . '</dd>
-                        <dt>Specialization</dt><dd>' . $specialization . '</dd>
-                        <dt>Member since</dt><dd>' . $memberSince . '</dd>
-                    </dl>
-                    <a href="lawyer-profile.php" class="btn btn-outline-primary btn-sm mb-0 w-100">Edit profile</a>
-                </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-header pb-0"><h6>Portal overview</h6></div>
-                <div class="card-body">
-                    <div class="cs-stats-grid">' . $statsHtml . '</div>
-                </div>
-            </div>
-            <div class="card mb-4">
-                <div class="card-header pb-0"><h6>Quick links</h6></div>
-                <div class="card-body">
-                    <p class="text-sm text-muted mb-3">Jump to common areas of your lawyer portal.</p>
-                    <div class="cs-quick-links">' . $quickLinksHtml . '</div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header pb-0"><h6>Your firm</h6></div>
-                <div class="card-body">
-                    <h6 class="mb-2">' . $firmName . '</h6>
-                    ' . $firmDetailsHtml . '
-                </div>
+            <div class="cp-panel-stack">
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.account', 'Your account'),
+                    'subtitle' => $t('settings.account_help', 'Details tied to your lawyer portal login.'),
+                    'icon' => 'user',
+                ], $accountBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.portal_overview', 'Portal overview'),
+                    'subtitle' => $t('settings.quick_links_help', 'Jump to common areas of your lawyer portal.'),
+                    'icon' => 'layout-grid',
+                ], $overviewBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.quick_links', 'Quick links'),
+                    'subtitle' => $t('settings.quick_links_help', 'Jump to common areas of your lawyer portal.'),
+                    'icon' => 'link',
+                ], $quickLinksBody) . '
+                ' . client_portal_render_panel([
+                    'title' => $t('settings.your_firm', 'Your firm'),
+                    'subtitle' => $t('settings.firm_default', 'Contact your firm administrator for office details and support.'),
+                    'icon' => 'building-2',
+                ], $firmBody) . '
             </div>
         </div>
     </div>';

@@ -155,8 +155,8 @@ $casesHtml = '';
 if (empty($clientCases)) {
     $casesHtml = '<div class="text-center py-5 px-3">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseRow . '</div>
-        <h6 class="font-weight-bolder mt-3 mb-2">No cases yet</h6>
-        <p class="text-sm text-muted mb-0">Cases you share with this client will appear here.</p>
+        <h6 class="font-weight-bolder mt-3 mb-2">' . htmlspecialchars(lawyer_tf('client_view.no_cases', 'No cases yet')) . '</h6>
+        <p class="text-sm text-muted mb-0">' . htmlspecialchars(lawyer_tf('client_view.no_cases_sub', 'Cases you share with this client will appear here.')) . '</p>
     </div>';
 } else {
     $casesHtml = '<div class="lcv-case-grid">';
@@ -183,7 +183,7 @@ if (empty($clientCases)) {
             <div class="lcv-case-card__badges">' . $statusBadge . $priorityBadge . $primaryBadge . '</div>
             <p class="lcv-case-card__desc">' . htmlspecialchars($description) . '</p>
             <div class="lcv-case-card__foot">
-                <a href="lawyer-case-view.php?id=' . (int) $case['id'] . '" class="btn btn-sm btn-primary mb-0">View case</a>
+                <a href="lawyer-case-view.php?id=' . (int) $case['id'] . '" class="btn btn-sm btn-primary mb-0">' . htmlspecialchars(lawyer_tf('client_view.view_case', 'View case')) . '</a>
             </div>
         </article>';
     }
@@ -196,8 +196,8 @@ if (empty($clientComments)) {
     $commentsHtml = '
     <div class="cc-comments-empty text-center py-5 mb-0">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCommentEmpty . '</div>
-        <h6 class="font-weight-bolder mt-4 mb-2">No comments yet</h6>
-        <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">Comments from this client and your team on shared cases will appear here.</p>
+        <h6 class="font-weight-bolder mt-4 mb-2">' . htmlspecialchars(lawyer_tf('client_view.no_comments', 'No comments yet')) . '</h6>
+        <p class="text-sm text-muted mb-0 mx-auto" style="max-width: 22rem;">' . htmlspecialchars(lawyer_tf('client_view.no_comments_sub', 'Comments from this client and your team on shared cases will appear here.')) . '</p>
     </div>';
 } else {
     $commentsHtml .= '<ul class="cc-comment-list list-unstyled mb-0">';
@@ -236,7 +236,7 @@ if (empty($clientComments)) {
 // Build documents HTML
 $documentsHtml = '';
 if (empty($clientDocuments)) {
-    $documentsHtml = '<tr><td colspan="5" class="text-center text-muted py-5">No documents uploaded for this client\'s cases</td></tr>';
+    $documentsHtml = '<tr><td colspan="5" class="text-center text-muted py-5">' . htmlspecialchars(lawyer_tf('client_view.no_documents', 'No documents uploaded for this client\'s cases')) . '</td></tr>';
 } else {
     foreach ($clientDocuments as $document) {
         $filePath = isset($document['file_path']) ? trim((string) $document['file_path']) : '';
@@ -295,15 +295,21 @@ ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
 
+$pageTitle = lawyer_tf('client_view.page_title', 'Client Details');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle, [
+    ['label' => lawyer_tf('clients.page_title', 'My Clients'), 'url' => 'lawyer-clients.php'],
+    ['label' => $clientFullName],
+]);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - Client Details</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -318,28 +324,17 @@ $html = <<<'HTML'
     {NAVIGATION}
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-dashboard.php">Lawyer Portal</a></li>
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-clients.php">My Clients</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">{CLIENT_NAME}</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Client Details</h6>
-                </nav>
-            </div>
-        </nav>
+        {BREADCRUMB_NAVBAR}
 
         <div class="container-fluid py-4">
             <div class="card lcv-hero mb-4">
                 <div class="lcv-hero__gradient">
-                    <a href="lawyer-clients.php" class="lcv-back">{ICON_ARROW_LEFT} Back to clients</a>
+                    <a href="lawyer-clients.php" class="lcv-back">{ICON_ARROW_LEFT} {LBL_BACK_TO_CLIENTS}</a>
                     <div class="lcv-hero__main">
                         <div class="lcv-avatar" aria-hidden="true">{CLIENT_INITIALS}</div>
                         <div>
                             <h1 class="lcv-hero__name">{CLIENT_NAME}</h1>
-                            <p class="lcv-hero__meta">Client since {CLIENT_SINCE}</p>
+                            <p class="lcv-hero__meta">{LBL_CLIENT_SINCE} {CLIENT_SINCE}</p>
                         </div>
                     </div>
                 </div>
@@ -349,28 +344,28 @@ $html = <<<'HTML'
                 <div class="lcv-glance__item">
                     <div>
                         <div class="lcv-glance__val">{TOTAL_CASES}</div>
-                        <div class="lcv-glance__lbl">Total cases</div>
+                        <div class="lcv-glance__lbl">{LBL_TOTAL_CASES}</div>
                     </div>
                     <div class="lcv-glance__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">{ICON_PANEL_CASES}</div>
                 </div>
                 <div class="lcv-glance__item">
                     <div>
                         <div class="lcv-glance__val">{ACTIVE_CASES}</div>
-                        <div class="lcv-glance__lbl">Active cases</div>
+                        <div class="lcv-glance__lbl">{LBL_ACTIVE_CASES}</div>
                     </div>
                     <div class="lcv-glance__icon" style="background:rgba(45,206,137,.12);color:#2dce89;">{ICON_PANEL_CASES}</div>
                 </div>
                 <div class="lcv-glance__item">
                     <div>
                         <div class="lcv-glance__val">{COMMENTS_COUNT}</div>
-                        <div class="lcv-glance__lbl">Comments</div>
+                        <div class="lcv-glance__lbl">{LBL_COMMENTS}</div>
                     </div>
                     <div class="lcv-glance__icon" style="background:rgba(17,205,239,.12);color:#11cdef;">{ICON_PANEL_ACTIVITY}</div>
                 </div>
                 <div class="lcv-glance__item">
                     <div>
                         <div class="lcv-glance__val">{DOCUMENTS_COUNT}</div>
-                        <div class="lcv-glance__lbl">Documents</div>
+                        <div class="lcv-glance__lbl">{LBL_DOCUMENTS}</div>
                     </div>
                     <div class="lcv-glance__icon" style="background:rgba(251,99,64,.12);color:#fb6340;">{ICON_DOC_ROW}</div>
                 </div>
@@ -380,8 +375,8 @@ $html = <<<'HTML'
                 <div class="lcv-panel__head">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_PANEL_CONTACT}</div>
                     <div>
-                        <h6>Contact information</h6>
-                        <p>How to reach this client</p>
+                        <h6>{LBL_CONTACT_INFO}</h6>
+                        <p>{LBL_CONTACT_SUB}</p>
                     </div>
                 </div>
                 <div class="lcv-panel__body">
@@ -393,8 +388,8 @@ $html = <<<'HTML'
                 <div class="lcv-panel__head">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_PANEL_CASES}</div>
                     <div>
-                        <h6>Associated cases</h6>
-                        <p>Cases involving this client that are assigned to you</p>
+                        <h6>{LBL_ASSOCIATED_CASES}</h6>
+                        <p>{LBL_ASSOCIATED_CASES_SUB}</p>
                     </div>
                 </div>
                 <div class="lcv-panel__body">
@@ -406,20 +401,20 @@ $html = <<<'HTML'
                 <div class="lcv-panel__head">
                     <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">{ICON_PANEL_ACTIVITY}</div>
                     <div>
-                        <h6>Activity</h6>
-                        <p>Comments and documents from shared cases</p>
+                        <h6>{LBL_ACTIVITY}</h6>
+                        <p>{LBL_ACTIVITY_SUB}</p>
                     </div>
                 </div>
                 <div class="lcv-tabs-wrap">
                     <ul class="nav lcv-tabs" id="clientTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
-                                Comments <span class="lcv-tab-badge">{COMMENTS_COUNT}</span>
+                                {LBL_COMMENTS} <span class="lcv-tab-badge">{COMMENTS_COUNT}</span>
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
-                                Documents <span class="lcv-tab-badge">{DOCUMENTS_COUNT}</span>
+                                {LBL_DOCUMENTS} <span class="lcv-tab-badge">{DOCUMENTS_COUNT}</span>
                             </button>
                         </li>
                     </ul>
@@ -436,11 +431,11 @@ $html = <<<'HTML'
                                 <table class="table lcv-table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th>Document</th>
-                                            <th class="text-center">Type</th>
-                                            <th class="text-center">Size</th>
-                                            <th class="text-center">Uploaded</th>
-                                            <th class="text-end">Actions</th>
+                                            <th>{LBL_COL_DOCUMENT}</th>
+                                            <th class="text-center">{LBL_COL_TYPE}</th>
+                                            <th class="text-center">{LBL_COL_SIZE}</th>
+                                            <th class="text-center">{LBL_COL_UPLOADED}</th>
+                                            <th class="text-end">{LBL_ACTIONS}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -478,6 +473,26 @@ HTML;
 
 // Calculate statistics
 $replacements = [
+    '{HTML_LANG}' => lawyer_portal_html_lang(),
+    '{PAGE_TITLE}' => htmlspecialchars($pageTitle),
+    '{BREADCRUMB_NAVBAR}' => $breadcrumbNavbar,
+    '{LBL_BACK_TO_CLIENTS}' => htmlspecialchars(lawyer_tf('client_view.back_to_clients', 'Back to clients')),
+    '{LBL_CLIENT_SINCE}' => htmlspecialchars(lawyer_tf('client_view.client_since', 'Client since')),
+    '{LBL_TOTAL_CASES}' => htmlspecialchars(lawyer_tf('client_view.total_cases', 'Total cases')),
+    '{LBL_ACTIVE_CASES}' => htmlspecialchars(lawyer_tf('client_view.active_cases', 'Active cases')),
+    '{LBL_COMMENTS}' => htmlspecialchars(lawyer_tf('common.comments', 'Comments')),
+    '{LBL_DOCUMENTS}' => htmlspecialchars(lawyer_tf('common.documents', 'Documents')),
+    '{LBL_CONTACT_INFO}' => htmlspecialchars(lawyer_tf('client_view.contact_info', 'Contact information')),
+    '{LBL_CONTACT_SUB}' => htmlspecialchars(lawyer_tf('client_view.contact_sub', 'How to reach this client')),
+    '{LBL_ASSOCIATED_CASES}' => htmlspecialchars(lawyer_tf('client_view.associated_cases', 'Associated cases')),
+    '{LBL_ASSOCIATED_CASES_SUB}' => htmlspecialchars(lawyer_tf('client_view.associated_cases_sub', 'Cases involving this client that are assigned to you')),
+    '{LBL_ACTIVITY}' => htmlspecialchars(lawyer_tf('client_view.activity', 'Activity')),
+    '{LBL_ACTIVITY_SUB}' => htmlspecialchars(lawyer_tf('client_view.activity_sub', 'Comments and documents from shared cases')),
+    '{LBL_COL_DOCUMENT}' => htmlspecialchars(lawyer_tf('client_view.col_document', 'Document')),
+    '{LBL_COL_TYPE}' => htmlspecialchars(lawyer_tf('client_view.col_type', 'Type')),
+    '{LBL_COL_SIZE}' => htmlspecialchars(lawyer_tf('client_view.col_size', 'Size')),
+    '{LBL_COL_UPLOADED}' => htmlspecialchars(lawyer_tf('client_view.col_uploaded', 'Uploaded')),
+    '{LBL_ACTIONS}' => htmlspecialchars(lawyer_tf('common.actions', 'Actions')),
     '{NAVIGATION}' => $navHtml,
     '{CLIENT_NAME}' => htmlspecialchars($clientFullName),
     '{CLIENT_INITIALS}' => htmlspecialchars($clientInitials),
