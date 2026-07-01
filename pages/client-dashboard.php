@@ -58,7 +58,7 @@ try {
     $stmt->execute([$client_id]);
     $upcomingAppointments = $stmt->fetchAll();
 } catch (PDOException $e) {
-    $message     = 'Error loading dashboard data.';
+    $message     = client_t('dashboard.error_load');
     $messageType = 'danger';
     $caseStats   = ['total_cases' => 0, 'open_cases' => 0, 'closed_cases' => 0, 'pending_cases' => 0];
     $recentCases = [];
@@ -72,21 +72,19 @@ $totalCases = (int) ($caseStats['total_cases'] ?? 0);
 
 require_once __DIR__ . '/../inc/legalpro-icons.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/client-portal-i18n.php';
 
 $hour = (int) date('G');
-if ($hour < 12) {
-    $greeting = 'Good morning';
-} elseif ($hour < 17) {
-    $greeting = 'Good afternoon';
-} else {
-    $greeting = 'Good evening';
-}
+$greeting = client_greeting();
 $firstName = htmlspecialchars(explode(' ', trim((string) $client_name))[0] ?: $client_name);
 $dateLabel = date('l, F j');
 
+$caseWord = client_plural('common.case', 'common.cases', $openCases);
+$meetingWord = client_plural('common.meeting', 'common.meetings', $upcomingCount);
 $heroGlanceHtml = '<div class="cd-hero-glance">'
-    . '<span class="cd-hero-glance__item"><strong>' . $openCases . '</strong> open ' . ($openCases === 1 ? 'case' : 'cases') . '</span>'
-    . '<span class="cd-hero-glance__item"><strong>' . $upcomingCount . '</strong> upcoming ' . ($upcomingCount === 1 ? 'meeting' : 'meetings') . '</span>'
+    . '<span class="cd-hero-glance__item">' . htmlspecialchars(client_t('dashboard.open_cases', ['count' => (string) $openCases, 'cases' => $caseWord])) . '</span>'
+    . '<span class="cd-hero-glance__item">' . htmlspecialchars(client_t('dashboard.upcoming_meetings', ['count' => (string) $upcomingCount, 'meetings' => $meetingWord])) . '</span>'
     . '</div>';
 
 $nextApptBanner = '';
@@ -94,16 +92,16 @@ if ($nextAppt) {
     $dt = date('l, j F · g:i A', strtotime($nextAppt['starts_at']));
     $nextApptBanner = '<div class="cd-next-appt">'
         . legalpro_icon('calendar-clock')
-        . '<span>Next: <strong>' . htmlspecialchars($dt) . '</strong> · ' . htmlspecialchars($nextAppt['case_title'] ?: 'General') . '</span>'
+        . '<span>' . htmlspecialchars(client_t('common.next')) . ': <strong>' . htmlspecialchars($dt) . '</strong> · ' . htmlspecialchars($nextAppt['case_title'] ?: client_t('common.general')) . '</span>'
         . '</div>';
 }
 
 $quickActionsHtml = '';
 $quickActions = [
-    ['url' => 'client-cases.php', 'icon' => 'briefcase', 'tone' => '', 'label' => 'My Cases', 'desc' => 'All your matters'],
-    ['url' => 'client-documents.php', 'icon' => 'file-text', 'tone' => 'success', 'label' => 'Documents', 'desc' => 'View & download'],
-    ['url' => 'client-appointments.php', 'icon' => 'calendar', 'tone' => 'info', 'label' => 'Appointments', 'desc' => 'Book or review'],
-    ['url' => 'client-payments.php', 'icon' => 'credit-card', 'tone' => 'warning', 'label' => 'Payments', 'desc' => 'Invoices & receipts'],
+    ['url' => 'client-cases.php', 'icon' => 'briefcase', 'tone' => '', 'label' => client_t('dashboard.quick.cases'), 'desc' => client_t('dashboard.quick.cases_desc')],
+    ['url' => 'client-documents.php', 'icon' => 'file-text', 'tone' => 'success', 'label' => client_t('dashboard.quick.documents'), 'desc' => client_t('dashboard.quick.documents_desc')],
+    ['url' => 'client-appointments.php', 'icon' => 'calendar', 'tone' => 'info', 'label' => client_t('dashboard.quick.appointments'), 'desc' => client_t('dashboard.quick.appointments_desc')],
+    ['url' => 'client-payments.php', 'icon' => 'credit-card', 'tone' => 'warning', 'label' => client_t('dashboard.quick.payments'), 'desc' => client_t('dashboard.quick.payments_desc')],
 ];
 foreach ($quickActions as $action) {
     $iconClass = $action['tone'] !== '' ? ' cd-quick-card__icon--' . $action['tone'] : '';
@@ -118,14 +116,14 @@ $recentCasesHtml = '';
 if (empty($recentCases)) {
     $recentCasesHtml = '<div class="cd-empty-state">'
         . '<div class="cd-empty-icon">' . legalpro_icon('folder-open') . '</div>'
-        . '<p class="cd-empty-title">No cases yet</p>'
-        . '<p class="cd-empty-sub">When your firm opens a matter for you it will appear here.</p>'
+        . '<p class="cd-empty-title">' . htmlspecialchars(client_t('dashboard.no_cases')) . '</p>'
+        . '<p class="cd-empty-sub">' . htmlspecialchars(client_t('dashboard.no_cases_sub')) . '</p>'
         . '</div>';
 } else {
     foreach ($recentCases as $case) {
         $num     = 'C-' . str_pad((string) $case['id'], 4, '0', STR_PAD_LEFT);
         $title   = htmlspecialchars($case['title']);
-        $lawyer  = htmlspecialchars($case['lawyer_names'] ?: 'Unassigned');
+        $lawyer  = htmlspecialchars($case['lawyer_names'] ?: client_t('common.unassigned'));
         $updated = date('M j, Y', strtotime($case['updated_at']));
         $pill    = client_case_status_badge((string) ($case['status'] ?? ''));
         $caseSearchHay = htmlspecialchars(strtolower($num . ' ' . ($case['title'] ?? '') . ' ' . ($case['lawyer_names'] ?? '') . ' ' . ($case['status'] ?? '')), ENT_QUOTES, 'UTF-8');
@@ -133,7 +131,7 @@ if (empty($recentCases)) {
             . '<div class="cd-list-row__icon">' . legalpro_icon('briefcase') . '</div>'
             . '<div class="cd-list-row__body">'
             . '<div class="cd-list-row__title">' . $num . ' · ' . $title . '</div>'
-            . '<div class="cd-list-row__meta">' . $lawyer . ' · Updated ' . $updated . '</div>'
+            . '<div class="cd-list-row__meta">' . $lawyer . ' · ' . htmlspecialchars(client_t('common.updated')) . ' ' . $updated . '</div>'
             . '</div>'
             . '<div class="cd-list-row__aside">' . $pill . '</div>'
             . '</a>';
@@ -144,15 +142,15 @@ $appointmentsHtml = '';
 if (empty($upcomingAppointments)) {
     $appointmentsHtml = '<div class="cd-empty-state">'
         . '<div class="cd-empty-icon">' . legalpro_icon('calendar') . '</div>'
-        . '<p class="cd-empty-title">No upcoming meetings</p>'
-        . '<p class="cd-empty-sub">Accepted appointments will appear here once scheduled.</p>'
+        . '<p class="cd-empty-title">' . htmlspecialchars(client_t('dashboard.no_meetings')) . '</p>'
+        . '<p class="cd-empty-sub">' . htmlspecialchars(client_t('dashboard.no_meetings_sub')) . '</p>'
         . '</div>';
 } else {
     foreach ($upcomingAppointments as $apt) {
         $dayLabel  = date('M j', strtotime($apt['starts_at']));
         $timeLabel = date('g:i A', strtotime($apt['starts_at']));
-        $caseTitle = htmlspecialchars($apt['case_title'] ?: 'General appointment');
-        $lawyerTxt = htmlspecialchars($apt['lawyer_name'] ?: 'TBD');
+        $caseTitle = htmlspecialchars($apt['case_title'] ?: client_t('common.general_appointment'));
+        $lawyerTxt = htmlspecialchars($apt['lawyer_name'] ?: client_t('common.tbd'));
         $notesRaw  = $apt['notes'] ? (string) $apt['notes'] : '';
         $notes     = $notesRaw !== '' ? htmlspecialchars(mb_substr($notesRaw, 0, 68)) . (strlen($notesRaw) > 68 ? '…' : '') : '';
         $apptSearchHay = htmlspecialchars(strtolower($caseTitle . ' ' . $lawyerTxt . ' ' . $dayLabel . ' ' . $timeLabel . ' ' . $notesRaw), ENT_QUOTES, 'UTF-8');
@@ -166,7 +164,7 @@ if (empty($upcomingAppointments)) {
             . '<div class="cd-appt-row__meta">' . legalpro_icon('user') . $lawyerTxt . '</div>'
             . ($notes !== '' ? '<div class="cd-appt-row__notes">' . $notes . '</div>' : '')
             . '</div>'
-            . '<div class="cd-appt-row__badge"><span class="cd-appt-accepted">Confirmed</span></div>'
+            . '<div class="cd-appt-row__badge"><span class="cd-appt-accepted">' . htmlspecialchars(client_t('common.confirmed')) . '</span></div>'
             . '</a>';
     }
 }
@@ -178,25 +176,25 @@ $activityItems = legalpro_client_get_activity_feed($pdo, $client_id, 25);
 $activityFeedHtml = legalpro_client_render_activity_feed_html($activityItems);
 
 $clientPageNavbar = legalpro_render_client_page_navbar(
-    'Dashboard',
-    'Dashboard',
+    client_t('dashboard.title'),
+    client_t('dashboard.title'),
     '',
     ['include_search' => false]
 );
 
 $messageHtml = $message
-    ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show mb-3" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>'
+    ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show mb-3" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars(client_t('common.close')) . '"></button></div>'
     : '';
 
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>My Dashboard — LegalPro</title>
+    <title>{PAGE_TITLE}</title>
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -217,20 +215,20 @@ $html = <<<'HTML'
         <div class="cd-page">
         {MESSAGE}
 
-        <section class="cd-hero-card" aria-label="Dashboard overview">
+        <section class="cd-hero-card" aria-label="{DASH_ARIA}">
             <div class="cd-hero-main">
                 <div class="cd-hero-top">
-                    <p class="cd-hero-kicker">Your legal workspace</p>
+                    <p class="cd-hero-kicker">{DASH_KICKER}</p>
                     <span class="cd-hero-date">{HERO_DATE}</span>
                 </div>
                 <h1 class="cd-hero-title">{GREETING}, {CLIENT_NAME}</h1>
-                <p class="cd-hero-sub">Track your cases, prepare for meetings, and stay on top of court dates — all in one place.</p>
+                <p class="cd-hero-sub">{DASH_SUB}</p>
                 {HERO_GLANCE}
                 {NEXT_APPT_BANNER}
             </div>
             <div class="cd-hero-actions">
-                <a href="client-cases.php" class="btn btn-primary-solid">View cases</a>
-                <a href="chatbot.php" class="btn btn-ghost">Ask assistant</a>
+                <a href="client-cases.php" class="btn btn-primary-solid">{DASH_VIEW_CASES}</a>
+                <a href="chatbot.php" class="btn btn-ghost">{DASH_ASK_ASSISTANT}</a>
             </div>
         </section>
 
@@ -242,28 +240,28 @@ $html = <<<'HTML'
             <div class="cd-kpi" style="--kpi-accent: var(--cd-primary);">
                 <div>
                     <div class="cd-kpi__val">{TOTAL_CASES}</div>
-                    <div class="cd-kpi__lbl">Total cases</div>
+                    <div class="cd-kpi__lbl">{LBL_TOTAL_CASES}</div>
                 </div>
                 <div class="cd-kpi__icon">{KPI_ICON_BRIEFCASE}</div>
             </div>
             <div class="cd-kpi" style="--kpi-accent: #2dce89;">
                 <div>
                     <div class="cd-kpi__val">{OPEN_CASES}</div>
-                    <div class="cd-kpi__lbl">Active</div>
+                    <div class="cd-kpi__lbl">{LBL_ACTIVE}</div>
                 </div>
                 <div class="cd-kpi__icon">{KPI_ICON_ACTIVITY}</div>
             </div>
             <div class="cd-kpi" style="--kpi-accent: #fb6340;">
                 <div>
                     <div class="cd-kpi__val">{PENDING_CASES}</div>
-                    <div class="cd-kpi__lbl">Pending</div>
+                    <div class="cd-kpi__lbl">{LBL_PENDING}</div>
                 </div>
                 <div class="cd-kpi__icon">{KPI_ICON_CLOCK}</div>
             </div>
             <div class="cd-kpi" style="--kpi-accent: #8898aa;">
                 <div>
                     <div class="cd-kpi__val">{CLOSED_CASES}</div>
-                    <div class="cd-kpi__lbl">Closed</div>
+                    <div class="cd-kpi__lbl">{LBL_CLOSED}</div>
                 </div>
                 <div class="cd-kpi__icon">{KPI_ICON_CHECK}</div>
             </div>
@@ -274,11 +272,11 @@ $html = <<<'HTML'
                 <div class="cd-panel-hdr__left">
                     <span class="cd-panel-hdr__icon">{PANEL_ICON_ACTIVITY}</span>
                     <div>
-                        <p class="cd-panel-title">Recent activity</p>
-                        <p class="cd-panel-sub">Invoices, hearings, documents, and appointments</p>
+                        <p class="cd-panel-title">{LBL_RECENT_ACTIVITY}</p>
+                        <p class="cd-panel-sub">{LBL_RECENT_ACTIVITY_SUB}</p>
                     </div>
                 </div>
-                <a href="client-documents.php" class="btn-cd-link">{LINK_ICON_DOCS} Documents</a>
+                <a href="client-documents.php" class="btn-cd-link">{LINK_ICON_DOCS} {LBL_DOCUMENTS}</a>
             </div>
             <div class="cd-panel-body">
                 {ACTIVITY_FEED}
@@ -291,11 +289,11 @@ $html = <<<'HTML'
                     <div class="cd-panel-hdr__left">
                         <span class="cd-panel-hdr__icon">{PANEL_ICON_CASES}</span>
                         <div>
-                            <p class="cd-panel-title">Recent cases</p>
-                            <p class="cd-panel-sub">Latest updates on your matters</p>
+                            <p class="cd-panel-title">{LBL_RECENT_CASES}</p>
+                            <p class="cd-panel-sub">{LBL_RECENT_CASES_SUB}</p>
                         </div>
                     </div>
-                    <a href="client-cases.php" class="btn-cd-link">{LINK_ICON_ARROW} View all</a>
+                    <a href="client-cases.php" class="btn-cd-link">{LINK_ICON_ARROW} {LBL_VIEW_ALL}</a>
                 </div>
                 <div class="cd-panel-body">
                     {RECENT_CASES}
@@ -306,11 +304,11 @@ $html = <<<'HTML'
                     <div class="cd-panel-hdr__left">
                         <span class="cd-panel-hdr__icon">{PANEL_ICON_CALENDAR}</span>
                         <div>
-                            <p class="cd-panel-title">Upcoming appointments</p>
-                            <p class="cd-panel-sub">Confirmed meetings on your calendar</p>
+                            <p class="cd-panel-title">{LBL_UPCOMING_APPOINTMENTS}</p>
+                            <p class="cd-panel-sub">{LBL_UPCOMING_APPOINTMENTS_SUB}</p>
                         </div>
                     </div>
-                    <a href="client-appointments.php" class="btn-cd-link">{LINK_ICON_PLUS} Book one</a>
+                    <a href="client-appointments.php" class="btn-cd-link">{LINK_ICON_PLUS} {LBL_BOOK_ONE}</a>
                 </div>
                 <div class="cd-panel-body">
                     {UPCOMING_APPOINTMENTS}
@@ -332,6 +330,26 @@ $html = <<<'HTML'
 HTML;
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{HTML_LANG}', client_portal_html_lang(), $html);
+$html = str_replace('{PAGE_TITLE}', htmlspecialchars(client_t('dashboard.page_title') . ' — LegalPro'), $html);
+$html = str_replace('{DASH_ARIA}', htmlspecialchars(client_t('dashboard.aria_overview')), $html);
+$html = str_replace('{DASH_KICKER}', htmlspecialchars(client_t('dashboard.kicker')), $html);
+$html = str_replace('{DASH_SUB}', htmlspecialchars(client_t('dashboard.subtitle')), $html);
+$html = str_replace('{DASH_VIEW_CASES}', htmlspecialchars(client_t('dashboard.view_cases_btn')), $html);
+$html = str_replace('{DASH_ASK_ASSISTANT}', htmlspecialchars(client_t('dashboard.ask_assistant_btn')), $html);
+$html = str_replace('{LBL_TOTAL_CASES}', htmlspecialchars(client_t('dashboard.total_cases')), $html);
+$html = str_replace('{LBL_ACTIVE}', htmlspecialchars(client_t('dashboard.active')), $html);
+$html = str_replace('{LBL_PENDING}', htmlspecialchars(client_t('dashboard.pending')), $html);
+$html = str_replace('{LBL_CLOSED}', htmlspecialchars(client_t('dashboard.closed')), $html);
+$html = str_replace('{LBL_RECENT_ACTIVITY}', htmlspecialchars(client_t('dashboard.recent_activity')), $html);
+$html = str_replace('{LBL_RECENT_ACTIVITY_SUB}', htmlspecialchars(client_t('dashboard.recent_activity_sub')), $html);
+$html = str_replace('{LBL_DOCUMENTS}', htmlspecialchars(client_t('dashboard.documents_link')), $html);
+$html = str_replace('{LBL_RECENT_CASES}', htmlspecialchars(client_t('dashboard.recent_cases')), $html);
+$html = str_replace('{LBL_RECENT_CASES_SUB}', htmlspecialchars(client_t('dashboard.recent_cases_sub')), $html);
+$html = str_replace('{LBL_VIEW_ALL}', htmlspecialchars(client_t('dashboard.view_all')), $html);
+$html = str_replace('{LBL_UPCOMING_APPOINTMENTS}', htmlspecialchars(client_t('dashboard.upcoming_appointments')), $html);
+$html = str_replace('{LBL_UPCOMING_APPOINTMENTS_SUB}', htmlspecialchars(client_t('dashboard.upcoming_appointments_sub')), $html);
+$html = str_replace('{LBL_BOOK_ONE}', htmlspecialchars(client_t('dashboard.book_one')), $html);
 $html = str_replace('{CLIENT_NAVBAR}', $clientPageNavbar, $html);
 $html = str_replace('{GREETING}', $greeting, $html);
 $html = str_replace('{CLIENT_NAME}', $firstName, $html);

@@ -10,7 +10,7 @@ function client_portal_render_hero(array $opts): string
         require_once __DIR__ . '/../inc/legalpro-icons.php';
     }
 
-    $kicker = htmlspecialchars((string) ($opts['kicker'] ?? 'Client portal'));
+    $kicker = htmlspecialchars((string) ($opts['kicker'] ?? (function_exists('client_t') ? client_t('common.client_portal') : 'Client portal')));
     $title = htmlspecialchars((string) ($opts['title'] ?? ''));
     $subtitle = isset($opts['subtitle']) ? htmlspecialchars((string) $opts['subtitle']) : '';
     $meta = isset($opts['meta']) && $opts['meta'] !== ''

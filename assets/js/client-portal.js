@@ -1,6 +1,21 @@
 (function () {
     'use strict';
 
+    function i18n(key, replace) {
+        var dict = window.clientPortalI18n || {};
+        var text = dict[key] || key;
+        if (replace) {
+            Object.keys(replace).forEach(function (k) {
+                text = String(text).split(':' + k).join(String(replace[k]));
+            });
+        }
+        return text;
+    }
+
+    function dateLocale() {
+        return (window.clientPortalI18n && window.clientPortalI18n.date_locale) || 'en-GB';
+    }
+
     var PREVIEW_LIMIT = 5;
     var cachedNotifications = [];
 
@@ -35,7 +50,7 @@
 
     function getUnreadHint() {
         var panel = qs('#clientNotifPanel');
-        return (panel && panel.getAttribute('data-unread-hint')) || 'New — not yet seen';
+        return (panel && panel.getAttribute('data-unread-hint')) || i18n('unread_hint');
     }
 
     function buildNotifItem(n) {
@@ -68,7 +83,7 @@
 
         if (!visible.length) {
             var tpl = qs('#clientNotifEmptyTpl');
-            list.innerHTML = tpl ? tpl.innerHTML : '<div class="legalpro-notif-panel__empty"><p>No notifications</p></div>';
+            list.innerHTML = tpl ? tpl.innerHTML : '<div class="legalpro-notif-panel__empty"><p>' + escapeHtml(i18n('no_notifications')) + '</p></div>';
             return;
         }
 
@@ -236,7 +251,7 @@
                 btn.className += ' cd-activity-pagination__btn--active';
             }
             btn.textContent = label;
-            btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
+            btn.setAttribute('aria-label', options.ariaLabel || (i18n('page') + ' ' + label));
             if (options.disabled) {
                 btn.disabled = true;
             } else if (page) {
@@ -284,10 +299,10 @@
         function renderControls() {
             pagesEl.innerHTML = '';
 
-            var prev = pageButton('‹ Prev', currentPage - 1, {
+            var prev = pageButton(i18n('prev_short'), currentPage - 1, {
                 nav: true,
                 disabled: currentPage === 1,
-                ariaLabel: 'Previous page'
+                ariaLabel: i18n('prev_page')
             });
             pagesEl.appendChild(prev);
 
@@ -302,10 +317,10 @@
                 }));
             });
 
-            var next = pageButton('Next ›', currentPage + 1, {
+            var next = pageButton(i18n('next_short'), currentPage + 1, {
                 nav: true,
                 disabled: currentPage === totalPages,
-                ariaLabel: 'Next page'
+                ariaLabel: i18n('next_page')
             });
             pagesEl.appendChild(next);
         }
@@ -319,7 +334,7 @@
 
             var start = (currentPage - 1) * perPage + 1;
             var end = Math.min(currentPage * perPage, items.length);
-            rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + items.length;
+            rangeEl.textContent = i18n('showing_range', { start: start, end: end, total: items.length });
 
             renderControls();
         }
@@ -396,10 +411,10 @@
             filterClientSearchRows('[data-search]', null, '', '', '');
         }
 
-        filterClientSearchRows('tr.ca-row[data-search]', '#caCount', 'appointment', 'appointments', ' total');
-        filterClientSearchRows('.cp-invoice-row.cp-search-row', '#cpInvoiceCount', 'invoice', 'invoices', ' total');
-        filterClientSearchRows('.cp-payment-row.cp-search-row', '#cpPaymentCount', 'payment', 'payments', ' total');
-        filterClientSearchRows('.cct-search-row', '#cctRowCount', 'court date', 'court dates', ' total');
+        filterClientSearchRows('tr.ca-row[data-search]', '#caCount', i18n('appointment'), i18n('appointments'), ' ' + i18n('total_suffix'));
+        filterClientSearchRows('.cp-invoice-row.cp-search-row', '#cpInvoiceCount', i18n('invoice'), i18n('invoices'), ' ' + i18n('total_suffix'));
+        filterClientSearchRows('.cp-payment-row.cp-search-row', '#cpPaymentCount', i18n('payment'), i18n('payments'), ' ' + i18n('total_suffix'));
+        filterClientSearchRows('.cct-search-row', '#cctRowCount', i18n('court_date'), i18n('court_dates'), ' ' + i18n('total_suffix'));
         legalproResetClientTablePaginations();
 
         var navInput = qs('.legalpro-navbar-search input[name="q"]');
@@ -477,7 +492,7 @@
                 btn.className += ' cp-portal-pagination__btn--active';
             }
             btn.textContent = label;
-            btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
+            btn.setAttribute('aria-label', options.ariaLabel || (i18n('page') + ' ' + label));
             if (options.disabled) {
                 btn.disabled = true;
             } else if (page) {
@@ -526,10 +541,10 @@
                 return;
             }
             pagesEl.innerHTML = '';
-            pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
+            pagesEl.appendChild(pageButton(i18n('prev_short'), currentPage - 1, {
                 nav: true,
                 disabled: currentPage === 1,
-                ariaLabel: 'Previous page'
+                ariaLabel: i18n('prev_page')
             }));
             visiblePages().forEach(function (page) {
                 if (page === 'gap') {
@@ -538,13 +553,13 @@
                 }
                 pagesEl.appendChild(pageButton(String(page), page, {
                     active: page === currentPage,
-                    ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
+                    ariaLabel: i18n('page') + ' ' + page + (page === currentPage ? ', ' + i18n('current') : '')
                 }));
             });
-            pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
+            pagesEl.appendChild(pageButton(i18n('next_short'), currentPage + 1, {
                 nav: true,
                 disabled: currentPage === totalPages,
-                ariaLabel: 'Next page'
+                ariaLabel: i18n('next_page')
             }));
         }
 
@@ -558,7 +573,7 @@
             var start = (currentPage - 1) * perPage + 1;
             var end = Math.min(currentPage * perPage, rows.length);
             if (rangeEl) {
-                rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
+                rangeEl.textContent = i18n('showing_range', { start: start, end: end, total: rows.length });
             }
             renderControls();
         }

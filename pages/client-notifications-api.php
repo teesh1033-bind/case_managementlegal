@@ -43,8 +43,8 @@ switch ($action) {
             $payload[] = [
                 'id' => (int) $n['id'],
                 'type' => $n['type'],
-                'title' => $n['title'],
-                'body' => $n['body'],
+                'title' => legalpro_client_notification_title($n),
+                'body' => legalpro_client_notification_body($n),
                 'link_url' => legalpro_client_resolve_notification_link($n),
                 'icon' => $n['icon'],
                 'is_read' => (bool) $n['is_read'],

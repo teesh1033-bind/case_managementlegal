@@ -7,6 +7,7 @@ if (defined('LEGALPRO_CLIENT_PORTAL_HEAD')) {
 }
 define('LEGALPRO_CLIENT_PORTAL_HEAD', true);
 require_once __DIR__ . '/legalpro-icons.php';
+require_once __DIR__ . '/../lib/client-portal-js-i18n.php';
 ?>
 
 <?php include __DIR__ . '/portal-theme-head-early.php'; ?>
@@ -29,3 +30,4 @@ require_once __DIR__ . '/legalpro-icons.php';
 
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>
+<?php echo client_portal_render_i18n_script(); ?>

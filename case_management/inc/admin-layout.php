@@ -379,8 +379,13 @@ function legalpro_render_admin_theme_toggle(): string
     $currentMode = (string) (getPortalTheme()['mode'] ?? 'light');
     $isDark = $currentMode === 'dark';
     $iconName = $isDark ? 'sun' : 'moon';
+<<<<<<< HEAD
     $switchLight = legalpro_admin_ui_label('theme.switch_light', 'Switch to light mode');
     $switchDark = legalpro_admin_ui_label('theme.switch_dark', 'Switch to dark mode');
+=======
+    $switchLight = 'Switch to light mode';
+    $switchDark = 'Switch to dark mode';
+>>>>>>> f8d8069b26796673d274e4d4ddfcf515c2108c1d
     $label = $isDark ? $switchLight : $switchDark;
 
     return '<button type="button" class="legalpro-header-theme-toggle" id="adminThemeToggle"'
@@ -617,10 +622,20 @@ function legalpro_case_priority_badge(string $priority): string
         'urgent' => ['key' => 'badges.priority.urgent', 'label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
     ];
 
+<<<<<<< HEAD
     if (isset($map[$key])) {
         $meta = $map[$key];
 
         return '<span class="lp-pill ' . $meta['class'] . '">' . htmlspecialchars(admin_badge_t($meta['key'], $meta['label'])) . '</span>';
+=======
+    if ($key === 'high' || $key === 'urgent') {
+        $class = $key === 'urgent' ? 'lp-pill--priority-urgent' : 'lp-pill--priority-high';
+    } else {
+        $class = 'lp-pill--priority-medium';
+        if (!in_array($key, ['normal', 'high', 'urgent'], true)) {
+            $label = 'Normal';
+        }
+>>>>>>> f8d8069b26796673d274e4d4ddfcf515c2108c1d
     }
 
     $class = 'lp-pill--priority-medium';
@@ -633,6 +648,7 @@ function legalpro_case_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
+<<<<<<< HEAD
         'open' => ['key' => 'badges.status.active', 'label' => 'Active', 'class' => 'lp-pill--status-active'],
         'active' => ['key' => 'badges.status.active', 'label' => 'Active', 'class' => 'lp-pill--status-active'],
         'pending' => ['key' => 'badges.status.pending', 'label' => 'Pending', 'class' => 'lp-pill--status-pending'],
@@ -641,6 +657,16 @@ function legalpro_case_status_badge(string $status): string
         'waiting_for_client' => ['key' => 'badges.status.waiting_for_client', 'label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
         'on_hold' => ['key' => 'badges.status.on_hold', 'label' => 'On Hold', 'class' => 'lp-pill--status-waiting'],
         'closed' => ['key' => 'badges.status.closed', 'label' => 'Closed', 'class' => 'lp-pill--status-closed'],
+=======
+        'open' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'active' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'in_progress' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'under_review' => ['label' => 'Under Review', 'class' => 'lp-pill--status-waiting'],
+        'waiting_for_client' => ['label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
+        'on_hold' => ['label' => 'On Hold', 'class' => 'lp-pill--status-waiting'],
+        'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
+>>>>>>> f8d8069b26796673d274e4d4ddfcf515c2108c1d
     ];
 
     if (!isset($map[$key])) {
@@ -679,6 +705,7 @@ function legalpro_task_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
+<<<<<<< HEAD
         'active' => ['key' => 'badges.status.active', 'label' => 'Active', 'class' => 'lp-pill--status-progress'],
         'pending' => ['key' => 'badges.status.pending', 'label' => 'Pending', 'class' => 'lp-pill--status-pending'],
         'under_review' => ['key' => 'badges.status.under_review', 'label' => 'Under review', 'class' => 'lp-pill--status-progress'],
@@ -686,6 +713,15 @@ function legalpro_task_status_badge(string $status): string
         'in_progress' => ['key' => 'badges.status.in_progress', 'label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
         'completed' => ['key' => 'badges.status.completed', 'label' => 'Completed', 'class' => 'lp-pill--status-active'],
         'cancelled' => ['key' => 'badges.status.cancelled', 'label' => 'Cancelled', 'class' => 'lp-pill--status-declined'],
+=======
+        'active' => ['label' => 'Active', 'class' => 'lp-pill--status-progress'],
+        'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'under_review' => ['label' => 'Under review', 'class' => 'lp-pill--status-progress'],
+        'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
+        'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
+        'completed' => ['label' => 'Completed', 'class' => 'lp-pill--status-active'],
+        'cancelled' => ['label' => 'Cancelled', 'class' => 'lp-pill--status-declined'],
+>>>>>>> f8d8069b26796673d274e4d4ddfcf515c2108c1d
     ];
 
     if (!isset($map[$key])) {
@@ -703,11 +739,19 @@ function legalpro_task_priority_badge(string $priority): string
 {
     $key = strtolower(trim($priority));
     $map = [
+<<<<<<< HEAD
         'normal' => ['key' => 'badges.priority.normal', 'label' => 'Normal', 'class' => 'lp-pill--priority-medium'],
         'high' => ['key' => 'badges.priority.high', 'label' => 'High', 'class' => 'lp-pill--priority-high'],
         'urgent' => ['key' => 'badges.priority.urgent', 'label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
         'low' => ['key' => 'badges.priority.low', 'label' => 'Low', 'class' => 'lp-pill--status-closed'],
         'medium' => ['key' => 'badges.priority.medium', 'label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
+=======
+        'normal' => ['label' => 'Normal', 'class' => 'lp-pill--priority-medium'],
+        'high' => ['label' => 'High', 'class' => 'lp-pill--priority-high'],
+        'urgent' => ['label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
+        'low' => ['label' => 'Low', 'class' => 'lp-pill--status-closed'],
+        'medium' => ['label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
+>>>>>>> f8d8069b26796673d274e4d4ddfcf515c2108c1d
     ];
 
     if (!isset($map[$key])) {
@@ -882,44 +926,50 @@ function client_court_date_status_badge(string $status): string
 {
     $key = strtolower(trim($status));
     $map = [
-        'scheduled' => ['label' => 'Scheduled', 'pill' => 'ca-status-pill--scheduled'],
-        'completed' => ['label' => 'Completed', 'pill' => 'ca-status-pill--done'],
-        'cancelled' => ['label' => 'Cancelled', 'pill' => 'ca-status-pill--declined'],
-        'postponed' => ['label' => 'Postponed', 'pill' => 'ca-status-pill--pending'],
+        'scheduled' => ['label_key' => 'badge.court_scheduled', 'pill' => 'ca-status-pill--scheduled'],
+        'completed' => ['label_key' => 'badge.court_completed', 'pill' => 'ca-status-pill--done'],
+        'cancelled' => ['label_key' => 'badge.court_cancelled', 'pill' => 'ca-status-pill--declined'],
+        'postponed' => ['label_key' => 'badge.court_postponed', 'pill' => 'ca-status-pill--pending'],
     ];
 
     if (!isset($map[$key])) {
-        $label = ucwords(str_replace('_', ' ', $key));
+        $label = function_exists('client_status_label') ? client_status_label($status) : ucwords(str_replace('_', ' ', $key));
 
         return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $label = function_exists('client_t') ? client_t($map[$key]['label_key']) : $map[$key]['label_key'];
+
+    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($label) . '</span>';
 }
 
 function client_case_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
-        'open' => ['label' => 'Active', 'pill' => 'ca-status-pill--scheduled'],
-        'in_progress' => ['label' => 'In Progress', 'pill' => 'ca-status-pill--scheduled'],
-        'closed' => ['label' => 'Closed', 'pill' => 'ca-status-pill--done'],
-        'pending' => ['label' => 'Pending', 'pill' => 'ca-status-pill--pending'],
+        'open' => ['label_key' => 'status.active', 'pill' => 'ca-status-pill--scheduled'],
+        'in_progress' => ['label_key' => 'status.in_progress', 'pill' => 'ca-status-pill--scheduled'],
+        'closed' => ['label_key' => 'status.closed', 'pill' => 'ca-status-pill--done'],
+        'pending' => ['label_key' => 'status.pending', 'pill' => 'ca-status-pill--pending'],
     ];
 
     if (!isset($map[$key])) {
-        $label = ucwords(str_replace('_', ' ', $key));
+        $label = function_exists('client_status_label') ? client_status_label($status) : ucwords(str_replace('_', ' ', $key));
 
         return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $label = function_exists('client_t') ? client_t($map[$key]['label_key']) : $map[$key]['label_key'];
+
+    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($label) . '</span>';
 }
 
 function client_case_priority_badge(string $priority): string
 {
     $key = strtolower(trim($priority));
-    $label = $priority !== '' ? $priority : 'Normal';
+    $label = function_exists('client_priority_label')
+        ? client_priority_label($priority)
+        : ($priority !== '' ? $priority : 'Normal');
 
     if ($key === 'high' || $key === 'urgent') {
         $pill = 'ca-status-pill--declined';
@@ -927,9 +977,6 @@ function client_case_priority_badge(string $priority): string
         $pill = 'ca-status-pill--muted';
     } else {
         $pill = 'ca-status-pill--pending';
-        if ($key === 'normal') {
-            $label = 'Normal';
-        }
     }
 
     return '<span class="ca-status-pill ' . $pill . '">' . htmlspecialchars($label) . '</span>';
@@ -973,23 +1020,33 @@ function client_appointment_status_badge(array $appointment): string
     $now = time();
 
     if ($status === 'pending') {
-        return '<span class="ca-status-pill ca-status-pill--pending">Awaiting confirmation</span>';
+        $label = function_exists('client_t') ? client_t('badge.appt_awaiting') : 'Awaiting confirmation';
+
+        return '<span class="ca-status-pill ca-status-pill--pending">' . htmlspecialchars($label) . '</span>';
     }
     if ($status === 'rejected') {
-        return '<span class="ca-status-pill ca-status-pill--declined">Declined</span>';
+        $label = function_exists('client_t') ? client_t('badge.appt_declined') : 'Declined';
+
+        return '<span class="ca-status-pill ca-status-pill--declined">' . htmlspecialchars($label) . '</span>';
     }
     if ($status === 'accepted') {
         if ($startsAt > 0 && $startsAt < $now) {
-            return '<span class="ca-status-pill ca-status-pill--done">Completed</span>';
+            $label = function_exists('client_t') ? client_t('badge.appt_completed') : 'Completed';
+
+            return '<span class="ca-status-pill ca-status-pill--done">' . htmlspecialchars($label) . '</span>';
         }
         if ($startsAt > 0 && date('Y-m-d', $startsAt) === date('Y-m-d')) {
-            return '<span class="ca-status-pill ca-status-pill--scheduled">Today</span>';
+            $label = function_exists('client_t') ? client_t('badge.appt_today') : 'Today';
+
+            return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
         }
 
-        return '<span class="ca-status-pill ca-status-pill--scheduled">Confirmed</span>';
+        $label = function_exists('client_t') ? client_t('badge.appt_confirmed') : 'Confirmed';
+
+        return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
     }
 
-    $label = ucwords(str_replace('_', ' ', $status));
+    $label = function_exists('client_status_label') ? client_status_label($status) : ucwords(str_replace('_', ' ', $status));
 
     return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
 }

@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/case_events.php';
 require_once __DIR__ . '/client-portal-features.php';
+require_once __DIR__ . '/client-locale.php';
+require_once __DIR__ . '/client-portal-i18n.php';
 require_once dirname(__DIR__) . '/inc/admin-layout.php';
 require_once dirname(__DIR__) . '/inc/client-portal-navbar.php';
 require_once dirname(__DIR__) . '/inc/legalpro-icons.php';
@@ -9,6 +11,10 @@ require_once __DIR__ . '/client-portal-page-ui.php';
 
 function legalpro_client_case_nav(): array
 {
+    if (function_exists('client_case_nav_resolved')) {
+        return client_case_nav_resolved();
+    }
+
     return [
         'client-case-view' => [
             'file' => 'client-case-view.php',
@@ -160,14 +166,14 @@ function legalpro_client_case_handle_post(PDO $pdo, array &$state): void
             try {
                 $stmt = $pdo->prepare("INSERT INTO case_comments (case_id, user_id, comment, comment_type) VALUES (?, ?, ?, 'client')");
                 $stmt->execute([$caseId, $clientUserId, $comment]);
-                $state['message'] = 'Comment added successfully!';
+                $state['message'] = client_t('case.msg_comment_added');
                 $state['messageType'] = 'success';
                 CaseEvents::trackCommentAdded($caseId, [
                     'comment' => $comment,
                     'comment_type' => 'client',
                 ]);
             } catch (PDOException $e) {
-                $state['message'] = 'Error adding comment: ' . htmlspecialchars($e->getMessage());
+                $state['message'] = client_t('case.msg_comment_error') . ' ' . htmlspecialchars($e->getMessage());
                 $state['messageType'] = 'danger';
             }
         }
@@ -180,7 +186,7 @@ function legalpro_client_case_handle_post(PDO $pdo, array &$state): void
     if (($_POST['action'] ?? '') === 'acknowledge') {
         $docId = (int) ($_POST['document_id'] ?? 0);
         if (legalpro_client_acknowledge_document($pdo, $clientId, $docId)) {
-            $state['message'] = 'Receipt acknowledged.';
+            $state['message'] = client_t('case.msg_acknowledged');
             $state['messageType'] = 'success';
         }
         legalpro_client_case_redirect($caseId, 'client-case-documents.php');
@@ -200,18 +206,18 @@ function legalpro_client_case_handle_post(PDO $pdo, array &$state): void
                 try {
                     $stmt = $pdo->prepare("INSERT INTO documents (case_id, filename, filepath, label, uploaded_by) VALUES (?, ?, ?, ?, ?)");
                     $stmt->execute([$caseId, $file['name'], 'uploads/client_files/' . $fileName, $label ?: $file['name'], $clientName]);
-                    $state['message'] = 'File uploaded successfully!';
+                    $state['message'] = client_t('case.msg_upload_success');
                     $state['messageType'] = 'success';
                     CaseEvents::trackDocumentUploaded($caseId, [
                         'filename' => $file['name'],
                         'label' => $label ?: $file['name'],
                     ]);
                 } catch (PDOException $e) {
-                    $state['message'] = 'Error saving file information: ' . htmlspecialchars($e->getMessage());
+                    $state['message'] = client_t('case.msg_upload_error') . ' ' . htmlspecialchars($e->getMessage());
                     $state['messageType'] = 'danger';
                 }
             } else {
-                $state['message'] = 'Error uploading file.';
+                $state['message'] = client_t('case.msg_upload_error');
                 $state['messageType'] = 'danger';
             }
         }
@@ -298,7 +304,7 @@ function legalpro_client_case_load(PDO $pdo, array &$state): bool
 
         return true;
     } catch (PDOException $e) {
-        $state['message'] = 'Error loading case details: ' . htmlspecialchars($e->getMessage());
+        $state['message'] = client_t('case.msg_load_error') . ' ' . htmlspecialchars($e->getMessage());
         $state['messageType'] = 'danger';
         $state['case'] = null;
 
@@ -345,7 +351,7 @@ function legalpro_client_case_message_html(array $state): string
 
     return '<div class="alert alert-' . htmlspecialchars($type) . ' alert-dismissible fade show" role="alert">'
         . htmlspecialchars($state['message'])
-        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars(client_t('common.close')) . '"></button>'
         . '</div>';
 }
 
@@ -363,25 +369,25 @@ function legalpro_client_case_hero_html(array $state, array $page): string
 
     $caseNumber = (string) ($state['case_number'] ?? '');
     $caseId = (int) ($state['case_id'] ?? 0);
-    $statusLabel = ucwords(str_replace('_', ' ', (string) ($case['status'] ?? 'Unknown')));
-    $priorityLabel = ucfirst((string) ($case['priority'] ?? 'Normal'));
+    $statusLabel = client_status_label((string) ($case['status'] ?? ''));
+    $priorityLabel = client_priority_label((string) ($case['priority'] ?? 'normal'));
 
     return client_portal_render_hero([
-        'kicker' => 'Case ' . $caseNumber,
-        'title' => (string) ($case['title'] ?? 'Case details'),
+        'kicker' => client_t('case.hero_kicker', ['number' => $caseNumber]),
+        'title' => (string) ($case['title'] ?? client_t('case.hero_title_fallback')),
         'subtitle' => (string) ($page['subtitle'] ?? ''),
-        'meta' => $statusLabel . ' · ' . $priorityLabel . ' priority',
+        'meta' => client_t('case.hero_meta', ['status' => $statusLabel, 'priority' => $priorityLabel]),
         'show_date' => true,
-        'aria_label' => 'Case ' . $caseNumber,
+        'aria_label' => client_t('case.hero_kicker', ['number' => $caseNumber]),
         'stats' => [
-            ['num' => (string) count($state['documents'] ?? []), 'lbl' => 'Documents'],
-            ['num' => (string) count($state['appointments'] ?? []), 'lbl' => 'Appointments'],
-            ['num' => (string) count($state['comments'] ?? []), 'lbl' => 'Comments'],
-            ['num' => (string) count($state['services'] ?? []), 'lbl' => 'Services'],
+            ['num' => (string) count($state['documents'] ?? []), 'lbl' => client_t('case.stat_documents')],
+            ['num' => (string) count($state['appointments'] ?? []), 'lbl' => client_t('case.stat_appointments')],
+            ['num' => (string) count($state['comments'] ?? []), 'lbl' => client_t('case.stat_comments')],
+            ['num' => (string) count($state['services'] ?? []), 'lbl' => client_t('case.stat_services')],
         ],
         'actions' => [
-            ['url' => 'client-cases.php', 'label' => 'All cases', 'icon' => 'briefcase'],
-            ['url' => 'client-documents.php?case_id=' . $caseId, 'label' => 'Documents', 'primary' => true, 'icon' => 'folder-open'],
+            ['url' => 'client-cases.php', 'label' => client_t('case.action_all_cases'), 'icon' => 'briefcase'],
+            ['url' => 'client-documents.php?case_id=' . $caseId, 'label' => client_t('case.action_documents'), 'primary' => true, 'icon' => 'folder-open'],
         ],
     ]);
 }
@@ -414,60 +420,61 @@ function legalpro_client_case_detail_item(string $label, string $value, string $
 
 function legalpro_client_case_comment_role_badge(string $type): string
 {
+    $label = htmlspecialchars(client_comment_role_label($type));
     switch ($type) {
         case 'client':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Client</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">' . $label . '</span>';
         case 'lawyer':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-success">Lawyer</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-success">' . $label . '</span>';
         case 'admin':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-warning">Admin</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-warning">' . $label . '</span>';
         case 'staff':
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">Staff</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">' . $label . '</span>';
         default:
-            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">System</span>';
+            return '<span class="cc-comment-role badge badge-sm bg-gradient-secondary">' . $label . '</span>';
     }
 }
 
 function legalpro_client_case_overview_html(array $state): string
 {
     $case = $state['case'];
-    $lawyerNames = htmlspecialchars($case['lawyer_names'] ?: 'Unassigned');
-    $category = htmlspecialchars((string) ($case['category'] ?? 'General'));
+    $lawyerNames = htmlspecialchars($case['lawyer_names'] ?: client_t('common.unassigned'));
+    $category = htmlspecialchars((string) ($case['category'] ?? client_t('common.general')));
     $statusBadge = client_case_status_badge((string) ($case['status'] ?? ''));
     $priorityBadge = client_case_priority_badge((string) ($case['priority'] ?? 'Normal'));
-    $description = htmlspecialchars($case['description'] ?: 'No description provided for this matter yet.');
+    $description = htmlspecialchars($case['description'] ?: client_t('case.no_description'));
 
     $body = '
         <p class="ccv-overview-desc">' . $description . '</p>
         <div class="ccv-overview-badges">' . $statusBadge . $priorityBadge
         . '<span class="cat-pill" style="background:#f1f5f9;color:#475569">' . $category . '</span></div>
         <div class="ccv-detail-grid">'
-        . legalpro_client_case_detail_item('Lawyer(s)', $lawyerNames, 'user')
+        . legalpro_client_case_detail_item(client_t('case.lawyers'), $lawyerNames, 'user')
         . legalpro_client_case_detail_item(
-            'Start date',
-            $case['start_date'] ? htmlspecialchars(date('M j, Y', strtotime($case['start_date']))) : 'Not set',
+            client_t('case.start_date'),
+            $case['start_date'] ? htmlspecialchars(client_format_date($case['start_date'])) : client_t('common.not_set'),
             'calendar'
         )
         . legalpro_client_case_detail_item(
-            'Expected completion',
-            $case['expected_completion'] ? htmlspecialchars(date('M j, Y', strtotime($case['expected_completion']))) : 'Not set',
+            client_t('case.expected_completion'),
+            $case['expected_completion'] ? htmlspecialchars(client_format_date($case['expected_completion'])) : client_t('common.not_set'),
             'calendar-clock'
         )
         . legalpro_client_case_detail_item(
-            'Estimated fees',
+            client_t('case.estimated_fees'),
             htmlspecialchars(formatCurrency((float) $case['estimated_fees'])),
             'credit-card'
         )
         . legalpro_client_case_detail_item(
-            'Last updated',
-            htmlspecialchars(date('M j, Y', strtotime($case['updated_at']))),
+            client_t('case.last_updated'),
+            htmlspecialchars(client_format_date($case['updated_at'])),
             'clock'
         )
         . '</div>';
 
     return legalpro_client_case_panel_html([
-        'title' => 'Case overview',
-        'subtitle' => 'Summary, counsel, dates, and fees for this matter.',
+        'title' => client_t('case.panel.overview'),
+        'subtitle' => client_t('case.panel.overview_sub'),
         'icon' => 'briefcase',
     ], $body);
 }
@@ -478,8 +485,8 @@ function legalpro_client_case_activity_html(array $state): string
     $count = count($state['caseEvents'] ?? []);
 
     return legalpro_client_case_panel_html([
-        'title' => 'Case activity',
-        'subtitle' => 'Updates on documents, appointments, payments, and case changes.',
+        'title' => client_t('case.panel.activity'),
+        'subtitle' => client_t('case.panel.activity_sub'),
         'icon' => 'activity',
         'badge' => (string) $count,
     ], '<div class="ccv-activity-feed">' . $activityHtml . '</div>');
@@ -510,23 +517,26 @@ function legalpro_client_case_services_html(array $state): string
         $totalPill = '<span class="ca-status-pill ca-status-pill--done">' . htmlspecialchars(formatCurrency($totalFees)) . '</span>';
         $servicesHtml .= '<li class="list-group-item border-0 px-0 pt-3">
             <div class="d-flex align-items-center justify-content-between gap-3">
-                <span class="text-sm font-weight-bold">Total Fees</span>
+                <span class="text-sm font-weight-bold">' . htmlspecialchars(client_t('case.total_fees')) . '</span>
                 ' . $totalPill . '
             </div>
         </li>';
     } else {
         $servicesHtml = '<div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . $iconServiceEmpty . '</div>
-            <h5>No services yet</h5>
-            <p>Fee line items for this matter will appear here when your firm adds them.</p>
+            <h5>' . htmlspecialchars(client_t('case.no_services')) . '</h5>
+            <p>' . htmlspecialchars(client_t('case.no_services_sub')) . '</p>
         </div>';
     }
 
+    $itemCount = count($services);
+    $badgeLabel = $itemCount . ' ' . client_plural('common.item', 'common.items', $itemCount);
+
     return legalpro_client_case_panel_html([
-        'title' => 'Services & fees',
-        'subtitle' => 'Line items and total fees for this matter.',
+        'title' => client_t('case.panel.services'),
+        'subtitle' => client_t('case.panel.services_sub'),
         'icon' => 'receipt',
-        'badge' => count($services) . ' item' . (count($services) === 1 ? '' : 's'),
+        'badge' => $badgeLabel,
     ], '<ul class="list-group list-group-flush ccv-service-list">' . $servicesHtml . '</ul>');
 }
 
@@ -544,28 +554,28 @@ function legalpro_client_case_appointments_html(array $state): string
                 <div class="ccv-appt-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconApptRow . '</div>
                 <div class="w-100 min-width-0">
                     <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
-                        <h6 class="mb-0 text-sm font-weight-bold">' . date('M d, Y g:i A', strtotime($apt['starts_at'])) . '</h6>
+                        <h6 class="mb-0 text-sm font-weight-bold">' . htmlspecialchars(client_format_datetime($apt['starts_at'])) . '</h6>
                         ' . $statusBadge . '
                     </div>
-                    <p class="text-xs text-secondary mb-0 mt-1">Lawyer: ' . htmlspecialchars($apt['lawyer_name'] ?: 'TBD') . '</p>
-                    <p class="text-xs text-secondary mb-0">Notes: ' . htmlspecialchars($apt['notes'] ?: 'No notes') . '</p>
+                    <p class="text-xs text-secondary mb-0 mt-1">' . htmlspecialchars(client_t('case.appt_lawyer_prefix')) . ' ' . htmlspecialchars($apt['lawyer_name'] ?: client_t('common.tbd')) . '</p>
+                    <p class="text-xs text-secondary mb-0">' . htmlspecialchars(client_t('case.appt_notes_prefix')) . ' ' . htmlspecialchars($apt['notes'] ?: client_t('case.no_notes')) . '</p>
                 </div>
             </div>';
         }
     } else {
         $html = '<div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . $iconApptEmpty . '</div>
-            <h5>No appointments scheduled</h5>
-            <p>Meetings with your legal team for this case will show up here.</p>
-            <a href="client-appointments.php" class="btn-cp-link">Book appointment</a>
+            <h5>' . htmlspecialchars(client_t('case.appt_empty_title')) . '</h5>
+            <p>' . htmlspecialchars(client_t('case.appt_empty_sub')) . '</p>
+            <a href="client-appointments.php" class="btn-cp-link">' . htmlspecialchars(client_t('case.appt_book')) . '</a>
         </div>';
     }
 
     return legalpro_client_case_panel_html([
-        'title' => 'Appointments',
-        'subtitle' => 'Scheduled meetings with your legal team.',
+        'title' => client_t('case.appt_panel_title'),
+        'subtitle' => client_t('case.appt_panel_sub'),
         'icon' => 'calendar-clock',
-        'badge' => count($appointments) . ' total',
+        'badge' => count($appointments) . ' ' . client_t('common.total'),
     ], $html);
 }
 
@@ -588,23 +598,23 @@ function legalpro_client_case_documents_html(array $state): string
                 $ackHtml = '<form method="post" class="d-inline ms-1">
                     <input type="hidden" name="action" value="acknowledge">
                     <input type="hidden" name="document_id" value="' . (int) $doc['id'] . '">
-                    <button type="submit" class="btn btn-sm btn-outline-success cdoc-touch-btn">Acknowledge</button>
+                    <button type="submit" class="btn btn-sm btn-outline-success cdoc-touch-btn">' . htmlspecialchars(client_t('case.doc_acknowledge')) . '</button>
                 </form>';
             } elseif ($docMeta && !empty($docMeta['is_acknowledged'])) {
-                $ackHtml = '<span class="text-xs text-success ms-1">✓ Acknowledged</span>';
+                $ackHtml = '<span class="text-xs text-success ms-1">✓ ' . htmlspecialchars(client_t('case.doc_acknowledged')) . '</span>';
             }
-            $newBadge = ($docMeta && !empty($docMeta['is_new'])) ? ' <span class="cdoc-new-badge">New</span>' : '';
+            $newBadge = ($docMeta && !empty($docMeta['is_new'])) ? ' <span class="cdoc-new-badge">' . htmlspecialchars(client_t('documents.new_badge')) . '</span>' : '';
             $filename = (string) ($doc['filename'] ?? 'document');
             $iconWrap = legalpro_document_file_icon_wrap($filename, 'ccv-doc-icon');
             $listHtml .= '<article class="cdoc-row ccv-doc-row">
                 ' . $iconWrap . '
                 <div class="cdoc-row__body">
                     <div class="cdoc-row__title">' . htmlspecialchars($docLabel) . $newBadge . '</div>
-                    <div class="cdoc-row__meta">Uploaded by ' . htmlspecialchars($doc['uploaded_by']) . ' · ' . date('M j, Y', strtotime($doc['uploaded_at'])) . '</div>
+                    <div class="cdoc-row__meta">' . htmlspecialchars(client_t('case.doc_uploaded_by')) . ' ' . htmlspecialchars($doc['uploaded_by']) . ' · ' . htmlspecialchars(client_format_date($doc['uploaded_at'])) . '</div>
                 </div>
                 <div class="cdoc-row__actions">
-                    <a href="' . htmlspecialchars($viewUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary cdoc-touch-btn">View</a>
-                    <a href="' . htmlspecialchars($downloadUrl) . '" download="' . htmlspecialchars($downloadName) . '" class="btn btn-sm btn-primary cdoc-touch-btn">Download</a>
+                    <a href="' . htmlspecialchars($viewUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary cdoc-touch-btn">' . htmlspecialchars(client_t('common.view')) . '</a>
+                    <a href="' . htmlspecialchars($downloadUrl) . '" download="' . htmlspecialchars($downloadName) . '" class="btn btn-sm btn-primary cdoc-touch-btn">' . htmlspecialchars(client_t('documents.download')) . '</a>
                     ' . $ackHtml . '
                 </div>
             </article>';
@@ -612,31 +622,31 @@ function legalpro_client_case_documents_html(array $state): string
     } else {
         $listHtml = '<div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . legalpro_icon('folder-open') . '</div>
-            <h5>No documents yet</h5>
-            <p>Files shared for this case will appear here. You can also upload documents below.</p>
-            <a href="client-documents.php?case_id=' . $caseId . '" class="btn-cp-link">View all documents</a>
+            <h5>' . htmlspecialchars(client_t('case.doc_empty_title')) . '</h5>
+            <p>' . htmlspecialchars(client_t('case.doc_empty_sub')) . '</p>
+            <a href="client-documents.php?case_id=' . $caseId . '" class="btn-cp-link">' . htmlspecialchars(client_t('case.doc_view_all')) . '</a>
         </div>';
     }
 
     $uploadHtml = '
         <div class="ccv-upload-block">
-            <h6 class="ccv-upload-block__title">Upload a document</h6>
+            <h6 class="ccv-upload-block__title">' . htmlspecialchars(client_t('case.doc_upload_title')) . '</h6>
             <form method="POST" action="client-case-documents.php?id=' . $caseId . '" enctype="multipart/form-data" class="ccv-upload-form">
                 <div class="mb-2">
-                    <input type="text" class="form-control cp-field" name="file_label" placeholder="Document description (optional)">
+                    <input type="text" class="form-control cp-field" name="file_label" placeholder="' . htmlspecialchars(client_t('case.doc_upload_placeholder')) . '">
                 </div>
                 <div class="mb-3">
                     <input type="file" class="form-control cp-field" name="file" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm">Upload file</button>
+                <button type="submit" class="btn btn-primary btn-sm">' . htmlspecialchars(client_t('case.doc_upload_btn')) . '</button>
             </form>
         </div>';
 
     return legalpro_client_case_panel_html([
-        'title' => 'Documents',
-        'subtitle' => 'View, download, acknowledge, and upload files for this case.',
+        'title' => client_t('case.doc_panel_title'),
+        'subtitle' => client_t('case.doc_panel_sub'),
         'icon' => 'folder-open',
-        'badge' => count($documents) . ' total',
+        'badge' => count($documents) . ' ' . client_t('common.total'),
     ], $listHtml . $uploadHtml);
 }
 
@@ -652,17 +662,17 @@ function legalpro_client_case_comments_html(array $state): string
         foreach ($comments as $comment) {
             $isCurrentUser = ((int) $comment['user_id'] === $clientUserId);
             $username = trim((string) ($comment['username'] ?? ''));
-            $displayName = $username !== '' ? $username : 'User';
+            $displayName = $username !== '' ? $username : client_t('common.user');
             $type = $comment['comment_type'] ?? '';
             $itemClass = 'cc-comment-item cc-comment-item--' . preg_replace('/[^a-z]/', '', $type);
             if ($isCurrentUser) {
                 $itemClass .= ' cc-comment-item--yours';
             }
-            $timeLabel = date('M j, Y · g:i A', strtotime($comment['created_at']));
+            $timeLabel = client_format_datetime($comment['created_at']);
             $body = nl2br(htmlspecialchars($comment['comment']));
             $rawComment = htmlspecialchars((string) $comment['comment'], ENT_QUOTES, 'UTF-8');
             $roleBadge = legalpro_client_case_comment_role_badge($type);
-            $youBadge = $isCurrentUser ? '<span class="badge badge-sm bg-gradient-primary ms-1">You</span>' : '';
+            $youBadge = $isCurrentUser ? '<span class="badge badge-sm bg-gradient-primary ms-1">' . htmlspecialchars(client_t('common.you')) . '</span>' : '';
             $commentId = (int) ($comment['id'] ?? 0);
             $canManage = $isCurrentUser && $type === 'client' && $commentId > 0;
 
@@ -670,10 +680,10 @@ function legalpro_client_case_comments_html(array $state): string
                 $headActions = '
                     <div class="cc-comment-head-actions">
                         <time class="cc-comment-time" datetime="' . htmlspecialchars(date('c', strtotime($comment['created_at']))) . '">' . htmlspecialchars($timeLabel) . '</time>
-                        <button type="button" class="btn btn-sm btn-outline-primary mb-0 cc-comment-edit-btn" data-comment-id="' . $commentId . '">Edit</button>
-                        <form method="post" class="cc-comment-delete-form" onsubmit="return confirm(\'Delete this comment?\');">
+                        <button type="button" class="btn btn-sm btn-outline-primary mb-0 cc-comment-edit-btn" data-comment-id="' . $commentId . '">' . htmlspecialchars(client_t('common.edit')) . '</button>
+                        <form method="post" class="cc-comment-delete-form" onsubmit="return confirm(\'' . htmlspecialchars(client_t('case.comment_delete_confirm'), ENT_QUOTES) . '\');">
                             <input type="hidden" name="delete_comment_id" value="' . $commentId . '">
-                            <button type="submit" class="btn btn-sm btn-outline-danger mb-0">Delete</button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger mb-0">' . htmlspecialchars(client_t('common.delete')) . '</button>
                         </form>
                     </div>';
                 $commentBody = '
@@ -683,8 +693,8 @@ function legalpro_client_case_comments_html(array $state): string
                         <input type="hidden" name="edit_comment_id" value="' . $commentId . '">
                         <textarea class="form-control form-control-sm mb-2" name="comment" rows="3" required>' . $rawComment . '</textarea>
                         <div class="d-flex gap-2 justify-content-end">
-                            <button type="button" class="btn btn-sm btn-outline-secondary mb-0 cc-comment-edit-cancel">Cancel</button>
-                            <button type="submit" class="btn btn-sm bg-gradient-primary mb-0">Save</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mb-0 cc-comment-edit-cancel">' . htmlspecialchars(client_t('common.cancel')) . '</button>
+                            <button type="submit" class="btn btn-sm bg-gradient-primary mb-0">' . htmlspecialchars(client_t('common.save')) . '</button>
                         </div>
                     </form>
                 </div>';
@@ -713,25 +723,25 @@ function legalpro_client_case_comments_html(array $state): string
         $commentsHtml = '
         <div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . legalpro_icon('message-square') . '</div>
-            <h5>No comments yet</h5>
-            <p>Add a comment below to communicate with your legal team about this case.</p>
+            <h5>' . htmlspecialchars(client_t('case.comment_empty_title')) . '</h5>
+            <p>' . htmlspecialchars(client_t('case.comment_empty_sub')) . '</p>
         </div>';
     }
 
     $commentFormHtml = '
     <form method="POST" action="client-case-comments.php?id=' . $caseId . '#case-comments" class="cc-comment-form mt-4 pt-4 border-top">
-        <label for="case-comment-input" class="form-label text-sm font-weight-bold mb-2">Add a comment</label>
-        <textarea id="case-comment-input" class="form-control" name="comment" rows="4" placeholder="Write your comment here…" required></textarea>
+        <label for="case-comment-input" class="form-label text-sm font-weight-bold mb-2">' . htmlspecialchars(client_t('case.comment_add_label')) . '</label>
+        <textarea id="case-comment-input" class="form-control" name="comment" rows="4" placeholder="' . htmlspecialchars(client_t('case.comment_placeholder')) . '" required></textarea>
         <div class="d-flex justify-content-end mt-3">
-            <button type="submit" class="btn bg-gradient-primary mb-0">Post comment</button>
+            <button type="submit" class="btn bg-gradient-primary mb-0">' . htmlspecialchars(client_t('case.comment_post')) . '</button>
         </div>
     </form>';
 
     return legalpro_client_case_panel_html([
-        'title' => 'Case comments',
-        'subtitle' => 'Notes and updates from you and your legal team.',
+        'title' => client_t('case.comment_panel_title'),
+        'subtitle' => client_t('case.comment_panel_sub'),
         'icon' => 'message-square',
-        'badge' => count($comments) . ' total',
+        'badge' => count($comments) . ' ' . client_t('common.total'),
         'panel_id' => 'case-comments',
     ], $commentsHtml . $commentFormHtml);
 }
@@ -813,13 +823,13 @@ function legalpro_client_case_render(string $pageKey, string $contentHtml, array
     $subnavHtml = legalpro_client_case_subnav_html($caseId, $pageKey);
 
     $clientPageNavbar = legalpro_render_client_page_navbar(
-        'Case ' . ($state['case_number'] ?? ''),
-        'Case Details',
-        'Search cases…',
+        client_t('case.navbar_title', ['number' => (string) ($state['case_number'] ?? '')]),
+        client_t('case.navbar_breadcrumb'),
+        client_t('case.search_placeholder'),
         array_merge(
             legalpro_client_page_search_options('client-cases.php'),
             [
-                'parent_label' => 'My Cases',
+                'parent_label' => client_t('nav.my_cases'),
                 'parent_url' => 'client-cases.php',
                 'title_tag' => 'h6',
             ]
@@ -827,7 +837,7 @@ function legalpro_client_case_render(string $pageKey, string $contentHtml, array
     );
 
     $html = '<!DOCTYPE html>
-<html lang="en">
+<html lang="' . client_portal_html_lang() . '">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">

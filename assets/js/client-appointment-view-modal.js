@@ -4,11 +4,22 @@
 (function () {
     'use strict';
 
-    var STATUS_LABELS = {
-        pending: 'Pending',
-        accepted: 'Accepted',
-        rejected: 'Rejected'
-    };
+    function i18n(key, fallback) {
+        var dict = window.clientPortalI18n || {};
+        return dict[key] || fallback || key;
+    }
+
+    function dateLocale() {
+        return (window.clientPortalI18n && window.clientPortalI18n.date_locale) || 'en-GB';
+    }
+
+    function STATUS_LABELS() {
+        return {
+            pending: i18n('status_pending', 'Pending'),
+            accepted: i18n('status_accepted', 'Accepted'),
+            rejected: i18n('status_rejected', 'Rejected')
+        };
+    }
 
     function formatAppointmentDateTime(dateStr) {
         if (!dateStr) {
@@ -18,13 +29,13 @@
         if (isNaN(d.getTime())) {
             return dateStr;
         }
-        var datePart = d.toLocaleDateString('en-GB', {
+        var datePart = d.toLocaleDateString(dateLocale(), {
             weekday: 'long',
             day: 'numeric',
             month: 'long',
             year: 'numeric'
         });
-        var timePart = d.toLocaleTimeString('en-GB', {
+        var timePart = d.toLocaleTimeString(dateLocale(), {
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -39,7 +50,7 @@
         if (isNaN(d.getTime())) {
             return dateStr;
         }
-        return d.toLocaleDateString('en-GB', {
+        return d.toLocaleDateString(dateLocale(), {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
@@ -114,22 +125,23 @@
         var statusEl = document.getElementById('view_apt_status');
         var notesWrap = document.getElementById('view_apt_notes_wrap');
         var startsRaw = data.starts_at_raw || data.starts_at || '';
+        var labels = STATUS_LABELS();
 
-        setText('viewAppointmentModalLabel', data.case_title || 'Appointment');
+        setText('viewAppointmentModalLabel', data.case_title, i18n('appointment_fallback', 'Appointment'));
         setText('view_apt_datetime', formatAppointmentDateTime(startsRaw));
         setText('view_apt_case', data.case_title);
-        setText('view_apt_lawyer', data.lawyer_name, 'TBD');
+        setText('view_apt_lawyer', data.lawyer_name, i18n('tbd', 'TBD'));
         setText('view_apt_starts', formatAppointmentDisplay(startsRaw));
         setText('view_apt_ends', data.ends_at_raw ? formatAppointmentDisplay(data.ends_at_raw) : (data.ends_at || '—'), '—');
 
         var notes = (data.notes || '').trim();
-        setText('view_apt_notes', notes, 'No notes provided.');
+        setText('view_apt_notes', notes, i18n('no_notes', 'No notes provided.'));
         if (notesWrap) {
             notesWrap.classList.toggle('legalpro-court-detail__notes--empty', !notes);
         }
 
         if (statusEl) {
-            statusEl.textContent = data.status_label || STATUS_LABELS[statusKey] || statusKey;
+            statusEl.textContent = data.status_label || labels[statusKey] || statusKey;
             statusEl.className = statusClass(statusKey);
         }
 

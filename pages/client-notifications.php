@@ -54,8 +54,8 @@ if (empty($notifications)) {
             . legalpro_icon($icon)
             . '</span>'
             . '<span class="legalpro-notif-item__body">'
-            . '<span class="legalpro-notif-item__title">' . htmlspecialchars((string) ($item['title'] ?? '')) . '</span>'
-            . '<span class="legalpro-notif-item__message">' . htmlspecialchars((string) ($item['body'] ?? '')) . '</span>'
+            . '<span class="legalpro-notif-item__title">' . htmlspecialchars(legalpro_client_notification_title($item)) . '</span>'
+            . '<span class="legalpro-notif-item__message">' . htmlspecialchars(legalpro_client_notification_body($item)) . '</span>'
             . '<span class="legalpro-notif-item__time">' . $timeLabel . '</span>'
             . '</span>';
         if ($isUnread) {
@@ -71,7 +71,7 @@ if (empty($notifications)) {
 $messageHtml = $message !== ''
     ? '<div class="alert alert-' . htmlspecialchars($messageType ?: 'info') . ' alert-dismissible fade show" role="alert">'
         . htmlspecialchars($message)
-        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars(client_t('common.close')) . '"></button>'
     . '</div>'
     : '';
 

@@ -3,6 +3,8 @@
  * Standard client portal top navbar (matches client-appointments.php).
  */
 
+require_once __DIR__ . '/../lib/client-locale.php';
+
 function legalpro_client_page_search_query(): string
 {
     return isset($_GET['q']) ? trim((string) $_GET['q']) : '';
@@ -75,14 +77,18 @@ function legalpro_render_client_page_search_script(
 function legalpro_render_client_page_navbar(
     string $pageTitle,
     string $breadcrumbActive = '',
-    string $searchPlaceholder = 'Search…',
+    string $searchPlaceholder = '',
     array $options = []
 ): string {
     if ($breadcrumbActive === '') {
         $breadcrumbActive = $pageTitle;
     }
 
-    $parentLabel = (string) ($options['parent_label'] ?? 'Client');
+    if ($searchPlaceholder === '') {
+        $searchPlaceholder = client_t('common.search');
+    }
+
+    $parentLabel = (string) ($options['parent_label'] ?? client_t('header.client'));
     $parentUrl = (string) ($options['parent_url'] ?? 'client-dashboard.php');
     $parentLinkClass = (string) ($options['parent_link_class'] ?? 'opacity-6');
     $titleTag = (string) ($options['title_tag'] ?? 'h5');
@@ -90,11 +96,11 @@ function legalpro_render_client_page_navbar(
         $titleTag = 'h5';
     }
 
-    $welcomeName = (string) ($options['client_name'] ?? '');
-    if ($welcomeName === '' || $welcomeName === '{CLIENT_NAME}') {
-        $welcomeName = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'] : 'Client';
+    $welcomeNameRaw = (string) ($options['client_name'] ?? '');
+    if ($welcomeNameRaw === '' || $welcomeNameRaw === '{CLIENT_NAME}') {
+        $welcomeNameRaw = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'] : client_t('header.client');
     }
-    $welcomeName = htmlspecialchars($welcomeName, ENT_QUOTES, 'UTF-8');
+    $welcomeText = htmlspecialchars(client_t('header.welcome', ['name' => $welcomeNameRaw]), ENT_QUOTES, 'UTF-8');
 
     $pageTitleEsc = htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
     $breadcrumbEsc = htmlspecialchars($breadcrumbActive, ENT_QUOTES, 'UTF-8');
@@ -116,7 +122,7 @@ function legalpro_render_client_page_navbar(
                         <li class="nav-item d-flex align-items-center">
                             <a href="javascript:;" class="nav-link text-white font-weight-bold px-0">
                                 <i class="fa fa-user me-sm-1"></i>
-                                <span class="d-sm-inline d-none">Welcome, ' . $welcomeName . '</span>
+                                <span class="d-sm-inline d-none">' . $welcomeText . '</span>
                             </a>
                         </li>
                         <li class="nav-item d-xl-none ps-3 d-flex align-items-center">

@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_quotations.php';
 require_once __DIR__ . '/../inc/finance-document-templates.php';
+require_once __DIR__ . '/../lib/finance-document-i18n.php';
 
 ensure_case_quotation_schema($pdo);
 
@@ -24,6 +25,9 @@ legalpro_require_financial_document_access(
     isset($quotation['client_id']) ? (int) $quotation['client_id'] : null
 );
 
+$clientId = isset($quotation['client_id']) ? (int) $quotation['client_id'] : 0;
+legalpro_finance_doc_begin($clientId > 0 ? $clientId : null);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['client_id'])) {
     header('Location: client-payments.php#quotations');
     exit;
@@ -31,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['client_id'])) {
 
 $items = fetch_quotation_items($pdo, $quotationId);
 $quotationNumber = $quotation['quotation_number'] ?: ('QUO-' . str_pad((string) $quotationId, 4, '0', STR_PAD_LEFT));
-$title = trim((string) ($quotation['title'] ?? '')) ?: 'Quotation';
+$title = trim((string) ($quotation['title'] ?? '')) ?: fin_doc_t('quotation');
 $bodyHtml = legalpro_render_quotation_document_html($quotation, $items, $quotationId);
 $fileName = 'quotation-' . legalpro_finance_safe_filename($quotationNumber) . '.pdf';
 

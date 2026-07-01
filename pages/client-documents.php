@@ -2,6 +2,8 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/client-portal-features.php';
+require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/client-portal-i18n.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
 require_once __DIR__ . '/../lib/client-portal-page-ui.php';
@@ -19,10 +21,10 @@ $messageType = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'acknowledge') {
     $docId = (int) ($_POST['document_id'] ?? 0);
     if (legalpro_client_acknowledge_document($pdo, $clientId, $docId)) {
-        $message = function_exists('client_t') ? client_t('documents.acknowledged') : 'Receipt acknowledged.';
+        $message = client_t('documents.acknowledged');
         $messageType = 'success';
     } else {
-        $message = 'Could not acknowledge document.';
+        $message = client_t('documents.acknowledge_error');
         $messageType = 'danger';
     }
 }
@@ -45,7 +47,7 @@ try {
 $docCount = count($documents);
 $caseCount = count($clientCases);
 
-$caseOptions = '<option value="">All cases</option>';
+$caseOptions = '<option value="">' . htmlspecialchars(client_t('documents.filter_all_cases')) . '</option>';
 foreach ($clientCases as $c) {
     $sel = $filterCaseId === (int) $c['id'] ? ' selected' : '';
     $caseOptions .= '<option value="' . (int) $c['id'] . '"' . $sel . '>' . htmlspecialchars($c['title']) . '</option>';
@@ -55,29 +57,29 @@ $rowsHtml = '';
 if (empty($documents)) {
     $rowsHtml = '<div class="cdoc-empty">
         <div class="cdoc-empty__icon" aria-hidden="true">' . legalpro_icon('folder-open') . '</div>
-        <p class="cdoc-empty__title">No documents found</p>
-        <p class="cdoc-empty__sub">Files shared by your legal team will appear here.</p>
+        <p class="cdoc-empty__title">' . htmlspecialchars(client_t('documents.empty_title')) . '</p>
+        <p class="cdoc-empty__sub">' . htmlspecialchars(client_t('documents.empty_sub')) . '</p>
     </div>';
 } else {
     foreach ($documents as $doc) {
         $label = htmlspecialchars((string) ($doc['display_label'] ?? ($doc['label'] ?: $doc['filename'])));
         $caseTitle = htmlspecialchars($doc['case_title']);
         $uploaded = date('M j, Y', strtotime((string) $doc['uploaded_at']));
-        $by = htmlspecialchars((string) ($doc['uploaded_by'] ?: 'Unknown'));
+        $by = htmlspecialchars((string) ($doc['uploaded_by'] ?: client_t('documents.unknown')));
         $viewUrl = htmlspecialchars((string) ($doc['view_url'] ?? '../' . ltrim((string) $doc['filepath'], '/')));
         $downloadUrl = htmlspecialchars((string) ($doc['download_url'] ?? $doc['view_url'] ?? '../' . ltrim((string) $doc['filepath'], '/')));
         $downloadName = htmlspecialchars((string) ($doc['download_filename'] ?? $doc['filename']));
-        $newBadge = !empty($doc['is_new']) ? '<span class="cdoc-new-badge">New</span>' : '';
+        $newBadge = !empty($doc['is_new']) ? '<span class="cdoc-new-badge">' . htmlspecialchars(client_t('documents.new_badge')) . '</span>' : '';
         $ackBtn = '';
         if (!empty($doc['needs_ack'])) {
-            $ackLabel = function_exists('client_t') ? client_t('documents.acknowledge') : 'Acknowledge receipt';
+            $ackLabel = client_t('documents.acknowledge');
             $ackBtn = '<form method="post" class="d-inline">
                 <input type="hidden" name="action" value="acknowledge">
                 <input type="hidden" name="document_id" value="' . (int) $doc['id'] . '">
                 <button type="submit" class="btn btn-sm btn-outline-success cdoc-touch-btn">' . htmlspecialchars($ackLabel) . '</button>
             </form>';
         } elseif (!empty($doc['is_acknowledged'])) {
-            $ackBtn = '<span class="cdoc-ack-done">✓ Acknowledged</span>';
+            $ackBtn = '<span class="cdoc-ack-done">✓ ' . htmlspecialchars(client_t('documents.acknowledged_done')) . '</span>';
         }
 
         $filename = (string) ($doc['filename'] ?? 'document');
@@ -98,60 +100,60 @@ if (empty($documents)) {
                 <div class="cdoc-row__meta">' . $caseTitle . ' · ' . $by . ' · ' . $uploaded . '</div>
             </div>
             <div class="cdoc-row__actions">
-                <a href="' . $viewUrl . '" target="_blank" rel="noopener" class="btn btn-sm btn-primary cdoc-touch-btn">View</a>
-                <a href="' . $downloadUrl . '" download="' . $downloadName . '" class="btn btn-sm btn-outline-primary cdoc-touch-btn">Download</a>
+                <a href="' . $viewUrl . '" target="_blank" rel="noopener" class="btn btn-sm btn-primary cdoc-touch-btn">' . htmlspecialchars(client_t('common.view')) . '</a>
+                <a href="' . $downloadUrl . '" download="' . $downloadName . '" class="btn btn-sm btn-outline-primary cdoc-touch-btn">' . htmlspecialchars(client_t('documents.download')) . '</a>
                 ' . $ackBtn . '
             </div>
         </article>';
     }
 }
 
-$pageTitle = function_exists('client_t') ? client_t('documents.title') : 'Document Center';
+$pageTitle = client_t('documents.title');
 $clientPageNavbar = legalpro_render_client_page_navbar(
     $pageTitle,
     $pageTitle,
-    function_exists('client_t') ? client_t('documents.search_placeholder') : 'Search documents…',
+    client_t('documents.search_placeholder'),
     legalpro_client_page_search_options('client-documents.php')
 );
 
 $messageHtml = $message !== ''
     ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">'
         . htmlspecialchars($message)
-        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>'
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars(client_t('common.close')) . '"></button></div>'
     : '';
 
 $heroMeta = $newCount > 0
-    ? (int) $newCount . ' new since your last visit'
-    : $docCount . ' files across your matters';
+    ? client_t('documents.meta_new', ['count' => (string) (int) $newCount])
+    : client_t('documents.meta_files', ['count' => (string) $docCount]);
 
 $heroHtml = client_portal_render_hero([
-    'kicker' => 'Client portal',
+    'kicker' => client_t('documents.kicker'),
     'title' => $pageTitle,
-    'subtitle' => 'Contracts, court filings, and receipts shared by your legal team.',
+    'subtitle' => client_t('documents.subtitle'),
     'meta' => $heroMeta,
     'show_date' => true,
-    'aria_label' => 'Document center overview',
+    'aria_label' => client_t('documents.aria'),
     'stats' => [
-        ['num' => $docCount, 'lbl' => 'Documents'],
-        ['num' => $newCount, 'lbl' => 'New'],
-        ['num' => $caseCount, 'lbl' => 'Cases'],
+        ['num' => $docCount, 'lbl' => client_t('documents.stat_documents')],
+        ['num' => $newCount, 'lbl' => client_t('documents.stat_new')],
+        ['num' => $caseCount, 'lbl' => client_t('documents.stat_cases')],
     ],
     'actions' => [
-        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
-        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+        ['url' => 'client-dashboard.php', 'label' => client_t('nav.dashboard'), 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => client_t('nav.my_cases'), 'icon' => 'briefcase'],
     ],
 ]);
 
 $panelHeaderHtml = client_portal_render_panel_header([
-    'title' => 'Shared files',
-    'subtitle' => 'View or download documents for your matters.',
+    'title' => client_t('documents.panel_title'),
+    'subtitle' => client_t('documents.panel_sub'),
     'icon' => 'folder-open',
-    'badge' => $docCount . ' total',
+    'badge' => $docCount . ' ' . client_t('payments.word_total'),
 ]);
 
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(client_portal_html_lang()) ?>">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -173,18 +175,18 @@ $html = <<<'HTML'
         <div class="cp-filters-card">
             <form method="get" class="cp-filters-grid">
                 <div class="cp-filter-field">
-                    <label class="form-label" for="cdoc-case-filter">Filter by case</label>
+                    <label class="form-label" for="cdoc-case-filter"><?= htmlspecialchars(client_t('documents.filter_by_case')) ?></label>
                     <select id="cdoc-case-filter" name="case_id" class="form-select cp-field cp-filter-select" onchange="this.form.submit()">
                         {CASE_OPTIONS}
                     </select>
                 </div>
                 <div class="cp-filter-field">
-                    <label class="form-label" for="cdoc-search-input">Search</label>
-                    <input type="search" id="cdoc-search-input" name="q" value="{SEARCH_Q}" class="form-control cp-field" placeholder="Search by filename or case…">
+                    <label class="form-label" for="cdoc-search-input"><?= htmlspecialchars(client_t('documents.search_label')) ?></label>
+                    <input type="search" id="cdoc-search-input" name="q" value="{SEARCH_Q}" class="form-control cp-field" placeholder="<?= htmlspecialchars(client_t('documents.search_filename_placeholder')) ?>">
                 </div>
                 <div class="cp-filter-field cp-filter-field--action">
-                    <label class="form-label" for="cdoc-search-submit">Apply</label>
-                    <button type="submit" id="cdoc-search-submit" class="btn btn-primary w-100 cp-filter-submit">Search</button>
+                    <label class="form-label" for="cdoc-search-submit"><?= htmlspecialchars(client_t('common.apply')) ?></label>
+                    <button type="submit" id="cdoc-search-submit" class="btn btn-primary w-100 cp-filter-submit"><?= htmlspecialchars(client_t('common.search_btn')) ?></button>
                 </div>
             </form>
         </div>

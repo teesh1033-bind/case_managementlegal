@@ -14,6 +14,8 @@ $clientName = isset($_SESSION['client_name']) ? (string) $_SESSION['client_name'
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
 require_once __DIR__ . '/../lib/client-portal-page-ui.php';
+require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/client-portal-i18n.php';
 require_once __DIR__ . '/../inc/legalpro-icons.php';
 $iconCourtRow = legalpro_icon('landmark');
 $iconCourtEmpty = legalpro_icon('calendar');
@@ -28,7 +30,7 @@ try {
 }
 
 if (!$tableExists) {
-    $_SESSION['error_message'] = "Court dates table not found. Please contact administrator.";
+    $_SESSION['error_message'] = client_t('court.table_missing');
 }
 
 // Table creation is now handled by the SQL script in sql/create_court_dates_table.sql
@@ -165,20 +167,20 @@ foreach ($court_dates as $_cd) {
 }
 
 $heroHtml = client_portal_render_hero([
-    'kicker' => 'Docket',
-    'title' => 'Hearings & appearances',
-    'subtitle' => 'Use the calendar for a month view, search for hearings, or scan the list below. Click an event or search result for full information.',
+    'kicker' => client_t('court.kicker'),
+    'title' => client_t('court.hero_title'),
+    'subtitle' => client_t('court.subtitle'),
     'show_date' => true,
-    'aria_label' => 'Court tracking overview',
+    'aria_label' => client_t('court.aria'),
     'stats' => [
-        ['num' => (string) $ctTotal, 'lbl' => 'Total'],
-        ['num' => (string) $ctUpcoming, 'lbl' => 'Upcoming'],
-        ['num' => (string) $ctScheduled, 'lbl' => 'Scheduled'],
-        ['num' => (string) $ctCompleted, 'lbl' => 'Completed'],
+        ['num' => (string) $ctTotal, 'lbl' => client_t('common.total')],
+        ['num' => (string) $ctUpcoming, 'lbl' => client_t('court.stat_upcoming')],
+        ['num' => (string) $ctScheduled, 'lbl' => client_t('court.stat_scheduled')],
+        ['num' => (string) $ctCompleted, 'lbl' => client_t('court.stat_completed')],
     ],
     'actions' => [
-        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
-        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+        ['url' => 'client-dashboard.php', 'label' => client_t('nav.dashboard'), 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => client_t('nav.my_cases'), 'icon' => 'briefcase'],
     ],
 ]);
 
@@ -190,13 +192,13 @@ if (!empty($_SESSION['error_message'])) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(client_portal_html_lang()) ?>">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>Court Tracking - LegalPro</title>
+    <title><?= htmlspecialchars(client_t('court.page_title')) ?> - LegalPro</title>
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -579,7 +581,7 @@ if (!empty($_SESSION['error_message'])) {
 
     <main class="main-content position-relative border-radius-lg">
         <?php
-        echo legalpro_render_client_page_navbar('Court tracking', 'Court tracking', 'Search hearings & cases…', array_merge(
+        echo legalpro_render_client_page_navbar(client_t('court.navbar'), client_t('court.navbar'), client_t('court.search_placeholder'), array_merge(
             legalpro_client_page_search_options('client-court-tracking.php'),
             ['client_name' => $clientName]
         ));
@@ -590,7 +592,7 @@ if (!empty($_SESSION['error_message'])) {
             <?php if ($courtTableError !== ''): ?>
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
                 <?php echo htmlspecialchars($courtTableError); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?= htmlspecialchars(client_t('common.close')) ?>"></button>
             </div>
             <?php endif; ?>
 
@@ -601,17 +603,17 @@ if (!empty($_SESSION['error_message'])) {
                     <div class="dashboard-calendar-hub">
                         <div class="dashboard-calendar-hub__head">
                             <div class="cct-calendar-hub__intro">
-                                <h6 class="text-capitalize mb-0 font-weight-bold" style="color: var(--cct-primary);">Court Dates Calendar</h6>
-                                <p class="text-sm mb-0 text-muted">Use the search bar below to find hearings quickly, or click a calendar event</p>
+                                <h6 class="text-capitalize mb-0 font-weight-bold" style="color: var(--cct-primary);"><?= htmlspecialchars(client_t('court.calendar_title')) ?></h6>
+                                <p class="text-sm mb-0 text-muted"><?= htmlspecialchars(client_t('court.calendar_sub')) ?></p>
                                 <div class="dashboard-legend-pills">
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> <?= htmlspecialchars(client_t('court.stat_scheduled')) ?></span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> <?= htmlspecialchars(client_t('court.stat_completed')) ?></span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> <?= htmlspecialchars(client_t('court.status_postponed')) ?></span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> <?= htmlspecialchars(client_t('court.status_cancelled')) ?></span>
                                 </div>
                             </div>
                             <div class="cct-cal-search-wrap cct-cal-search-wrap--featured">
-                                <label class="cct-cal-search-label" for="cctCalSearchInput">Search court dates</label>
+                                <label class="cct-cal-search-label" for="cctCalSearchInput"><?= htmlspecialchars(client_t('court.search_label')) ?></label>
                                 <div class="cct-cal-search-field">
                                     <span class="cct-cal-search-icon" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
@@ -620,7 +622,7 @@ if (!empty($_SESSION['error_message'])) {
                                         </svg>
                                     </span>
                                     <input type="search" id="cctCalSearchInput" class="cct-cal-search-input"
-                                           placeholder="Search by case, hearing, location, status…" autocomplete="off">
+                                           placeholder="<?= htmlspecialchars(client_t('court.search_placeholder_long')) ?>" autocomplete="off">
                                 </div>
                                 <div class="cct-cal-search-results" id="cctCalSearchResults" hidden></div>
                             </div>
@@ -630,8 +632,8 @@ if (!empty($_SESSION['error_message'])) {
                                 <div id="courtTrackingCalendar"></div>
                                 <aside class="dashboard-upcoming-panel">
                                     <div class="dashboard-upcoming-panel__title">
-                                        <span>Upcoming</span>
-                                        <a href="#courtDatesTable" class="text-xs text-primary font-weight-bold">View all</a>
+                                        <span><?= htmlspecialchars(client_t('court.stat_upcoming')) ?></span>
+                                        <a href="#courtDatesTable" class="text-xs text-primary font-weight-bold"><?= htmlspecialchars(client_t('common.view_all')) ?></a>
                                     </div>
                                     <div class="dashboard-upcoming-list" id="upcomingCourtDatesList">
                                         <?php echo $upcomingCourtDatesHtml; ?>
@@ -646,19 +648,19 @@ if (!empty($_SESSION['error_message'])) {
             <div class="cct-panel" id="courtDatesTable">
                 <div class="cct-panel-hdr">
                     <div>
-                        <h5>All court dates</h5>
-                        <p>Sorted by date, earliest first.</p>
+                        <h5><?= htmlspecialchars(client_t('court.all_dates_title')) ?></h5>
+                        <p><?= htmlspecialchars(client_t('court.all_dates_sub')) ?></p>
                     </div>
                     <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                        <span class="cct-count" id="cctRowCount"><?php echo (int) $ctTotal; ?> total</span>
-                        <a href="client-cases.php" class="btn-cct-view text-decoration-none">My cases</a>
+                        <span class="cct-count" id="cctRowCount"><?php echo (int) $ctTotal; ?> <?= htmlspecialchars(client_t('common.total')) ?></span>
+                        <a href="client-cases.php" class="btn-cct-view text-decoration-none"><?= htmlspecialchars(client_t('nav.my_cases')) ?></a>
                     </div>
                 </div>
                 <?php if (empty($court_dates)): ?>
                     <div class="cct-empty">
                         <div class="cct-empty-icon"><?php echo $iconCourtEmpty; ?></div>
-                        <h5>No court dates yet</h5>
-                        <p>When your legal team adds hearings or appearances for your matters, they will appear here and on the calendar above.</p>
+                        <h5><?= htmlspecialchars(client_t('court.empty_title')) ?></h5>
+                        <p><?= htmlspecialchars(client_t('court.empty_sub')) ?></p>
                     </div>
                 <?php else: ?>
                     <div class="cct-court-table-wrap" id="clientCourtDatesTableWrap" data-court-per-page="10">
@@ -666,10 +668,10 @@ if (!empty($_SESSION['error_message'])) {
                         <table class="cct-table">
                             <thead>
                                 <tr>
-                                    <th>Case</th>
-                                    <th>Date &amp; time</th>
-                                    <th>Title</th>
-                                    <th style="text-align:center">Status</th>
+                                    <th><?= htmlspecialchars(client_t('court.col_case')) ?></th>
+                                    <th><?= htmlspecialchars(client_t('court.col_datetime')) ?></th>
+                                    <th><?= htmlspecialchars(client_t('court.col_title')) ?></th>
+                                    <th style="text-align:center"><?= htmlspecialchars(client_t('court.col_status')) ?></th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -699,7 +701,7 @@ if (!empty($_SESSION['error_message'])) {
                                                     <?php else: ?>
                                                     <span class="text-sm font-weight-bold d-inline-block text-truncate" style="max-width: 14rem;"><?php echo htmlspecialchars($date['case_title']); ?></span>
                                                     <?php endif; ?>
-                                                    <p class="text-xs text-muted mb-0">Matter</p>
+                                                    <p class="text-xs text-muted mb-0"><?= htmlspecialchars(client_t('court.matter')) ?></p>
                                                 </div>
                                             </div>
                                         </td>
@@ -713,7 +715,7 @@ if (!empty($_SESSION['error_message'])) {
                                         <td class="text-center"><?php echo $rowStatusBadge; ?></td>
                                         <td>
                                             <div class="d-flex gap-1 justify-content-end flex-wrap">
-                                                <button type="button" class="btn-cct-view cdoc-touch-btn" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
+                                                <button type="button" class="btn-cct-view cdoc-touch-btn" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="<?= htmlspecialchars(client_t('common.view')) ?>"><?= htmlspecialchars(client_t('common.view')) ?></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -993,7 +995,7 @@ if (!empty($_SESSION['error_message'])) {
                     return;
                 }
                 if (!matches.length) {
-                    resultsEl.innerHTML = '<div class="cct-cal-search-empty">No court dates match your search.</div>';
+                    resultsEl.innerHTML = '<div class="cct-cal-search-empty">' + (window.clientPortalI18n && window.clientPortalI18n.no_court_search_match || 'No court dates match your search.') + '</div>';
                     resultsEl.hidden = false;
                     return;
                 }
