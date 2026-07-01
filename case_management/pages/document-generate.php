@@ -9,7 +9,7 @@ legalpro_documents_portal_handle_post($pdo, 'document-generate', $state);
 legalpro_documents_portal_load($pdo, $state);
 
 $content = '
-<div class="card mb-4">
+<div class="card mb-4 legalpro-doc-generate-form no-print">
     <div class="card-header pb-0">
         <h6 class="mb-0">Generate Legal Document</h6>
         <p class="text-sm text-muted mb-0">Merge any template with live case data.</p>
@@ -40,6 +40,6 @@ $content = '
         </form>
     </div>
 </div>'
-. legalpro_documents_preview_html($state);
+. legalpro_documents_generated_actions_html(legalpro_documents_get_generated_draft());
 
 legalpro_documents_render_page('document-generate', $content, $state);

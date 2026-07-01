@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/legalpro-icons.php';
 require_once __DIR__ . '/../lib/portal_notifications.php';
+require_once __DIR__ . '/../lib/admin-locale.php';
 
 function legalpro_admin_notification_count(?PDO $pdo = null): int
 {
@@ -18,6 +19,16 @@ function legalpro_admin_display_name(): string
     }
 
     return 'Admin User';
+}
+
+function legalpro_admin_ui_label(string $key, string $fallback): string
+{
+    if (!isset($_SESSION['admin_id']) || !function_exists('admin_t')) {
+        return $fallback;
+    }
+
+    $translated = admin_t($key);
+    return $translated !== $key ? $translated : $fallback;
 }
 
 function legalpro_admin_initials(string $name): string
@@ -92,8 +103,15 @@ function legalpro_render_portal_header_utilities(
         . ($notifCount > 0 ? ($notifCount > 9 ? '9+' : (string) $notifCount) : '')
         . '</span>';
 
+    $profileLabel = 'Profile';
+    $signOutLabel = 'Sign out';
+    if (!empty($_SESSION['admin_id']) && function_exists('admin_t')) {
+        $profileLabel = legalpro_admin_ui_label('header.profile', $profileLabel);
+        $signOutLabel = legalpro_admin_ui_label('header.sign_out', $signOutLabel);
+    }
+
     $profileItem = $profileUrl !== ''
-        ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . 'Profile</a></li>'
+        ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . htmlspecialchars($profileLabel) . '</a></li>'
         : '';
 
     if ($notifPanelMode) {
@@ -132,7 +150,7 @@ function legalpro_render_portal_header_utilities(
             <ul class="dropdown-menu dropdown-menu-end shadow border-0 legalpro-header-user__menu" id="legalproHeaderUserMenuList">
                 ' . $profileItem . '
                 ' . $extraMenuHtml . '
-                <li><a class="dropdown-item text-danger" href="' . htmlspecialchars($logoutUrl) . '">' . legalpro_icon('log-out', 'me-2') . 'Sign out</a></li>
+                <li><a class="dropdown-item text-danger" href="' . htmlspecialchars($logoutUrl) . '">' . legalpro_icon('log-out', 'me-2') . htmlspecialchars($signOutLabel) . '</a></li>
             </ul>
         </div>
     </div>';
@@ -301,7 +319,10 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    document.addEventListener("click", function () {
+    document.addEventListener("click", function (e) {
+        if (e.target && e.target.closest && e.target.closest(".legalpro-notif-item, .legalpro-notif-panel__view-all")) {
+            return;
+        }
         closeUserMenu();
         closeNotifPanel();
     });
@@ -332,12 +353,12 @@ function legalpro_render_admin_header_utilities(?PDO $pdo = null): string
 
     return legalpro_render_portal_header_utilities(
         legalpro_admin_display_name(),
-        'Administrator',
+        legalpro_admin_ui_label('header.administrator', 'Administrator'),
         [],
         'admin-notifications.php',
         'admin-logout.php',
         'profile.php',
-        '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
+        '<li><a class="dropdown-item" href="settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars(legalpro_admin_ui_label('nav.settings', 'Settings')) . '</a></li>',
         false,
         $unreadCount,
         true,
@@ -358,8 +379,8 @@ function legalpro_render_admin_theme_toggle(): string
     $currentMode = (string) (getPortalTheme()['mode'] ?? 'light');
     $isDark = $currentMode === 'dark';
     $iconName = $isDark ? 'sun' : 'moon';
-    $switchLight = 'Switch to light mode';
-    $switchDark = 'Switch to dark mode';
+    $switchLight = legalpro_admin_ui_label('theme.switch_light', 'Switch to light mode');
+    $switchDark = legalpro_admin_ui_label('theme.switch_dark', 'Switch to dark mode');
     $label = $isDark ? $switchLight : $switchDark;
 
     return '<button type="button" class="legalpro-header-theme-toggle" id="adminThemeToggle"'
@@ -376,23 +397,23 @@ function legalpro_render_admin_notification_dropdown(): string
 {
     $unreadHint = htmlspecialchars(legalpro_notification_unread_hint(), ENT_QUOTES, 'UTF-8');
 
-    return '<div class="legalpro-notif-panel legalpro-admin-notif-dropdown" id="legalproNotifPanel" role="menu" aria-label="Notifications" data-unread-hint="' . $unreadHint . '">'
+    return '<div class="legalpro-notif-panel legalpro-admin-notif-dropdown" id="legalproNotifPanel" role="menu" aria-label="' . htmlspecialchars(legalpro_admin_ui_label('header.notifications', 'Notifications'), ENT_QUOTES, 'UTF-8') . '" data-unread-hint="' . $unreadHint . '">'
         . '<div class="legalpro-notif-panel__head">'
-        . '<h6 class="legalpro-notif-panel__title">Notifications</h6>'
-        . '<button type="button" class="btn btn-link btn-sm p-0 text-primary legalpro-admin-notif-dropdown__mark-all" id="adminNotifMarkAll">Mark all read</button>'
+        . '<h6 class="legalpro-notif-panel__title">' . htmlspecialchars(legalpro_admin_ui_label('notifications.title', 'Notifications')) . '</h6>'
+        . '<button type="button" class="btn btn-link btn-sm p-0 text-primary legalpro-admin-notif-dropdown__mark-all" id="adminNotifMarkAll">' . htmlspecialchars(legalpro_admin_ui_label('notifications.mark_all_read', 'Mark all read')) . '</button>'
         . '</div>'
         . '<div class="legalpro-notif-panel__body" id="adminNotifList">'
-        . '<div class="text-muted text-sm p-3">Loading…</div>'
+        . '<div class="text-muted text-sm p-3">' . htmlspecialchars(legalpro_admin_ui_label('notifications.loading', 'Loading…')) . '</div>'
         . '</div>'
         . '<div class="legalpro-notif-panel__foot">'
-        . '<a href="admin-notifications.php" class="legalpro-notif-panel__view-all">View all</a>'
+        . '<a href="admin-notifications.php" class="legalpro-notif-panel__view-all">' . htmlspecialchars(legalpro_admin_ui_label('notifications.view_all', 'View all')) . '</a>'
         . '</div>'
         . '</div>'
         . '<template id="adminNotifEmptyTpl">'
         . '<div class="legalpro-notif-panel__empty">'
         . legalpro_icon('bell', 'legalpro-notif-panel__empty-icon')
-        . '<p>No new notifications</p>'
-        . '<span>You are all caught up.</span>'
+        . '<p>' . htmlspecialchars(legalpro_admin_ui_label('notifications.empty_title', 'No new notifications')) . '</p>'
+        . '<span>' . htmlspecialchars(legalpro_admin_ui_label('notifications.empty_sub', 'You are all caught up.')) . '</span>'
         . '</div>'
         . '</template>';
 }
@@ -590,16 +611,20 @@ function legalpro_format_case_fee($amount): string
 function legalpro_case_priority_badge(string $priority): string
 {
     $key = strtolower(trim($priority));
-    $label = $priority !== '' ? $priority : 'Normal';
+    $map = [
+        'normal' => ['key' => 'badges.priority.normal', 'label' => 'Normal', 'class' => 'lp-pill--priority-medium'],
+        'high' => ['key' => 'badges.priority.high', 'label' => 'High', 'class' => 'lp-pill--priority-high'],
+        'urgent' => ['key' => 'badges.priority.urgent', 'label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
+    ];
 
-    if ($key === 'high' || $key === 'urgent') {
-        $class = $key === 'urgent' ? 'lp-pill--priority-urgent' : 'lp-pill--priority-high';
-    } else {
-        $class = 'lp-pill--priority-medium';
-        if (!in_array($key, ['normal', 'high', 'urgent'], true)) {
-            $label = 'Normal';
-        }
+    if (isset($map[$key])) {
+        $meta = $map[$key];
+
+        return '<span class="lp-pill ' . $meta['class'] . '">' . htmlspecialchars(admin_badge_t($meta['key'], $meta['label'])) . '</span>';
     }
+
+    $class = 'lp-pill--priority-medium';
+    $label = $priority !== '' ? $priority : admin_badge_t('badges.priority.normal', 'Normal');
 
     return '<span class="lp-pill ' . $class . '">' . htmlspecialchars($label) . '</span>';
 }
@@ -608,14 +633,14 @@ function legalpro_case_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
-        'open' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
-        'active' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
-        'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
-        'in_progress' => ['label' => 'Active', 'class' => 'lp-pill--status-active'],
-        'under_review' => ['label' => 'Under Review', 'class' => 'lp-pill--status-waiting'],
-        'waiting_for_client' => ['label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
-        'on_hold' => ['label' => 'On Hold', 'class' => 'lp-pill--status-waiting'],
-        'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
+        'open' => ['key' => 'badges.status.active', 'label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'active' => ['key' => 'badges.status.active', 'label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'pending' => ['key' => 'badges.status.pending', 'label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'in_progress' => ['key' => 'badges.status.active', 'label' => 'Active', 'class' => 'lp-pill--status-active'],
+        'under_review' => ['key' => 'badges.status.under_review', 'label' => 'Under Review', 'class' => 'lp-pill--status-waiting'],
+        'waiting_for_client' => ['key' => 'badges.status.waiting_for_client', 'label' => 'Waiting For Client', 'class' => 'lp-pill--status-waiting'],
+        'on_hold' => ['key' => 'badges.status.on_hold', 'label' => 'On Hold', 'class' => 'lp-pill--status-waiting'],
+        'closed' => ['key' => 'badges.status.closed', 'label' => 'Closed', 'class' => 'lp-pill--status-closed'],
     ];
 
     if (!isset($map[$key])) {
@@ -624,17 +649,19 @@ function legalpro_case_status_badge(string $status): string
         return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $meta = $map[$key];
+
+    return '<span class="lp-pill ' . $meta['class'] . '">' . htmlspecialchars(admin_badge_t($meta['key'], $meta['label'])) . '</span>';
 }
 
 function legalpro_comment_role_badge(string $commentType): string
 {
     $key = strtolower(trim($commentType));
     $map = [
-        'client' => ['label' => 'Client', 'class' => 'lp-pill--status-default'],
-        'lawyer' => ['label' => 'Lawyer', 'class' => 'lp-pill--status-active'],
-        'admin' => ['label' => 'Admin', 'class' => 'lp-pill--status-pending'],
-        'staff' => ['label' => 'Staff', 'class' => 'lp-pill--status-closed'],
+        'client' => ['key' => 'badges.role.client', 'label' => 'Client', 'class' => 'lp-pill--status-default'],
+        'lawyer' => ['key' => 'badges.role.lawyer', 'label' => 'Lawyer', 'class' => 'lp-pill--status-active'],
+        'admin' => ['key' => 'badges.role.admin', 'label' => 'Admin', 'class' => 'lp-pill--status-pending'],
+        'staff' => ['key' => 'badges.role.staff', 'label' => 'Staff', 'class' => 'lp-pill--status-closed'],
     ];
 
     if (!isset($map[$key])) {
@@ -643,20 +670,22 @@ function legalpro_comment_role_badge(string $commentType): string
         return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $meta = $map[$key];
+
+    return '<span class="lp-pill ' . $meta['class'] . '">' . htmlspecialchars(admin_badge_t($meta['key'], $meta['label'])) . '</span>';
 }
 
 function legalpro_task_status_badge(string $status): string
 {
     $key = strtolower(str_replace(' ', '_', trim($status)));
     $map = [
-        'active' => ['label' => 'Active', 'class' => 'lp-pill--status-progress'],
-        'pending' => ['label' => 'Pending', 'class' => 'lp-pill--status-pending'],
-        'under_review' => ['label' => 'Under review', 'class' => 'lp-pill--status-progress'],
-        'closed' => ['label' => 'Closed', 'class' => 'lp-pill--status-closed'],
-        'in_progress' => ['label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
-        'completed' => ['label' => 'Completed', 'class' => 'lp-pill--status-active'],
-        'cancelled' => ['label' => 'Cancelled', 'class' => 'lp-pill--status-declined'],
+        'active' => ['key' => 'badges.status.active', 'label' => 'Active', 'class' => 'lp-pill--status-progress'],
+        'pending' => ['key' => 'badges.status.pending', 'label' => 'Pending', 'class' => 'lp-pill--status-pending'],
+        'under_review' => ['key' => 'badges.status.under_review', 'label' => 'Under review', 'class' => 'lp-pill--status-progress'],
+        'closed' => ['key' => 'badges.status.closed', 'label' => 'Closed', 'class' => 'lp-pill--status-closed'],
+        'in_progress' => ['key' => 'badges.status.in_progress', 'label' => 'In Progress', 'class' => 'lp-pill--status-progress'],
+        'completed' => ['key' => 'badges.status.completed', 'label' => 'Completed', 'class' => 'lp-pill--status-active'],
+        'cancelled' => ['key' => 'badges.status.cancelled', 'label' => 'Cancelled', 'class' => 'lp-pill--status-declined'],
     ];
 
     if (!isset($map[$key])) {
@@ -665,37 +694,41 @@ function legalpro_task_status_badge(string $status): string
         return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $meta = $map[$key];
+
+    return '<span class="lp-pill ' . $meta['class'] . '">' . htmlspecialchars(admin_badge_t($meta['key'], $meta['label'])) . '</span>';
 }
 
 function legalpro_task_priority_badge(string $priority): string
 {
     $key = strtolower(trim($priority));
     $map = [
-        'normal' => ['label' => 'Normal', 'class' => 'lp-pill--priority-medium'],
-        'high' => ['label' => 'High', 'class' => 'lp-pill--priority-high'],
-        'urgent' => ['label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
-        'low' => ['label' => 'Low', 'class' => 'lp-pill--status-closed'],
-        'medium' => ['label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
+        'normal' => ['key' => 'badges.priority.normal', 'label' => 'Normal', 'class' => 'lp-pill--priority-medium'],
+        'high' => ['key' => 'badges.priority.high', 'label' => 'High', 'class' => 'lp-pill--priority-high'],
+        'urgent' => ['key' => 'badges.priority.urgent', 'label' => 'Urgent', 'class' => 'lp-pill--priority-urgent'],
+        'low' => ['key' => 'badges.priority.low', 'label' => 'Low', 'class' => 'lp-pill--status-closed'],
+        'medium' => ['key' => 'badges.priority.medium', 'label' => 'Medium', 'class' => 'lp-pill--priority-medium'],
     ];
 
     if (!isset($map[$key])) {
-        $label = $priority !== '' ? ucwords($priority) : 'Medium';
+        $label = $priority !== '' ? ucwords($priority) : admin_badge_t('badges.priority.medium', 'Medium');
 
         return '<span class="lp-pill lp-pill--priority-medium">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $meta = $map[$key];
+
+    return '<span class="lp-pill ' . $meta['class'] . '">' . htmlspecialchars(admin_badge_t($meta['key'], $meta['label'])) . '</span>';
 }
 
 function legalpro_court_date_status_meta(string $status): array
 {
     $key = strtolower(trim($status));
     $map = [
-        'scheduled' => ['label' => 'Scheduled', 'pill' => 'lp-pill--status-progress'],
-        'completed' => ['label' => 'Completed', 'pill' => 'lp-pill--status-closed'],
-        'cancelled' => ['label' => 'Cancelled', 'pill' => 'lp-pill--status-declined'],
-        'postponed' => ['label' => 'Postponed', 'pill' => 'lp-pill--status-pending'],
+        'scheduled' => ['key' => 'badges.status.scheduled', 'label' => 'Scheduled', 'pill' => 'lp-pill--status-progress'],
+        'completed' => ['key' => 'badges.status.completed', 'label' => 'Completed', 'pill' => 'lp-pill--status-closed'],
+        'cancelled' => ['key' => 'badges.status.cancelled', 'label' => 'Cancelled', 'pill' => 'lp-pill--status-declined'],
+        'postponed' => ['key' => 'badges.status.postponed', 'label' => 'Postponed', 'pill' => 'lp-pill--status-pending'],
     ];
 
     if (!isset($map[$key])) {
@@ -704,7 +737,9 @@ function legalpro_court_date_status_meta(string $status): array
         return ['label' => $label, 'pill' => 'lp-pill--status-default'];
     }
 
-    return $map[$key];
+    $meta = $map[$key];
+
+    return ['label' => admin_badge_t($meta['key'], $meta['label']), 'pill' => $meta['pill']];
 }
 
 function legalpro_court_date_status_badge(string $status): string
@@ -717,10 +752,10 @@ function legalpro_court_date_status_badge(string $status): string
 function legalpro_lawyer_active_status_badge(bool $isActive): string
 {
     if ($isActive) {
-        return '<span class="lp-pill lp-pill--status-active">Active</span>';
+        return '<span class="lp-pill lp-pill--status-active">' . htmlspecialchars(admin_badge_t('badges.status.active', 'Active')) . '</span>';
     }
 
-    return '<span class="lp-pill lp-pill--status-closed">Inactive</span>';
+    return '<span class="lp-pill lp-pill--status-closed">' . htmlspecialchars(admin_badge_t('badges.inactive', 'Inactive')) . '</span>';
 }
 
 function legalpro_case_fee_due(float $estimatedFees, float $invoicedTotal): float
@@ -731,22 +766,26 @@ function legalpro_case_fee_due(float $estimatedFees, float $invoicedTotal): floa
 function legalpro_case_payment_status_label(float $totalDue, float $paid): string
 {
     if ($totalDue <= 0.01 && $paid <= 0.01) {
-        return 'No fees';
+        return admin_badge_t('badges.status.no_fees', 'No fees');
     }
     if ($paid >= $totalDue - 0.01) {
-        return 'Paid';
+        return admin_badge_t('badges.status.paid', 'Paid');
     }
     if ($paid > 0.01) {
-        return 'Partial';
+        return admin_badge_t('badges.status.partial', 'Partial');
     }
 
-    return 'Outstanding';
+    return admin_badge_t('badges.status.outstanding', 'Outstanding');
 }
 
 function legalpro_case_payment_status_badge(float $totalDue, float $paid): string
 {
     $label = legalpro_case_payment_status_label($totalDue, $paid);
     $map = [
+        admin_badge_t('badges.status.no_fees', 'No fees') => 'lp-pill--status-default',
+        admin_badge_t('badges.status.paid', 'Paid') => 'lp-pill--status-active',
+        admin_badge_t('badges.status.partial', 'Partial') => 'lp-pill--status-progress',
+        admin_badge_t('badges.status.outstanding', 'Outstanding') => 'lp-pill--status-pending',
         'No fees' => 'lp-pill--status-default',
         'Paid' => 'lp-pill--status-active',
         'Partial' => 'lp-pill--status-progress',
@@ -761,11 +800,11 @@ function legalpro_invoice_status_badge(string $status): string
 {
     $key = strtolower(trim($status));
     $map = [
-        'draft' => ['label' => 'Draft', 'class' => 'lp-pill--status-default'],
-        'sent' => ['label' => 'Sent', 'class' => 'lp-pill--status-progress'],
-        'paid' => ['label' => 'Paid', 'class' => 'lp-pill--status-active'],
-        'overdue' => ['label' => 'Overdue', 'class' => 'lp-pill--status-declined'],
-        'cancelled' => ['label' => 'Cancelled', 'class' => 'lp-pill--status-closed'],
+        'draft' => ['key' => 'badges.status.draft', 'label' => 'Draft', 'class' => 'lp-pill--status-default'],
+        'sent' => ['key' => 'badges.status.sent', 'label' => 'Sent', 'class' => 'lp-pill--status-progress'],
+        'paid' => ['key' => 'badges.status.paid', 'label' => 'Paid', 'class' => 'lp-pill--status-active'],
+        'overdue' => ['key' => 'badges.status.overdue', 'label' => 'Overdue', 'class' => 'lp-pill--status-declined'],
+        'cancelled' => ['key' => 'badges.status.cancelled', 'label' => 'Cancelled', 'class' => 'lp-pill--status-closed'],
     ];
 
     if (!isset($map[$key])) {
@@ -774,7 +813,9 @@ function legalpro_invoice_status_badge(string $status): string
         return '<span class="lp-pill lp-pill--status-default">' . htmlspecialchars($label) . '</span>';
     }
 
-    return '<span class="lp-pill ' . $map[$key]['class'] . '">' . htmlspecialchars($map[$key]['label']) . '</span>';
+    $meta = $map[$key];
+
+    return '<span class="lp-pill ' . $meta['class'] . '">' . htmlspecialchars(admin_badge_t($meta['key'], $meta['label'])) . '</span>';
 }
 
 function legalpro_document_file_icon_meta(string $filename): array

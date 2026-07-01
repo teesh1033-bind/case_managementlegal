@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/../inc/bank-accounts-settings.php';
+require_once __DIR__ . '/admin-locale.php';
 
 function legalpro_settings_portal_pages(): array
 {
@@ -100,6 +101,10 @@ function legalpro_admin_settings_handle_post(array &$state): void
     }
 
     if ($formType === 'portal_theme') {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         $themeMode = isset($_POST['theme_mode']) ? (string) $_POST['theme_mode'] : 'light';
         $themeColor = isset($_POST['theme_color']) ? (string) $_POST['theme_color'] : 'primary';
         $customPrimary = isset($_POST['custom_primary']) ? (string) $_POST['custom_primary'] : null;
@@ -111,7 +116,17 @@ function legalpro_admin_settings_handle_post(array &$state): void
             return;
         }
 
-        header('Location: ' . $redirect . '?msg=' . urlencode($result['message']) . '&type=success');
+        $adminId = (int) ($_SESSION['admin_id'] ?? 0);
+        if ($adminId > 0 && isset($_POST['locale'])) {
+            $localeResult = saveAdminPortalLocale($adminId, (string) $_POST['locale']);
+            if (!$localeResult['ok']) {
+                $state['message'] = $localeResult['message'];
+                $state['messageType'] = 'danger';
+                return;
+            }
+        }
+
+        header('Location: ' . $redirect . '?msg=' . urlencode(admin_t('settings.saved')) . '&type=success');
         exit;
     }
 
@@ -271,6 +286,10 @@ function legalpro_admin_settings_handle_post(array &$state): void
 
 function legalpro_admin_settings_init_state(): array
 {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
     $state = [
         'message' => '',
         'messageType' => '',
@@ -383,7 +402,7 @@ function legalpro_settings_hub_cards_html(): string
     $pages = legalpro_settings_portal_pages();
     $cards = [
         'settings-branding' => ['desc' => 'Company name, logo, and contact details.', 'icon' => 'building-2', 'accent' => 'primary'],
-        'settings-appearance' => ['desc' => 'Theme mode and accent colors for all portals.', 'icon' => 'palette', 'accent' => 'info'],
+        'settings-appearance' => ['desc' => admin_t('settings.hub_appearance_desc'), 'icon' => 'palette', 'accent' => 'info'],
         'settings-finance' => ['desc' => 'Currency, bank accounts, and invoice defaults.', 'icon' => 'landmark', 'accent' => 'success'],
         'settings-catalog' => ['desc' => 'Services, case categories, and lawyer specializations.', 'icon' => 'clipboard-list', 'accent' => 'dark'],
         'settings-ai' => ['desc' => 'OpenAI key and model for the AI assistant.', 'icon' => 'bot', 'accent' => 'warning'],
@@ -734,7 +753,7 @@ function legalpro_settings_render_page(string $pageKey, string $contentHtml, arr
     $subnav = $pageKey === 'settings' ? '' : legalpro_settings_subnav_html($pageKey);
 
     $html = '<!DOCTYPE html>
-<html lang="en">
+<html lang="' . admin_portal_html_lang() . '">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">

@@ -232,6 +232,12 @@ $resultsSummaryClass = 'text-sm mb-0 search-results-summary';
 $resultsSummaryStyle = '';
 $resultsQueryClass = 'search-results-query';
 
+if ($portal === 'admin') {
+    require_once __DIR__ . '/../lib/admin-locale.php';
+    require_once __DIR__ . '/../lib/branding.php';
+    ob_start();
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -250,7 +256,7 @@ $resultsQueryClass = 'search-results-query';
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <?php else: ?>
     <link href="../assets/css/app-font-montserrat.css?v=7" rel="stylesheet" />
-    <link href="../assets/css/dashboard-enhancements.css?v=12" rel="stylesheet" />
+    <link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
     <?php legalpro_icons_asset_links(); ?>
     <?php if ($portal === 'lawyer'): ?>
     <?php include __DIR__ . '/../inc/lawyer-portal-badges-css.php'; ?>
@@ -660,3 +666,8 @@ $resultsQueryClass = 'search-results-query';
 <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
+<?php
+if ($portal === 'admin') {
+    echo legalpro_apply_copyright_line(ob_get_clean());
+}
+?>

@@ -129,15 +129,35 @@
         panel.addEventListener('click', function (e) {
             e.stopPropagation();
 
-            var item = e.target.closest('.legalpro-notif-item');
-            if (!item) return;
-            var id = item.getAttribute('data-notif-id');
-            if (id) {
-                markRead(id).then(function (data) {
-                    if (data && typeof data.unread === 'number') updateNotifBadge(data.unread);
-                    item.classList.remove('is-unread');
-                });
+            var item = e.target.closest('a.legalpro-notif-item');
+            if (!item) {
+                return;
             }
+
+            var href = item.getAttribute('href') || '';
+            if (href === '' || href === '#') {
+                return;
+            }
+
+            var id = item.getAttribute('data-notif-id');
+            e.preventDefault();
+
+            function navigate() {
+                window.location.assign(href);
+            }
+
+            if (!id) {
+                navigate();
+                return;
+            }
+
+            markRead(id).then(function (data) {
+                if (data && typeof data.unread === 'number') {
+                    updateNotifBadge(data.unread);
+                }
+                item.classList.remove('is-unread');
+                navigate();
+            }).catch(navigate);
         });
 
         var markAll = qs('#clientNotifMarkAll');
@@ -162,15 +182,14 @@
             });
         }
 
-        document.addEventListener('click', function () {
-            if (panel.classList.contains('show')) closePanel();
+        document.addEventListener('click', function (e) {
+            if (wrap && wrap.contains(e.target)) {
+                return;
+            }
+            if (panel.classList.contains('show')) {
+                closePanel();
+            }
         });
-
-        if (wrap) {
-            wrap.addEventListener('click', function (e) {
-                e.stopPropagation();
-            });
-        }
 
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && panel.classList.contains('show')) closePanel();

@@ -64,6 +64,7 @@ function legalpro_finance_document_css(): string
         . '.fin-doc-signature{margin-top:36px;font-size:12px;color:#64748b;}'
         . '.fin-doc-signature-line{margin-top:24px;border-top:1px solid #cbd5e1;width:220px;}'
         . '.text-end{text-align:right;}'
+        . '.fin-doc-legal-body{font-size:13px;line-height:1.65;}'
         . '@media print{body.fin-doc-page{padding:0;background:#fff;}.fin-doc{border:none;border-radius:0;box-shadow:none;}.fin-doc-toolbar,.fin-doc-action,.no-print{display:none!important;}}';
 }
 

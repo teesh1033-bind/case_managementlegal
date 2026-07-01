@@ -1,10 +1,52 @@
 /* Admin finance pages — invoices, payments, financial summary */
 body.legalpro-finance-page {
-    --fin-primary: var(--legalpro-theme-primary, #5e72e4);
-    --fin-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
+    --fin-primary: var(--legalpro-theme-primary, var(--lp-admin-primary, #5e72e4));
+    --fin-primary-dark: var(--legalpro-theme-primary-dark, var(--lp-admin-primary-dark, #825ee4));
     --fin-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
-    --fin-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+    --fin-gradient: var(--legalpro-theme-gradient, var(--lp-admin-gradient, linear-gradient(135deg, #5e72e4, #825ee4)));
     --fin-radius: 16px;
+}
+
+/* Finance action buttons — always use portal accent from settings */
+body.legalpro-finance-page a.lp-fin-accent-btn,
+body.legalpro-finance-page button.lp-fin-accent-btn,
+body.legalpro-admin-portal.legalpro-finance-page a.lp-fin-accent-btn,
+body.legalpro-admin-portal.legalpro-finance-page button.lp-fin-accent-btn {
+    background-color: var(--fin-primary) !important;
+    background-image: var(--fin-gradient) !important;
+    border: 1px solid var(--fin-primary) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22) !important;
+}
+
+body.legalpro-finance-page a.lp-fin-accent-btn:hover,
+body.legalpro-finance-page a.lp-fin-accent-btn:focus,
+body.legalpro-finance-page button.lp-fin-accent-btn:hover,
+body.legalpro-finance-page button.lp-fin-accent-btn:focus,
+body.legalpro-admin-portal.legalpro-finance-page a.lp-fin-accent-btn:hover,
+body.legalpro-admin-portal.legalpro-finance-page a.lp-fin-accent-btn:focus,
+body.legalpro-admin-portal.legalpro-finance-page button.lp-fin-accent-btn:hover,
+body.legalpro-admin-portal.legalpro-finance-page button.lp-fin-accent-btn:focus {
+    background-color: var(--fin-primary-dark) !important;
+    background-image: linear-gradient(135deg, var(--fin-primary) 0%, var(--fin-primary-dark) 100%) !important;
+    border-color: var(--fin-primary-dark) !important;
+    color: #fff !important;
+}
+
+body.legalpro-finance-page a.lp-fin-accent-btn-outline,
+body.legalpro-admin-portal.legalpro-finance-page a.lp-fin-accent-btn-outline {
+    color: var(--fin-primary) !important;
+    border-color: var(--fin-primary) !important;
+    background: transparent !important;
+}
+
+body.legalpro-finance-page a.lp-fin-accent-btn-outline:hover,
+body.legalpro-finance-page a.lp-fin-accent-btn-outline:focus,
+body.legalpro-admin-portal.legalpro-finance-page a.lp-fin-accent-btn-outline:hover,
+body.legalpro-admin-portal.legalpro-finance-page a.lp-fin-accent-btn-outline:focus {
+    background: var(--fin-primary) !important;
+    border-color: var(--fin-primary) !important;
+    color: #fff !important;
 }
 
 body.legalpro-finance-page .fin-hero-card {
@@ -85,21 +127,71 @@ body.legalpro-finance-page .dashboard-stat-icon-wrap--primary {
     color: var(--fin-primary);
 }
 
+body.legalpro-admin-portal.legalpro-finance-page .btn-primary,
+body.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-primary,
+body.legalpro-admin-portal.legalpro-finance-page .btn-dark:not(.btn-link),
+body.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-dark,
 body.legalpro-finance-page .btn-primary,
-body.legalpro-finance-page .btn.bg-gradient-primary {
+body.legalpro-finance-page .btn.bg-gradient-primary,
+body.legalpro-finance-page .btn-dark:not(.btn-link),
+body.legalpro-finance-page .btn.bg-gradient-dark {
+    background-color: var(--fin-primary) !important;
     background-image: var(--fin-gradient) !important;
     border-color: var(--fin-primary) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22) !important;
 }
 
-body.legalpro-finance-page .btn-outline-primary {
+body.legalpro-admin-portal.legalpro-finance-page .btn-primary:hover,
+body.legalpro-admin-portal.legalpro-finance-page .btn-primary:focus,
+body.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-primary:hover,
+body.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-primary:focus,
+body.legalpro-admin-portal.legalpro-finance-page .btn-dark:not(.btn-link):hover,
+body.legalpro-admin-portal.legalpro-finance-page .btn-dark:not(.btn-link):focus,
+body.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-dark:hover,
+body.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-dark:focus,
+body.legalpro-finance-page .btn-primary:hover,
+body.legalpro-finance-page .btn-primary:focus,
+body.legalpro-finance-page .btn.bg-gradient-primary:hover,
+body.legalpro-finance-page .btn.bg-gradient-primary:focus,
+body.legalpro-finance-page .btn-dark:not(.btn-link):hover,
+body.legalpro-finance-page .btn-dark:not(.btn-link):focus,
+body.legalpro-finance-page .btn.bg-gradient-dark:hover,
+body.legalpro-finance-page .btn.bg-gradient-dark:focus {
+    background-color: var(--fin-primary-dark) !important;
+    background-image: linear-gradient(135deg, var(--fin-primary) 0%, var(--fin-primary-dark) 100%) !important;
+    border-color: var(--fin-primary-dark) !important;
+    color: #fff !important;
+}
+
+body.legalpro-admin-portal.legalpro-finance-page .btn-outline-primary,
+body.legalpro-admin-portal.legalpro-finance-page .btn-outline-dark,
+body.legalpro-finance-page .btn-outline-primary,
+body.legalpro-finance-page .btn-outline-dark {
     color: var(--fin-primary);
     border-color: var(--fin-primary);
+    background: transparent;
 }
 
-body.legalpro-finance-page .btn-outline-primary:hover {
+body.legalpro-admin-portal.legalpro-finance-page .btn-outline-primary:hover,
+body.legalpro-admin-portal.legalpro-finance-page .btn-outline-primary:focus,
+body.legalpro-admin-portal.legalpro-finance-page .btn-outline-dark:hover,
+body.legalpro-admin-portal.legalpro-finance-page .btn-outline-dark:focus,
+body.legalpro-finance-page .btn-outline-primary:hover,
+body.legalpro-finance-page .btn-outline-primary:focus,
+body.legalpro-finance-page .btn-outline-dark:hover,
+body.legalpro-finance-page .btn-outline-dark:focus {
     background: var(--fin-primary);
     border-color: var(--fin-primary);
     color: #fff;
+}
+
+body.legalpro-admin-portal.legalpro-finance-page .progress-bar.bg-gradient-primary,
+body.legalpro-admin-portal.legalpro-finance-page .progress-bar.bg-gradient-dark,
+body.legalpro-finance-page .progress-bar.bg-gradient-primary,
+body.legalpro-finance-page .progress-bar.bg-gradient-dark {
+    background-color: var(--fin-primary) !important;
+    background-image: var(--fin-gradient) !important;
 }
 
 body.legalpro-finance-page .table thead th {
@@ -268,19 +360,56 @@ body.legalpro-dark-mode.legalpro-finance-page .progress {
     background: rgba(255, 255, 255, 0.1);
 }
 
-body.legalpro-dark-mode.legalpro-finance-page .btn-dark,
-body.legalpro-dark-mode.legalpro-finance-page .btn.bg-gradient-dark {
-    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
-    border: none !important;
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-dark:not(.btn-link),
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-dark,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-primary,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-primary,
+body.legalpro-dark-mode.legalpro-finance-page .btn-dark:not(.btn-link),
+body.legalpro-dark-mode.legalpro-finance-page .btn.bg-gradient-dark,
+body.legalpro-dark-mode.legalpro-finance-page .btn-primary,
+body.legalpro-dark-mode.legalpro-finance-page .btn.bg-gradient-primary {
+    background-color: var(--fin-primary) !important;
+    background-image: var(--fin-gradient) !important;
+    border-color: var(--fin-primary) !important;
     color: #fff !important;
-    box-shadow: 0 4px 12px rgba(94, 114, 228, 0.28) !important;
+    box-shadow: 0 4px 12px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.28) !important;
 }
 
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-dark:not(.btn-link):hover,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-dark:not(.btn-link):focus,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-dark:hover,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn.bg-gradient-dark:focus,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-primary:hover,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-primary:focus,
 body.legalpro-dark-mode.legalpro-finance-page .btn-dark:hover,
 body.legalpro-dark-mode.legalpro-finance-page .btn-dark:focus,
 body.legalpro-dark-mode.legalpro-finance-page .btn.bg-gradient-dark:hover,
 body.legalpro-dark-mode.legalpro-finance-page .btn.bg-gradient-dark:focus {
-    background: linear-gradient(135deg, #6d7fe8 0%, #916fef 100%) !important;
+    background-color: var(--fin-primary-dark) !important;
+    background-image: linear-gradient(135deg, var(--fin-primary) 0%, var(--fin-primary-dark) 100%) !important;
+    border-color: var(--fin-primary-dark) !important;
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-outline-dark,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-outline-primary,
+body.legalpro-dark-mode.legalpro-finance-page .btn-outline-dark,
+body.legalpro-dark-mode.legalpro-finance-page .btn-outline-primary {
+    color: var(--fin-primary) !important;
+    border-color: var(--fin-primary) !important;
+    background: transparent !important;
+}
+
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-outline-dark:hover,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-outline-dark:focus,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-outline-primary:hover,
+body.legalpro-dark-mode.legalpro-admin-portal.legalpro-finance-page .btn-outline-primary:focus,
+body.legalpro-dark-mode.legalpro-finance-page .btn-outline-dark:hover,
+body.legalpro-dark-mode.legalpro-finance-page .btn-outline-dark:focus,
+body.legalpro-dark-mode.legalpro-finance-page .btn-outline-primary:hover,
+body.legalpro-dark-mode.legalpro-finance-page .btn-outline-primary:focus {
+    background: var(--fin-primary) !important;
+    border-color: var(--fin-primary) !important;
     color: #fff !important;
 }
 

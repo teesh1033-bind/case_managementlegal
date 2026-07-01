@@ -153,7 +153,7 @@ foreach ($cases as $case) {
         <td class="text-center">
             <div class="progress-wrapper">
                 <div class="progress" style="height: 6px;">
-                    <div class="progress-bar bg-gradient-dark" role="progressbar" style="width: ' . $percent . '%;"></div>
+                    <div class="progress-bar bg-gradient-primary" role="progressbar" style="width: ' . $percent . '%;"></div>
                 </div>
                 <small class="text-xs text-muted">' . $percent . '% paid</small>
             </div>
@@ -162,7 +162,7 @@ foreach ($cases as $case) {
         <td class="text-center">' . ($paymentCount ? $paymentCount : '—') . '</td>
         <td class="text-center">' . ($lastPayment !== '—' ? htmlspecialchars($lastPayment) : '<span class="text-muted">No payments</span>') . '</td>
         <td class="text-end">
-            <button class="btn btn-sm btn-dark" data-case="' . $caseId . '" onclick="showPaymentHistory(' . $caseId . ')">History</button>
+            <button class="btn btn-sm bg-gradient-primary lp-fin-accent-btn mb-0" data-case="' . $caseId . '" onclick="showPaymentHistory(' . $caseId . ')">History</button>
         </td>
     </tr>';
 
@@ -258,7 +258,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
+    <link href="../assets/css/legalpro-finance-pages.css?v=7" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
@@ -365,8 +365,8 @@ $html = <<<'HTML'
                         <p class="text-sm text-muted mb-0">Monitor totals, collected amounts, and remaining balances per case.</p>
                     </div>
                     <div class="mt-3 mt-md-0">
-                        <a href="payments.php" class="btn btn-sm btn-dark me-2">Record Payment</a>
-                        <a href="document-generate.php" class="btn btn-sm btn-dark">Generate Document</a>
+                        <a href="payments.php" class="btn btn-sm bg-gradient-primary lp-fin-accent-btn me-2 mb-0">Record Payment</a>
+                        <a href="document-generate.php" class="btn btn-sm bg-gradient-primary lp-fin-accent-btn mb-0">Generate Document</a>
                     </div>
                 </div>
                 <div class="card-body px-0 pt-0 pb-2">
@@ -438,7 +438,7 @@ $html = <<<'HTML'
                     for (var i = 0; i < payments.length; i++) {
                         var p = payments[i];
                         var receiptLink = p.payment_id
-                            ? '<a class="btn btn-sm btn-outline-dark" href="payment-receipt.php?id=' + encodeURIComponent(p.payment_id) + '" target="_blank" rel="noopener">PDF</a>'
+                            ? '<a class="btn btn-sm btn-outline-primary lp-fin-accent-btn-outline" href="payment-receipt.php?id=' + encodeURIComponent(p.payment_id) + '" target="_blank" rel="noopener">PDF</a>'
                             : '<span class="text-muted">—</span>';
                         list += '<tr>' +
                             '<td>' + p.date + '</td>' +
@@ -501,6 +501,6 @@ include __DIR__ . '/../inc/footer.php';
 $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
 
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>
 

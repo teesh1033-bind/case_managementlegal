@@ -428,3 +428,92 @@ body.legalpro-dark-mode .cdoc-row__icon.legalpro-doc-icon.dashboard-stat-icon-wr
         flex: 1;
     }
 }
+
+/* —— Generated document print preview —— */
+.legalpro-doc-preview-print-title {
+    display: none;
+}
+
+.legalpro-doc-preview-body {
+    min-height: 200px;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: #1e293b;
+}
+
+@media print {
+    @page {
+        margin: 1.5cm;
+    }
+
+    body.legalpro-doc-has-preview {
+        background: #fff !important;
+        color: #111 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body.legalpro-doc-has-preview * {
+        visibility: hidden;
+    }
+
+    body.legalpro-doc-has-preview #legalpro-doc-print-area,
+    body.legalpro-doc-has-preview #legalpro-doc-print-area * {
+        visibility: visible;
+    }
+
+    body.legalpro-doc-has-preview #legalpro-doc-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: #fff !important;
+    }
+
+    body.legalpro-doc-has-preview .sidenav,
+    body.legalpro-doc-has-preview .navbar-main,
+    body.legalpro-doc-has-preview #navbarBlur,
+    body.legalpro-doc-has-preview .min-height-300,
+    body.legalpro-doc-has-preview .legalpro-doc-subnav,
+    body.legalpro-doc-has-preview .alert,
+    body.legalpro-doc-has-preview .no-print,
+    body.legalpro-doc-has-preview footer {
+        display: none !important;
+    }
+
+    body.legalpro-doc-has-preview .main-content,
+    body.legalpro-doc-has-preview .container-fluid {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    body.legalpro-doc-has-preview .legalpro-doc-preview-card__body {
+        padding: 0 !important;
+    }
+
+    body.legalpro-doc-has-preview .legalpro-doc-preview-print-title {
+        display: block !important;
+        visibility: visible !important;
+        font-size: 18pt;
+        font-weight: 700;
+        color: #111 !important;
+        margin: 0 0 1rem;
+        padding: 0;
+    }
+
+    body.legalpro-doc-has-preview .legalpro-doc-preview-body {
+        min-height: auto !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+        padding: 0 !important;
+        font-size: 12pt;
+        line-height: 1.6;
+    }
+}

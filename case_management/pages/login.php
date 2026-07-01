@@ -42,6 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_username'] = $user['username'];
                 $_SESSION['admin_role'] = $user['role'];
                 $_SESSION['admin_name'] = $user['username'];
+                require_once __DIR__ . '/../lib/admin-locale.php';
+                $_SESSION['admin_locale'] = getAdminPortalLocale((int) $user['id']);
 
                 // Redirect to admin dashboard
                 header('Location: dashboard.php');

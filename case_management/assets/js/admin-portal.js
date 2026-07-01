@@ -29,8 +29,9 @@
     }
 
     function getUnreadHint() {
+        var i18n = window.LEGALPRO_ADMIN_I18N || {};
         var panel = qs('#legalproNotifPanel');
-        return (panel && panel.getAttribute('data-unread-hint')) || 'New — not yet seen';
+        return (panel && panel.getAttribute('data-unread-hint')) || i18n.unreadHint || 'New — not yet seen';
     }
 
     function buildNotifItem(n) {
@@ -55,9 +56,10 @@
         if (!listEl) {
             return;
         }
+        var i18n = window.LEGALPRO_ADMIN_I18N || {};
         if (!items || !items.length) {
             var tpl = qs('#adminNotifEmptyTpl');
-            listEl.innerHTML = tpl ? tpl.innerHTML : '<div class="legalpro-notif-panel__empty"><p>No new notifications</p></div>';
+            listEl.innerHTML = tpl ? tpl.innerHTML : '<div class="legalpro-notif-panel__empty"><p>' + escapeHtml(i18n.emptyTitle || 'No new notifications') + '</p></div>';
             return;
         }
         listEl.innerHTML = items.map(buildNotifItem).join('');
@@ -78,7 +80,8 @@
             })
             .catch(function () {
                 if (listEl) {
-                    listEl.innerHTML = '<div class="text-muted text-sm p-3">Could not load notifications.</div>';
+                    var i18n = window.LEGALPRO_ADMIN_I18N || {};
+                    listEl.innerHTML = '<div class="text-muted text-sm p-3">' + escapeHtml(i18n.loadError || 'Could not load notifications.') + '</div>';
                 }
             });
     }
@@ -93,6 +96,46 @@
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: body.toString()
         }).then(function (r) { return r.json(); });
+    }
+
+    function initThemeToggle() {
+        var btn = qs('#adminThemeToggle');
+        if (!btn) {
+            return;
+        }
+
+        btn.addEventListener('click', function () {
+            if (btn.disabled) {
+                return;
+            }
+
+            var current = btn.getAttribute('data-theme-mode') === 'dark' ? 'dark' : 'light';
+            var next = current === 'dark' ? 'light' : 'dark';
+            btn.disabled = true;
+
+            fetch('admin-theme-api.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ theme_mode: next })
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (data && data.ok) {
+                        window.location.reload();
+                        return;
+                    }
+                    btn.disabled = false;
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                });
+        });
     }
 
     function initAdminNotifications() {
@@ -118,15 +161,30 @@
             if (!item) {
                 return;
             }
+
+            e.stopPropagation();
+
             var key = item.getAttribute('data-notif-key');
+            var href = item.getAttribute('href') || '';
+            var navigate = function () {
+                if (href && href !== '#') {
+                    window.location.assign(href);
+                }
+            };
+
             if (!key) {
+                navigate();
                 return;
             }
-            markRead(key).then(function (data) {
-                if (data && typeof data.unread === 'number') {
-                    updateNotifBadge(data.unread);
-                }
-            });
+
+            e.preventDefault();
+            markRead(key)
+                .then(function (data) {
+                    if (data && typeof data.unread === 'number') {
+                        updateNotifBadge(data.unread);
+                    }
+                })
+                .finally(navigate);
         });
 
         var markAll = qs('#adminNotifMarkAll', wrap);
@@ -151,5 +209,8 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', initAdminNotifications);
+    document.addEventListener('DOMContentLoaded', function () {
+        initThemeToggle();
+        initAdminNotifications();
+    });
 })();

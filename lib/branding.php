@@ -152,11 +152,17 @@ function legalpro_copyright_html(string $classes = 'text-center text-sm text-mut
  */
 function legalpro_apply_copyright_line(string $html): string
 {
-    if (strpos($html, '{COPYRIGHT_LINE}') === false) {
-        return $html;
+    if (strpos($html, '{COPYRIGHT_LINE}') !== false) {
+        $html = str_replace('{COPYRIGHT_LINE}', legalpro_copyright_line(), $html);
     }
 
-    return str_replace('{COPYRIGHT_LINE}', legalpro_copyright_line(), $html);
+    if (function_exists('legalpro_apply_admin_i18n_for_page')) {
+        $html = legalpro_apply_admin_i18n_for_page($html);
+    } elseif (function_exists('legalpro_apply_admin_i18n')) {
+        $html = legalpro_apply_admin_i18n($html);
+    }
+
+    return $html;
 }
 
 function saveCompanyBranding(string $companyName, string $companyDetails, ?array $logoFile = null): array

@@ -1155,6 +1155,6 @@ include __DIR__ . '/../inc/footer.php';
 $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
 
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>
 
