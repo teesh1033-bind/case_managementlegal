@@ -20,7 +20,14 @@ function legalpro_finance_pdf_autoload(): ?string
 
 function legalpro_finance_pdf_available(): bool
 {
-    return legalpro_finance_pdf_autoload() !== null;
+    $autoload = legalpro_finance_pdf_autoload();
+    if ($autoload === null) {
+        return false;
+    }
+
+    require_once $autoload;
+
+    return class_exists(Options::class) && class_exists(Dompdf::class);
 }
 
 function legalpro_output_finance_pdf(string $html, string $fileName): void
@@ -28,11 +35,17 @@ function legalpro_output_finance_pdf(string $html, string $fileName): void
     $autoload = legalpro_finance_pdf_autoload();
     if ($autoload === null) {
         http_response_code(500);
-        echo 'PDF library is not installed. Run: composer require dompdf/dompdf';
+        echo 'PDF library is not installed. Run: composer install';
         exit;
     }
 
     require_once $autoload;
+
+    if (!class_exists(Options::class) || !class_exists(Dompdf::class)) {
+        http_response_code(500);
+        echo 'PDF library is incomplete. Run: composer install';
+        exit;
+    }
 
     $options = new Options();
     $options->set('isRemoteEnabled', false);

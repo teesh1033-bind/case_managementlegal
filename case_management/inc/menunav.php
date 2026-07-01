@@ -3,6 +3,7 @@
 
 require_once __DIR__ . '/admin-layout.php';
 require_once __DIR__ . '/../lib/portal-sidebar.php';
+require_once __DIR__ . '/../lib/admin-locale.php';
 
 if (defined('LEGALPRO_ADMIN_MENUNAV_LOADED')) {
     return;
@@ -17,17 +18,17 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 $currentPage = str_replace('.php', '', $currentPage);
 
 $menuItems = [
-    ['title' => 'Dashboard', 'url' => 'dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'dashboard'],
-    ['title' => 'Clients', 'url' => 'clients.php', 'icon' => 'users', 'id' => 'clients'],
-    ['title' => 'Cases', 'url' => 'tables.php', 'icon' => 'briefcase', 'id' => 'tables'],
-    ['title' => 'Payments', 'url' => 'payments.php', 'icon' => 'credit-card', 'id' => 'payments'],
-    ['title' => 'Appointments', 'url' => 'appointments.php', 'icon' => 'calendar', 'id' => 'appointments'],
-    ['title' => 'Court Tracking', 'url' => 'court-tracking.php', 'icon' => 'landmark', 'id' => 'court-tracking'],
-    ['title' => 'Lawyers', 'url' => 'lawyers.php', 'icon' => 'user-round', 'id' => 'lawyers'],
-    ['title' => 'Invoices', 'url' => 'invoices.php', 'icon' => 'file-text', 'id' => 'invoices'],
-    ['title' => 'Finance', 'url' => 'financial-summary.php', 'icon' => 'pie-chart', 'id' => 'financial-summary'],
-    ['title' => 'Documents', 'url' => 'documents.php', 'icon' => 'folder-open', 'id' => 'documents'],
-    ['title' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
+    ['title_key' => 'nav.dashboard', 'url' => 'dashboard.php', 'icon' => 'layout-dashboard', 'id' => 'dashboard'],
+    ['title_key' => 'nav.clients', 'url' => 'clients.php', 'icon' => 'users', 'id' => 'clients'],
+    ['title_key' => 'nav.cases', 'url' => 'tables.php', 'icon' => 'briefcase', 'id' => 'tables'],
+    ['title_key' => 'nav.payments', 'url' => 'payments.php', 'icon' => 'credit-card', 'id' => 'payments'],
+    ['title_key' => 'nav.appointments', 'url' => 'appointments.php', 'icon' => 'calendar', 'id' => 'appointments'],
+    ['title_key' => 'nav.court_tracking', 'url' => 'court-tracking.php', 'icon' => 'landmark', 'id' => 'court-tracking'],
+    ['title_key' => 'nav.lawyers', 'url' => 'lawyers.php', 'icon' => 'user-round', 'id' => 'lawyers'],
+    ['title_key' => 'nav.invoices', 'url' => 'invoices.php', 'icon' => 'file-text', 'id' => 'invoices'],
+    ['title_key' => 'nav.finance', 'url' => 'financial-summary.php', 'icon' => 'pie-chart', 'id' => 'financial-summary'],
+    ['title_key' => 'nav.documents', 'url' => 'documents.php', 'icon' => 'folder-open', 'id' => 'documents'],
+    ['title_key' => 'nav.ai_assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
 
 if (!function_exists('legalpro_admin_menu_is_active')) {
@@ -63,8 +64,8 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 <?php include __DIR__ . '/portal-theme-head-early.php'; ?>
 <?php legalpro_icons_head_scripts(); ?>
 <link href="../assets/css/legalpro-portal-shell.css?v=21" rel="stylesheet" />
-<link href="../assets/css/legalpro-admin-portal.css?v=32" rel="stylesheet" />
-<link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=37" rel="stylesheet" />
+<link href="../assets/css/dashboard-enhancements.css?v=16" rel="stylesheet" />
 <?php echo legalpro_sidebar_stylesheet_tag(); ?>
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>
@@ -74,7 +75,7 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 echo legalpro_render_portal_sidebar([
     'portal' => 'admin',
     'home_url' => 'dashboard.php',
-    'role_label' => 'ADMIN',
+    'role_label' => admin_t('sidebar.role_admin'),
     'company_name' => $companyName,
     'logo_url' => $companyLogoUrl,
     'current_page' => $currentPage,
@@ -84,7 +85,16 @@ echo legalpro_render_portal_sidebar([
 ]);
 ?>
 
+<!-- LEGALPRO_I18N_SKIP -->
 <?php echo $navbarUtilitiesMount; ?>
 
-<script src="../assets/js/admin-portal.js?v=2"></script>
+<script>window.LEGALPRO_ADMIN_I18N=<?= json_encode([
+    'unreadHint' => admin_t('notifications.unread_hint'),
+    'loading' => admin_t('notifications.loading'),
+    'emptyTitle' => admin_t('notifications.empty_title'),
+    'loadError' => admin_t('notifications.load_error'),
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;</script>
+<script src="../assets/js/admin-portal.js?v=6"></script>
+<script src="../assets/js/legalpro-admin-table-pagination.js?v=1" defer></script>
 <?php legalpro_icons_footer_scripts(); ?>
+<!-- LEGALPRO_I18N_SKIP_END -->

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../lib/admin-locale.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -228,15 +229,16 @@ if (empty($topClients)) {
 }
 
 // ─── JSON for JS ──────────────────────────────────────────────────────────────
-$calendarJson      = json_encode($calendarEvents);
-$chartLabelsJson   = json_encode($chartLabels);
-$chartInvoicedJson = json_encode($chartInvoiced);
-$chartPaidJson     = json_encode($chartPaid);
-$catLabels         = json_encode(array_column($caseByCategory, 'cat'));
-$catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCategory));
+$calendarJson      = json_encode($calendarEvents, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+$chartLabelsJson   = json_encode($chartLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+$chartInvoicedJson = json_encode($chartInvoiced, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+$chartPaidJson     = json_encode($chartPaid, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+$catLabels         = json_encode(array_column($caseByCategory, 'cat'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+$catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCategory), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+ob_start();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= admin_portal_html_lang() ?>">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -637,7 +639,11 @@ echo ob_get_clean();
 <script>
 /* ── Financial line chart ────────────────────────────────────────────────── */
 (function() {
-    var ctx = document.getElementById('chart-financial').getContext('2d');
+    var ctxEl = document.getElementById('chart-financial');
+    if (!ctxEl) {
+        return;
+    }
+    var ctx = ctxEl.getContext('2d');
     var g1 = ctx.createLinearGradient(0,230,0,50);
     g1.addColorStop(1,'rgba(94,114,228,0.18)'); g1.addColorStop(0,'rgba(94,114,228,0)');
     var g2 = ctx.createLinearGradient(0,230,0,50);
@@ -773,13 +779,20 @@ document.addEventListener('DOMContentLoaded', function() {
         return { domNodes: [el] };
     }
 
-    document.getElementById('upcomingAppointmentsList').addEventListener('click', function(e) {
-        var btn = e.target.closest('[data-appointment-id]');
-        if (!btn) return;
-        var id  = btn.getAttribute('data-appointment-id');
-        var ev  = events.find(function(x){ return String(x.id)===String(id); });
-        if (ev) openModal({ title: ev.title, start: ev.start, end: ev.end, id: ev.id, extendedProps: ev.extendedProps });
-    });
+    var upcomingList = document.getElementById('upcomingAppointmentsList');
+    if (upcomingList) {
+        upcomingList.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-appointment-id]');
+            if (!btn) return;
+            var id  = btn.getAttribute('data-appointment-id');
+            var ev  = events.find(function(x){ return String(x.id)===String(id); });
+            if (ev) openModal({ title: ev.title, start: ev.start, end: ev.end, id: ev.id, extendedProps: ev.extendedProps });
+        });
+    }
+
+    if (!calendarEl || typeof FullCalendar === 'undefined') {
+        return;
+    }
 
     var cal = new FullCalendar.Calendar(calendarEl, {
         initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
@@ -823,5 +836,5 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="../assets/js/spa-nav.js"></script>
 
 <?php include __DIR__ . '/../inc/footer.php'; ?>
-</body>
-</html>
+<?php
+echo legalpro_apply_copyright_line(ob_get_clean());

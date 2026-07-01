@@ -8,7 +8,7 @@
     --lp-admin-sidebar-bg: #1e2a44;
     --lp-admin-sidebar-bg-deep: #151d30;
     --lp-admin-sidebar-width: 280px;
-    --lp-admin-sidebar-collapsed: 80px;
+    --lp-admin-sidebar-collapsed: 88px;
     --lp-admin-header-height: 76px;
     --lp-admin-content-bg: #f4f6f9;
     --lp-admin-card-radius: 14px;
@@ -95,7 +95,8 @@ body.legalpro-admin-portal .legalpro-admin-sidebar {
     padding: 0;
 }
 
-body.legalpro-admin-portal.legalpro-sidebar-collapsed .legalpro-admin-sidebar {
+body.legalpro-admin-portal.legalpro-sidebar-collapsed .legalpro-admin-sidebar,
+body.legalpro-admin-portal.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar {
     width: var(--lp-admin-sidebar-collapsed) !important;
     max-width: var(--lp-admin-sidebar-collapsed) !important;
 }
@@ -281,6 +282,7 @@ body.legalpro-admin-portal .navbar-main .dashboard-quick-actions + .legalpro-nav
 
 .legalpro-header-notif-wrap {
     position: relative;
+    z-index: 1090;
 }
 
 .legalpro-header-notif {
@@ -328,6 +330,61 @@ body.legalpro-admin-portal .navbar-main .dashboard-quick-actions + .legalpro-nav
     justify-content: center;
 }
 
+.legalpro-admin-portal .legalpro-header-theme-toggle {
+    position: relative;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    padding: 0;
+    background: rgba(255, 255, 255, 0.96);
+    color: #4c5d7a;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.legalpro-admin-portal .legalpro-header-theme-toggle:hover,
+.legalpro-admin-portal .legalpro-header-theme-toggle:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+    color: var(--legalpro-theme-primary, #5e72e4);
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+    outline: none;
+}
+
+body.legalpro-admin-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle {
+    background: #fff;
+    color: #344767;
+    border-color: transparent;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    backdrop-filter: none;
+}
+
+body.legalpro-admin-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle:hover,
+body.legalpro-admin-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle:focus {
+    background: #fff;
+    color: var(--legalpro-theme-primary, #5e72e4);
+    border-color: transparent;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.legalpro-dark-mode.legalpro-admin-portal .legalpro-header-theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e8ecf4;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+body.legalpro-dark-mode.legalpro-admin-portal .legalpro-header-theme-toggle:hover,
+body.legalpro-dark-mode.legalpro-admin-portal .legalpro-header-theme-toggle:focus {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
 /* —— Notification panel (YouTube-style dropdown) —— */
 .legalpro-notif-panel {
     position: absolute;
@@ -341,8 +398,9 @@ body.legalpro-admin-portal .navbar-main .dashboard-quick-actions + .legalpro-nav
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 0.85rem;
     box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
-    z-index: 1070;
+    z-index: 1095;
     overflow: hidden;
+    pointer-events: auto;
 }
 
 .legalpro-notif-panel.show {
@@ -749,6 +807,10 @@ body.legalpro-admin-portal .navbar-main .container-fluid {
 body.legalpro-admin-portal.legalpro-sidebar-collapsed .navbar-main,
 body.legalpro-admin-portal.legalpro-sidebar-collapsed #navbarBlur {
     left: var(--lp-admin-sidebar-collapsed) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: auto !important;
+    right: 0 !important;
 }
 
 body.legalpro-admin-portal .navbar-main .container-fluid {
@@ -1788,4 +1850,105 @@ body.legalpro-dark-mode .appointment-modal-edit-btn.bg-gradient-dark:hover,
 body.legalpro-dark-mode .appointment-modal-edit-btn.bg-gradient-dark:focus {
     background: linear-gradient(135deg, #6d7fe8 0%, #916fef 100%) !important;
     color: #fff !important;
+}
+
+/* Admin table pagination */
+.lp-admin-row-filtered,
+.lp-admin-row-page-hidden {
+    display: none !important;
+}
+
+.lp-admin-table-paginate .lp-admin-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    padding: 0.75rem 1.5rem 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.lp-admin-pagination__info {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: #67748e;
+}
+
+.lp-admin-pagination__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.lp-admin-pagination__btn {
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #344767;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.lp-admin-pagination__btn--nav {
+    padding: 0 0.75rem;
+}
+
+.lp-admin-pagination__btn:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    color: #5e72e4;
+}
+
+.lp-admin-pagination__btn--active {
+    background: #5e72e4;
+    border-color: #5e72e4;
+    color: #fff;
+}
+
+.lp-admin-pagination__btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.lp-admin-pagination__ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    color: #8392ab;
+    font-size: 0.875rem;
+    user-select: none;
+}
+
+body.legalpro-dark-mode .lp-admin-table-paginate .lp-admin-pagination {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-dark-mode .lp-admin-pagination__info {
+    color: #a8b3cf;
+}
+
+body.legalpro-dark-mode .lp-admin-pagination__btn {
+    background: #1a2035;
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #e9ecef;
+}
+
+body.legalpro-dark-mode .lp-admin-pagination__btn:hover:not(:disabled) {
+    background: #252b42;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+body.legalpro-dark-mode .lp-admin-pagination__btn--active {
+    background: #5e72e4;
+    border-color: #5e72e4;
+    color: #fff;
 }

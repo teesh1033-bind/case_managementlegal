@@ -236,10 +236,11 @@ if (empty($upcomingCourtDates)) {
         </button>';
     }
 }
+ob_start();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= admin_portal_html_lang() ?>">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -571,6 +572,7 @@ if (empty($upcomingCourtDates)) {
         </div>
     </div>
 
+    <!-- LEGALPRO_ADMIN_SCRIPTS -->
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
@@ -1257,3 +1259,5 @@ if (empty($upcomingCourtDates)) {
     </script>
     <?php legalpro_render_availability_date_picker_script(); ?>
 <?php include __DIR__ . '/../inc/footer.php'; ?>
+<?php
+echo legalpro_apply_copyright_line(ob_get_clean());

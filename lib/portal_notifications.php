@@ -108,8 +108,13 @@ function legalpro_filter_read_notifications(PDO $pdo, array $items): array
 
 function legalpro_notification_unread_hint(): string
 {
+<<<<<<< HEAD
     if (!empty($_SESSION['lawyer_id']) && function_exists('lawyer_t')) {
         $hint = lawyer_t('notifications.unread_hint');
+=======
+    if (!empty($_SESSION['admin_id']) && function_exists('admin_t')) {
+        $hint = admin_t('notifications.unread_hint');
+>>>>>>> f63da589d24754b69ba747815f2fbedd935808fa
         if ($hint !== 'notifications.unread_hint') {
             return $hint;
         }
@@ -123,6 +128,18 @@ function legalpro_notification_unread_hint(): string
     }
 
     return 'New — not yet seen';
+}
+
+function legalpro_admin_notification_text(string $key, string $fallback): string
+{
+    if (!empty($_SESSION['admin_id']) && function_exists('admin_t')) {
+        $text = admin_t($key);
+        if ($text !== $key) {
+            return $text;
+        }
+    }
+
+    return $fallback;
 }
 
 function legalpro_notification_unread_caption_html(): string
@@ -248,17 +265,17 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
             LIMIT 12
         ");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $clientName = trim((string) ($row['client_name'] ?? '')) ?: 'Client';
-            $lawyerName = trim((string) ($row['lawyer_name'] ?? '')) ?: 'Unassigned';
+            $clientName = trim((string) ($row['client_name'] ?? '')) ?: legalpro_admin_notification_text('badges.role.client', 'Client');
+            $lawyerName = trim((string) ($row['lawyer_name'] ?? '')) ?: legalpro_admin_notification_text('notifications.unassigned', 'Unassigned');
             $when = !empty($row['starts_at'])
                 ? date('M j, Y · g:i A', strtotime($row['starts_at']))
-                : 'Date TBD';
-            $caseLabel = !empty($row['case_title']) ? (string) $row['case_title'] : 'General appointment';
+                : legalpro_admin_notification_text('notifications.date_tbd', 'Date TBD');
+            $caseLabel = !empty($row['case_title']) ? (string) $row['case_title'] : legalpro_admin_notification_text('notifications.general_appointment', 'General appointment');
 
             $items[] = legalpro_build_notification_item(
                 'appointment:' . (int) $row['id'],
                 'appointment',
-                'Pending appointment',
+                legalpro_admin_notification_text('notifications.pending_appointment', 'Pending appointment'),
                 $clientName . ' · ' . $caseLabel . ' · ' . $when . ' · ' . $lawyerName,
                 'new_appointment.php?id=' . (int) $row['id'],
                 (string) ($row['created_at'] ?? $row['starts_at'] ?? ''),
@@ -301,7 +318,7 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
                 $items[] = legalpro_build_notification_item(
                     'court:' . (int) $row['id'],
                     'court',
-                    'Upcoming court date',
+                    legalpro_admin_notification_text('notifications.upcoming_court', 'Upcoming court date'),
                     $caseNumber . ' · ' . $caseTitle . ' · ' . $hearingTitle . ' · ' . $when,
                     $caseId > 0 ? 'case-view.php?id=' . $caseId : 'court-tracking.php',
                     (string) ($row['created_at'] ?? $row['court_date'] ?? ''),
@@ -334,12 +351,12 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
             $caseId = (int) $row['id'];
             $balance = max((float) $row['estimated_fees'] - (float) $row['paid_total'], 0);
             $caseNumber = 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
-            $clientName = trim((string) ($row['client_name'] ?? '')) ?: 'Client';
+            $clientName = trim((string) ($row['client_name'] ?? '')) ?: legalpro_admin_notification_text('badges.role.client', 'Client');
 
             $items[] = legalpro_build_notification_item(
                 'payment:case:' . $caseId,
                 'payment',
-                'Outstanding balance',
+                legalpro_admin_notification_text('notifications.outstanding_balance', 'Outstanding balance'),
                 $caseNumber . ' · ' . (string) $row['title'] . ' · ' . $clientName . ' · ' . formatCurrency($balance) . ' due',
                 'payments.php?case_id=' . $caseId,
                 null,

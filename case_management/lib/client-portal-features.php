@@ -518,11 +518,56 @@ function legalpro_client_notification_normalize_datetime(?string $value): string
     return date('Y-m-d H:i:s');
 }
 
+function legalpro_client_notification_title(array $item): string
+{
+    if (!function_exists('client_t')) {
+        require_once __DIR__ . '/client-locale.php';
+    }
+
+    $type = (string) ($item['type'] ?? '');
+    $map = [
+        'document' => 'notifications.type.document',
+        'appointment_confirmed' => 'notifications.type.appt_confirmed',
+        'appointment_pending' => 'notifications.type.appt_pending',
+        'invoice' => 'notifications.type.invoice',
+        'payment' => 'notifications.type.payment',
+        'hearing' => 'notifications.type.hearing',
+        'court' => 'notifications.type.hearing',
+    ];
+
+    if (isset($map[$type])) {
+        $translated = client_t($map[$type]);
+        if ($translated !== $map[$type]) {
+            return $translated;
+        }
+    }
+
+    return (string) ($item['title'] ?? '');
+}
+
+function legalpro_client_notification_body(array $item): string
+{
+    if (!function_exists('client_t')) {
+        require_once __DIR__ . '/client-locale.php';
+    }
+
+    $type = (string) ($item['type'] ?? '');
+    if ($type === 'appointment_pending' && trim((string) ($item['body'] ?? '')) === 'Your request is pending review') {
+        return client_t('notifications.type.appt_pending_body');
+    }
+
+    return (string) ($item['body'] ?? '');
+}
+
 /**
  * @return array{label: string, ago: string, iso: string}
  */
 function legalpro_client_notification_time_parts(string $datetime): array
 {
+    if (!function_exists('client_t')) {
+        require_once __DIR__ . '/client-locale.php';
+    }
+
     $ts = strtotime($datetime);
     if ($ts === false) {
         return ['label' => '', 'ago' => '', 'iso' => ''];
@@ -535,15 +580,15 @@ function legalpro_client_notification_time_parts(string $datetime): array
     $yesterdayStart = strtotime('yesterday');
 
     if ($diff < 45) {
-        $ago = 'Just now';
+        $ago = client_t('time.just_now');
     } elseif ($diff < 3600) {
-        $ago = (int) floor($diff / 60) . 'm ago';
+        $ago = client_t('time.minutes_ago', ['count' => (string) (int) floor($diff / 60)]);
     } elseif ($ts >= $todayStart) {
-        $ago = date('g:i A', $ts);
+        $ago = date('G:i', $ts);
     } elseif ($ts >= $yesterdayStart) {
-        $ago = 'Yesterday ' . date('g:i A', $ts);
+        $ago = client_t('time.yesterday') . ' ' . date('G:i', $ts);
     } elseif ($diff < 604800) {
-        $ago = (int) floor($diff / 86400) . 'd ago';
+        $ago = client_t('time.days_ago', ['count' => (string) (int) floor($diff / 86400)]);
     } else {
         $ago = date('M j', $ts);
     }
@@ -843,6 +888,13 @@ function legalpro_client_mark_all_notifications_read(?PDO $pdo, int $clientId): 
 
 function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit = 30): array
 {
+    if (!function_exists('client_t')) {
+        require_once __DIR__ . '/client-locale.php';
+    }
+    if (!function_exists('client_comment_role_label')) {
+        require_once __DIR__ . '/client-portal-i18n.php';
+    }
+
     if ($pdo === null || $clientId <= 0) {
         return [];
     }
@@ -865,7 +917,7 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
             $items[] = [
                 'type' => 'document',
                 'icon' => 'file-text',
-                'title' => $isClient ? 'You uploaded a document' : 'Lawyer uploaded a document',
+                'title' => $isClient ? client_t('activity.doc_uploaded_you') : client_t('activity.doc_uploaded_lawyer'),
                 'subtitle' => ($row['label'] ?: $row['filename']) . ' · ' . $row['case_title'],
                 'ts' => strtotime((string) $row['uploaded_at']),
                 'url' => 'client-documents.php?case_id=' . (int) $row['case_id'],
@@ -884,17 +936,17 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $status = strtolower((string) ($row['status'] ?? ''));
             if ($status === 'accepted') {
-                $title = 'Appointment confirmed';
+                $title = client_t('activity.appt_confirmed');
             } elseif ($status === 'pending') {
-                $title = 'Appointment requested';
+                $title = client_t('activity.appt_requested');
             } else {
-                $title = 'Appointment updated';
+                $title = client_t('activity.appt_updated');
             }
             $items[] = [
                 'type' => 'appointment',
                 'icon' => 'calendar',
                 'title' => $title,
-                'subtitle' => date('M j, g:i A', strtotime((string) $row['starts_at'])) . ' · ' . ($row['case_title'] ?: 'General'),
+                'subtitle' => date('M j, g:i A', strtotime((string) $row['starts_at'])) . ' · ' . ($row['case_title'] ?: client_t('common.general')),
                 'ts' => strtotime((string) ($row['updated_at'] ?: $row['starts_at'])),
                 'url' => 'client-appointments.php',
             ];
@@ -913,8 +965,8 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
             $items[] = [
                 'type' => 'invoice',
                 'icon' => 'receipt',
-                'title' => 'Invoice issued',
-                'subtitle' => ($row['invoice_number'] ?: 'Invoice') . ' — ' . formatCurrency((float) $row['amount']),
+                'title' => client_t('activity.invoice_issued'),
+                'subtitle' => ($row['invoice_number'] ?: client_t('activity.invoice_fallback')) . ' — ' . formatCurrency((float) $row['amount']),
                 'ts' => strtotime((string) $row['created_at']),
                 'url' => 'client-payments.php',
             ];
@@ -933,8 +985,8 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
             $items[] = [
                 'type' => 'court',
                 'icon' => 'landmark',
-                'title' => 'Hearing scheduled',
-                'subtitle' => ($row['title'] ?: 'Court date') . ' · ' . date('M j, Y', strtotime((string) $row['court_date'])) . ' — ' . $row['case_title'],
+                'title' => client_t('activity.hearing_scheduled'),
+                'subtitle' => ($row['title'] ?: client_t('activity.court_date')) . ' · ' . date('M j, Y', strtotime((string) $row['court_date'])) . ' — ' . $row['case_title'],
                 'ts' => strtotime((string) $row['created_at']),
                 'url' => 'client-court-tracking.php',
             ];
@@ -954,8 +1006,8 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
             $items[] = [
                 'type' => 'payment',
                 'icon' => 'credit-card',
-                'title' => 'Payment recorded',
-                'subtitle' => formatCurrency((float) $row['amount']) . ' · ' . ($row['case_title'] ?: 'Account'),
+                'title' => client_t('activity.payment_recorded'),
+                'subtitle' => formatCurrency((float) $row['amount']) . ' · ' . ($row['case_title'] ?: client_t('activity.account')),
                 'ts' => $ts !== false ? $ts : time(),
                 'url' => 'client-payments.php',
             ];
@@ -978,7 +1030,7 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
             $items[] = [
                 'type' => 'event',
                 'icon' => 'activity',
-                'title' => 'Case activity',
+                'title' => client_t('activity.case_activity'),
                 'subtitle' => mb_substr($desc, 0, 80) . (mb_strlen($desc) > 80 ? '…' : '') . ' · ' . $row['case_title'],
                 'ts' => strtotime((string) $row['created_at']),
                 'url' => 'client-case-view.php?id=' . (int) $row['case_id'],
@@ -995,7 +1047,7 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
         ");
         $stmt->execute([$clientId]);
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $role = ucfirst((string) $row['comment_type']);
+            $roleLabel = client_comment_role_label((string) $row['comment_type']);
             $preview = mb_substr((string) $row['comment'], 0, 80);
             if (mb_strlen((string) $row['comment']) > 80) {
                 $preview .= '…';
@@ -1003,7 +1055,7 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
             $items[] = [
                 'type' => 'comment',
                 'icon' => 'message-circle',
-                'title' => $role . ' posted an update',
+                'title' => client_t('activity.role_posted', ['role' => $roleLabel]),
                 'subtitle' => $preview . ' · ' . $row['case_title'],
                 'ts' => strtotime((string) $row['created_at']),
                 'url' => 'client-case-view.php?id=' . (int) $row['case_id'],
@@ -1022,8 +1074,8 @@ function legalpro_client_get_activity_feed(?PDO $pdo, int $clientId, int $limit 
             $items[] = [
                 'type' => 'case',
                 'icon' => 'briefcase',
-                'title' => 'Case updated',
-                'subtitle' => $row['title'] . ' — ' . ucfirst(str_replace('_', ' ', (string) $row['status'])),
+                'title' => client_t('activity.case_updated'),
+                'subtitle' => $row['title'] . ' — ' . client_status_label((string) $row['status']),
                 'ts' => strtotime((string) $row['updated_at']),
                 'url' => 'client-case-view.php?id=' . (int) $row['id'],
             ];
@@ -1044,6 +1096,10 @@ function legalpro_client_activity_feed_per_page(): int
 
 function legalpro_client_render_activity_feed_html(array $items, ?int $perPage = null): string
 {
+    if (!function_exists('client_t')) {
+        require_once __DIR__ . '/client-locale.php';
+    }
+
     require_once __DIR__ . '/../inc/legalpro-icons.php';
 
     if ($perPage === null) {
@@ -1054,8 +1110,8 @@ function legalpro_client_render_activity_feed_html(array $items, ?int $perPage =
     if (empty($items)) {
         return '<div class="cp-activity-empty">'
             . '<div class="cd-empty-icon">' . legalpro_icon('inbox') . '</div>'
-            . '<p class="cp-activity-empty__title">No recent activity</p>'
-            . '<p class="cp-activity-empty__sub">Updates from your cases, documents, and appointments will appear here.</p>'
+            . '<p class="cp-activity-empty__title">' . htmlspecialchars(client_t('activity.empty_title')) . '</p>'
+            . '<p class="cp-activity-empty__sub">' . htmlspecialchars(client_t('activity.empty_sub')) . '</p>'
             . '</div>';
     }
 
@@ -1092,7 +1148,7 @@ function legalpro_client_render_activity_feed_html(array $items, ?int $perPage =
     $html .= '</div>';
 
     if ($needsPagination) {
-        $html .= '<nav class="cd-activity-pagination" aria-label="Activity pagination">'
+        $html .= '<nav class="cd-activity-pagination" aria-label="' . htmlspecialchars(client_t('activity.pagination_aria')) . '">'
             . '<p class="cd-activity-pagination__info" data-activity-range></p>'
             . '<div class="cd-activity-pagination__controls" data-activity-pages></div>'
             . '</nav>';
@@ -1122,7 +1178,7 @@ function legalpro_client_render_bottom_nav(string $currentPage): string
         ['url' => 'client-requests.php', 'icon' => 'message-circle', 'label_key' => 'nav.my_requests', 'fallback' => 'My requests'],
     ];
 
-    $html = '<nav class="legalpro-client-bottom-nav d-xl-none" aria-label="Mobile navigation">';
+    $html = '<nav class="legalpro-client-bottom-nav d-xl-none" aria-label="' . htmlspecialchars(client_t('nav.mobile_aria')) . '">';
     foreach ($items as $item) {
         $active = clientNavIsActive($item['id'], $currentPage);
         if (!empty($item['is_more'])) {
@@ -1144,10 +1200,10 @@ function legalpro_client_render_bottom_nav(string $currentPage): string
 
     $html .= '<div class="legalpro-client-more-sheet d-xl-none" id="clientMoreSheet" hidden>
         <div class="legalpro-client-more-sheet__backdrop" data-more-close="1"></div>
-        <div class="legalpro-client-more-sheet__panel" role="dialog" aria-label="More options">
+        <div class="legalpro-client-more-sheet__panel" role="dialog" aria-label="' . htmlspecialchars(client_t('nav.more_options_aria')) . '">
             <div class="legalpro-client-more-sheet__hdr">
                 <strong>' . htmlspecialchars(function_exists('client_t') ? (client_t('nav.more') !== 'nav.more' ? client_t('nav.more') : 'More') : 'More') . '</strong>
-                <button type="button" class="btn btn-link p-0" data-more-close="1" aria-label="Close">&times;</button>
+                <button type="button" class="btn btn-link p-0" data-more-close="1" aria-label="' . htmlspecialchars(client_t('common.close')) . '">&times;</button>
             </div>
             <div class="legalpro-client-more-sheet__grid">';
     foreach ($moreLinks as $link) {

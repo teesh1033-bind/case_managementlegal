@@ -2,6 +2,7 @@
 
 function getClientPortalLocales(): array
 {
+    // Native language names only — must not call client_t() (client_t loads locale via getClientPortalLocale).
     return [
         'en' => 'English',
         'fr' => 'Français',
@@ -43,13 +44,13 @@ function getClientPortalLocale(?int $clientId = null): string
 function saveClientPortalLocale(int $clientId, string $locale): array
 {
     if ($clientId <= 0) {
-        return ['ok' => false, 'message' => 'Invalid client account.'];
+        return ['ok' => false, 'message' => client_t('locale.invalid_account')];
     }
 
     $locale = strtolower(trim($locale));
     $locales = getClientPortalLocales();
     if (!isset($locales[$locale])) {
-        return ['ok' => false, 'message' => 'Invalid language selected.'];
+        return ['ok' => false, 'message' => client_t('locale.invalid_language')];
     }
 
     setSetting(clientPortalLocaleSettingKey($clientId), $locale);
@@ -68,8 +69,12 @@ function client_t(string $key, array $replace = [], ?string $forceLocale = null)
 
     $locale = $forceLocale ?? getClientPortalLocale();
     if (!isset($cache[$locale])) {
-        $path = __DIR__ . '/../lang/client/' . $locale . '.php';
-        $cache[$locale] = is_file($path) ? (require $path) : [];
+    $path = __DIR__ . '/../lang/client/' . $locale . '.php';
+    $cache[$locale] = is_file($path) ? (require $path) : [];
+    $morePath = __DIR__ . '/../lang/client/more-' . $locale . '.php';
+    if (is_file($morePath)) {
+        $cache[$locale] = array_merge($cache[$locale], require $morePath);
+    }
         if ($locale !== 'en' && !isset($cache['en'])) {
             $enPath = __DIR__ . '/../lang/client/en.php';
             $cache['en'] = is_file($enPath) ? (require $enPath) : [];
@@ -83,6 +88,10 @@ function client_t(string $key, array $replace = [], ?string $forceLocale = null)
     }
 
     return $text;
+}
+
+if (is_readable(__DIR__ . '/client-portal-i18n.php')) {
+    require_once __DIR__ . '/client-portal-i18n.php';
 }
 
 function client_portal_html_lang(): string

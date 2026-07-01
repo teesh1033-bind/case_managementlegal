@@ -42,7 +42,7 @@ if (isset($_GET['msg'])) {
 $messageHtml = $message !== ''
     ? '<div class="alert alert-' . htmlspecialchars($messageType ?: 'info') . ' alert-dismissible fade show" role="alert">'
         . htmlspecialchars($message)
-        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars(client_t('common.close')) . '"></button>'
     . '</div>'
     : '';
 

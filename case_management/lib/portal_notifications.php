@@ -108,6 +108,13 @@ function legalpro_filter_read_notifications(PDO $pdo, array $items): array
 
 function legalpro_notification_unread_hint(): string
 {
+    if (!empty($_SESSION['admin_id']) && function_exists('admin_t')) {
+        $hint = admin_t('notifications.unread_hint');
+        if ($hint !== 'notifications.unread_hint') {
+            return $hint;
+        }
+    }
+
     if (function_exists('client_t')) {
         $hint = client_t('notifications.unread_hint');
         if ($hint !== 'notifications.unread_hint') {
@@ -116,6 +123,18 @@ function legalpro_notification_unread_hint(): string
     }
 
     return 'New — not yet seen';
+}
+
+function legalpro_admin_notification_text(string $key, string $fallback): string
+{
+    if (!empty($_SESSION['admin_id']) && function_exists('admin_t')) {
+        $text = admin_t($key);
+        if ($text !== $key) {
+            return $text;
+        }
+    }
+
+    return $fallback;
 }
 
 function legalpro_notification_unread_caption_html(): string
@@ -241,17 +260,17 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
             LIMIT 12
         ");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $clientName = trim((string) ($row['client_name'] ?? '')) ?: 'Client';
-            $lawyerName = trim((string) ($row['lawyer_name'] ?? '')) ?: 'Unassigned';
+            $clientName = trim((string) ($row['client_name'] ?? '')) ?: legalpro_admin_notification_text('badges.role.client', 'Client');
+            $lawyerName = trim((string) ($row['lawyer_name'] ?? '')) ?: legalpro_admin_notification_text('notifications.unassigned', 'Unassigned');
             $when = !empty($row['starts_at'])
                 ? date('M j, Y · g:i A', strtotime($row['starts_at']))
-                : 'Date TBD';
-            $caseLabel = !empty($row['case_title']) ? (string) $row['case_title'] : 'General appointment';
+                : legalpro_admin_notification_text('notifications.date_tbd', 'Date TBD');
+            $caseLabel = !empty($row['case_title']) ? (string) $row['case_title'] : legalpro_admin_notification_text('notifications.general_appointment', 'General appointment');
 
             $items[] = legalpro_build_notification_item(
                 'appointment:' . (int) $row['id'],
                 'appointment',
-                'Pending appointment',
+                legalpro_admin_notification_text('notifications.pending_appointment', 'Pending appointment'),
                 $clientName . ' · ' . $caseLabel . ' · ' . $when . ' · ' . $lawyerName,
                 'new_appointment.php?id=' . (int) $row['id'],
                 (string) ($row['created_at'] ?? $row['starts_at'] ?? ''),
@@ -294,7 +313,7 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
                 $items[] = legalpro_build_notification_item(
                     'court:' . (int) $row['id'],
                     'court',
-                    'Upcoming court date',
+                    legalpro_admin_notification_text('notifications.upcoming_court', 'Upcoming court date'),
                     $caseNumber . ' · ' . $caseTitle . ' · ' . $hearingTitle . ' · ' . $when,
                     $caseId > 0 ? 'case-view.php?id=' . $caseId : 'court-tracking.php',
                     (string) ($row['created_at'] ?? $row['court_date'] ?? ''),
@@ -327,12 +346,12 @@ function legalpro_fetch_admin_notifications(PDO $pdo, int $limit = 20): array
             $caseId = (int) $row['id'];
             $balance = max((float) $row['estimated_fees'] - (float) $row['paid_total'], 0);
             $caseNumber = 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
-            $clientName = trim((string) ($row['client_name'] ?? '')) ?: 'Client';
+            $clientName = trim((string) ($row['client_name'] ?? '')) ?: legalpro_admin_notification_text('badges.role.client', 'Client');
 
             $items[] = legalpro_build_notification_item(
                 'payment:case:' . $caseId,
                 'payment',
-                'Outstanding balance',
+                legalpro_admin_notification_text('notifications.outstanding_balance', 'Outstanding balance'),
                 $caseNumber . ' · ' . (string) $row['title'] . ' · ' . $clientName . ' · ' . formatCurrency($balance) . ' due',
                 'payments.php?case_id=' . $caseId,
                 null,
@@ -383,6 +402,249 @@ function legalpro_fetch_lawyer_notifications(PDO $pdo, int $lawyerId, int $limit
     }
 
     $items = [];
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                clw.case_id,
+                clw.assigned_at,
+                clw.is_primary,
+                c.title AS case_title,
+                c.status AS case_status,
+                CONCAT(cl.first_name, ' ', cl.last_name) AS client_name
+            FROM case_lawyers clw
+            INNER JOIN cases c ON c.id = clw.case_id
+            LEFT JOIN clients cl ON cl.id = c.client_id
+            WHERE clw.lawyer_id = ?
+              AND LOWER(COALESCE(c.status, 'open')) != 'closed'
+              AND clw.assigned_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+            ORDER BY clw.assigned_at DESC
+            LIMIT 12
+        ");
+        $stmt->execute([$lawyerId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $caseId = (int) ($row['case_id'] ?? 0);
+            if ($caseId <= 0) {
+                continue;
+            }
+            $caseNumber = 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
+            $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Case';
+            $clientName = trim((string) ($row['client_name'] ?? '')) ?: 'Client';
+            $assignedAt = (string) ($row['assigned_at'] ?? '');
+            $roleLabel = !empty($row['is_primary']) ? 'Primary lawyer' : 'Assigned lawyer';
+
+            $items[] = legalpro_build_notification_item(
+                'case-assign:' . $caseId,
+                'case',
+                'Assigned to a case',
+                $caseNumber . ' · ' . $caseTitle . ' · ' . $clientName . ' · ' . $roleLabel,
+                'lawyer-case-view.php?id=' . $caseId,
+                $assignedAt,
+                'briefcase',
+                $assignedAt !== '' ? (int) strtotime($assignedAt) : time()
+            );
+        }
+    } catch (PDOException $e) {
+        // ignore
+    }
+
+    try {
+        require_once __DIR__ . '/task_helpers.php';
+        ensure_task_support_schema($pdo);
+
+        $stmt = $pdo->prepare("
+            SELECT
+                t.id,
+                t.title,
+                t.due_date,
+                t.created_at,
+                c.id AS case_id,
+                c.title AS case_title
+            FROM tasks t
+            INNER JOIN cases c ON c.id = t.case_id
+            WHERE " . lawyer_task_access_sql() . "
+              AND t.due_date IS NOT NULL
+              AND t.due_date < CURDATE()
+              AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('closed', 'completed', 'cancelled')
+            ORDER BY t.due_date ASC
+            LIMIT 8
+        ");
+        $stmt->execute([$lawyerId, $lawyerId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $taskId = (int) ($row['id'] ?? 0);
+            if ($taskId <= 0) {
+                continue;
+            }
+            $caseId = (int) ($row['case_id'] ?? 0);
+            $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+            $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Case';
+            $taskTitle = trim((string) ($row['title'] ?? '')) ?: 'Task';
+            $dueLabel = date('M j, Y', strtotime((string) $row['due_date']));
+
+            $items[] = legalpro_build_notification_item(
+                'task-overdue:' . $taskId,
+                'task',
+                'Task overdue',
+                $caseNumber . ' · ' . $taskTitle . ' · ' . $caseTitle . ' · Due ' . $dueLabel,
+                'tasks.php?due=overdue',
+                (string) ($row['due_date'] ?? $row['created_at'] ?? ''),
+                'list-checks',
+                (int) strtotime((string) $row['due_date'])
+            );
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT
+                t.id,
+                t.title,
+                t.due_date,
+                t.created_at,
+                c.id AS case_id,
+                c.title AS case_title
+            FROM tasks t
+            INNER JOIN cases c ON c.id = t.case_id
+            WHERE " . lawyer_task_access_sql() . "
+              AND t.due_date = CURDATE()
+              AND LOWER(COALESCE(t.status, 'pending')) NOT IN ('closed', 'completed', 'cancelled')
+            ORDER BY t.due_date ASC
+            LIMIT 8
+        ");
+        $stmt->execute([$lawyerId, $lawyerId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $taskId = (int) ($row['id'] ?? 0);
+            if ($taskId <= 0) {
+                continue;
+            }
+            $caseId = (int) ($row['case_id'] ?? 0);
+            $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+            $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Case';
+            $taskTitle = trim((string) ($row['title'] ?? '')) ?: 'Task';
+
+            $items[] = legalpro_build_notification_item(
+                'task-due-today:' . $taskId,
+                'task',
+                'Task due today',
+                $caseNumber . ' · ' . $taskTitle . ' · ' . $caseTitle,
+                'tasks.php?due=today',
+                (string) ($row['due_date'] ?? $row['created_at'] ?? ''),
+                'list-checks',
+                (int) strtotime((string) $row['due_date'])
+            );
+        }
+    } catch (PDOException $e) {
+        // ignore
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                t.id,
+                t.title,
+                t.priority,
+                t.due_date,
+                t.created_at,
+                t.status,
+                c.id AS case_id,
+                c.title AS case_title
+            FROM tasks t
+            INNER JOIN cases c ON c.id = t.case_id
+            WHERE LOWER(COALESCE(t.status, 'pending')) IN ('pending', 'in_progress')
+              AND (
+                t.assigned_lawyer_id = ?
+                OR EXISTS (
+                    SELECT 1 FROM task_lawyers tl
+                    WHERE tl.task_id = t.id AND tl.lawyer_id = ?
+                )
+              )
+            ORDER BY COALESCE(t.due_date, t.created_at) ASC
+            LIMIT 12
+        ");
+        $stmt->execute([$lawyerId, $lawyerId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $taskId = (int) ($row['id'] ?? 0);
+            if ($taskId <= 0) {
+                continue;
+            }
+            $dueDate = (string) ($row['due_date'] ?? '');
+            $today = date('Y-m-d');
+            if ($dueDate !== '' && ($dueDate < $today || $dueDate === $today)) {
+                continue;
+            }
+            $caseId = (int) ($row['case_id'] ?? 0);
+            $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+            $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Case';
+            $taskTitle = trim((string) ($row['title'] ?? '')) ?: 'Task';
+            $priority = ucfirst(strtolower((string) ($row['priority'] ?? 'medium')));
+            $dueLabel = !empty($row['due_date'])
+                ? 'Due ' . date('M j, Y', strtotime((string) $row['due_date']))
+                : 'No due date';
+
+            $items[] = legalpro_build_notification_item(
+                'task:' . $taskId,
+                'task',
+                'Task assigned to you',
+                $caseNumber . ' · ' . $taskTitle . ' · ' . $caseTitle . ' · ' . $priority . ' · ' . $dueLabel,
+                'tasks.php',
+                (string) ($row['created_at'] ?? ''),
+                'list-checks',
+                !empty($row['due_date'])
+                    ? (int) strtotime((string) $row['due_date'])
+                    : (int) strtotime((string) ($row['created_at'] ?? ''))
+            );
+        }
+    } catch (PDOException $e) {
+        // ignore — task_lawyers table may not exist yet on older installs
+    }
+
+    try {
+        $tableExists = $pdo->query("SHOW TABLES LIKE 'court_dates'")->rowCount() > 0;
+        if ($tableExists) {
+            $stmt = $pdo->prepare("
+                SELECT
+                    cd.id,
+                    cd.court_date,
+                    cd.title,
+                    cd.created_at,
+                    cd.case_id,
+                    c.title AS case_title,
+                    CONCAT(cl.first_name, ' ', cl.last_name) AS client_name
+                FROM court_dates cd
+                INNER JOIN case_lawyers clw ON clw.case_id = cd.case_id
+                LEFT JOIN cases c ON c.id = cd.case_id
+                LEFT JOIN clients cl ON cl.id = c.client_id
+                WHERE clw.lawyer_id = ?
+                  AND cd.court_date >= CURDATE()
+                  AND cd.court_date <= DATE_ADD(CURDATE(), INTERVAL 14 DAY)
+                  AND LOWER(COALESCE(cd.status, 'scheduled')) = 'scheduled'
+                ORDER BY cd.court_date ASC
+                LIMIT 8
+            ");
+            $stmt->execute([$lawyerId]);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $caseId = (int) ($row['case_id'] ?? 0);
+                $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
+                $caseTitle = trim((string) ($row['case_title'] ?? '')) ?: 'Court hearing';
+                $hearingTitle = trim((string) ($row['title'] ?? '')) ?: 'Court date';
+                $clientName = trim((string) ($row['client_name'] ?? '')) ?: 'Client';
+                $when = !empty($row['court_date'])
+                    ? date('M j, Y · g:i A', strtotime((string) $row['court_date']))
+                    : 'Upcoming';
+
+                $items[] = legalpro_build_notification_item(
+                    'court:' . (int) $row['id'],
+                    'court',
+                    'Upcoming court date',
+                    $caseNumber . ' · ' . $caseTitle . ' · ' . $hearingTitle . ' · ' . $clientName . ' · ' . $when,
+                    'lawyer-court-tracking.php',
+                    (string) ($row['created_at'] ?? $row['court_date'] ?? ''),
+                    'landmark',
+                    !empty($row['court_date']) ? (int) strtotime((string) $row['court_date']) : 0
+                );
+            }
+        }
+    } catch (PDOException $e) {
+        // ignore
+    }
 
     try {
         $stmt = $pdo->prepare("

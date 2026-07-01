@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/case_events.php';
+require_once __DIR__ . '/admin-locale.php';
 
 function legalpro_documents_portal_pages(): array
 {
@@ -121,6 +122,155 @@ function legalpro_documents_portal_redirect(string $pageKey, string $msg, string
     exit;
 }
 
+function legalpro_documents_ensure_session(): void
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+}
+
+function legalpro_documents_require_admin(): void
+{
+    legalpro_documents_ensure_session();
+    if (!isset($_SESSION['admin_id'])) {
+        header('Location: login.php');
+        exit;
+    }
+}
+
+function legalpro_documents_build_replacements(array $case, string $customFieldsRaw = ''): array
+{
+    $replacements = [
+        '{{case_title}}' => $case['title'] ?? '',
+        '{{case_number}}' => 'C-' . str_pad((string) ($case['id'] ?? 0), 4, '0', STR_PAD_LEFT),
+        '{{client_name}}' => $case['client_name'] ?? 'Client',
+        '{{client_email}}' => $case['client_email'] ?? '',
+        '{{client_phone}}' => $case['client_phone'] ?? '',
+        '{{status}}' => $case['status'] ?? '',
+        '{{priority}}' => $case['priority'] ?? '',
+        '{{category}}' => $case['category'] ?? '',
+        '{{fee}}' => isset($case['estimated_fees']) ? formatCurrency((float) $case['estimated_fees']) : formatCurrency(0),
+        '{{start_date}}' => $case['start_date'] ?? '',
+        '{{expected_completion}}' => $case['expected_completion'] ?? '',
+        '{{today}}' => date('d M Y'),
+        '{{firm_name}}' => getCompanyName(),
+        '{{lawyer_name}}' => 'Assigned Counsel',
+        '{{balance}}' => isset($case['estimated_fees']) ? formatCurrency((float) $case['estimated_fees']) : formatCurrency(0),
+        '{{scope}}' => 'Legal representation as described herein',
+        '{{fee_structure}}' => 'Flat fee',
+    ];
+
+    if ($customFieldsRaw !== '') {
+        $lines = preg_split('/\r\n|\r|\n/', $customFieldsRaw);
+        foreach ($lines as $line) {
+            if (strpos($line, '=') !== false) {
+                [$key, $value] = array_map('trim', explode('=', $line, 2));
+                if ($key !== '') {
+                    $replacements['{{' . strtolower($key) . '}}'] = $value;
+                }
+            }
+        }
+    }
+
+    return $replacements;
+}
+
+function legalpro_documents_merge_template(array $template, array $case, string $customFieldsRaw, string $outputTitle): array
+{
+    $replacements = legalpro_documents_build_replacements($case, $customFieldsRaw);
+    $generated = (string) ($template['body'] ?? '');
+    foreach ($replacements as $token => $value) {
+        $generated = str_replace($token, $value, $generated);
+    }
+
+    $title = $outputTitle !== '' ? $outputTitle : (($template['name'] ?? 'Document') . ' · Draft');
+
+    return [
+        'title' => $title,
+        'content' => $generated,
+        'case_number' => $replacements['{{case_number}}'],
+        'case_title' => (string) ($case['title'] ?? ''),
+        'client_name' => (string) ($case['client_name'] ?? 'Client'),
+        'template_name' => (string) ($template['name'] ?? ''),
+        'today' => $replacements['{{today}}'],
+    ];
+}
+
+function legalpro_documents_store_generated_draft(array $draft): void
+{
+    legalpro_documents_ensure_session();
+    $_SESSION['legalpro_generated_document'] = $draft;
+}
+
+function legalpro_documents_get_generated_draft(): ?array
+{
+    legalpro_documents_ensure_session();
+    $draft = $_SESSION['legalpro_generated_document'] ?? null;
+
+    return is_array($draft) ? $draft : null;
+}
+
+function legalpro_render_legal_document_html(array $draft): string
+{
+    require_once dirname(__DIR__) . '/inc/finance-document-templates.php';
+
+    $title = (string) ($draft['title'] ?? 'Legal Document');
+    $caseNumber = (string) ($draft['case_number'] ?? '');
+    $content = (string) ($draft['content'] ?? '');
+    $clientName = (string) ($draft['client_name'] ?? '');
+    $caseTitle = (string) ($draft['case_title'] ?? '');
+    $templateName = (string) ($draft['template_name'] ?? '');
+    $today = (string) ($draft['today'] ?? date('d M Y'));
+    $firm = legalpro_finance_firm_details();
+    $badge = $caseNumber !== '' ? $caseNumber : 'DRAFT';
+
+    return '<div class="fin-doc">'
+        . legalpro_render_finance_document_top($title, $badge)
+        . '<div class="fin-doc-body">'
+        . '<div class="fin-doc-section"><div class="fin-doc-section-title">Matter details</div><div class="fin-doc-grid">'
+        . '<div><strong>Client</strong>' . legalpro_finance_h($clientName) . '</div>'
+        . '<div><strong>Case</strong>' . legalpro_finance_h($caseTitle) . '</div>'
+        . '<div><strong>Template</strong>' . legalpro_finance_h($templateName) . '</div>'
+        . '<div><strong>Date</strong>' . legalpro_finance_h($today) . '</div>'
+        . '</div></div>'
+        . '<div class="fin-doc-section"><div class="fin-doc-section-title">Document</div>'
+        . '<div class="fin-doc-notes fin-doc-legal-body">' . nl2br(legalpro_finance_h($content)) . '</div>'
+        . '</div>'
+        . '<div class="fin-doc-signature"><div>For ' . legalpro_finance_h($firm['name']) . '</div>'
+        . '<div class="fin-doc-signature-line"></div></div>'
+        . '</div></div>';
+}
+
+function legalpro_deliver_legal_document(array $draft): void
+{
+    require_once dirname(__DIR__) . '/inc/finance-document-templates.php';
+    require_once dirname(__DIR__) . '/lib/finance_pdf.php';
+
+    $pageTitle = (string) ($draft['title'] ?? 'Legal Document');
+    $bodyHtml = legalpro_render_legal_document_html($draft);
+    $safeTitle = legalpro_finance_safe_filename($pageTitle);
+    $pdfFileName = 'legal-document-' . $safeTitle . '.pdf';
+    $mode = legalpro_finance_document_request_mode();
+    $downloadUrl = 'document-download.php';
+    $printUrl = 'document-download.php?print=1';
+
+    if ($mode === 'view' || $mode === 'print') {
+        $toolbar = '<div class="fin-doc-toolbar no-print">'
+            . '<a href="' . legalpro_finance_h($downloadUrl) . '" class="fin-doc-action fin-doc-action--download">Download PDF</a>'
+            . '<a href="' . legalpro_finance_h($printUrl) . '" class="fin-doc-action">Print</a>'
+            . '<a href="document-generate.php" class="fin-doc-action">Back to generator</a>'
+            . '</div>';
+        $bodyHtml = $toolbar . $bodyHtml;
+
+        header('Content-Type: text/html; charset=utf-8');
+        echo legalpro_render_finance_document_page($pageTitle, $bodyHtml, $mode);
+        exit;
+    }
+
+    $html = legalpro_render_finance_document_page($pageTitle, $bodyHtml, 'pdf');
+    legalpro_output_finance_pdf($html, $pdfFileName);
+}
+
 function legalpro_documents_portal_handle_post(PDO $pdo, string $returnPageKey, array &$state): void
 {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -234,47 +384,10 @@ function legalpro_documents_portal_handle_post(PDO $pdo, string $returnPageKey, 
                 $state['message'] = 'Unable to locate the selected template or case.';
                 $state['messageType'] = 'danger';
             } else {
-                $replacements = [
-                    '{{case_title}}' => $case['title'] ?? '',
-                    '{{case_number}}' => 'C-' . str_pad((string) $case['id'], 4, '0', STR_PAD_LEFT),
-                    '{{client_name}}' => $case['client_name'] ?? 'Client',
-                    '{{client_email}}' => $case['client_email'] ?? '',
-                    '{{client_phone}}' => $case['client_phone'] ?? '',
-                    '{{status}}' => $case['status'] ?? '',
-                    '{{priority}}' => $case['priority'] ?? '',
-                    '{{category}}' => $case['category'] ?? '',
-                    '{{fee}}' => isset($case['estimated_fees']) ? formatCurrency((float) $case['estimated_fees']) : formatCurrency(0),
-                    '{{start_date}}' => $case['start_date'] ?? '',
-                    '{{expected_completion}}' => $case['expected_completion'] ?? '',
-                    '{{today}}' => date('d M Y'),
-                    '{{firm_name}}' => getCompanyName(),
-                    '{{lawyer_name}}' => 'Assigned Counsel',
-                    '{{balance}}' => isset($case['estimated_fees']) ? formatCurrency((float) $case['estimated_fees']) : formatCurrency(0),
-                    '{{scope}}' => 'Legal representation as described herein',
-                    '{{fee_structure}}' => 'Flat fee',
-                ];
-
-                if ($customFieldsRaw !== '') {
-                    $lines = preg_split('/\r\n|\r|\n/', $customFieldsRaw);
-                    foreach ($lines as $line) {
-                        if (strpos($line, '=') !== false) {
-                            [$key, $value] = array_map('trim', explode('=', $line, 2));
-                            if ($key !== '') {
-                                $replacements['{{' . strtolower($key) . '}}'] = $value;
-                            }
-                        }
-                    }
-                }
-
-                $generated = (string) $template['body'];
-                foreach ($replacements as $token => $value) {
-                    $generated = str_replace($token, $value, $generated);
-                }
-
-                $state['previewContent'] = nl2br(htmlspecialchars($generated));
-                $state['previewTitle'] = $outputTitle !== '' ? $outputTitle : ($template['name'] . ' · Draft');
-                $state['message'] = 'Document generated below. Copy, print, or download as needed.';
-                $state['messageType'] = 'success';
+                $draft = legalpro_documents_merge_template($template, $case, $customFieldsRaw, $outputTitle);
+                legalpro_documents_store_generated_draft($draft);
+                header('Location: document-download.php?view=1');
+                exit;
             }
         }
     } elseif ($formType === 'delete_document') {
@@ -617,22 +730,24 @@ function legalpro_documents_message_html(array $state): string
         . '</div>';
 }
 
-function legalpro_documents_preview_html(array $state): string
+function legalpro_documents_generated_actions_html(?array $draft): string
 {
-    if (empty($state['previewContent'])) {
+    if ($draft === null) {
         return '';
     }
 
+    $title = htmlspecialchars((string) ($draft['title'] ?? 'Document'), ENT_QUOTES, 'UTF-8');
+
     return '
     <div class="card mt-4">
-        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">' . htmlspecialchars($state['previewTitle']) . '</h6>
-            <button type="button" class="btn btn-sm btn-outline-dark" onclick="window.print()">Print</button>
+        <div class="card-header pb-0">
+            <h6 class="mb-0">Last generated document</h6>
         </div>
-        <div class="card-body">
-            <div class="border rounded p-3 bg-white legalpro-doc-preview-body" style="min-height: 200px;">'
-                . $state['previewContent']
-            . '</div>
+        <div class="card-body d-flex flex-wrap gap-2 align-items-center">
+            <span class="text-sm text-muted me-2">' . $title . '</span>
+            <a href="document-download.php?view=1" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View document</a>
+            <a href="document-download.php" class="btn btn-sm btn-secondary" target="_blank" rel="noopener">Download PDF</a>
+            <a href="document-download.php?print=1" class="btn btn-sm btn-outline-dark" target="_blank" rel="noopener">Print</a>
         </div>
     </div>';
 }
@@ -733,19 +848,41 @@ function legalpro_documents_hub_cards_html(): string
     return $html;
 }
 
+function legalpro_documents_localized_page(string $pageKey): array
+{
+    $pages = legalpro_documents_portal_pages();
+    $page = $pages[$pageKey] ?? $pages['documents'];
+    $keys = [
+        'documents' => ['title' => 'documents.overview_title', 'nav' => 'documents.overview'],
+        'document-upload' => ['title' => 'documents.upload_title', 'nav' => 'documents.upload'],
+        'document-templates' => ['title' => 'documents.templates_title', 'nav' => 'documents.templates'],
+        'document-generate' => ['title' => 'documents.generate_title', 'nav' => 'documents.generate'],
+        'document-browse' => ['title' => 'documents.browse_title', 'nav' => 'documents.browse'],
+    ];
+
+    if (!empty($_SESSION['admin_id']) && isset($keys[$pageKey])) {
+        $page['title'] = admin_t($keys[$pageKey]['title']);
+        $page['nav'] = admin_t($keys[$pageKey]['nav']);
+    }
+
+    return $page;
+}
+
 function legalpro_documents_subnav_html(string $activeKey): string
 {
     $pages = legalpro_documents_portal_pages();
-    $html = '<nav class="legalpro-doc-subnav" aria-label="Documents sections">';
+    $html = '<nav class="legalpro-doc-subnav no-print" aria-label="' . htmlspecialchars(admin_t('breadcrumb.documents'), ENT_QUOTES, 'UTF-8') . '">';
     $overviewActive = $activeKey === 'documents' ? ' is-active' : '';
-    $html .= '<a class="legalpro-doc-subnav__link' . $overviewActive . '" href="documents.php">Overview</a>';
+    $overviewLabel = !empty($_SESSION['admin_id']) ? admin_t('documents.overview_title') : 'Overview';
+    $html .= '<a class="legalpro-doc-subnav__link' . $overviewActive . '" href="documents.php">' . htmlspecialchars($overviewLabel) . '</a>';
     foreach ($pages as $key => $page) {
         if ($key === 'documents') {
             continue;
         }
+        $localized = legalpro_documents_localized_page($key);
         $active = $key === $activeKey ? ' is-active' : '';
         $html .= '<a class="legalpro-doc-subnav__link' . $active . '" href="' . htmlspecialchars($page['file']) . '">'
-            . htmlspecialchars($page['title']) . '</a>';
+            . htmlspecialchars($localized['title']) . '</a>';
     }
     $html .= '</nav>';
 
@@ -931,14 +1068,14 @@ JS;
 
 function legalpro_documents_render_page(string $pageKey, string $contentHtml, array $state, string $extraScripts = ''): void
 {
-    $pages = legalpro_documents_portal_pages();
-    $page = $pages[$pageKey] ?? $pages['documents'];
+    $page = legalpro_documents_localized_page($pageKey);
     $navTitle = $page['nav'];
     $bodyClass = legalpro_portal_theme_body_class();
     $subnav = $pageKey === 'documents' ? '' : legalpro_documents_subnav_html($pageKey);
+    $documentsNavLabel = !empty($_SESSION['admin_id']) ? admin_t('nav.documents') : 'Documents';
 
     $html = '<!DOCTYPE html>
-<html lang="en">
+<html lang="' . admin_portal_html_lang() . '">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -954,7 +1091,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
     ob_start();
     include dirname(__DIR__) . '/inc/admin-portal-head.php';
     $html .= ob_get_clean();
-    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />'
+    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=6" rel="stylesheet" />'
         . '<style>' . legalpro_documents_shared_styles() . '</style>
 </head>
 <body class="g-sidenav-show g-sidenav-pinned bg-gray-100 legalpro-admin-portal legalpro-documents-page' . $bodyClass . '">
@@ -965,7 +1102,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="documents.php">Documents</a></li>
+                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="documents.php">' . htmlspecialchars($documentsNavLabel) . '</a></li>
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">' . htmlspecialchars($page['title']) . '</li>
                     </ol>
                     <h6 class="font-weight-bolder text-white mb-0">' . htmlspecialchars($navTitle) . '</h6>

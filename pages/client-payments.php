@@ -12,18 +12,20 @@ $client_id = $_SESSION['client_id'];
 $client_name = $_SESSION['client_name'];
 
 require_once __DIR__ . '/../lib/case_quotations.php';
+require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/client-portal-i18n.php';
 ensure_case_quotation_schema($pdo);
 
 function clientInvoiceStatusMeta(float $balanceDue, ?string $dueDate): array
 {
     if ($balanceDue <= 0) {
-        return ['label' => 'Paid', 'pill' => 'ca-status-pill--done'];
+        return ['label' => client_t('status.paid'), 'pill' => 'ca-status-pill--done'];
     }
     if ($dueDate && strtotime($dueDate) < time()) {
-        return ['label' => 'Overdue', 'pill' => 'ca-status-pill--declined'];
+        return ['label' => client_t('status.overdue'), 'pill' => 'ca-status-pill--declined'];
     }
 
-    return ['label' => 'Outstanding', 'pill' => 'ca-status-pill--pending'];
+    return ['label' => client_t('status.outstanding'), 'pill' => 'ca-status-pill--pending'];
 }
 
 function clientInvoiceStatusBadge(array $meta): string
@@ -98,7 +100,7 @@ try {
     }
 
 } catch (PDOException $e) {
-    $message = 'Error loading payment information: ' . htmlspecialchars($e->getMessage());
+    $message = client_t('payments.error_load') . ' ' . htmlspecialchars($e->getMessage());
     $messageType = 'danger';
     $invoices = [];
     $payments = [];
@@ -126,7 +128,7 @@ $iconPaymentEmpty = legalpro_icon('credit-card');
 $iconQuotationRow = legalpro_icon('clipboard-list');
 $iconQuotationEmpty = legalpro_icon('clipboard-list');
 
-$messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
+$messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars(client_t('common.close')) . '"></button></div>' : '';
 
 // Build invoices table rows
 $invoicesRows = '';
@@ -134,8 +136,8 @@ if (empty($invoices)) {
     $invoicesRows = '<tr><td colspan="7" class="border-0">
         <div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . $iconInvoiceEmpty . '</div>
-            <h5>No invoices yet</h5>
-            <p>When your firm issues an invoice for a matter, it will show here with amounts, due dates, and payment status.</p>
+            <h5>' . htmlspecialchars(client_t('payments.no_invoices')) . '</h5>
+            <p>' . htmlspecialchars(client_t('payments.no_invoices_sub')) . '</p>
         </div>
     </td></tr>';
 } else {
@@ -195,8 +197,8 @@ if (empty($payments)) {
     $paymentsRows = '<tr><td colspan="6" class="border-0">
         <div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--success">' . $iconPaymentEmpty . '</div>
-            <h5>No payments recorded</h5>
-            <p>Posted payments from your firm will appear here with date, method, and reference.</p>
+            <h5>' . htmlspecialchars(client_t('payments.no_payments')) . '</h5>
+            <p>' . htmlspecialchars(client_t('payments.no_payments_sub')) . '</p>
         </div>
     </td></tr>';
 } else {
@@ -220,7 +222,7 @@ if (empty($payments)) {
                     <div class="cp-row-icon cp-row-icon--success flex-shrink-0">' . $iconPaymentRow . '</div>
                     <div class="min-width-0">
                         <h6 class="mb-0 text-sm font-weight-bold text-truncate" style="max-width: 11rem;" title="' . htmlspecialchars($caseTitle) . '">' . htmlspecialchars($caseTitle) . '</h6>
-                        <p class="text-xs text-muted mb-0">' . htmlspecialchars($payment['invoice_number'] ?: 'No invoice #') . '</p>
+                        <p class="text-xs text-muted mb-0">' . htmlspecialchars($payment['invoice_number'] ?: client_t('payments.no_invoice_num')) . '</p>
                     </div>
                 </div>
             </td>
@@ -249,8 +251,8 @@ if (empty($quotations)) {
     $quotationsRows = '<tr><td colspan="6" class="border-0">
         <div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . $iconQuotationEmpty . '</div>
-            <h5>No quotations yet</h5>
-            <p>When your firm sends a fee quotation for a matter, it will appear here for review.</p>
+            <h5>' . htmlspecialchars(client_t('payments.no_quotations')) . '</h5>
+            <p>' . htmlspecialchars(client_t('payments.no_quotations_sub')) . '</p>
         </div>
     </td></tr>';
 } else {
@@ -258,7 +260,7 @@ if (empty($quotations)) {
         $quoteNumber = !empty($quotation['quotation_number'])
             ? $quotation['quotation_number']
             : 'QUO-' . str_pad((string) $quotation['id'], 4, '0', STR_PAD_LEFT);
-        $quoteTitle = trim((string) ($quotation['title'] ?? '')) ?: 'Quotation';
+        $quoteTitle = trim((string) ($quotation['title'] ?? '')) ?: client_t('payments.quotation_fallback');
         $caseTitle = $quotation['case_title'] ?: '—';
         $issuedDate = !empty($quotation['created_at'])
             ? date('M j, Y', strtotime($quotation['created_at']))
@@ -278,7 +280,7 @@ if (empty($quotations)) {
 
         $quoteId = (int) $quotation['id'];
         $actionsCell = '<div class="cp-quotation-actions">'
-            . '<a href="client-quotation-view.php?id=' . $quoteId . '&view=1" class="btn-cp-link" target="_blank" rel="noopener">View</a>'
+            . '<a href="client-quotation-view.php?id=' . $quoteId . '&view=1" class="btn-cp-link" target="_blank" rel="noopener">' . htmlspecialchars(client_t('common.view')) . '</a>'
             . '<a href="client-quotation-view.php?id=' . $quoteId . '" class="btn-cp-link btn-cp-download" target="_blank" rel="noopener">PDF</a>'
             . '</div>';
 
@@ -315,52 +317,56 @@ require_once __DIR__ . '/../inc/client-portal-navbar.php';
 require_once __DIR__ . '/../lib/client-portal-page-ui.php';
 
 $heroHtml = client_portal_render_hero([
-    'kicker' => 'Billing',
-    'title' => 'Your financial snapshot',
-    'subtitle' => 'Review issued invoices, quotations, what you have paid, and any balance still due. Contact your firm if you need a payment plan or receipt.',
-    'meta' => $invoiceCount . ' invoices · ' . $quotationCount . ' quotations · ' . $paymentCount . ' payments recorded',
+    'kicker' => client_t('payments.kicker'),
+    'title' => client_t('payments.title'),
+    'subtitle' => client_t('payments.subtitle'),
+    'meta' => client_t('payments.meta', [
+        'invoices' => (string) $invoiceCount,
+        'quotations' => (string) $quotationCount,
+        'payments' => (string) $paymentCount,
+    ]),
     'show_date' => true,
-    'aria_label' => 'Payments overview',
+    'aria_label' => client_t('payments.aria'),
     'stats' => [
-        ['num' => formatCurrency($totalInvoiced), 'lbl' => 'Invoiced'],
-        ['num' => formatCurrency($totalPaid), 'lbl' => 'Paid'],
-        ['num' => formatCurrency($totalOutstanding), 'lbl' => 'Outstanding'],
-        ['num' => (string) $overdueInvoiceCount, 'lbl' => 'Overdue'],
+        ['num' => formatCurrency($totalInvoiced), 'lbl' => client_t('payments.invoiced')],
+        ['num' => formatCurrency($totalPaid), 'lbl' => client_t('payments.paid')],
+        ['num' => formatCurrency($totalOutstanding), 'lbl' => client_t('payments.outstanding')],
+        ['num' => (string) $overdueInvoiceCount, 'lbl' => client_t('payments.overdue')],
     ],
     'actions' => [
-        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
-        ['url' => 'client-cases.php', 'label' => 'My cases', 'icon' => 'briefcase'],
+        ['url' => 'client-dashboard.php', 'label' => client_t('nav.dashboard'), 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-cases.php', 'label' => client_t('nav.my_cases'), 'icon' => 'briefcase'],
     ],
 ]);
 
 $clientPageNavbar = legalpro_render_client_page_navbar(
-    'Payments & invoices',
-    'Payments'
+    client_t('payments.navbar'),
+    client_t('payments.navbar_short')
 );
 
 $paymentsSearchQuery = legalpro_client_page_search_query();
-$paymentsSearchHtml = '<section class="cp-pay-search-wrap cp-pay-search-wrap--featured" aria-label="Search billing">'
-    . '<label class="cp-pay-search-label" for="cpPaymentsSearchInput">Search invoices &amp; payments</label>'
+$paymentsSearchHtml = '<section class="cp-pay-search-wrap cp-pay-search-wrap--featured" aria-label="' . htmlspecialchars(client_t('payments.search_aria')) . '">'
+    . '<label class="cp-pay-search-label" for="cpPaymentsSearchInput">' . htmlspecialchars(client_t('payments.search_label')) . '</label>'
     . '<div class="cp-pay-search-field">'
     . '<span class="cp-pay-search-icon" aria-hidden="true">'
     . '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">'
     . '<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3-3"></path>'
     . '</svg></span>'
     . '<input type="search" id="cpPaymentsSearchInput" class="cp-pay-search-input"'
-    . ' placeholder="Search by invoice, quotation, payment, case, or reference…"'
+    . ' placeholder="' . htmlspecialchars(client_t('payments.search_placeholder')) . '"'
     . ' value="' . htmlspecialchars($paymentsSearchQuery, ENT_QUOTES, 'UTF-8') . '"'
-    . ' autocomplete="off" maxlength="200" aria-label="Search invoices, quotations, and payments">'
+    . ' autocomplete="off" maxlength="200" aria-label="' . htmlspecialchars(client_t('payments.search_label')) . '">'
     . '</div></section>';
 
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - My Payments</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -386,12 +392,12 @@ $html = <<<'HTML'
                 <div class="cp-panel">
                     <div class="cp-panel-hdr">
                         <div>
-                            <h5>Invoices</h5>
-                            <p>Issued for your matters, newest first.</p>
+                            <h5>{LBL_INVOICES}</h5>
+                            <p>{LBL_INVOICES_SUB}</p>
                         </div>
                         <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span class="cp-count" id="cpInvoiceCount">{INVOICE_COUNT} total</span>
-                            <a href="client-cases.php" class="btn-cp-link">My cases</a>
+                            <span class="cp-count" id="cpInvoiceCount">{INVOICE_COUNT} {LBL_TOTAL}</span>
+                            <a href="client-cases.php" class="btn-cp-link">{LBL_MY_CASES}</a>
                         </div>
                     </div>
                     <div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cp-invoice-row" data-portal-per-page="10" data-portal-show-page-global="cpInvoiceShowPage">
@@ -399,13 +405,13 @@ $html = <<<'HTML'
                         <table class="cp-table">
                             <thead>
                                 <tr>
-                                    <th>Invoice</th>
-                                    <th>Issued</th>
-                                    <th>Due</th>
-                                    <th style="text-align:right">Amount</th>
-                                    <th style="text-align:right">Paid</th>
-                                    <th style="text-align:center">Status</th>
-                                    <th style="text-align:center;padding-right:1.5rem">Download</th>
+                                    <th>{COL_INVOICE}</th>
+                                    <th>{COL_ISSUED}</th>
+                                    <th>{COL_DUE}</th>
+                                    <th style="text-align:right">{COL_AMOUNT}</th>
+                                    <th style="text-align:right">{COL_PAID}</th>
+                                    <th style="text-align:center">{COL_STATUS}</th>
+                                    <th style="text-align:center;padding-right:1.5rem">{COL_DOWNLOAD}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -423,12 +429,12 @@ $html = <<<'HTML'
                 <div class="cp-panel">
                     <div class="cp-panel-hdr">
                         <div>
-                            <h5>Payment history</h5>
-                            <p>Recorded receipts and transfers.</p>
+                            <h5>{LBL_PAYMENTS_HISTORY}</h5>
+                            <p>{LBL_PAYMENTS_HISTORY_SUB}</p>
                         </div>
                         <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                            <span class="cp-count" id="cpPaymentCount">{PAYMENT_COUNT} total</span>
-                            <a href="client-dashboard.php" class="btn-cp-link">Dashboard</a>
+                            <span class="cp-count" id="cpPaymentCount">{PAYMENT_COUNT} {LBL_TOTAL}</span>
+                            <a href="client-dashboard.php" class="btn-cp-link">{LBL_DASHBOARD}</a>
                         </div>
                     </div>
                     <div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cp-payment-row" data-portal-per-page="10" data-portal-show-page-global="cpPaymentShowPage">
@@ -436,12 +442,12 @@ $html = <<<'HTML'
                         <table class="cp-table">
                             <thead>
                                 <tr>
-                                    <th>Case / ref</th>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Reference</th>
-                                    <th style="text-align:center;padding-right:1.5rem">Receipt</th>
+                                    <th>{COL_CASE_REF}</th>
+                                    <th>{COL_DATE}</th>
+                                    <th>{COL_AMOUNT}</th>
+                                    <th>{COL_METHOD}</th>
+                                    <th>{COL_REFERENCE}</th>
+                                    <th style="text-align:center;padding-right:1.5rem">{COL_RECEIPT}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -460,11 +466,11 @@ $html = <<<'HTML'
             <div class="cp-panel" id="quotations">
                 <div class="cp-panel-hdr">
                     <div>
-                        <h5>Quotations</h5>
-                        <p>Fee quotes from your firm.</p>
+                        <h5>{LBL_QUOTATIONS}</h5>
+                        <p>{LBL_QUOTATIONS_SUB}</p>
                     </div>
                     <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                        <span class="cp-count" id="cpQuotationCount">{QUOTATION_COUNT} total</span>
+                        <span class="cp-count" id="cpQuotationCount">{QUOTATION_COUNT} {LBL_TOTAL}</span>
                     </div>
                 </div>
                 <div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cp-quotation-row" data-portal-per-page="10" data-portal-show-page-global="cpQuotationShowPage">
@@ -472,12 +478,12 @@ $html = <<<'HTML'
                     <table class="cp-table">
                         <thead>
                             <tr>
-                                <th>Quotation</th>
-                                <th>Case</th>
-                                <th>Issued</th>
-                                <th>Valid until</th>
-                                <th style="text-align:right">Amount</th>
-                                <th style="text-align:center;padding-right:1.5rem">Actions</th>
+                                <th>{COL_QUOTATION}</th>
+                                <th>{COL_CASE}</th>
+                                <th>{COL_ISSUED}</th>
+                                <th>{COL_VALID_UNTIL}</th>
+                                <th style="text-align:right">{COL_AMOUNT}</th>
+                                <th style="text-align:center;padding-right:1.5rem">{COL_ACTIONS}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -501,6 +507,15 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
+    var cpPayLabels = {
+        invoice: <?= json_encode(client_t('payments.invoice_singular'), JSON_UNESCAPED_UNICODE) ?>,
+        invoices: <?= json_encode(client_t('payments.invoice_plural'), JSON_UNESCAPED_UNICODE) ?>,
+        quotation: <?= json_encode(client_t('payments.quotation_singular'), JSON_UNESCAPED_UNICODE) ?>,
+        quotations: <?= json_encode(client_t('payments.quotation_plural'), JSON_UNESCAPED_UNICODE) ?>,
+        payment: <?= json_encode(client_t('payments.payment_singular'), JSON_UNESCAPED_UNICODE) ?>,
+        payments: <?= json_encode(client_t('payments.payment_plural'), JSON_UNESCAPED_UNICODE) ?>,
+        total: <?= json_encode(client_t('payments.word_total'), JSON_UNESCAPED_UNICODE) ?>
+    };
     (function () {
         function getPaymentsSearchQuery() {
             var input = document.getElementById('cpPaymentsSearchInput');
@@ -528,12 +543,12 @@ $html = <<<'HTML'
                 });
                 var countEl = document.getElementById(countId);
                 if (countEl) {
-                    countEl.textContent = visible + ' ' + (visible === 1 ? singular : plural) + ' total';
+                    countEl.textContent = visible + ' ' + (visible === 1 ? singular : plural) + ' ' + cpPayLabels.total;
                 }
             }
-            filterRows('.cp-invoice-row.cp-search-row', 'cpInvoiceCount', 'invoice', 'invoices');
-            filterRows('.cp-quotation-row.cp-search-row', 'cpQuotationCount', 'quotation', 'quotations');
-            filterRows('.cp-payment-row.cp-search-row', 'cpPaymentCount', 'payment', 'payments');
+            filterRows('.cp-invoice-row.cp-search-row', 'cpInvoiceCount', cpPayLabels.invoice, cpPayLabels.invoices);
+            filterRows('.cp-quotation-row.cp-search-row', 'cpQuotationCount', cpPayLabels.quotation, cpPayLabels.quotations);
+            filterRows('.cp-payment-row.cp-search-row', 'cpPaymentCount', cpPayLabels.payment, cpPayLabels.payments);
             if (typeof legalproResetClientTablePaginations === 'function') {
                 legalproResetClientTablePaginations();
             }
@@ -570,6 +585,33 @@ $html = <<<'HTML'
 HTML;
 
 // Replace placeholders
+$html = str_replace('{HTML_LANG}', client_portal_html_lang(), $html);
+$html = str_replace('{PAGE_TITLE}', htmlspecialchars(client_t('payments.page_title')), $html);
+$html = str_replace('{LBL_INVOICES}', htmlspecialchars(client_t('payments.invoices')), $html);
+$html = str_replace('{LBL_INVOICES_SUB}', htmlspecialchars(client_t('payments.invoices_sub')), $html);
+$html = str_replace('{LBL_PAYMENTS_HISTORY}', htmlspecialchars(client_t('payments.payments_history')), $html);
+$html = str_replace('{LBL_PAYMENTS_HISTORY_SUB}', htmlspecialchars(client_t('payments.payments_history_sub')), $html);
+$html = str_replace('{LBL_QUOTATIONS}', htmlspecialchars(client_t('payments.quotations')), $html);
+$html = str_replace('{LBL_QUOTATIONS_SUB}', htmlspecialchars(client_t('payments.quotations_sub')), $html);
+$html = str_replace('{LBL_TOTAL}', htmlspecialchars(client_t('payments.word_total')), $html);
+$html = str_replace('{LBL_MY_CASES}', htmlspecialchars(client_t('nav.my_cases')), $html);
+$html = str_replace('{LBL_DASHBOARD}', htmlspecialchars(client_t('nav.dashboard')), $html);
+$html = str_replace('{COL_INVOICE}', htmlspecialchars(client_t('payments.col_invoice')), $html);
+$html = str_replace('{COL_ISSUED}', htmlspecialchars(client_t('payments.col_issued')), $html);
+$html = str_replace('{COL_DUE}', htmlspecialchars(client_t('payments.col_due')), $html);
+$html = str_replace('{COL_AMOUNT}', htmlspecialchars(client_t('payments.col_amount')), $html);
+$html = str_replace('{COL_PAID}', htmlspecialchars(client_t('payments.col_paid')), $html);
+$html = str_replace('{COL_STATUS}', htmlspecialchars(client_t('payments.col_status')), $html);
+$html = str_replace('{COL_DOWNLOAD}', htmlspecialchars(client_t('payments.col_download')), $html);
+$html = str_replace('{COL_CASE_REF}', htmlspecialchars(client_t('payments.col_case_ref')), $html);
+$html = str_replace('{COL_DATE}', htmlspecialchars(client_t('payments.col_date')), $html);
+$html = str_replace('{COL_METHOD}', htmlspecialchars(client_t('payments.col_method')), $html);
+$html = str_replace('{COL_REFERENCE}', htmlspecialchars(client_t('payments.col_reference')), $html);
+$html = str_replace('{COL_RECEIPT}', htmlspecialchars(client_t('payments.col_receipt')), $html);
+$html = str_replace('{COL_QUOTATION}', htmlspecialchars(client_t('payments.col_quotation')), $html);
+$html = str_replace('{COL_CASE}', htmlspecialchars(client_t('payments.col_case')), $html);
+$html = str_replace('{COL_VALID_UNTIL}', htmlspecialchars(client_t('payments.col_valid_until')), $html);
+$html = str_replace('{COL_ACTIONS}', htmlspecialchars(client_t('payments.col_actions')), $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{HERO}', $heroHtml, $html);
 $html = str_replace('{PAYMENTS_SEARCH}', $paymentsSearchHtml, $html);

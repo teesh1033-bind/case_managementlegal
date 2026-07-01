@@ -28,7 +28,7 @@ try {
     $stmt->execute([$client_id]);
     $cases = $stmt->fetchAll();
 } catch (PDOException $e) {
-    $message     = 'Error loading cases: ' . htmlspecialchars($e->getMessage());
+    $message     = client_t('cases.error_load') . ' ' . htmlspecialchars($e->getMessage());
     $messageType = 'danger';
     $cases       = [];
 }
@@ -61,42 +61,13 @@ foreach ($cases as $c) {
 
 require_once __DIR__ . '/../inc/legalpro-icons.php';
 require_once __DIR__ . '/../lib/client-portal-page-ui.php';
-
-// ── Badge helpers ─────────────────────────────────────────────────────────────
-function modern_status_badge(string $status): string {
-    $map = [
-        'active'        => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'Active'],
-        'open'          => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'Active'],
-        'in_progress'   => ['cls' => 'badge-active',  'dot' => '#16a34a', 'label' => 'In progress'],
-        'pending'       => ['cls' => 'badge-pending', 'dot' => '#ca8a04', 'label' => 'Pending'],
-        'under review'  => ['cls' => 'badge-review',  'dot' => 'currentColor', 'label' => 'Under review'],
-        'under_review'  => ['cls' => 'badge-review',  'dot' => 'currentColor', 'label' => 'Under review'],
-        'closed'        => ['cls' => 'badge-closed',  'dot' => '#94a3b8', 'label' => 'Closed'],
-    ];
-    $key  = strtolower(trim(str_replace('_', ' ', $status)));
-    $keyUnderscore = strtolower(str_replace(' ', '_', trim($status)));
-    $cfg  = $map[$key] ?? $map[$keyUnderscore] ?? ['cls' => 'badge-closed', 'dot' => '#94a3b8', 'label' => ucfirst($status)];
-    return '<span class="badge ' . $cfg['cls'] . '">'
-         . '<span class="badge-dot" style="background:' . $cfg['dot'] . '"></span>'
-         . htmlspecialchars($cfg['label'])
-         . '</span>';
-}
-
-function modern_priority_badge(string $priority): string {
-    $map = [
-        'high'   => 'pri-high',
-        'urgent' => 'pri-high',
-        'normal' => 'pri-med',
-    ];
-    $key = strtolower(trim($priority));
-    $cls = $map[$key] ?? 'pri-med';
-    return '<span class="' . $cls . '">' . htmlspecialchars(ucfirst($priority)) . '</span>';
-}
+require_once __DIR__ . '/../lib/client-locale.php';
+require_once __DIR__ . '/../lib/client-portal-i18n.php';
 
 // ── Lawyer avatar stack ───────────────────────────────────────────────────────
 function lawyer_stack(string $names): string {
     if (!$names || $names === 'Unassigned') {
-        return '<span class="lawyer-stack__unassigned">Unassigned</span>';
+        return '<span class="lawyer-stack__unassigned">' . htmlspecialchars(client_t('common.unassigned')) . '</span>';
     }
     $people  = array_map('trim', explode(',', $names));
     $colors  = [
@@ -147,9 +118,9 @@ if (empty($cases)) {
     $casesRows = '<tr><td colspan="6">
         <div class="cp-empty">
             <div class="cp-empty-icon cp-empty-icon--primary">' . legalpro_icon('briefcase') . '</div>
-            <h5>No cases yet</h5>
-            <p>When your legal team opens a matter for you, it will appear here with status, priority, and assigned counsel.</p>
-            <a href="client-dashboard.php" class="btn-action">' . legalpro_icon('layout-dashboard') . ' Go to dashboard</a>
+            <h5>' . htmlspecialchars(client_t('cases.empty_title')) . '</h5>
+            <p>' . htmlspecialchars(client_t('cases.empty_sub')) . '</p>
+            <a href="client-dashboard.php" class="btn-action">' . legalpro_icon('layout-dashboard') . ' ' . htmlspecialchars(client_t('common.go_dashboard')) . '</a>
         </div>
     </td></tr>';
 } else {
@@ -158,8 +129,8 @@ if (empty($cases)) {
         $caseNumber = 'C-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
         $title      = htmlspecialchars($case['title']);
         $lawyers    = lawyer_stack($case['lawyer_names'] ?: 'Unassigned');
-        $status     = modern_status_badge((string) ($case['status'] ?? ''));
-        $priority   = modern_priority_badge((string) ($case['priority'] ?? 'Normal'));
+        $status     = client_modern_status_badge((string) ($case['status'] ?? ''));
+        $priority   = client_modern_priority_badge((string) ($case['priority'] ?? 'Normal'));
         $category   = category_pill((string) ($case['category'] ?? ''));
         $updated    = isset($case['updated_at']) ? date('M j, Y', strtotime($case['updated_at'])) : '';
 
@@ -177,7 +148,7 @@ if (empty($cases)) {
                     <div>
                         <p class="case-num">' . $caseNumber . '</p>
                         <p class="case-title">' . $title . '</p>
-                        <p class="case-date">Updated ' . htmlspecialchars($updated) . '</p>
+                        <p class="case-date">' . htmlspecialchars(client_t('common.updated')) . ' ' . htmlspecialchars($updated) . '</p>
                     </div>
                 </div>
             </td>
@@ -185,7 +156,7 @@ if (empty($cases)) {
             <td style="text-align:center">' . $status . '</td>
             <td style="text-align:center">' . $priority . '</td>
             <td>' . $lawyers . '</td>
-            <td><a href="client-case-view.php?id=' . $id . '" class="btn-view">' . legalpro_icon('arrow-right') . ' View</a></td>
+            <td><a href="client-case-view.php?id=' . $id . '" class="btn-view">' . legalpro_icon('arrow-right') . ' ' . htmlspecialchars(client_t('common.view')) . '</a></td>
         </tr>';
     }
 }
@@ -194,53 +165,53 @@ if (empty($cases)) {
 $messageHtml = $message
     ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">'
         . htmlspecialchars($message)
-        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>'
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars(client_t('common.close')) . '"></button></div>'
     : '';
 
 $heroHtml = client_portal_render_hero([
-    'kicker' => 'Client portal',
-    'title' => 'My cases',
-    'subtitle' => 'Track status, priority, and the counsel assigned to each of your matters.',
+    'kicker' => client_t('cases.kicker'),
+    'title' => client_t('cases.title'),
+    'subtitle' => client_t('cases.subtitle'),
     'show_date' => true,
-    'aria_label' => 'My cases overview',
+    'aria_label' => client_t('cases.aria'),
     'stats' => [
-        ['num' => (string) $caseCount, 'lbl' => 'Total'],
-        ['num' => (string) $activeCount, 'lbl' => 'Active'],
-        ['num' => (string) $pendingCount, 'lbl' => 'Pending'],
-        ['num' => (string) $closedCount, 'lbl' => 'Closed'],
+        ['num' => (string) $caseCount, 'lbl' => client_t('common.total')],
+        ['num' => (string) $activeCount, 'lbl' => client_t('status.active')],
+        ['num' => (string) $pendingCount, 'lbl' => client_t('status.pending')],
+        ['num' => (string) $closedCount, 'lbl' => client_t('status.closed')],
     ],
     'actions' => [
-        ['url' => 'client-dashboard.php', 'label' => 'Dashboard', 'primary' => true, 'icon' => 'layout-dashboard'],
-        ['url' => 'client-documents.php', 'label' => 'Documents', 'icon' => 'folder-open'],
+        ['url' => 'client-dashboard.php', 'label' => client_t('nav.dashboard'), 'primary' => true, 'icon' => 'layout-dashboard'],
+        ['url' => 'client-documents.php', 'label' => client_t('nav.documents'), 'icon' => 'folder-open'],
     ],
 ]);
 
 $panelHeaderHtml = client_portal_render_panel_header([
-    'title' => 'Case list',
-    'subtitle' => 'Sorted by most recently updated',
+    'title' => client_t('cases.list_title'),
+    'subtitle' => client_t('cases.list_sub_sorted'),
     'icon' => 'briefcase',
-    'badge' => $caseCount . ' case' . ($caseCount !== 1 ? 's' : ''),
+    'badge' => $caseCount . ' ' . client_plural('common.case', 'common.cases', $caseCount),
     'badge_id' => 'ccRowCount',
 ]);
 
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/client-portal-navbar.php';
 $clientPageNavbar = legalpro_render_client_page_navbar(
-    'My Cases',
-    'My Cases',
-    'Search cases…',
+    client_t('cases.navbar'),
+    client_t('cases.navbar'),
+    client_t('cases.search_placeholder'),
     legalpro_client_page_search_options('client-cases.php')
 );
 
 ob_start(); ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(client_portal_html_lang()) ?>">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro – My Cases</title>
+    <title>LegalPro – <?= htmlspecialchars(client_t('cases.navbar')) ?></title>
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
@@ -265,26 +236,26 @@ ob_start(); ?>
 
             <?= $heroHtml ?>
 
-            <section class="cp-filters-card" aria-label="Filter cases">
+            <section class="cp-filters-card" aria-label="<?= htmlspecialchars(client_t('cases.filter_aria')) ?>">
                 <div class="cp-filters">
                     <div class="cp-search-wrap">
                         <?= legalpro_icon('search') ?>
                         <input id="ccSearch" class="cp-search-input" type="text"
-                               placeholder="Search cases…" oninput="ccFilter()"
+                               placeholder="<?= htmlspecialchars(client_t('cases.search_placeholder')) ?>" oninput="ccFilter()"
                                value="<?= htmlspecialchars(legalpro_client_page_search_query(), ENT_QUOTES, 'UTF-8') ?>">
                     </div>
                     <select id="ccStatus" class="cp-filter-select" onchange="ccFilter()">
-                        <option value="">All statuses</option>
-                        <option>Active</option>
-                        <option>Pending</option>
-                        <option>Under review</option>
-                        <option>Closed</option>
+                        <option value=""><?= htmlspecialchars(client_t('cases.filter_all_statuses')) ?></option>
+                        <option value="active"><?= htmlspecialchars(client_t('status.active')) ?></option>
+                        <option value="pending"><?= htmlspecialchars(client_t('status.pending')) ?></option>
+                        <option value="under review"><?= htmlspecialchars(client_t('cases.filter_under_review')) ?></option>
+                        <option value="closed"><?= htmlspecialchars(client_t('status.closed')) ?></option>
                     </select>
                     <select id="ccPriority" class="cp-filter-select" onchange="ccFilter()">
-                        <option value="">All priorities</option>
-                        <option>High</option>
-                        <option>Urgent</option>
-                        <option>Normal</option>
+                        <option value=""><?= htmlspecialchars(client_t('cases.filter_all_priorities')) ?></option>
+                        <option value="high"><?= htmlspecialchars(client_t('priority.high')) ?></option>
+                        <option value="urgent"><?= htmlspecialchars(client_t('priority.urgent')) ?></option>
+                        <option value="normal"><?= htmlspecialchars(client_t('priority.normal')) ?></option>
                     </select>
                 </div>
             </section>
@@ -296,11 +267,11 @@ ob_start(); ?>
                     <table class="cc-table" id="ccTable">
                         <thead>
                             <tr>
-                                <th>Case</th>
-                                <th>Category</th>
-                                <th style="text-align:center">Status</th>
-                                <th style="text-align:center">Priority</th>
-                                <th>Lawyer(s)</th>
+                                <th><?= htmlspecialchars(client_t('cases.col_case')) ?></th>
+                                <th><?= htmlspecialchars(client_t('cases.col_category')) ?></th>
+                                <th style="text-align:center"><?= htmlspecialchars(client_t('cases.col_status')) ?></th>
+                                <th style="text-align:center"><?= htmlspecialchars(client_t('cases.col_priority')) ?></th>
+                                <th><?= htmlspecialchars(client_t('cases.col_lawyers')) ?></th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -309,7 +280,7 @@ ob_start(); ?>
                         </tbody>
                     </table>
                 </div>
-                <nav class="cp-portal-pagination" data-portal-pagination aria-label="Cases pagination" hidden>
+                <nav class="cp-portal-pagination" data-portal-pagination aria-label="<?= htmlspecialchars(client_t('cases.pagination_aria')) ?>" hidden>
                     <p class="cp-portal-pagination__info" data-portal-range></p>
                     <div class="cp-portal-pagination__controls" data-portal-pages></div>
                 </nav>
@@ -329,6 +300,8 @@ ob_start(); ?>
 <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 
     <script>
+    var ccCaseLabel = <?= json_encode(client_t('common.case'), JSON_UNESCAPED_UNICODE) ?>;
+    var ccCasesLabel = <?= json_encode(client_t('common.cases'), JSON_UNESCAPED_UNICODE) ?>;
     function ccStatusKey(s) {
         s = (s || '').toLowerCase().replace(/_/g, ' ').trim();
         if (s === 'open' || s === 'in progress') return 'active';
@@ -351,7 +324,7 @@ ob_start(); ?>
             if (show) visible++;
         });
         var el = document.getElementById('ccRowCount');
-        if (el) el.textContent = visible + ' case' + (visible === 1 ? '' : 's');
+        if (el) el.textContent = visible + ' ' + (visible === 1 ? ccCaseLabel : ccCasesLabel);
         if (typeof window.ccShowPage === 'function') {
             window.ccShowPage(1);
         }

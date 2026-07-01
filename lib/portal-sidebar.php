@@ -15,9 +15,25 @@ function legalpro_sidebar_stylesheet_tag(): string
 
 function legalpro_sidebar_resolve_label(array $item): string
 {
+    if (!empty($item['title_key'])) {
+        if (function_exists('admin_t') && !empty($_SESSION['admin_id'])) {
+            $translated = admin_t((string) $item['title_key']);
+            if ($translated !== $item['title_key']) {
+                return $translated;
+            }
+        }
+        if (function_exists('client_t')) {
+            $translated = client_t((string) $item['title_key']);
+            if ($translated !== $item['title_key']) {
+                return $translated;
+            }
+        }
+    }
+
     if (!empty($item['title'])) {
         return (string) $item['title'];
     }
+<<<<<<< HEAD
     if (!empty($item['title_key'])) {
         $key = (string) $item['title_key'];
         if (!empty($_SESSION['lawyer_id']) && function_exists('lawyer_t')) {
@@ -35,6 +51,8 @@ function legalpro_sidebar_resolve_label(array $item): string
 
         return (string) ($item['fallback'] ?? $key);
     }
+=======
+>>>>>>> f63da589d24754b69ba747815f2fbedd935808fa
 
     return (string) ($item['fallback'] ?? 'Link');
 }

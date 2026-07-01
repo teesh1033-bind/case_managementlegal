@@ -3571,6 +3571,10 @@ function renderPortalThemeHead(): void
 
 function renderPortalThemeSettingsHtml(): string
 {
+    if (!function_exists('admin_t')) {
+        require_once __DIR__ . '/admin-locale.php';
+    }
+
     $theme = getPortalTheme();
     $presets = getPortalThemeColorPresets();
     $currentMode = $theme['mode'];
@@ -3579,6 +3583,16 @@ function renderPortalThemeSettingsHtml(): string
 
     $lightChecked = $currentMode === 'light' ? ' checked' : '';
     $darkChecked = $currentMode === 'dark' ? ' checked' : '';
+
+    $adminId = (int) ($_SESSION['admin_id'] ?? 0);
+    $currentLocale = $adminId > 0 ? getAdminPortalLocale($adminId) : 'en';
+    $locales = getAdminPortalLocales();
+    $localeOptions = '';
+    foreach ($locales as $code => $label) {
+        $selected = $code === $currentLocale ? ' selected' : '';
+        $localeOptions .= '<option value="' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '"' . $selected . '>'
+            . htmlspecialchars($label) . '</option>';
+    }
 
     $swatches = '';
     foreach ($presets as $key => $preset) {
@@ -3604,30 +3618,35 @@ function renderPortalThemeSettingsHtml(): string
         . '</label>';
 
     return '<div class="card mb-4">'
-        . '<div class="card-header pb-0"><h6>Appearance</h6></div>'
+        . '<div class="card-header pb-0"><h6>' . htmlspecialchars(admin_t('settings.appearance')) . '</h6></div>'
         . '<div class="card-body">'
-        . '<p class="text-sm text-muted mb-4">Choose the default theme and accent color for the admin, lawyer, and client portals.</p>'
+        . '<p class="text-sm text-muted mb-4">' . htmlspecialchars(admin_t('settings.appearance_help')) . '</p>'
         . '<form method="post" class="settings-theme-form">'
         . '<input type="hidden" name="form_type" value="portal_theme">'
         . '<div class="mb-4">'
-        . '<label class="form-control-label d-block mb-2">Theme mode</label>'
+        . '<label class="form-control-label d-block mb-2">' . htmlspecialchars(admin_t('settings.theme_mode')) . '</label>'
         . '<div class="settings-theme-mode">'
-        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> Light</label>'
-        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> Dark</label>'
+        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars(admin_t('settings.light')) . '</label>'
+        . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars(admin_t('settings.dark')) . '</label>'
         . '</div>'
         . '</div>'
         . '<div class="mb-4">'
-        . '<label class="form-control-label d-block mb-2">Accent color</label>'
+        . '<label class="form-control-label d-block mb-2" for="admin_locale">' . htmlspecialchars(admin_t('settings.language_label')) . '</label>'
+        . '<select class="form-select" name="locale" id="admin_locale" required>' . $localeOptions . '</select>'
+        . '<p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars(admin_t('settings.language_help')) . '</p>'
+        . '</div>'
+        . '<div class="mb-4">'
+        . '<label class="form-control-label d-block mb-2">' . htmlspecialchars(admin_t('settings.accent_color')) . '</label>'
         . '<div class="settings-theme-swatches">' . $swatches . '</div>'
         . '</div>'
         . '<div class="settings-theme-custom-picker mb-4"' . $customPickerStyle . '>'
-        . '<label class="form-control-label d-block mb-2">Custom color</label>'
+        . '<label class="form-control-label d-block mb-2">' . htmlspecialchars(admin_t('settings.custom_color')) . '</label>'
         . '<div class="d-flex align-items-center gap-3 flex-wrap">'
         . '<input type="color" class="form-control form-control-color settings-theme-color-input" name="custom_primary" value="' . htmlspecialchars($customPrimary) . '" title="Pick a custom accent color">'
-        . '<span class="text-sm text-muted">Pick any color for buttons, links, and sidebar highlights.</span>'
+        . '<span class="text-sm text-muted">' . htmlspecialchars(admin_t('settings.custom_color_help')) . '</span>'
         . '</div>'
         . '</div>'
-        . '<button type="submit" class="btn btn-dark">Save Appearance</button>'
+        . '<button type="submit" class="btn btn-dark">' . htmlspecialchars(admin_t('settings.save_appearance')) . '</button>'
         . '</form>'
         . '<script>(function(){var form=document.querySelector(".settings-theme-form");if(!form)return;var customInput=form.querySelector(\'input[name="theme_color"][value="custom"]\');var pickerWrap=form.querySelector(".settings-theme-custom-picker");var picker=form.querySelector(\'input[name="custom_primary"]\');var customDot=form.querySelector(".settings-theme-swatch--custom .settings-theme-swatch__dot");var sync=function(){if(pickerWrap)pickerWrap.style.display=customInput&&customInput.checked?"block":"none";};form.querySelectorAll(\'input[name="theme_color"]\').forEach(function(radio){radio.addEventListener("change",sync);});if(picker){picker.addEventListener("input",function(){if(customDot)customDot.style.background=picker.value;});}sync();})();</script>'
         . '</div>'

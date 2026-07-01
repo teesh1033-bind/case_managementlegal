@@ -495,7 +495,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/legalpro-finance-pages.css?v=5" rel="stylesheet" />
+    <link href="../assets/css/legalpro-finance-pages.css?v=6" rel="stylesheet" />
     <link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />
     <style>
         .legalpro-doc-hub-card { transition: transform 0.15s ease, box-shadow 0.15s ease; border: 1px solid #e9ecf3; }
@@ -1006,6 +1006,6 @@ include __DIR__ . '/../inc/footer.php';
 $footer = ob_get_clean();
 $html = preg_replace('/<\/body>\s*<\/html>$/i', $footer . "\n</body>\n</html>", $html);
 
-echo $html;
+echo legalpro_apply_copyright_line($html);
 ?>
 
