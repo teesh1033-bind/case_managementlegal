@@ -31,9 +31,9 @@
 }
 
 .legalpro-doc-subnav__link.is-active {
-    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+    background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 100%));
     color: #fff;
-    box-shadow: 0 6px 16px rgba(94, 114, 228, 0.28);
+    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.28);
 }
 
 .legalpro-doc-hero {
@@ -300,7 +300,9 @@
     padding: 0.65rem 1rem;
 }
 
-body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav__link {
+body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav__link,
+body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link,
+body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav__link {
     color: var(--lp-dark-text-muted, #94a3b8);
 }
 
@@ -309,7 +311,9 @@ body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav__link {
     color: var(--lp-dark-text-muted, #94a3b8);
 }
 
-body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav__link:hover {
+body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav__link:hover,
+body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link:hover,
+body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav__link:hover {
     background: var(--lp-dark-surface-hover, #464f68);
     color: var(--lp-dark-text, #f8f9fc);
 }
@@ -322,6 +326,8 @@ body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav__link:hover {
 
 body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-subnav,
 body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav,
+body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav,
+body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav,
 body.legalpro-dark-mode.legalpro-client-portal .legalpro-doc-subnav,
 body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav,
 body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-action-card,
@@ -333,25 +339,32 @@ body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-template-card {
 
 body.legalpro-dark-mode.legalpro-documents-hub .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.legalpro-documents-page .legalpro-doc-subnav__link.is-active,
+body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link.is-active,
+body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.legalpro-client-portal .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav__link.is-active {
     background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 100%)) !important;
     color: #fff !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35) !important;
 }
 
 body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item a,
 body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item.active,
-body.legalpro-dark-mode.legalpro-documents-page .navbar-main h6.font-weight-bolder {
+body.legalpro-dark-mode.legalpro-documents-page .navbar-main h6.font-weight-bolder,
+body.legalpro-dark-mode.legalpro-settings-page .navbar-main .breadcrumb-item a,
+body.legalpro-dark-mode.legalpro-settings-page .navbar-main .breadcrumb-item.active,
+body.legalpro-dark-mode.legalpro-settings-page .navbar-main h6.font-weight-bolder {
     color: var(--lp-dark-text, #f8f9fc) !important;
     opacity: 1 !important;
 }
 
-body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item a {
+body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item a,
+body.legalpro-dark-mode.legalpro-settings-page .navbar-main .breadcrumb-item a {
     opacity: 0.72 !important;
 }
 
-body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item a:hover {
+body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item a:hover,
+body.legalpro-dark-mode.legalpro-settings-page .navbar-main .breadcrumb-item a:hover {
     opacity: 1 !important;
 }
 
