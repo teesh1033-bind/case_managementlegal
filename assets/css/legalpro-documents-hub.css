@@ -31,9 +31,9 @@
 }
 
 .legalpro-doc-subnav__link.is-active {
-    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+    background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 100%));
     color: #fff;
-    box-shadow: 0 6px 16px rgba(94, 114, 228, 0.28);
+    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.28);
 }
 
 .legalpro-doc-hero {
@@ -345,7 +345,7 @@ body.legalpro-dark-mode.legalpro-client-portal .legalpro-doc-subnav__link.is-act
 body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav__link.is-active {
     background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 100%)) !important;
     color: #fff !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35) !important;
 }
 
 body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item a,

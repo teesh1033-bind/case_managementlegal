@@ -981,7 +981,7 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     {ADMIN_PORTAL_HEAD}
-    <link href="../assets/css/case-detail-tabs.css?v=11" rel="stylesheet" />
+    <link href="../assets/css/case-detail-tabs.css?v=12" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-case-view-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
