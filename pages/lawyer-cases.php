@@ -75,8 +75,8 @@ $casesTable = '';
 if (empty($cases)) {
     $casesTable = '<tr><td colspan="7" class="border-0"><div class="text-center py-5 px-4">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconCaseEmpty . '</div>
-        <h5 class="font-weight-bolder mt-3 mb-2">No cases found</h5>
-        <p class="text-sm text-muted mb-0">Try adjusting your search, status or priority filter.</p>
+        <h5 class="font-weight-bolder mt-3 mb-2">' . htmlspecialchars(lawyer_tf('cases.empty_title', 'No cases found')) . '</h5>
+        <p class="text-sm text-muted mb-0">' . htmlspecialchars(lawyer_tf('cases.empty_sub', 'Try adjusting your search, status or priority filter.')) . '</p>
     </div></td></tr>';
 } else {
     foreach ($cases as $case) {
@@ -115,7 +115,7 @@ if (empty($cases)) {
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
             <td class="align-middle text-end lp-table-actions">
-                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">View Details</a>
+                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">' . htmlspecialchars(lawyer_tf('common.view', 'View')) . '</a>
             </td>
         </tr>';
     }
@@ -125,15 +125,18 @@ ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
 
+$pageTitle = lawyer_tf('cases.page_title', 'My Cases');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle);
+
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - My Cases</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -148,17 +151,7 @@ $html = <<<'HTML'
     {NAVIGATION}
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-dashboard.php">Lawyer Portal</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Cases</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">My Cases</h6>
-                </nav>
-            </div>
-        </nav>
+        {BREADCRUMB_NAVBAR}
 
         <div class="container-fluid py-4">
             <!-- Filters -->
@@ -168,37 +161,37 @@ $html = <<<'HTML'
                         <div class="card-body p-3">
                             <form method="GET" class="row align-items-end g-3">
                                 <div class="col-lg-3 col-md-6">
-                                    <label class="form-label">Search Cases</label>
-                                    <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="Case title or client name">
+                                    <label class="form-label">{LBL_SEARCH}</label>
+                                    <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="{PH_SEARCH}">
                                 </div>
                                 <div class="col-lg-2 col-md-3">
-                                    <label class="form-label">Status</label>
+                                    <label class="form-label">{LBL_STATUS}</label>
                                     <select class="form-select" name="status">
-                                        <option value="all"{STATUS_ALL}>All Cases</option>
-                                        <option value="active"{STATUS_ACTIVE}>Active</option>
-                                        <option value="pending"{STATUS_PENDING}>Pending</option>
-                                        <option value="under_review"{STATUS_UNDER_REVIEW}>Under review</option>
-                                        <option value="closed"{STATUS_CLOSED}>Closed</option>
+                                        <option value="all"{STATUS_ALL}>{OPT_ALL_CASES}</option>
+                                        <option value="active"{STATUS_ACTIVE}>{OPT_ACTIVE}</option>
+                                        <option value="pending"{STATUS_PENDING}>{OPT_PENDING}</option>
+                                        <option value="under_review"{STATUS_UNDER_REVIEW}>{OPT_UNDER_REVIEW}</option>
+                                        <option value="closed"{STATUS_CLOSED}>{OPT_CLOSED}</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-2 col-md-3">
-                                    <label class="form-label">Priority</label>
+                                    <label class="form-label">{LBL_PRIORITY}</label>
                                     <select class="form-select" name="priority">
-                                        <option value="all"{PRIORITY_ALL}>All Priorities</option>
-                                        <option value="normal"{PRIORITY_NORMAL}>Normal</option>
-                                        <option value="high"{PRIORITY_HIGH}>High</option>
-                                        <option value="urgent"{PRIORITY_URGENT}>Urgent</option>
+                                        <option value="all"{PRIORITY_ALL}>{OPT_ALL_PRIORITIES}</option>
+                                        <option value="normal"{PRIORITY_NORMAL}>{OPT_NORMAL}</option>
+                                        <option value="high"{PRIORITY_HIGH}>{OPT_HIGH}</option>
+                                        <option value="urgent"{PRIORITY_URGENT}>{OPT_URGENT}</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-3 col-md-6">
-                                    <label class="form-label d-block invisible">Actions</label>
+                                    <label class="form-label d-block invisible">{LBL_ACTIONS}</label>
                                     <div class="lp-lawyer-filter-actions">
-                                        <button type="submit" class="btn btn-primary mb-0">Filter</button>
-                                        <a href="lawyer-cases.php" class="btn btn-outline-secondary mb-0">Reset</a>
+                                        <button type="submit" class="btn btn-primary mb-0">{BTN_FILTER}</button>
+                                        <a href="lawyer-cases.php" class="btn btn-outline-secondary mb-0">{BTN_RESET}</a>
                                     </div>
                                 </div>
                                 <div class="col-lg-2 col-md-12 text-lg-end">
-                                    <p class="text-sm text-muted mb-0">Total: {TOTAL_CASES} cases</p>
+                                    <p class="text-sm text-muted mb-0">{TOTAL_COUNT}</p>
                                 </div>
                             </form>
                         </div>
@@ -214,8 +207,8 @@ $html = <<<'HTML'
                             <div class="d-flex align-items-center">
                                 <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                 <div>
-                                    <h6 class="mb-0">My Cases</h6>
-                                    <p class="text-xs text-muted mb-0">Cases assigned to you</p>
+                                    <h6 class="mb-0">{PAGE_TITLE}</h6>
+                                    <p class="text-xs text-muted mb-0">{CARD_SUBTITLE}</p>
                                 </div>
                             </div>
                         </div>
@@ -224,12 +217,12 @@ $html = <<<'HTML'
                                 <table class="table align-items-center mb-0">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case Details</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 lc-col-category">Category</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Created</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_DETAILS}</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 lc-col-category">{COL_CATEGORY}</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{LBL_CLIENT}</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{LBL_STATUS}</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{LBL_PRIORITY}</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{LBL_CREATED}</th>
                                             <th class="text-secondary opacity-7"></th>
                                         </tr>
                                     </thead>
@@ -268,6 +261,31 @@ $html = <<<'HTML'
 HTML;
 
 $replacements = [
+    '{HTML_LANG}' => lawyer_portal_html_lang(),
+    '{PAGE_TITLE}' => htmlspecialchars($pageTitle),
+    '{BREADCRUMB_NAVBAR}' => $breadcrumbNavbar,
+    '{LBL_SEARCH}' => htmlspecialchars(lawyer_tf('cases.search_label', 'Search Cases')),
+    '{PH_SEARCH}' => htmlspecialchars(lawyer_tf('cases.search_placeholder', 'Case title or client name')),
+    '{LBL_STATUS}' => htmlspecialchars(lawyer_tf('common.status', 'Status')),
+    '{LBL_PRIORITY}' => htmlspecialchars(lawyer_tf('common.priority', 'Priority')),
+    '{LBL_CLIENT}' => htmlspecialchars(lawyer_tf('common.client', 'Client')),
+    '{LBL_CREATED}' => htmlspecialchars(lawyer_tf('common.created', 'Created')),
+    '{LBL_ACTIONS}' => htmlspecialchars(lawyer_tf('common.actions', 'Actions')),
+    '{OPT_ALL_CASES}' => htmlspecialchars(lawyer_tf('cases.all_cases', 'All Cases')),
+    '{OPT_ACTIVE}' => htmlspecialchars(lawyer_status_label('active')),
+    '{OPT_PENDING}' => htmlspecialchars(lawyer_status_label('pending')),
+    '{OPT_UNDER_REVIEW}' => htmlspecialchars(lawyer_status_label('under_review')),
+    '{OPT_CLOSED}' => htmlspecialchars(lawyer_status_label('closed')),
+    '{OPT_ALL_PRIORITIES}' => htmlspecialchars(lawyer_tf('cases.all_priorities', 'All Priorities')),
+    '{OPT_NORMAL}' => htmlspecialchars(lawyer_priority_label('normal')),
+    '{OPT_HIGH}' => htmlspecialchars(lawyer_priority_label('high')),
+    '{OPT_URGENT}' => htmlspecialchars(lawyer_priority_label('urgent')),
+    '{BTN_FILTER}' => htmlspecialchars(lawyer_tf('common.filter', 'Filter')),
+    '{BTN_RESET}' => htmlspecialchars(lawyer_tf('common.reset', 'Reset')),
+    '{TOTAL_COUNT}' => htmlspecialchars(lawyer_tf('cases.total_count', 'Total: :count cases', ['count' => count($cases)])),
+    '{CARD_SUBTITLE}' => htmlspecialchars(lawyer_tf('cases.card_subtitle', 'Cases assigned to you')),
+    '{COL_DETAILS}' => htmlspecialchars(lawyer_tf('cases.col_details', 'Case Details')),
+    '{COL_CATEGORY}' => htmlspecialchars(lawyer_tf('cases.col_category', 'Category')),
     '{ICON_CARD_HEADER}' => $iconCardHeader,
     '{NAVIGATION}' => $navHtml,
     '{SEARCH_VALUE}' => htmlspecialchars($search),

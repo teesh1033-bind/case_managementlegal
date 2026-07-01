@@ -435,14 +435,14 @@ $tasksListHtml = '';
 if (empty($tasks)) {
     $tasksListHtml = '<div class="text-center py-5 px-4">
         <div class="lp-empty-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary mx-auto d-flex align-items-center justify-content-center">' . $iconTaskEmpty . '</div>
-        <h5 class="font-weight-bolder mt-3 mb-2">No tasks found</h5>
-        <p class="text-sm text-muted mb-0">Try adjusting your search or filters, or add a new task.</p>
+        <h5 class="font-weight-bolder mt-3 mb-2">' . htmlspecialchars(lawyer_tf('tasks.empty_title', 'No tasks found')) . '</h5>
+        <p class="text-sm text-muted mb-0">' . htmlspecialchars(lawyer_tf('tasks.empty_sub', 'Try adjusting your filters or create a new task.')) . '</p>
     </div>';
 } else {
     foreach ($tasks as $task) {
         $statusBadge = lawyer_task_status_badge((string) ($task['status'] ?? ''));
         $priorityBadge = lawyer_task_priority_badge((string) ($task['priority'] ?? 'normal'));
-        $dueLabel = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : 'No due date';
+        $dueLabel = $task['due_date'] ? date('M j, Y', strtotime($task['due_date'])) : lawyer_tf('tasks.no_due_date', 'No due date');
         $dueState = lawyer_task_due_state($task['due_date'] ?? null, (string) ($task['status'] ?? ''));
         $dueAlertBadge = lawyer_render_task_due_alert_badge($dueState);
         $rowStateClass = $dueState !== 'none' && $dueState !== 'upcoming' ? ' lt-task-row--' . str_replace('_', '-', $dueState) : '';
@@ -470,7 +470,7 @@ if (empty($tasks)) {
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-1">' . $dueAlertBadge . '</div>
                     <h6 class="lt-task-row__title mb-1">' . htmlspecialchars($task['title']) . '</h6>
                     <p class="lt-task-row__meta mb-1">' . htmlspecialchars($task['case_title']) . ' (' . $caseNumber . ')</p>
-                    <p class="lt-task-row__meta mb-0">Client: ' . $clientName . '</p>';
+                    <p class="lt-task-row__meta mb-0">' . htmlspecialchars(lawyer_tf('common.client', 'Client')) . ': ' . $clientName . '</p>';
         if (!empty($task['task_comment'])) {
             $tasksListHtml .= '<p class="lt-task-row__meta mb-0 mt-1"><span class="text-muted">Comment:</span> ' . nl2br(htmlspecialchars($task['task_comment'])) . '</p>';
         }
@@ -486,13 +486,13 @@ if (empty($tasks)) {
                     </div>
                 </div>
                 <div class="col-lg-3 lp-row-actions-col">
-                    <p class="' . $dueClass . ' text-lg-end mb-0">Due: ' . htmlspecialchars($dueLabel) . '</p>
+                    <p class="' . $dueClass . ' text-lg-end mb-0">' . htmlspecialchars(lawyer_tf('tasks.col_due', 'Due date')) . ': ' . htmlspecialchars($dueLabel) . '</p>
                     <div class="lt-task-row__actions d-flex align-items-center gap-2 justify-content-lg-end flex-wrap">
                         <button
                             type="button"
                             class="btn btn-sm lt-task-edit-btn mb-0"
                             onclick="showEditTaskModal(' . (int) $task['id'] . ', ' . (int) $task['case_id'] . ', ' . $taskTitleJs . ', ' . $taskDescriptionJs . ', ' . $taskPriorityJs . ', ' . $taskDueDateJs . ')"
-                        >Edit</button>
+                        >' . htmlspecialchars(lawyer_tf('common.edit', 'Edit')) . '</button>
                         <form method="POST" action="" class="d-flex align-items-center mb-0">
                             <input type="hidden" name="action" value="update_status">
                             <input type="hidden" name="task_id" value="' . (int) $task['id'] . '">
@@ -507,11 +507,14 @@ if (empty($tasks)) {
     }
 }
 
-$caseOptions = '<option value="">Select case</option>';
+$caseOptions = '<option value="">' . htmlspecialchars(lawyer_tf('tasks.select_case', 'Select case')) . '</option>';
 foreach ($lawyerCases as $lawyerCase) {
     $selected = ((int)$taskForm['case_id'] === (int)$lawyerCase['id']) ? ' selected' : '';
     $caseOptions .= '<option value="' . (int)$lawyerCase['id'] . '"' . $selected . '>' . htmlspecialchars($lawyerCase['title']) . '</option>';
 }
+
+$pageTitle = lawyer_tf('tasks.page_title', 'My Tasks');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle);
 
 ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
@@ -519,13 +522,13 @@ $navHtml = ob_get_clean();
 
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - My Tasks</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -715,17 +718,7 @@ $html = <<<'HTML'
     {NAVIGATION}
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-dashboard.php">Lawyer Portal</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">My Tasks</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">My Tasks</h6>
-                </nav>
-            </div>
-        </nav>
+        {BREADCRUMB_NAVBAR}
 
         <div class="container-fluid py-4">
             {MESSAGE}
@@ -738,46 +731,46 @@ $html = <<<'HTML'
                         <div class="card-body p-3">
                             <form method="GET" class="row align-items-end g-3">
                                 <div class="col-lg-3 col-md-6">
-                                    <label class="form-label">Search Tasks</label>
-                                    <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="Task title, case or client">
+                                    <label class="form-label">{LBL_SEARCH}</label>
+                                    <input type="text" class="form-control" name="search" value="{SEARCH_VALUE}" placeholder="{PH_SEARCH}">
                                 </div>
                                 <div class="col-lg-2 col-md-3">
-                                    <label class="form-label">Due Date</label>
+                                    <label class="form-label">{LBL_DUE}</label>
                                     <select class="form-select" name="due">
-                                        <option value="all"{DUE_ALL}>All due dates</option>
-                                        <option value="overdue"{DUE_OVERDUE}>Overdue</option>
-                                        <option value="today"{DUE_TODAY}>Due today</option>
-                                        <option value="this_week"{DUE_THIS_WEEK}>Due this week</option>
+                                        <option value="all"{DUE_ALL}>{OPT_DUE_ALL}</option>
+                                        <option value="overdue"{DUE_OVERDUE}>{OPT_DUE_OVERDUE}</option>
+                                        <option value="today"{DUE_TODAY}>{OPT_DUE_TODAY}</option>
+                                        <option value="this_week"{DUE_THIS_WEEK}>{OPT_DUE_WEEK}</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-2 col-md-3">
-                                    <label class="form-label">Status</label>
+                                    <label class="form-label">{LBL_STATUS}</label>
                                     <select class="form-select" name="status">
-                                        <option value="all"{STATUS_ALL}>All Status</option>
-                                        <option value="active"{STATUS_ACTIVE}>Active</option>
-                                        <option value="pending"{STATUS_PENDING}>Pending</option>
-                                        <option value="under_review"{STATUS_UNDER_REVIEW}>Under review</option>
-                                        <option value="closed"{STATUS_CLOSED}>Closed</option>
+                                        <option value="all"{STATUS_ALL}>{OPT_ALL_STATUSES}</option>
+                                        <option value="active"{STATUS_ACTIVE}>{OPT_ACTIVE}</option>
+                                        <option value="pending"{STATUS_PENDING}>{OPT_PENDING}</option>
+                                        <option value="under_review"{STATUS_UNDER_REVIEW}>{OPT_UNDER_REVIEW}</option>
+                                        <option value="closed"{STATUS_CLOSED}>{OPT_CLOSED}</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-2 col-md-3">
-                                    <label class="form-label">Priority</label>
+                                    <label class="form-label">{LBL_PRIORITY}</label>
                                     <select class="form-select" name="priority">
-                                        <option value="all"{PRIORITY_ALL}>All Priorities</option>
-                                        <option value="normal"{PRIORITY_NORMAL}>Normal</option>
-                                        <option value="high"{PRIORITY_HIGH}>High</option>
-                                        <option value="urgent"{PRIORITY_URGENT}>Urgent</option>
+                                        <option value="all"{PRIORITY_ALL}>{OPT_ALL_PRIORITIES}</option>
+                                        <option value="normal"{PRIORITY_NORMAL}>{OPT_NORMAL}</option>
+                                        <option value="high"{PRIORITY_HIGH}>{OPT_HIGH}</option>
+                                        <option value="urgent"{PRIORITY_URGENT}>{OPT_URGENT}</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-2 col-md-3">
-                                    <label class="form-label d-block invisible">Actions</label>
+                                    <label class="form-label d-block invisible">{LBL_ACTIONS}</label>
                                     <div class="lp-lawyer-filter-actions">
-                                        <button type="submit" class="btn btn-primary mb-0">Filter</button>
-                                        <a href="tasks.php" class="btn btn-outline-secondary mb-0">Reset</a>
+                                        <button type="submit" class="btn btn-primary mb-0">{BTN_FILTER}</button>
+                                        <a href="tasks.php" class="btn btn-outline-secondary mb-0">{BTN_RESET}</a>
                                     </div>
                                 </div>
                                 <div class="col-lg-1 col-md-12 text-lg-end">
-                                    <p class="text-sm text-muted mb-0">Total: {TOTAL_TASKS} tasks</p>
+                                    <p class="text-sm text-muted mb-0">{TOTAL_COUNT}</p>
                                 </div>
                             </form>
                         </div>
@@ -793,12 +786,12 @@ $html = <<<'HTML'
                                 <div class="d-flex align-items-center">
                                     <div class="lp-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
                                     <div>
-                                        <h6 class="mb-0">My Tasks</h6>
-                                        <p class="text-xs text-muted mb-0">Tasks assigned to you</p>
+                                        <h6 class="mb-0">{PAGE_TITLE}</h6>
+                                        <p class="text-xs text-muted mb-0">{CARD_SUBTITLE}</p>
                                     </div>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-primary mb-0" onclick="showAddTaskModal()">
-                                    <i class="ni ni-fat-add me-1"></i>Add Task
+                                    <i class="ni ni-fat-add me-1"></i>{BTN_NEW_TASK}
                                 </button>
                             </div>
                         </div>
@@ -826,7 +819,7 @@ $html = <<<'HTML'
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="taskModalTitle">Add Task</h5>
+                    <h5 class="modal-title" id="taskModalTitle">{LBL_ADD_TASK}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" enctype="multipart/form-data">
@@ -835,11 +828,11 @@ $html = <<<'HTML'
                         <input type="hidden" name="task_id" id="task_id" value="{TASK_FORM_ID}">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Task Title <span class="text-danger">*</span></label>
+                                <label class="form-label">{LBL_FORM_TITLE} <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="task_title" id="task_title" value="{TASK_FORM_TITLE}" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Case <span class="text-danger">*</span></label>
+                                <label class="form-label">{LBL_CASE} <span class="text-danger">*</span></label>
                                 <select class="form-control" name="case_id" id="task_case_id" required>
                                     {TASK_CASE_OPTIONS}
                                 </select>
@@ -847,42 +840,42 @@ $html = <<<'HTML'
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Priority</label>
+                                <label class="form-label">{LBL_PRIORITY}</label>
                                 <select class="form-control" name="task_priority" id="task_priority">
-                                    <option value="normal" {TASK_PRIORITY_NORMAL}>Normal</option>
-                                    <option value="high" {TASK_PRIORITY_HIGH}>High</option>
-                                    <option value="urgent" {TASK_PRIORITY_URGENT}>Urgent</option>
+                                    <option value="normal" {TASK_PRIORITY_NORMAL}>{OPT_NORMAL}</option>
+                                    <option value="high" {TASK_PRIORITY_HIGH}>{OPT_HIGH}</option>
+                                    <option value="urgent" {TASK_PRIORITY_URGENT}>{OPT_URGENT}</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Due Date</label>
+                                <label class="form-label">{LBL_FORM_DUE_DATE}</label>
                                 <input type="date" class="form-control" name="due_date" id="task_due_date" value="{TASK_FORM_DUE_DATE}" min="{MIN_DUE_DATE}">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" name="task_description" id="task_description" rows="3" placeholder="Task description (optional)">{TASK_FORM_DESCRIPTION}</textarea>
+                            <label class="form-label">{LBL_FORM_DESCRIPTION}</label>
+                            <textarea class="form-control" name="task_description" id="task_description" rows="3" placeholder="{PH_FORM_DESC}">{TASK_FORM_DESCRIPTION}</textarea>
                         </div>
                         <div class="mb-0">
                             <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                                <label class="form-label mb-0">Comment</label>
+                                <label class="form-label mb-0">{LBL_FORM_COMMENT}</label>
                                 <button type="button" class="btn btn-link task-comment-toggle mb-0" id="task_comment_toggle" aria-expanded="false" aria-controls="task_comment_wrap">
-                                    Add a comment
+                                    {LBL_ADD_COMMENT}
                                 </button>
                             </div>
                             <div id="task_comment_wrap" hidden>
-                                <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="Your comment">{TASK_FORM_COMMENT}</textarea>
+                                <textarea class="form-control" name="task_comment" id="task_comment" rows="3" placeholder="{PH_COMMENT}">{TASK_FORM_COMMENT}</textarea>
                                 <div class="mt-3">
-                                    <label class="form-label mb-1">Attachment (optional)</label>
+                                    <label class="form-label mb-1">{LBL_ATTACHMENT}</label>
                                     <input type="file" class="form-control" name="task_comment_file" id="task_comment_file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif">
-                                    <p class="task-comment-hint mb-0">PDF, Word, text or image up to 5 MB.</p>
+                                    <p class="task-comment-hint mb-0">{LBL_ATTACHMENT_HINT}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="taskSaveButton">Save Task</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{LBL_CANCEL}</button>
+                        <button type="submit" class="btn btn-primary" id="taskSaveButton">{LBL_SAVE_TASK}</button>
                     </div>
                 </form>
             </div>
@@ -894,6 +887,14 @@ $html = <<<'HTML'
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script>
+        var taskI18n = {
+            addTask: {TASK_I18N_ADD},
+            editTask: {TASK_I18N_EDIT},
+            saveTask: {TASK_I18N_SAVE},
+            updateTask: {TASK_I18N_UPDATE},
+            addComment: {TASK_I18N_ADD_COMMENT},
+            hideComment: {TASK_I18N_HIDE_COMMENT}
+        };
         var taskMinDueDate = {MIN_DUE_DATE_JSON};
 
         function applyTaskDueDateMin() {
@@ -911,13 +912,13 @@ $html = <<<'HTML'
                 return;
             }
             wrap.hidden = !show;
-            toggle.textContent = show ? 'Hide comment' : 'Add a comment';
+            toggle.textContent = show ? taskI18n.hideComment : taskI18n.addComment;
             toggle.setAttribute('aria-expanded', show ? 'true' : 'false');
         }
 
         function showAddTaskModal() {
-            document.getElementById('taskModalTitle').textContent = 'Add Task';
-            document.getElementById('taskSaveButton').textContent = 'Add Task';
+            document.getElementById('taskModalTitle').textContent = taskI18n.addTask;
+            document.getElementById('taskSaveButton').textContent = taskI18n.addTask;
             document.getElementById('task_id').value = '';
             document.getElementById('task_title').value = '';
             document.getElementById('task_description').value = '';
@@ -932,8 +933,8 @@ $html = <<<'HTML'
         }
 
         function showEditTaskModal(taskId, caseId, title, description, priority, dueDate) {
-            document.getElementById('taskModalTitle').textContent = 'Edit Task';
-            document.getElementById('taskSaveButton').textContent = 'Update Task';
+            document.getElementById('taskModalTitle').textContent = taskI18n.editTask;
+            document.getElementById('taskSaveButton').textContent = taskI18n.updateTask;
             document.getElementById('task_id').value = taskId;
             document.getElementById('task_case_id').value = String(caseId || '');
             document.getElementById('task_title').value = title || '';
@@ -963,6 +964,52 @@ HTML;
 
 // Replace placeholders
 $replacements = [
+    '{HTML_LANG}' => lawyer_portal_html_lang(),
+    '{PAGE_TITLE}' => htmlspecialchars($pageTitle),
+    '{BREADCRUMB_NAVBAR}' => $breadcrumbNavbar,
+    '{LBL_SEARCH}' => htmlspecialchars(lawyer_tf('tasks.search_label', 'Search Tasks')),
+    '{PH_SEARCH}' => htmlspecialchars(lawyer_tf('tasks.search_placeholder', 'Task title, case or client')),
+    '{LBL_DUE}' => htmlspecialchars(lawyer_tf('tasks.due_filter', 'Due')),
+    '{LBL_STATUS}' => htmlspecialchars(lawyer_tf('common.status', 'Status')),
+    '{LBL_PRIORITY}' => htmlspecialchars(lawyer_tf('common.priority', 'Priority')),
+    '{LBL_ACTIONS}' => htmlspecialchars(lawyer_tf('common.actions', 'Actions')),
+    '{OPT_DUE_ALL}' => htmlspecialchars(lawyer_tf('tasks.due_all', 'All dates')),
+    '{OPT_DUE_OVERDUE}' => htmlspecialchars(lawyer_tf('tasks.due_overdue', 'Overdue')),
+    '{OPT_DUE_TODAY}' => htmlspecialchars(lawyer_tf('tasks.due_today', 'Due today')),
+    '{OPT_DUE_WEEK}' => htmlspecialchars(lawyer_tf('tasks.due_week', 'Due this week')),
+    '{OPT_ALL_STATUSES}' => htmlspecialchars(lawyer_tf('tasks.all_statuses', 'All statuses')),
+    '{OPT_ACTIVE}' => htmlspecialchars(lawyer_status_label('active')),
+    '{OPT_PENDING}' => htmlspecialchars(lawyer_status_label('pending')),
+    '{OPT_UNDER_REVIEW}' => htmlspecialchars(lawyer_status_label('under_review')),
+    '{OPT_CLOSED}' => htmlspecialchars(lawyer_status_label('closed')),
+    '{OPT_ALL_PRIORITIES}' => htmlspecialchars(lawyer_tf('tasks.all_priorities', 'All priorities')),
+    '{OPT_NORMAL}' => htmlspecialchars(lawyer_priority_label('normal')),
+    '{OPT_HIGH}' => htmlspecialchars(lawyer_priority_label('high')),
+    '{OPT_URGENT}' => htmlspecialchars(lawyer_priority_label('urgent')),
+    '{BTN_FILTER}' => htmlspecialchars(lawyer_tf('common.filter', 'Filter')),
+    '{BTN_RESET}' => htmlspecialchars(lawyer_tf('common.reset', 'Reset')),
+    '{TOTAL_COUNT}' => htmlspecialchars(lawyer_tf('tasks.total_count', 'Total: :count tasks', ['count' => count($tasks)])),
+    '{CARD_SUBTITLE}' => htmlspecialchars(lawyer_tf('tasks.card_subtitle', 'Tasks assigned to you across your cases')),
+    '{BTN_NEW_TASK}' => htmlspecialchars(lawyer_tf('tasks.new_task', 'New Task')),
+    '{LBL_ADD_TASK}' => htmlspecialchars(lawyer_tf('tasks.add_task', 'Add Task')),
+    '{LBL_FORM_TITLE}' => htmlspecialchars(lawyer_tf('tasks.form_title', 'Task Title')),
+    '{LBL_CASE}' => htmlspecialchars(lawyer_tf('common.case', 'Case')),
+    '{LBL_FORM_DUE_DATE}' => htmlspecialchars(lawyer_tf('tasks.form_due_date', 'Due Date')),
+    '{LBL_FORM_DESCRIPTION}' => htmlspecialchars(lawyer_tf('tasks.form_description', 'Description')),
+    '{PH_FORM_DESC}' => htmlspecialchars(lawyer_tf('tasks.form_desc_placeholder', 'Task description (optional)')),
+    '{LBL_FORM_COMMENT}' => htmlspecialchars(lawyer_tf('tasks.form_comment', 'Comment')),
+    '{LBL_ADD_COMMENT}' => htmlspecialchars(lawyer_tf('tasks.add_comment', 'Add a comment')),
+    '{PH_COMMENT}' => htmlspecialchars(lawyer_tf('tasks.comment_placeholder', 'Your comment')),
+    '{LBL_ATTACHMENT}' => htmlspecialchars(lawyer_tf('tasks.attachment_optional', 'Attachment (optional)')),
+    '{LBL_ATTACHMENT_HINT}' => htmlspecialchars(lawyer_tf('tasks.attachment_hint', 'PDF, Word, text or image up to 5 MB.')),
+    '{LBL_CANCEL}' => htmlspecialchars(lawyer_tf('common.cancel', 'Cancel')),
+    '{LBL_SAVE_TASK}' => htmlspecialchars(lawyer_tf('tasks.save_task', 'Save Task')),
+    '{TASK_I18N_ADD}' => json_encode(lawyer_tf('tasks.add_task', 'Add Task')),
+    '{TASK_I18N_EDIT}' => json_encode(lawyer_tf('tasks.edit_task', 'Edit Task')),
+    '{TASK_I18N_SAVE}' => json_encode(lawyer_tf('tasks.save_task', 'Save Task')),
+    '{TASK_I18N_UPDATE}' => json_encode(lawyer_tf('tasks.update_task', 'Update Task')),
+    '{TASK_I18N_ADD_COMMENT}' => json_encode(lawyer_tf('tasks.add_comment', 'Add a comment')),
+    '{TASK_I18N_HIDE_COMMENT}' => json_encode(lawyer_tf('tasks.hide_comment', 'Hide comment')),
     '{ICON_CARD_HEADER}' => $iconCardHeader,
     '{NAVIGATION}' => $navHtml,
     '{MESSAGE}' => $messageHtml,

@@ -2,7 +2,8 @@
  * Client settings & profile pages — shared account UI.
  */
 .client-settings-page,
-.client-profile-page {
+.client-profile-page,
+.lawyer-settings-page {
     --cpp-primary: var(--legalpro-theme-primary, #5e72e4);
     --cpp-primary-rgb: var(--legalpro-theme-primary-rgb, 94, 114, 228);
 }
@@ -68,13 +69,15 @@
     padding: 0.55rem 1.15rem !important;
 }
 
-.client-settings-page .settings-theme-mode {
+.client-settings-page .settings-theme-mode,
+.lawyer-settings-page .settings-theme-mode {
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
 }
 
-.client-settings-page .settings-theme-mode__option {
+.client-settings-page .settings-theme-mode__option,
+.lawyer-settings-page .settings-theme-mode__option {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -90,22 +93,26 @@
     transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.client-settings-page .settings-theme-mode__option:has(input:checked) {
+.client-settings-page .settings-theme-mode__option:has(input:checked),
+.lawyer-settings-page .settings-theme-mode__option:has(input:checked) {
     border-color: var(--cpp-primary, #5e72e4);
     background: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.08);
 }
 
-.client-settings-page .settings-theme-mode__option input {
+.client-settings-page .settings-theme-mode__option input,
+.lawyer-settings-page .settings-theme-mode__option input {
     margin: 0;
 }
 
-.client-settings-page .cs-stats-grid {
+.client-settings-page .cs-stats-grid,
+.lawyer-settings-page .cs-stats-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.65rem;
 }
 
-.client-settings-page .cs-stat {
+.client-settings-page .cs-stat,
+.lawyer-settings-page .cs-stat {
     background: #f8fafc;
     border: 1px solid #e9ecf3;
     border-radius: 12px;
@@ -113,7 +120,8 @@
     text-align: center;
 }
 
-.client-settings-page .cs-stat__num {
+.client-settings-page .cs-stat__num,
+.lawyer-settings-page .cs-stat__num {
     display: block;
     font-size: 1.05rem;
     font-weight: 800;
@@ -121,7 +129,8 @@
     line-height: 1.2;
 }
 
-.client-settings-page .cs-stat__lbl {
+.client-settings-page .cs-stat__lbl,
+.lawyer-settings-page .cs-stat__lbl {
     display: block;
     font-size: 0.68rem;
     color: #94a3b8;
@@ -131,13 +140,15 @@
     font-weight: 600;
 }
 
-.client-settings-page .cs-quick-links {
+.client-settings-page .cs-quick-links,
+.lawyer-settings-page .cs-quick-links {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
 }
 
-.client-settings-page .cs-quick-link {
+.client-settings-page .cs-quick-link,
+.lawyer-settings-page .cs-quick-link {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -151,28 +162,33 @@
     transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.client-settings-page .cs-quick-link:hover {
+.client-settings-page .cs-quick-link:hover,
+.lawyer-settings-page .cs-quick-link:hover {
     background: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.06);
     border-color: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.25);
     color: var(--cpp-primary, #5e72e4);
 }
 
-.client-settings-page .cs-quick-link__icon {
+.client-settings-page .cs-quick-link__icon,
+.lawyer-settings-page .cs-quick-link__icon {
     display: inline-flex;
     color: var(--cpp-primary, #5e72e4);
 }
 
-.client-settings-page .cs-quick-link__icon .lp-icon svg {
+.client-settings-page .cs-quick-link__icon .lp-icon svg,
+.lawyer-settings-page .cs-quick-link__icon .lp-icon svg {
     width: 1rem;
     height: 1rem;
     stroke: currentColor;
 }
 
-.client-settings-page .cs-account-dl {
+.client-settings-page .cs-account-dl,
+.lawyer-settings-page .cs-account-dl {
     margin: 0;
 }
 
-.client-settings-page .cs-account-dl dt {
+.client-settings-page .cs-account-dl dt,
+.lawyer-settings-page .cs-account-dl dt {
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -181,7 +197,8 @@
     font-weight: 700;
 }
 
-.client-settings-page .cs-account-dl dd {
+.client-settings-page .cs-account-dl dd,
+.lawyer-settings-page .cs-account-dl dd {
     font-size: 0.875rem;
     font-weight: 600;
     color: #1e293b;
@@ -189,6 +206,7 @@
 }
 
 .client-settings-page .cs-tip-list,
+.lawyer-settings-page .cs-tip-list,
 .client-profile-page .cp-help-list {
     padding-left: 1.15rem;
     margin: 0;
@@ -197,6 +215,7 @@
 }
 
 .client-settings-page .cs-tip-list li + li,
+.lawyer-settings-page .cs-tip-list li + li,
 .client-profile-page .cp-help-list li + li {
     margin-top: 0.35rem;
 }
@@ -234,25 +253,31 @@
 }
 
 body.legalpro-dark-mode.client-settings-page .settings-theme-mode__option,
+body.legalpro-dark-mode.lawyer-settings-page .settings-theme-mode__option,
 body.legalpro-dark-mode.client-profile-page .form-control,
 body.legalpro-dark-mode.client-profile-page .form-select,
-body.legalpro-dark-mode.client-settings-page .form-select {
+body.legalpro-dark-mode.client-settings-page .form-select,
+body.legalpro-dark-mode.lawyer-settings-page .form-select {
     background: var(--lp-dark-input-bg, #2f3547);
     border-color: var(--lp-dark-border-strong, rgba(255, 255, 255, 0.16));
     color: var(--lp-dark-text, #f8f9fc);
 }
 
-body.legalpro-dark-mode.client-settings-page .cs-stat {
+body.legalpro-dark-mode.client-settings-page .cs-stat,
+body.legalpro-dark-mode.lawyer-settings-page .cs-stat {
     background: var(--lp-dark-surface-raised, #2f3547);
     border-color: rgba(255, 255, 255, 0.08);
 }
 
 body.legalpro-dark-mode.client-settings-page .cs-stat__num,
-body.legalpro-dark-mode.client-settings-page .cs-account-dl dd {
+body.legalpro-dark-mode.lawyer-settings-page .cs-stat__num,
+body.legalpro-dark-mode.client-settings-page .cs-account-dl dd,
+body.legalpro-dark-mode.lawyer-settings-page .cs-account-dl dd {
     color: var(--lp-dark-text, #f8f9fc);
 }
 
-body.legalpro-dark-mode.client-settings-page .cs-quick-link {
+body.legalpro-dark-mode.client-settings-page .cs-quick-link,
+body.legalpro-dark-mode.lawyer-settings-page .cs-quick-link {
     background: var(--lp-dark-surface-raised, #2f3547);
     border-color: rgba(255, 255, 255, 0.08);
     color: var(--lp-dark-text, #f8f9fc);

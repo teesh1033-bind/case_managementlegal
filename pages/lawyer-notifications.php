@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../lib/lawyer-portal-i18n.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/portal_notifications.php';
 
@@ -16,7 +17,7 @@ $messageType = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_all_read') {
     $items = legalpro_fetch_lawyer_notifications($pdo, $lawyerId, 100);
     legalpro_mark_all_portal_notifications_read($pdo, 'lawyer', $lawyerId, $items);
-    header('Location: lawyer-notifications.php?msg=' . urlencode('All notifications marked as read.') . '&type=success');
+    header('Location: lawyer-notifications.php?msg=' . urlencode(lawyer_tf('notifications.marked_all_read', 'All notifications marked as read.')) . '&type=success');
     exit;
 }
 
@@ -31,8 +32,8 @@ $listHtml = '';
 if (empty($notifications)) {
     $listHtml = '<div class="legalpro-notif-panel__empty py-5">'
         . legalpro_icon('bell', 'legalpro-notif-panel__empty-icon')
-        . '<p>No new notifications</p>'
-        . '<span>You are all caught up.</span>'
+        . '<p>' . htmlspecialchars(lawyer_tf('notifications.empty_title', 'No new notifications')) . '</p>'
+        . '<span>' . htmlspecialchars(lawyer_tf('notifications.empty_sub', 'You are all caught up.')) . '</span>'
         . '</div>';
 } else {
     $listHtml = '<div class="legalpro-notif-list-page">';
@@ -61,19 +62,28 @@ if (empty($notifications)) {
     $listHtml .= '</div>';
 }
 
+$closeLabel = lawyer_tf('common.close', 'Close');
 $messageHtml = $message !== ''
     ? '<div class="alert alert-' . htmlspecialchars($messageType ?: 'info') . ' alert-dismissible fade show" role="alert">'
         . htmlspecialchars($message)
-        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+        . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="' . htmlspecialchars($closeLabel) . '"></button>'
     . '</div>'
     : '';
 
 $markAllBtn = !empty($notifications)
     ? '<form method="post" class="d-inline">'
         . '<input type="hidden" name="action" value="mark_all_read">'
-        . '<button type="submit" class="btn btn-sm btn-outline-primary mb-0">Mark all read</button>'
+        . '<button type="submit" class="btn btn-sm btn-outline-primary mb-0">' . htmlspecialchars(lawyer_tf('notifications.mark_all_read', 'Mark all read')) . '</button>'
         . '</form>'
     : '';
+
+$pageTitle = lawyer_tf('notifications.page_title', 'Notifications');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar(
+    $pageTitle,
+    [
+        ['label' => lawyer_tf('nav.dashboard', 'Dashboard'), 'url' => 'lawyer-dashboard.php'],
+    ]
+);
 
 ob_start();
 include __DIR__ . '/../inc/lawyer-menunav.php';
@@ -81,13 +91,13 @@ $navHtml = ob_get_clean();
 
 $html = <<<'HTML'
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{HTML_LANG}">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro - Notifications</title>
+    <title>LegalPro - {PAGE_TITLE}</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -116,17 +126,7 @@ $html = <<<'HTML'
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
     {NAVIGATION}
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="lawyer-dashboard.php">Dashboard</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Notifications</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Notifications</h6>
-                </nav>
-            </div>
-        </nav>
+        {BREADCRUMB_NAVBAR}
         <div class="container-fluid py-4">
             {MESSAGE_HTML}
             <div class="row">
@@ -134,8 +134,8 @@ $html = <<<'HTML'
                     <div class="card">
                         <div class="card-header pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <div>
-                                <h6 class="mb-0">All notifications</h6>
-                                <p class="text-sm text-muted mb-0">Unread updates for your cases, appointments, and clients</p>
+                                <h6 class="mb-0">{ALL_TITLE}</h6>
+                                <p class="text-sm text-muted mb-0">{PAGE_SUBTITLE}</p>
                             </div>
                             {MARK_ALL_BTN}
                         </div>
@@ -166,6 +166,11 @@ HTML;
 
 $html = str_replace(
     [
+        '{HTML_LANG}',
+        '{PAGE_TITLE}',
+        '{ALL_TITLE}',
+        '{PAGE_SUBTITLE}',
+        '{BREADCRUMB_NAVBAR}',
         '{NAVIGATION}',
         '{MESSAGE_HTML}',
         '{MARK_ALL_BTN}',
@@ -173,6 +178,11 @@ $html = str_replace(
         '{PORTAL_THEME_BODY_CLASS}',
     ],
     [
+        lawyer_portal_html_lang(),
+        htmlspecialchars($pageTitle),
+        htmlspecialchars(lawyer_tf('notifications.all_title', 'All notifications')),
+        htmlspecialchars(lawyer_tf('notifications.page_subtitle', 'Unread updates for your cases, appointments, and clients')),
+        $breadcrumbNavbar,
         $navHtml,
         $messageHtml,
         $markAllBtn,

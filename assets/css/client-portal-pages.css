@@ -7,7 +7,8 @@
 .client-court-tracking-page,
 .client-appointments-page,
 .client-settings-page,
-.client-profile-page {
+.client-profile-page,
+.lawyer-settings-page {
     --cpp-primary: var(--legalpro-theme-primary, #5e72e4);
     --cpp-primary-rgb: var(--legalpro-theme-primary-rgb, 94, 114, 228);
     --cpp-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 55%, #6b5ce7 100%));
@@ -961,7 +962,8 @@ body.legalpro-dark-mode.client-payments-page,
 body.legalpro-dark-mode.client-court-tracking-page,
 body.legalpro-dark-mode.client-appointments-page,
 body.legalpro-dark-mode.client-settings-page,
-body.legalpro-dark-mode.client-profile-page {
+body.legalpro-dark-mode.client-profile-page,
+body.legalpro-dark-mode.lawyer-settings-page {
     --cpp-text: var(--lp-dark-text, #f8f9fc);
     --cpp-muted: var(--lp-dark-text-muted, #94a3b8);
     --cpp-surface: var(--lp-dark-surface, #343b4f);
@@ -986,7 +988,8 @@ body.legalpro-dark-mode.client-cases-page {
 
 body.legalpro-dark-mode.client-payments-page .cp-panel,
 body.legalpro-dark-mode.client-court-tracking-page .cct-panel,
-body.legalpro-dark-mode.client-documents-page .cp-panel {
+body.legalpro-dark-mode.client-documents-page .cp-panel,
+body.legalpro-dark-mode.lawyer-settings-page .cp-panel {
     background: var(--cpp-surface);
     border-color: var(--cpp-border);
 }
@@ -994,7 +997,8 @@ body.legalpro-dark-mode.client-documents-page .cp-panel {
 body.legalpro-dark-mode.client-payments-page .cp-panel-hdr,
 body.legalpro-dark-mode.client-court-tracking-page .cct-panel-hdr,
 body.legalpro-dark-mode.client-documents-page .cp-panel-header,
-body.legalpro-dark-mode.client-cases-page .cc-panel-header {
+body.legalpro-dark-mode.client-cases-page .cc-panel-header,
+body.legalpro-dark-mode.lawyer-settings-page .cp-panel-header {
     border-bottom-color: var(--cpp-border);
 }
 

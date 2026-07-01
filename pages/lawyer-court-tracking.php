@@ -265,7 +265,7 @@ $upcomingCourtDates = array_values(array_filter($court_dates, function ($row) {
         && strtolower((string) ($row['status'] ?? '')) === 'scheduled';
 }));
 if (empty($upcomingCourtDates)) {
-    $upcomingCourtDatesHtml = '<div class="dashboard-upcoming-empty"><div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">' . $iconCourtEmpty . '</div>No upcoming court dates</div>';
+    $upcomingCourtDatesHtml = '<div class="dashboard-upcoming-empty"><div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary">' . $iconCourtEmpty . '</div>' . htmlspecialchars(lawyer_tf('court.empty_upcoming', 'No upcoming court dates')) . '</div>';
 } else {
     usort($upcomingCourtDates, function ($a, $b) {
         return strtotime($a['court_date']) <=> strtotime($b['court_date']);
@@ -288,16 +288,32 @@ if (empty($upcomingCourtDates)) {
         </button>';
     }
 }
+
+$pageTitle = lawyer_tf('court.page_title', 'Court Tracking');
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle);
+$htmlLang = lawyer_portal_html_lang();
+$courtSearchLabel = lawyer_tf('court.search_label', 'Search Court Dates');
+$courtSearchPlaceholder = lawyer_tf('court.search_placeholder', 'Case, client, title or location');
+$courtCalSearchLabel = lawyer_tf('court.cal_search_label', 'Search court dates');
+$courtCalSearchPlaceholder = lawyer_tf('court.cal_search_placeholder', 'Search by case, client, hearing, location, status…');
+$courtAllStatus = lawyer_tf('court.all_status', 'All Status');
+$courtEmptyTable = lawyer_tf('court.empty_table', 'No court dates found. Try adjusting your search or status filter.');
+$courtEmptySearch = lawyer_tf('court.empty_search', 'No court dates match your search.');
+$courtLblStatus = lawyer_tf('common.status', 'Status');
+$courtLblFilter = lawyer_tf('common.filter', 'Filter');
+$courtLblReset = lawyer_tf('common.reset', 'Reset');
+$courtLblActions = lawyer_tf('common.actions', 'Actions');
+$courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars($htmlLang, ENT_QUOTES, 'UTF-8'); ?>">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>Court Tracking - LegalPro</title>
+    <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?> - LegalPro</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
@@ -576,17 +592,7 @@ if (empty($upcomingCourtDates)) {
     <?php include __DIR__ . '/../inc/lawyer-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Lawyer</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Court Tracking</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Court Tracking</h6>
-                </nav>
-            </div>
-        </nav>
+        <?php echo $breadcrumbNavbar; ?>
 
         <div class="container-fluid py-4">
             <div class="row mb-4">
@@ -595,13 +601,13 @@ if (empty($upcomingCourtDates)) {
                         <div class="card-body p-3">
                             <form method="GET" class="row align-items-end">
                                 <div class="col-md-4">
-                                    <label class="form-label">Search Court Dates</label>
-                                    <input type="text" class="form-control" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Case, client, title or location">
+                                    <label class="form-label"><?php echo htmlspecialchars($courtSearchLabel, ENT_QUOTES, 'UTF-8'); ?></label>
+                                    <input type="text" class="form-control" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="<?php echo htmlspecialchars($courtSearchPlaceholder, ENT_QUOTES, 'UTF-8'); ?>">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Status</label>
+                                    <label class="form-label"><?php echo htmlspecialchars($courtLblStatus, ENT_QUOTES, 'UTF-8'); ?></label>
                                     <select class="form-select" name="status">
-                                        <option value="all"<?php echo $statusFilter === 'all' ? ' selected' : ''; ?>>All Status</option>
+                                        <option value="all"<?php echo $statusFilter === 'all' ? ' selected' : ''; ?>><?php echo htmlspecialchars($courtAllStatus, ENT_QUOTES, 'UTF-8'); ?></option>
                                         <option value="scheduled"<?php echo $statusFilter === 'scheduled' ? ' selected' : ''; ?>>Scheduled</option>
                                         <option value="completed"<?php echo $statusFilter === 'completed' ? ' selected' : ''; ?>>Completed</option>
                                         <option value="postponed"<?php echo $statusFilter === 'postponed' ? ' selected' : ''; ?>>Postponed</option>
@@ -609,10 +615,10 @@ if (empty($upcomingCourtDates)) {
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label d-block invisible">Actions</label>
+                                    <label class="form-label d-block invisible"><?php echo htmlspecialchars($courtLblActions, ENT_QUOTES, 'UTF-8'); ?></label>
                                     <div class="lp-lawyer-filter-actions">
-                                        <button type="submit" class="btn btn-primary mb-0">Filter</button>
-                                        <a href="lawyer-court-tracking.php" class="btn btn-outline-secondary mb-0">Reset</a>
+                                        <button type="submit" class="btn btn-primary mb-0"><?php echo htmlspecialchars($courtLblFilter, ENT_QUOTES, 'UTF-8'); ?></button>
+                                        <a href="lawyer-court-tracking.php" class="btn btn-outline-secondary mb-0"><?php echo htmlspecialchars($courtLblReset, ENT_QUOTES, 'UTF-8'); ?></a>
                                     </div>
                                 </div>
                                 <div class="col-md-2 text-end">
@@ -662,7 +668,7 @@ if (empty($upcomingCourtDates)) {
                                 </div>
                             </div>
                             <div class="lct-cal-search-wrap lct-cal-search-wrap--featured">
-                                <label class="lct-cal-search-label" for="lctCalSearchInput">Search court dates</label>
+                                <label class="lct-cal-search-label" for="lctCalSearchInput"><?php echo htmlspecialchars($courtCalSearchLabel, ENT_QUOTES, 'UTF-8'); ?></label>
                                 <div class="lct-cal-search-field">
                                     <span class="lct-cal-search-icon" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
@@ -671,8 +677,8 @@ if (empty($upcomingCourtDates)) {
                                         </svg>
                                     </span>
                                     <input type="search" id="lctCalSearchInput" class="lct-cal-search-input"
-                                           placeholder="Search by case, client, hearing, location, status…" autocomplete="off">
-                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="lctCalSearchInput" aria-label="Reset search">Reset</button>
+                                           placeholder="<?php echo htmlspecialchars($courtCalSearchPlaceholder, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off">
+                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="lctCalSearchInput" aria-label="<?php echo htmlspecialchars($courtSearchResetAria, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($courtLblReset, ENT_QUOTES, 'UTF-8'); ?></button>
                                 </div>
                                 <div class="lct-cal-search-results" id="lctCalSearchResults" hidden></div>
                             </div>
@@ -720,7 +726,7 @@ if (empty($upcomingCourtDates)) {
                                     <tbody>
                                         <?php if (empty($court_dates)): ?>
                                             <tr>
-                                                <td colspan="6" class="text-center text-muted py-4">No court dates found. Try adjusting your search or status filter.</td>
+                                                <td colspan="6" class="text-center text-muted py-4"><?php echo htmlspecialchars($courtEmptyTable, ENT_QUOTES, 'UTF-8'); ?></td>
                                             </tr>
                                         <?php else: ?>
                                         <?php foreach ($court_dates as $date): ?>
@@ -890,6 +896,7 @@ if (empty($upcomingCourtDates)) {
     <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script src="../assets/js/court-date-view-modal.js?v=2"></script>
+    <script>window.LCT_I18N=<?php echo json_encode(['emptySearch' => $courtEmptySearch], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;</script>
     <script>
         var lawyerCourtTrackingCalendar = null;
 
@@ -1175,7 +1182,7 @@ if (empty($upcomingCourtDates)) {
                 });
 
                 if (!matches.length) {
-                    resultsEl.innerHTML = '<div class="lct-cal-search-empty">No court dates match your search.</div>';
+                    resultsEl.innerHTML = '<div class="lct-cal-search-empty">' + (window.LCT_I18N ? window.LCT_I18N.emptySearch : '') + '</div>';
                     resultsEl.hidden = false;
                     return;
                 }

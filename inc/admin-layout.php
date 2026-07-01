@@ -92,8 +92,18 @@ function legalpro_render_portal_header_utilities(
         . ($notifCount > 0 ? ($notifCount > 9 ? '9+' : (string) $notifCount) : '')
         . '</span>';
 
+    $profileLabel = function_exists('legalpro_portal_translate')
+        ? legalpro_portal_translate('nav.profile', 'Profile')
+        : 'Profile';
+    $signOutLabel = function_exists('legalpro_portal_translate')
+        ? legalpro_portal_translate('nav.sign_out', 'Sign out')
+        : 'Sign out';
+    $notifTitle = function_exists('legalpro_portal_translate')
+        ? legalpro_portal_translate('notifications.title', 'Notifications')
+        : 'Notifications';
+
     $profileItem = $profileUrl !== ''
-        ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . 'Profile</a></li>'
+        ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . htmlspecialchars($profileLabel) . '</a></li>'
         : '';
 
     if ($notifPanelMode) {
@@ -110,7 +120,7 @@ function legalpro_render_portal_header_utilities(
             . '</div>';
     } else {
         $notifControl = '<div class="legalpro-header-notif-wrap">'
-            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="Notifications">'
+            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="' . htmlspecialchars($notifTitle) . '">'
             . legalpro_icon('bell') . $notifBadge . '</button>'
             . legalpro_render_notification_panel($notifications, $viewAllUrl)
             . '</div>';
@@ -132,7 +142,7 @@ function legalpro_render_portal_header_utilities(
             <ul class="dropdown-menu dropdown-menu-end shadow border-0 legalpro-header-user__menu" id="legalproHeaderUserMenuList">
                 ' . $profileItem . '
                 ' . $extraMenuHtml . '
-                <li><a class="dropdown-item text-danger" href="' . htmlspecialchars($logoutUrl) . '">' . legalpro_icon('log-out', 'me-2') . 'Sign out</a></li>
+                <li><a class="dropdown-item text-danger" href="' . htmlspecialchars($logoutUrl) . '">' . legalpro_icon('log-out', 'me-2') . htmlspecialchars($signOutLabel) . '</a></li>
             </ul>
         </div>
     </div>';
@@ -165,9 +175,14 @@ document.addEventListener("DOMContentLoaded", function () {
     nav.classList.add("d-flex", "align-items-center", "justify-content-between", "flex-wrap", "gap-2", "w-100");
 
     var isLawyerPortal = document.body.classList.contains("legalpro-lawyer-portal");
+    var isLawyerSettingsPage = document.body.classList.contains("lawyer-settings-page");
     var navCollapse = nav.querySelector("#navbar") || nav.querySelector(".navbar-collapse");
-    if (isLawyerPortal && navCollapse && !navCollapse.querySelector(".legalpro-navbar-search")) {
+    if (isLawyerPortal && !isLawyerSettingsPage && navCollapse && !navCollapse.querySelector(".legalpro-navbar-search")) {
         var params = new URLSearchParams(window.location.search);
+        var lawyerI18n = window.legalproLawyerI18n || {};
+        var searchPlaceholder = lawyerI18n.search || "Search...";
+        var searchAria = lawyerI18n.searchAria || searchPlaceholder;
+        var searchReset = lawyerI18n.searchReset || "Reset";
         var searchForm = document.createElement("form");
         searchForm.className = "ms-md-auto pe-md-3 d-flex align-items-center legalpro-navbar-search";
         searchForm.method = "get";
@@ -176,8 +191,8 @@ document.addEventListener("DOMContentLoaded", function () {
         searchForm.innerHTML = ""
             + "<div class=\"input-group\">"
             + "<span class=\"input-group-text text-body\"><i class=\"fas fa-search\" aria-hidden=\"true\"></i></span>"
-            + "<input type=\"search\" name=\"q\" id=\"lawyerNavbarSearchInput\" class=\"form-control\" placeholder=\"Search...\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"Search\">"
-            + "<button type=\"button\" class=\"lp-lawyer-search-reset-btn\" data-lawyer-search-reset=\"lawyerNavbarSearchInput\" data-clear-url-param=\"q\" aria-label=\"Reset search\">Reset</button>"
+            + "<input type=\"search\" name=\"q\" id=\"lawyerNavbarSearchInput\" class=\"form-control\" placeholder=\"" + searchPlaceholder.replace(/"/g, "&quot;") + "\" autocomplete=\"off\" maxlength=\"200\" aria-label=\"" + searchAria.replace(/"/g, "&quot;") + "\">"
+            + "<button type=\"button\" class=\"lp-lawyer-search-reset-btn\" data-lawyer-search-reset=\"lawyerNavbarSearchInput\" data-clear-url-param=\"q\" aria-label=\"" + searchReset.replace(/"/g, "&quot;") + "\">" + searchReset.replace(/</g, "&lt;") + "</button>"
             + "</div>";
 
         var searchInput = searchForm.querySelector("input[name=\"q\"]");
@@ -406,13 +421,17 @@ function legalpro_render_lawyer_theme_toggle(): string
     if (!function_exists('getLawyerPortalThemeMode')) {
         require_once __DIR__ . '/../lib/portal-theme.php';
     }
+    if (!function_exists('legalpro_portal_translate')) {
+        require_once __DIR__ . '/../lib/lawyer-locale.php';
+    }
 
     $currentMode = getLawyerPortalThemeMode((int) $_SESSION['lawyer_id']);
     $isDark = $currentMode === 'dark';
     $iconName = $isDark ? 'sun' : 'moon';
-    $switchLight = 'Switch to light mode';
-    $switchDark = 'Switch to dark mode';
-    $label = $isDark ? $switchLight : $switchDark;
+    $labelKey = $isDark ? 'theme.switch_light' : 'theme.switch_dark';
+    $label = legalpro_portal_translate($labelKey, $isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    $switchLight = legalpro_portal_translate('theme.switch_light', 'Switch to light mode');
+    $switchDark = legalpro_portal_translate('theme.switch_dark', 'Switch to dark mode');
 
     return '<button type="button" class="legalpro-header-theme-toggle" id="lawyerThemeToggle"'
         . ' data-theme-mode="' . htmlspecialchars($currentMode, ENT_QUOTES, 'UTF-8') . '"'
@@ -426,20 +445,27 @@ function legalpro_render_lawyer_theme_toggle(): string
 
 function legalpro_render_lawyer_header_utilities(?PDO $pdo = null): string
 {
+    if (!function_exists('legalpro_portal_translate')) {
+        require_once __DIR__ . '/../lib/lawyer-locale.php';
+    }
+
     $lawyerId = isset($_SESSION['lawyer_id']) ? (int) $_SESSION['lawyer_id'] : 0;
     $displayName = isset($_SESSION['lawyer_name']) ? (string) $_SESSION['lawyer_name'] : 'Lawyer';
     $notifications = ($pdo instanceof PDO && $lawyerId > 0)
         ? legalpro_fetch_lawyer_notifications($pdo, $lawyerId)
         : [];
 
+    $lawyerLabel = legalpro_portal_translate('header.lawyer', 'Lawyer');
+    $settingsLabel = legalpro_portal_translate('nav.settings', 'Settings');
+
     return legalpro_render_portal_header_utilities(
         $displayName,
-        'Lawyer',
+        $lawyerLabel,
         $notifications,
         'lawyer-notifications.php',
         'lawyer-logout.php',
         'lawyer-profile.php',
-        '<li><a class="dropdown-item" href="lawyer-settings.php">' . legalpro_icon('settings', 'me-2') . 'Settings</a></li>',
+        '<li><a class="dropdown-item" href="lawyer-settings.php">' . legalpro_icon('settings', 'me-2') . htmlspecialchars($settingsLabel) . '</a></li>',
         false,
         null,
         false,
@@ -901,23 +927,45 @@ function lawyer_appointment_status_badge(array $appointment): string
     $now = time();
 
     if ($status === 'pending') {
-        return '<span class="ca-status-pill ca-status-pill--pending">Pending approval</span>';
+        $label = function_exists('lawyer_tf')
+            ? lawyer_tf('appointments.status_pending_approval', 'Pending approval')
+            : 'Pending approval';
+
+        return '<span class="ca-status-pill ca-status-pill--pending">' . htmlspecialchars($label) . '</span>';
     }
     if ($status === 'rejected') {
-        return '<span class="ca-status-pill ca-status-pill--declined">Rejected</span>';
+        $label = function_exists('lawyer_appointment_status_label')
+            ? lawyer_appointment_status_label('rejected')
+            : 'Rejected';
+
+        return '<span class="ca-status-pill ca-status-pill--declined">' . htmlspecialchars($label) . '</span>';
     }
     if ($status === 'accepted') {
         if ($startsAt > 0 && $startsAt < $now) {
-            return '<span class="ca-status-pill ca-status-pill--done">Completed</span>';
+            $label = function_exists('lawyer_appointment_status_label')
+                ? lawyer_appointment_status_label('completed')
+                : 'Completed';
+
+            return '<span class="ca-status-pill ca-status-pill--done">' . htmlspecialchars($label) . '</span>';
         }
         if ($startsAt > 0 && date('Y-m-d', $startsAt) === date('Y-m-d')) {
-            return '<span class="ca-status-pill ca-status-pill--scheduled">Today</span>';
+            $label = function_exists('lawyer_appointment_status_label')
+                ? lawyer_appointment_status_label('today')
+                : 'Today';
+
+            return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
         }
 
-        return '<span class="ca-status-pill ca-status-pill--scheduled">Scheduled</span>';
+        $label = function_exists('lawyer_appointment_status_label')
+            ? lawyer_appointment_status_label('scheduled')
+            : 'Scheduled';
+
+        return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
     }
 
-    $label = ucwords(str_replace('_', ' ', $status));
+    $label = function_exists('lawyer_appointment_status_label')
+        ? lawyer_appointment_status_label($status)
+        : ucwords(str_replace('_', ' ', $status));
 
     return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
 }
