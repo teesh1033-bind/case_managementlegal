@@ -255,6 +255,7 @@ ob_start();
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
+    <link href="../assets/css/vision-ui-dashboard.css?v=2" rel="stylesheet" />
 
     <style>
         /* Inline extras not yet in the drop-in CSS */
@@ -308,7 +309,7 @@ ob_start();
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page<?php echo legalpro_portal_theme_body_class(); ?>">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page vision-ui-theme<?php echo legalpro_portal_theme_body_class(); ?>">
 <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 
 <?php
@@ -324,16 +325,60 @@ echo ob_get_clean();
     <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
         <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div>
-                <h6 class="font-weight-bolder mb-0">Dashboard</h6>
-                <p class="dashboard-welcome-sub mb-0 mt-1">
-                    Welcome back, <?= htmlspecialchars($adminDisplayName) ?> &nbsp;·&nbsp; <?= htmlspecialchars($welcomeDate) ?>
-                </p>
+                <p class="vu-breadcrumb mb-0">Pages / <strong>Dashboard</strong></p>
+                <h6 class="vu-page-title font-weight-bolder mb-0 mt-1">Dashboard</h6>
             </div>
-
+            <p class="dashboard-welcome-sub mb-0">
+                Welcome back, <?= htmlspecialchars($adminDisplayName) ?> &nbsp;·&nbsp; <?= htmlspecialchars($welcomeDate) ?>
+            </p>
         </div>
     </nav>
 
     <div class="container-fluid py-4 px-4">
+
+        <!-- ── AT-A-GLANCE STRIP ───────────────────────────────────────── -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="dashboard-glance">
+                    <a href="appointments.php" class="dashboard-glance__item">
+                        <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--primary">
+                            <?= legalpro_icon('clock') ?>
+                        </div>
+                        <div>
+                            <div class="dashboard-glance__value"><?= $appointmentsToday ?></div>
+                            <div class="dashboard-glance__label">Appointments today</div>
+                        </div>
+                    </a>
+                    <a href="appointments.php" class="dashboard-glance__item">
+                        <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--info">
+                            <?= legalpro_icon('calendar') ?>
+                        </div>
+                        <div>
+                            <div class="dashboard-glance__value"><?= $appointmentsThisWeek ?></div>
+                            <div class="dashboard-glance__label">This week</div>
+                        </div>
+                    </a>
+                    <a href="appointments.php" class="dashboard-glance__item">
+                        <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--warning">
+                            <?= legalpro_icon('bell') ?>
+                        </div>
+                        <div>
+                            <div class="dashboard-glance__value"><?= $dueToday ?></div>
+                            <div class="dashboard-glance__label">Pending today</div>
+                        </div>
+                    </a>
+                    <a href="invoices.php" class="dashboard-glance__item">
+                        <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--success">
+                            <?= legalpro_icon('file-text') ?>
+                        </div>
+                        <div>
+                            <div class="dashboard-glance__value"><?= $unpaidInvoices ?></div>
+                            <div class="dashboard-glance__label">Open invoices</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <!-- ── FOUR KPI STAT CARDS ─────────────────────────────────────── -->
         <div class="row mb-4">
@@ -428,22 +473,161 @@ echo ob_get_clean();
             </div>
         </div>
 
-        <!-- ── MAIN GRAPH (curvy line chart) ────────────────────────────── -->
+        <!-- ── WELCOME + INSIGHTS (Vision UI row) ─────────────────────── -->
+        <div class="row mb-4">
+            <div class="col-lg-7 mb-4 mb-lg-0">
+                <div class="card vu-welcome-card h-100 mb-0">
+                    <h4>Welcome back, <?= htmlspecialchars($adminDisplayName) ?></h4>
+                    <p>Monitor your legal operations, track cases, appointments, and financial performance from one place.</p>
+                    <a href="case-new.php" class="vu-welcome-btn">Create new case →</a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="card vu-mini-card h-100 mb-0 text-center">
+                            <p class="lp-section-hd mb-1">Completion Rate</p>
+                            <p class="lp-section-sub">Closed vs total cases</p>
+                            <div class="vu-gauge" style="--pct: <?= (int) $completionRate ?>;">
+                                <span><?= $completionRate ?>%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card vu-mini-card h-100 mb-0">
+                            <p class="lp-section-hd mb-1">Operations</p>
+                            <p class="lp-section-sub">Live activity snapshot</p>
+                            <div class="vu-track-stats">
+                                <div class="vu-track-stat">
+                                    <strong><?= $appointmentsThisWeek ?></strong>
+                                    <small>Appointments this week</small>
+                                </div>
+                                <div class="vu-track-stat">
+                                    <strong><?= $collectionRate ?>%</strong>
+                                    <small>Collection rate</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── CHARTS ROW ──────────────────────────────────────────────── -->
         <div class="row mt-2 mb-4">
-            <div class="col-12">
+
+            <!-- Financial overview (line) -->
+            <div class="col-lg-8 mb-4 mb-lg-0">
                 <div class="card h-100">
-                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="card-header d-flex align-items-center justify-content-between">
                         <div>
-                            <p class="lp-section-hd">Financial Trend</p>
-                            <p class="lp-section-sub">Curved monthly trend for invoiced vs collected</p>
+                            <p class="lp-section-hd">Financial Overview</p>
+                            <p class="lp-section-sub">Invoiced vs collected · last 6 months</p>
                         </div>
                         <span class="lp-collection-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                             <?= $collectionRate ?>% collected
                         </span>
                     </div>
                     <div class="card-body">
-                        <div style="position:relative;height:340px;">
+                        <div style="position:relative;height:260px;">
+                            <canvas id="chart-financial" aria-label="Line chart: invoiced vs collected over 6 months">Financial chart unavailable.</canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Case status + categories -->
+            <div class="col-lg-4">
+                <div class="card h-100 mb-4">
+                    <div class="card-header">
+                        <p class="lp-section-hd">Cases by Status</p>
+                        <p class="lp-section-sub">Current workload distribution</p>
+                    </div>
+                    <div class="card-body">
+                        <div style="position:relative;height:160px;">
                             <canvas id="chart-status" aria-label="Bar chart of case status distribution">Status chart unavailable.</canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card h-100">
+                    <div class="card-header">
+                        <p class="lp-section-hd">Cases by Category</p>
+                        <p class="lp-section-sub">Practice area split</p>
+                    </div>
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <div style="position:relative;width:150px;height:150px;">
+                            <canvas id="chart-categories" aria-label="Doughnut chart of case categories">Category chart unavailable.</canvas>
+                        </div>
+                        <div id="cat-legend" style="margin-top:1rem;width:100%;font-size:.75rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── RECENT CASES + TOP CLIENTS ─────────────────────────────── -->
+        <div class="row mb-4">
+            <div class="col-lg-7 mb-4 mb-lg-0">
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="lp-section-hd">Recent Cases</p>
+                            <p class="lp-section-sub">Latest activity across all cases</p>
+                        </div>
+                        <a href="tables.php" class="btn btn-sm btn-outline-primary mb-0" style="border-radius:99px!important;font-size:.74rem!important;">View all</a>
+                    </div>
+                    <div class="card-body py-2">
+                        <?= $recentCasesHtml ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div>
+                            <p class="lp-section-hd">Top Clients</p>
+                            <p class="lp-section-sub">Ranked by total cases</p>
+                        </div>
+                        <a href="clients.php" class="btn btn-sm btn-outline-primary mb-0" style="border-radius:99px!important;font-size:.74rem!important;">All clients</a>
+                    </div>
+                    <div class="card-body">
+                        <?= $topClientsHtml ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── APPOINTMENTS CALENDAR ───────────────────────────────────── -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="dashboard-calendar-hub">
+                    <div class="dashboard-calendar-hub__head">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                            <div>
+                                <p class="lp-section-hd">Appointments Calendar</p>
+                                <p class="lp-section-sub">Click an event for details · drag to reschedule</p>
+                                <div class="dashboard-legend-pills">
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
+                                    <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
+                                </div>
+                            </div>
+                            <a href="appointments.php" class="btn btn-sm bg-gradient-primary mb-0">Manage appointments</a>
+                        </div>
+                    </div>
+                    <div class="dashboard-calendar-hub__body">
+                        <div class="dashboard-calendar-layout">
+                            <div id="dashboardCalendar"></div>
+                            <aside class="dashboard-upcoming-panel">
+                                <div class="dashboard-upcoming-panel__title">
+                                    <span>Upcoming</span>
+                                    <a href="appointments.php" class="text-xs font-weight-bold" style="color:#7cb8ff;">View all</a>
+                                </div>
+                                <div class="dashboard-upcoming-list" id="upcomingAppointmentsList">
+                                    <?= $upcomingHtml ?>
+                                </div>
+                            </aside>
                         </div>
                     </div>
                 </div>
@@ -460,6 +644,45 @@ echo ob_get_clean();
     </div><!-- /container-fluid -->
 </main>
 
+<!-- ── APPOINTMENT DETAIL MODAL ──────────────────────────────────────────── -->
+<div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true" style="z-index:99999;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#0075ff 0%,#4318ff 100%);">
+                <h6 class="modal-title text-white font-weight-bold" id="modalTitle">Appointment</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label>Client</label>
+                        <p id="modalClient" class="mb-0"></p>
+                    </div>
+                    <div class="col-6">
+                        <label>Lawyer</label>
+                        <p id="modalLawyer" class="mb-0"></p>
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label>Status</label>
+                        <p id="modalStatus" class="mb-0"></p>
+                    </div>
+                    <div class="col-6">
+                        <label>Scheduled time</label>
+                        <p id="modalTime" class="mb-0"></p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label>Notes</label>
+                    <div id="modalNotes" class="appointment-modal-notes p-3 rounded"></div>
+                </div>
+                <a id="modalEditLink" href="appointments.php" class="btn btn-sm bg-gradient-dark appointment-modal-edit-btn w-100 mb-0">Edit appointment</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ── SCRIPTS ────────────────────────────────────────────────────────────── -->
 <script src="../assets/js/core/popper.min.js"></script>
 <script src="../assets/js/core/bootstrap.min.js"></script>
@@ -468,95 +691,235 @@ echo ob_get_clean();
 <script src="../assets/js/plugins/chartjs.min.js"></script>
 
 <script>
-/* ── Curvy financial line chart ─────────────────────────────────────────── */
+function vuIsDarkTheme() {
+    return document.body.classList.contains('legalpro-dark-mode');
+}
+
+function vuChartTheme() {
+    var dark = vuIsDarkTheme();
+    return {
+        tick: dark ? '#A0AEC0' : '#707eae',
+        grid: dark ? 'rgba(160, 174, 192, 0.15)' : 'rgba(112, 126, 174, 0.18)',
+        doughnutBorder: dark ? '#1a1f37' : '#ffffff',
+        invoicedFill: dark ? 'rgba(0, 117, 255, 0.35)' : 'rgba(0, 117, 255, 0.22)',
+        collectedFill: dark ? 'rgba(1, 181, 116, 0.28)' : 'rgba(1, 181, 116, 0.2)'
+    };
+}
+
+/* ── Financial line chart ────────────────────────────────────────────────── */
 (function() {
-    var ctxEl = document.getElementById('chart-status');
-    if (!ctxEl) {
-        return;
-    }
+    var ctxEl = document.getElementById('chart-financial');
+    if (!ctxEl) return;
+    var theme = vuChartTheme();
     var ctx = ctxEl.getContext('2d');
-    var g1 = ctx.createLinearGradient(0, 340, 0, 30);
-    g1.addColorStop(1, 'rgba(123, 97, 255, 0.00)');
-    g1.addColorStop(0, 'rgba(123, 97, 255, 0.28)');
-    var g2 = ctx.createLinearGradient(0, 340, 0, 30);
-    g2.addColorStop(1, 'rgba(45, 206, 137, 0.00)');
-    g2.addColorStop(0, 'rgba(45, 206, 137, 0.22)');
+    var g1 = ctx.createLinearGradient(0, 260, 0, 30);
+    g1.addColorStop(0, theme.invoicedFill);
+    g1.addColorStop(1, 'rgba(0, 117, 255, 0)');
+    var g2 = ctx.createLinearGradient(0, 260, 0, 30);
+    g2.addColorStop(0, theme.collectedFill);
+    g2.addColorStop(1, 'rgba(1, 181, 116, 0)');
 
     new Chart(ctx, {
         type: 'line',
         data: {
             labels: <?= $chartLabelsJson ?>,
             datasets: [{
-                label: 'Invoiced',
-                data: <?= $chartInvoicedJson ?>,
-                borderColor: '#7B61FF',
-                backgroundColor: g1,
-                fill: true,
-                tension: 0.45,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointBackgroundColor: '#7B61FF',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                borderWidth: 3
+                label: 'Invoiced', tension: 0.45, pointRadius: 4,
+                pointBackgroundColor: '#0075FF', borderColor: '#0075FF',
+                backgroundColor: g1, borderWidth: 3, fill: true,
+                data: <?= $chartInvoicedJson ?>
             }, {
-                label: 'Collected',
-                data: <?= $chartPaidJson ?>,
-                borderColor: '#2DCE89',
-                backgroundColor: g2,
-                fill: true,
-                tension: 0.45,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                pointBackgroundColor: '#2DCE89',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                borderWidth: 3
+                label: 'Collected', tension: 0.45, pointRadius: 4,
+                pointBackgroundColor: '#01B574', borderColor: '#01B574',
+                backgroundColor: g2, borderWidth: 3, fill: true,
+                data: <?= $chartPaidJson ?>
             }]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: '#6b7a9b',
-                        usePointStyle: true,
-                        boxWidth: 9,
-                        font: { family: 'Inter', size: 11, weight: '600' }
-                    }
+                legend: { display: true, position: 'top',
+                    labels: { color: theme.tick, font: { family: 'Inter', size: 11 }, usePointStyle: true, boxWidth: 8 }
                 },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
+                tooltip: { mode: 'index', intersect: false,
                     callbacks: {
-                        label: function(ctx) {
-                            return ' ' + ctx.dataset.label + ': ' + (window.LegalProFormatCurrency ? window.LegalProFormatCurrency(ctx.parsed.y) : ctx.parsed.y);
+                        label: function(c) {
+                            return ' ' + c.dataset.label + ': ' + (window.LegalProFormatCurrency ? window.LegalProFormatCurrency(c.parsed.y) : c.parsed.y);
                         }
                     }
                 }
             },
             interaction: { intersect: false, mode: 'index' },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grace: '12%',
-                    ticks: {
-                        color: '#8392ab',
-                        font: { size: 11, family: 'Inter' },
-                        callback: function(v) { return window.LegalProFormatCurrency ? window.LegalProFormatCurrency(v, 0) : v; }
-                    },
-                    grid: { color: 'rgba(120, 136, 167, 0.20)', drawBorder: false }
-                },
-                x: {
-                    ticks: { color: '#6b7a9b', font: { size: 11, family: 'Inter', weight: '600' } },
-                    grid: { display: false }
-                }
+                y: { grid: { color: theme.grid, drawBorder: false },
+                     ticks: { color: theme.tick, font: { size: 11 },
+                              callback: function(v) { return window.LegalProFormatCurrency ? window.LegalProFormatCurrency(v, 0) : v; } } },
+                x: { grid: { display: false }, ticks: { color: theme.tick, font: { size: 11 } } }
             }
         }
     });
 })();
+
+/* ── Case status bar chart ───────────────────────────────────────────────── */
+(function() {
+    var ctxEl = document.getElementById('chart-status');
+    if (!ctxEl) return;
+    var theme = vuChartTheme();
+    new Chart(ctxEl, {
+        type: 'bar',
+        data: {
+            labels: <?= $statusLabelsJson ?>,
+            datasets: [{
+                label: 'Cases',
+                data: <?= $statusDataJson ?>,
+                backgroundColor: ['#0075FF', '#4318FF', '#01B574', '#FFB547', '#E31A1A'],
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: theme.grid }, ticks: { color: theme.tick } },
+                x: { grid: { display: false }, ticks: { color: theme.tick } }
+            }
+        }
+    });
+})();
+
+/* ── Case category doughnut ──────────────────────────────────────────────── */
+(function() {
+    var ctx = document.getElementById('chart-categories');
+    if (!ctx) return;
+    var theme = vuChartTheme();
+    var labels = <?= $catLabels ?>;
+    var data   = <?= $catData ?>;
+    var colors = ['#0075FF', '#01B574', '#4318FF', '#FFB547', '#7551FF', '#E31A1A'];
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{ data: data, backgroundColor: colors, borderWidth: 2, borderColor: theme.doughnutBorder, hoverOffset: 6 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, cutout: '68%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: function(c) { return ' ' + c.label + ': ' + c.parsed; } } }
+            }
+        }
+    });
+
+    var leg = document.getElementById('cat-legend');
+    if (!leg) return;
+    var total = data.reduce(function(a, b) { return a + b; }, 0);
+    labels.forEach(function(l, i) {
+        var pct = total > 0 ? Math.round(data[i] / total * 100) : 0;
+        leg.innerHTML += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">' +
+            '<span style="width:10px;height:10px;border-radius:3px;background:' + colors[i] + ';flex-shrink:0;"></span>' +
+            '<span class="cat-legend-label" style="flex:1;">' + l + '</span>' +
+            '<span class="cat-legend-pct" style="font-weight:700;">' + pct + '%</span></div>';
+    });
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('dashboardCalendar');
+    var events = <?= $calendarJson ?>;
+
+    function fmtDT(d) {
+        if (!d) return '—';
+        var dd = String(d.getDate()).padStart(2, '0'),
+            mm = String(d.getMonth() + 1).padStart(2, '0'),
+            yy = d.getFullYear(),
+            h = String(d.getHours()).padStart(2, '0'),
+            mi = String(d.getMinutes()).padStart(2, '0');
+        return dd + '/' + mm + '/' + yy + ' at ' + h + ':' + mi;
+    }
+
+    function openModal(ev) {
+        var p = ev.extendedProps || {};
+        document.getElementById('modalTitle').textContent = ev.title || 'Appointment';
+        document.getElementById('modalClient').textContent = p.client || '—';
+        document.getElementById('modalLawyer').textContent = p.lawyer || '—';
+        document.getElementById('modalStatus').textContent = p.statusLabel || p.status || 'Pending';
+        document.getElementById('modalNotes').textContent = p.notes || 'No notes added.';
+        var start = ev.start instanceof Date ? ev.start : new Date(ev.start);
+        var t = fmtDT(start);
+        if (ev.end) {
+            var e = ev.end instanceof Date ? ev.end : new Date(ev.end);
+            t += ' — ' + fmtDT(e);
+        }
+        document.getElementById('modalTime').textContent = t;
+        document.getElementById('modalEditLink').href = 'new_appointment.php?id=' + (p.appointmentId || ev.id);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('appointmentModal')).show();
+    }
+
+    function statusKey(s) {
+        var v = String(s || 'pending').toLowerCase();
+        return v === 'approved' ? 'accepted' : v;
+    }
+
+    function renderEvent(arg) {
+        var p = arg.event.extendedProps || {};
+        var sk = statusKey(p.status);
+        var label = arg.event.title;
+        if (label.length > 22) label = label.slice(0, 19) + '…';
+        var el = document.createElement('div');
+        el.className = 'dashboard-cal-event';
+        el.innerHTML = '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + sk + '"></span>' +
+            '<span class="dashboard-cal-event__text">' + (arg.timeText ? arg.timeText + ' ' : '') + label + '</span>';
+        return { domNodes: [el] };
+    }
+
+    var upcomingList = document.getElementById('upcomingAppointmentsList');
+    if (upcomingList) {
+        upcomingList.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-appointment-id]');
+            if (!btn) return;
+            var id = btn.getAttribute('data-appointment-id');
+            var ev = events.find(function(x) { return String(x.id) === String(id); });
+            if (ev) openModal({ title: ev.title, start: ev.start, end: ev.end, id: ev.id, extendedProps: ev.extendedProps });
+        });
+    }
+
+    if (!calendarEl || typeof FullCalendar === 'undefined') return;
+
+    var cal = new FullCalendar.Calendar(calendarEl, {
+        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+        height: 'auto', firstDay: 1, navLinks: true, nowIndicator: true,
+        fixedWeekCount: false, dayMaxEvents: 3, moreLinkClick: 'popover',
+        buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+        eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+        dayHeaderFormat: { weekday: 'short' },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+        events: events,
+        eventContent: renderEvent,
+        dateClick: function(info) {
+            if (window.legalproHandleCalendarDateClick) {
+                window.legalproHandleCalendarDateClick(info, function(event) { openModal(event); });
+            }
+        },
+        dayCellDidMount: function(info) {
+            if (window.legalproMountCalendarDayCell) window.legalproMountCalendarDayCell(info);
+        },
+        eventClick: function(info) { info.jsEvent.preventDefault(); openModal(info.event); },
+        eventDidMount: function(info) {
+            if (window.legalproMountCalendarEventClickable) window.legalproMountCalendarEventClickable(info);
+            var p = info.event.extendedProps;
+            var tip = info.event.title;
+            if (p.client) tip += '\nClient: ' + p.client;
+            if (p.lawyer) tip += '\nLawyer: ' + p.lawyer;
+            info.el.title = tip;
+        }
+    });
+    cal.render();
+});
 </script>
 
 <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>

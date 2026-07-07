@@ -4,17 +4,25 @@ require_once __DIR__ . '/../inc/db.php';
 
 $companyBranding = getCompanyBranding();
 $loginPortalTitle = $companyBranding['name'] . ' Portal';
+$allowedLoginTypes = ['admin', 'lawyer', 'client'];
+$defaultLoginType = isset($_GET['portal']) ? strtolower(trim((string) $_GET['portal'])) : 'admin';
+if (!in_array($defaultLoginType, $allowedLoginTypes, true)) {
+    $defaultLoginType = 'admin';
+}
 
 $message = '';
 $messageType = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $loginType = isset($_POST['login_type']) ? $_POST['login_type'] : '';
+    $loginType = isset($_POST['login_type']) ? strtolower(trim((string) $_POST['login_type'])) : '';
     $username = trim(isset($_POST['username']) ? $_POST['username'] : '');
     $password = isset($_POST['password']) ? $_POST['password'] : '';
 
     if (empty($username) || empty($password) || empty($loginType)) {
         $message = 'Please enter all required fields.';
+        $messageType = 'danger';
+    } elseif (!in_array($loginType, $allowedLoginTypes, true)) {
+        $message = 'Invalid login type selected.';
         $messageType = 'danger';
     } elseif ($loginType === 'admin') {
         // Admin login logic
@@ -120,9 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Login error: ' . htmlspecialchars($e->getMessage());
             $messageType = 'danger';
         }
-    } else {
-        $message = 'Invalid login type selected.';
-        $messageType = 'danger';
     }
 }
 
@@ -157,9 +162,9 @@ $html = <<<'HTML'
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <style>
         :root {
-            --login-primary: #5e72e4;
-            --login-primary-dark: #4c63d2;
-            --login-accent: #825ee4;
+            --login-primary: #2b6fff;
+            --login-primary-dark: #1e56cf;
+            --login-accent: #35a6ff;
             --login-ink: #0f172a;
             --login-muted: #64748b;
             --login-border: rgba(15, 23, 42, 0.08);
@@ -182,7 +187,9 @@ $html = <<<'HTML'
         }
         .login-brand-panel {
             position: relative;
-            background: linear-gradient(145deg, #1e293b 0%, #334155 38%, #4f46e5 100%);
+            background:
+                radial-gradient(circle at 15% 20%, rgba(53, 166, 255, 0.22), transparent 45%),
+                linear-gradient(160deg, #06285a 0%, #0b3f8e 45%, #1463c9 100%);
             color: #fff;
             display: flex;
             align-items: center;
@@ -194,23 +201,21 @@ $html = <<<'HTML'
         .login-brand-panel::after {
             content: "";
             position: absolute;
-            border-radius: 50%;
-            filter: blur(60px);
+            border-radius: 0;
             pointer-events: none;
         }
         .login-brand-panel::before {
-            width: 420px;
-            height: 420px;
-            top: -120px;
-            right: -80px;
-            background: rgba(99, 102, 241, 0.45);
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 18px 18px;
+            opacity: 0.6;
         }
         .login-brand-panel::after {
-            width: 320px;
-            height: 320px;
-            bottom: -60px;
-            left: -40px;
-            background: rgba(14, 165, 233, 0.25);
+            width: 360px;
+            height: 360px;
+            right: -120px;
+            bottom: -130px;
+            background: radial-gradient(circle, rgba(53, 166, 255, 0.42), rgba(53, 166, 255, 0));
         }
         .login-brand-content {
             position: relative;
@@ -254,7 +259,7 @@ $html = <<<'HTML'
             width: 36px;
             height: 36px;
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
             display: inline-flex;
             align-items: center;
@@ -267,49 +272,40 @@ $html = <<<'HTML'
             justify-content: center;
             padding: 2rem;
             background:
-                radial-gradient(ellipse 80% 60% at 20% 10%, rgba(94, 114, 228, 0.08), transparent 55%),
-                radial-gradient(ellipse 60% 50% at 90% 90%, rgba(130, 94, 228, 0.06), transparent 50%),
-                #f8fafc;
+                radial-gradient(ellipse 70% 60% at 10% 10%, rgba(43, 111, 255, 0.09), transparent 50%),
+                #f5f8ff;
         }
-        .auth-card {
+        .auth-shell {
             width: 100%;
-            max-width: 420px;
-            border: 1px solid var(--login-border);
-            border-radius: var(--login-radius);
-            background: var(--login-surface);
-            box-shadow:
-                0 1px 2px rgba(15, 23, 42, 0.04),
-                0 12px 40px rgba(15, 23, 42, 0.08);
-            overflow: hidden;
+            max-width: 430px;
         }
-        .login-page .auth-card > .card-header {
-            background: transparent;
-            color: var(--login-ink);
-            padding: 2rem 2rem 0.25rem;
-            border: 0;
+        .auth-intro {
+            margin-bottom: 1.1rem;
+            padding: 0;
         }
-        .login-page .auth-card > .card-header h3 {
-            font-size: 1.65rem;
+        .auth-intro h3 {
+            font-size: 1.95rem;
             line-height: 1.2;
             font-weight: 800;
             letter-spacing: -0.03em;
+            color: var(--login-ink);
             margin-bottom: 0.35rem;
         }
-        .login-page .auth-card > .card-header p {
+        .auth-intro p {
             margin: 0;
             color: var(--login-muted);
             font-size: 0.92rem;
             font-weight: 500;
         }
         .auth-body {
-            padding: 1.25rem 2rem 2rem;
+            padding: 0;
         }
         .login-type-selector {
             display: flex;
             gap: 0.35rem;
             padding: 0.35rem;
             margin-bottom: 1.5rem;
-            background: #f1f5f9;
+            background: #eef3ff;
             border-radius: 14px;
             border: 1px solid var(--login-border);
         }
@@ -336,7 +332,7 @@ $html = <<<'HTML'
             height: 2.1rem;
             margin: 0 auto 0.35rem;
             border-radius: 8px;
-            background: rgba(94, 114, 228, 0.1);
+            background: rgba(44, 169, 164, 0.12);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -359,8 +355,21 @@ $html = <<<'HTML'
             color: var(--login-muted);
             font-weight: 700;
         }
+        .login-type-option small {
+            display: block;
+            margin-top: 0.12rem;
+            font-size: 0.66rem;
+            color: #8a98ad;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .login-type-option.active h6 {
             color: var(--login-ink);
+        }
+        .login-type-option.active small {
+            color: #6d7f98;
         }
         .login-page .form-control-label {
             font-size: 0.72rem;
@@ -381,7 +390,7 @@ $html = <<<'HTML'
         .login-page .input-group:focus-within {
             border-color: var(--login-primary);
             background: #fff;
-            box-shadow: 0 0 0 4px rgba(94, 114, 228, 0.1);
+            box-shadow: 0 0 0 4px rgba(43, 111, 255, 0.14);
         }
         .login-page .input-group .input-group-text {
             border: none;
@@ -419,7 +428,7 @@ $html = <<<'HTML'
         }
         .login-page .password-toggle:hover,
         .login-page .password-toggle:focus {
-            background: rgba(94, 114, 228, 0.06);
+            background: rgba(43, 111, 255, 0.08);
             color: var(--login-primary);
             outline: none;
         }
@@ -473,12 +482,12 @@ $html = <<<'HTML'
             letter-spacing: 0.01em;
             padding: 0.85rem 1rem;
             background: linear-gradient(135deg, var(--login-primary) 0%, var(--login-accent) 100%);
-            box-shadow: 0 4px 14px rgba(94, 114, 228, 0.35);
+            box-shadow: 0 4px 14px rgba(43, 111, 255, 0.32);
             transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
         }
         .login-page .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 8px 22px rgba(94, 114, 228, 0.4);
+            box-shadow: 0 8px 22px rgba(43, 111, 255, 0.38);
             filter: brightness(1.03);
         }
         .login-page .btn-primary:active {
@@ -524,10 +533,10 @@ $html = <<<'HTML'
                 padding: 1.25rem;
             }
             .auth-body {
-                padding: 1rem 1.35rem 1.5rem;
+                padding: 0;
             }
-            .login-page .auth-card > .card-header {
-                padding: 1.5rem 1.35rem 0.25rem;
+            .auth-intro h3 {
+                font-size: 1.7rem;
             }
         }
     </style>
@@ -538,17 +547,17 @@ $html = <<<'HTML'
             <div class="login-brand-content">
                 <img src="{COMPANY_LOGO_URL}" alt="{COMPANY_NAME} logo" class="login-brand-logo">
                 <h1>{COMPANY_NAME}</h1>
-                <p>Secure portal for managing legal operations, clients, cases, and appointments.</p>
+                <p>Secure portal for managing notary/legal operations, clients, cases, and documents.</p>
                 <div class="login-feature"><i class="ni ni-lock-circle-open"></i><span>Enterprise-grade security</span></div>
                 <div class="login-feature"><i class="ni ni-chart-bar-32"></i><span>Real-time analytics</span></div>
                 <div class="login-feature"><i class="ni ni-single-copy-04"></i><span>Client and case management</span></div>
             </div>
         </section>
         <section class="login-form-panel">
-            <div class="card auth-card">
-                <div class="card-header border-0">
+            <div class="auth-shell">
+                <div class="auth-intro">
                     <h3 class="mb-0">Welcome back</h3>
-                    <p>Sign in to your account</p>
+                    <p>Sign in to your portal account</p>
                 </div>
                 <div class="card-body auth-body">
                     {MESSAGE}
@@ -557,25 +566,28 @@ $html = <<<'HTML'
                             <div class="login-type-option active" role="button" tabindex="0" onclick="selectLoginType('admin')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectLoginType('admin');}">
                                 <span class="login-type-icon-wrap"><i class="ni ni-settings" aria-hidden="true"></i></span>
                                 <h6>Admin</h6>
+                                <small>Manage operations</small>
                             </div>
                             <div class="login-type-option" role="button" tabindex="0" onclick="selectLoginType('lawyer')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectLoginType('lawyer');}">
                                 <span class="login-type-icon-wrap"><i class="ni ni-single-02" aria-hidden="true"></i></span>
                                 <h6>Lawyer</h6>
+                                <small>Handle legal matters</small>
                             </div>
                             <div class="login-type-option" role="button" tabindex="0" onclick="selectLoginType('client')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectLoginType('client');}">
                                 <span class="login-type-icon-wrap"><i class="ni ni-circle-08" aria-hidden="true"></i></span>
                                 <h6>Client</h6>
+                                <small>View your cases</small>
                             </div>
                         </div>
 
                         <form method="post" id="loginForm">
-                            <input type="hidden" name="login_type" id="login_type" value="admin">
+                            <input type="hidden" name="login_type" id="login_type" value="{DEFAULT_LOGIN_TYPE}">
 
                             <div class="mb-3">
-                                <label class="form-control-label" for="login_username">Username</label>
+                                <label class="form-control-label" for="login_username">Email / Username</label>
                                 <div class="input-group input-group-lg">
                                     <span class="input-group-text"><i class="ni ni-single-02" aria-hidden="true"></i></span>
-                                    <input type="text" class="form-control" id="login_username" name="username" placeholder="Username" autocomplete="username" required>
+                                    <input type="text" class="form-control" id="login_username" name="username" placeholder="Email address or username" autocomplete="username" required>
                                 </div>
                             </div>
                             <div class="mb-4">
@@ -604,7 +616,7 @@ $html = <<<'HTML'
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary" id="loginButton">
-                                    <span id="loginText">Sign in as Admin</span>
+                                    <span id="loginText">Sign in</span>
                                 </button>
                             </div>
                         </form>
@@ -645,8 +657,8 @@ $html = <<<'HTML'
             }
         }
 
-        // Set initial state
-        selectLoginType('admin');
+        // Set initial state from query/default selection
+        selectLoginType('{DEFAULT_LOGIN_TYPE}');
 
         const passwordInput = document.getElementById('login_password');
         const passwordToggle = document.getElementById('toggle_login_password');
@@ -674,5 +686,6 @@ $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name']), $html);
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{LOGIN_PORTAL_TITLE}', htmlspecialchars($loginPortalTitle), $html);
+$html = str_replace('{DEFAULT_LOGIN_TYPE}', htmlspecialchars($defaultLoginType), $html);
 echo $html;
 ?>
