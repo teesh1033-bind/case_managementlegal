@@ -390,7 +390,7 @@ function legalpro_render_admin_theme_toggle(): string
 
     $currentMode = (string) (getPortalTheme()['mode'] ?? 'light');
     $isDark = $currentMode === 'dark';
-    $iconName = $isDark ? 'sun' : 'moon';
+    $iconName = $isDark ? 'sun-medium' : 'moon-star';
     $switchLight = legalpro_admin_ui_label('theme.switch_light', 'Switch to light mode');
     $switchDark = legalpro_admin_ui_label('theme.switch_dark', 'Switch to dark mode');
     $label = $isDark ? $switchLight : $switchDark;
@@ -445,7 +445,7 @@ function legalpro_render_lawyer_theme_toggle(): string
 
     $currentMode = getLawyerPortalThemeMode((int) $_SESSION['lawyer_id']);
     $isDark = $currentMode === 'dark';
-    $iconName = $isDark ? 'sun' : 'moon';
+    $iconName = $isDark ? 'sun-medium' : 'moon-star';
     $labelKey = $isDark ? 'theme.switch_light' : 'theme.switch_dark';
     $label = legalpro_portal_translate($labelKey, $isDark ? 'Switch to light mode' : 'Switch to dark mode');
     $switchLight = legalpro_portal_translate('theme.switch_light', 'Switch to light mode');
@@ -503,7 +503,7 @@ function legalpro_render_client_theme_toggle(): string
 
     $currentMode = getClientPortalThemeMode((int) $_SESSION['client_id']);
     $isDark = $currentMode === 'dark';
-    $iconName = $isDark ? 'sun' : 'moon';
+    $iconName = $isDark ? 'sun-medium' : 'moon-star';
     $labelKey = $isDark ? 'theme.switch_light' : 'theme.switch_dark';
     $label = function_exists('client_t') ? client_t($labelKey) : ($isDark ? 'Switch to light mode' : 'Switch to dark mode');
     if ($label === $labelKey) {

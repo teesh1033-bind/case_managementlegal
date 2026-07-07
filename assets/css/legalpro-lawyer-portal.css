@@ -1968,16 +1968,16 @@ body.legalpro-dark-mode.lawyer-case-view-page .lawyer-case-comments .cc-comment-
 /* —— Header theme toggle (moon / sun) —— */
 .legalpro-lawyer-portal .legalpro-header-theme-toggle {
     position: relative;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.6rem;
+    height: 2.6rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.96);
-    color: #4c5d7a;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
-    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 248, 255, 0.96) 100%);
+    color: #43516f;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.28);
     padding: 0;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -1985,40 +1985,48 @@ body.legalpro-dark-mode.lawyer-case-view-page .lawyer-case-comments .cc-comment-
 
 .legalpro-lawyer-portal .legalpro-header-theme-toggle:hover,
 .legalpro-lawyer-portal .legalpro-header-theme-toggle:focus {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
     color: var(--legalpro-theme-primary, #5e72e4);
-    border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.45);
     outline: none;
 }
 
 body.legalpro-lawyer-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle {
-    background: #fff;
+    background: linear-gradient(140deg, #ffffff 0%, #f3f7ff 100%);
     color: #344767;
-    border-color: transparent;
-    border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-color: rgba(148, 163, 184, 0.24);
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
     backdrop-filter: none;
 }
 
 body.legalpro-lawyer-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle:hover,
 body.legalpro-lawyer-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle:focus {
-    background: #fff;
+    background: linear-gradient(140deg, #ffffff 0%, #eef3ff 100%);
     color: var(--legalpro-theme-primary, #5e72e4);
-    border-color: transparent;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.38);
+    box-shadow: 0 12px 26px rgba(56, 73, 120, 0.2);
 }
 
 body.legalpro-dark-mode.legalpro-lawyer-portal .navbar-main .legalpro-header-theme-toggle {
-    background: rgba(255, 255, 255, 0.1);
-    color: #e8ecf4;
-    border-color: rgba(255, 255, 255, 0.18);
+    background: linear-gradient(145deg, rgba(71, 81, 109, 0.95) 0%, rgba(56, 65, 89, 0.95) 100%);
+    color: #eef3ff;
+    border-color: rgba(206, 218, 255, 0.18);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.34);
 }
 
 body.legalpro-dark-mode.legalpro-lawyer-portal .navbar-main .legalpro-header-theme-toggle:hover,
 body.legalpro-dark-mode.legalpro-lawyer-portal .navbar-main .legalpro-header-theme-toggle:focus {
-    background: rgba(255, 255, 255, 0.16);
+    background: linear-gradient(145deg, rgba(86, 97, 129, 0.98) 0%, rgba(65, 75, 102, 0.98) 100%);
     color: #fff;
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 154, 174, 255), 0.46);
+}
+
+.legalpro-lawyer-portal .legalpro-header-theme-toggle .lp-icon svg {
+    width: 1.06rem;
+    height: 1.06rem;
+    stroke-width: 2.1;
 }
 
 body.legalpro-dark-mode.lawyer-case-view-page .lcv-table tr.lcv-table-total td {

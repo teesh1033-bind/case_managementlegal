@@ -555,7 +555,11 @@ $html = str_replace('{TOP_NAVBAR}', $topNavbarHtml, $html);
 $html = str_replace('{HEADER_BG_CLASS}', $headerBgClass, $html);
 
 $portalHeadCss = '';
-if ($role === 'client') {
+if ($role === 'admin') {
+    ob_start();
+    include __DIR__ . '/../inc/admin-portal-head.php';
+    $portalHeadCss = ob_get_clean();
+} elseif ($role === 'client') {
     ob_start();
     include __DIR__ . '/../inc/client-portal-head.php';
     $portalHeadCss = ob_get_clean();
