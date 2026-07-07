@@ -82,9 +82,7 @@ function legalpro_finance_document_css(): string
         . '.fin-doc-signature{margin-top:36px;font-size:12px;color:#64748b;}'
         . '.fin-doc-signature-line{margin-top:24px;border-top:1px solid #cbd5e1;width:220px;}'
         . '.text-end{text-align:right;}'
-<<<<<<< HEAD
         . '.fin-doc-legal-body{font-size:13px;line-height:1.65;}'
-=======
         . '.fin-doc--invoice{border-radius:0;border:none;box-shadow:none;max-width:800px;}'
         . 'body.fin-doc-page .fin-doc--invoice{margin:0 auto;}'
         . '.fin-doc-inv-accent{height:5px;background:linear-gradient(90deg,' . $c['primary'] . ' 0%,' . $c['primary_dark'] . ' 100%);}'
@@ -150,7 +148,6 @@ function legalpro_finance_document_css(): string
         . '.fin-doc-inv-footer-firm{font-size:12px;font-weight:800;color:#0f172a;margin-bottom:4px;}'
         . '.fin-doc-inv-footer-meta{font-size:10px;color:#94a3b8;line-height:1.5;}'
         . '.fin-doc-inv-footer-thanks{margin-top:10px;font-size:10px;color:#cbd5e1;font-weight:600;letter-spacing:.04em;}'
->>>>>>> edc55b1ec36a79c8d3168b5fd6bf457edf39b6c5
         . '@media print{body.fin-doc-page{padding:0;background:#fff;}.fin-doc{border:none;border-radius:0;box-shadow:none;}.fin-doc-toolbar,.fin-doc-action,.no-print{display:none!important;}}';
 }
 

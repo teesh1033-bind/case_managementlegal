@@ -108,13 +108,15 @@ function legalpro_filter_read_notifications(PDO $pdo, array $items): array
 
 function legalpro_notification_unread_hint(): string
 {
-<<<<<<< HEAD
-    if (!empty($_SESSION['lawyer_id']) && function_exists('lawyer_t')) {
-        $hint = lawyer_t('notifications.unread_hint');
-=======
     if (!empty($_SESSION['admin_id']) && function_exists('admin_t')) {
         $hint = admin_t('notifications.unread_hint');
->>>>>>> f63da589d24754b69ba747815f2fbedd935808fa
+        if ($hint !== 'notifications.unread_hint') {
+            return $hint;
+        }
+    }
+
+    if (!empty($_SESSION['lawyer_id']) && function_exists('lawyer_t')) {
+        $hint = lawyer_t('notifications.unread_hint');
         if ($hint !== 'notifications.unread_hint') {
             return $hint;
         }

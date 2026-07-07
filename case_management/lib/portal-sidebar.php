@@ -10,22 +10,40 @@ require_once dirname(__DIR__) . '/lib/portal-theme.php';
 
 function legalpro_sidebar_stylesheet_tag(): string
 {
-    return '<link href="../assets/css/legalpro-sidebar-nav.css?v=22" rel="stylesheet" />';
+    return '<link href="../assets/css/legalpro-sidebar-nav.css?v=23" rel="stylesheet" />';
 }
 
 function legalpro_sidebar_resolve_label(array $item): string
 {
+    if (!empty($item['title_key'])) {
+        $key = (string) $item['title_key'];
+        if (!empty($_SESSION['admin_id']) && function_exists('admin_t')) {
+            $translated = admin_t($key);
+            if ($translated !== $key) {
+                return $translated;
+            }
+        }
+        if (!empty($_SESSION['lawyer_id']) && function_exists('lawyer_t')) {
+            $translated = lawyer_t($key);
+            if ($translated !== $key) {
+                return $translated;
+            }
+        }
+        if (function_exists('client_t')) {
+            $translated = client_t($key);
+            if ($translated !== $key) {
+                return $translated;
+            }
+        }
+
+        return (string) ($item['fallback'] ?? $key);
+    }
+
     if (!empty($item['title'])) {
         return (string) $item['title'];
     }
-    if (!empty($item['title_key']) && function_exists('client_t')) {
-        $translated = client_t((string) $item['title_key']);
-        if ($translated !== $item['title_key']) {
-            return $translated;
-        }
-    }
 
-    return (string) ($item['fallback'] ?? $item['title_key'] ?? 'Link');
+    return (string) ($item['fallback'] ?? 'Link');
 }
 
 function legalpro_sidebar_item_active(array $item, string $currentPage, ?callable $isActiveFn): bool

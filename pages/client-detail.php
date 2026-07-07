@@ -380,13 +380,6 @@ $html = <<<'HTML'
 	<link href="../assets/css/legalpro-admin-portal.css?v=25" rel="stylesheet" />
 	<link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
 	<link href="../assets/css/legalpro-finance-pages.css?v=5" rel="stylesheet" />
-<<<<<<< HEAD
-=======
-	<link href="../assets/css/dashboard-enhancements.css?v=15" rel="stylesheet" />
-	<link href="../assets/css/legalpro-finance-pages.css?v=3" rel="stylesheet" />
->>>>>>> 185062efd2497903d22b626414de52e2c22ea8db
-=======
->>>>>>> a16ef36d67d25b0507f30aa54630c12fcfd9225e
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-client-detail-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>

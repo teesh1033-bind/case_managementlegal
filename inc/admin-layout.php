@@ -103,24 +103,19 @@ function legalpro_render_portal_header_utilities(
         . ($notifCount > 0 ? ($notifCount > 9 ? '9+' : (string) $notifCount) : '')
         . '</span>';
 
-<<<<<<< HEAD
-    $profileLabel = function_exists('legalpro_portal_translate')
-        ? legalpro_portal_translate('nav.profile', 'Profile')
-        : 'Profile';
-    $signOutLabel = function_exists('legalpro_portal_translate')
-        ? legalpro_portal_translate('nav.sign_out', 'Sign out')
-        : 'Sign out';
-    $notifTitle = function_exists('legalpro_portal_translate')
-        ? legalpro_portal_translate('notifications.title', 'Notifications')
-        : 'Notifications';
-=======
     $profileLabel = 'Profile';
     $signOutLabel = 'Sign out';
+    $notifTitle = 'Notifications';
+
     if (!empty($_SESSION['admin_id']) && function_exists('admin_t')) {
         $profileLabel = legalpro_admin_ui_label('header.profile', $profileLabel);
         $signOutLabel = legalpro_admin_ui_label('header.sign_out', $signOutLabel);
+        $notifTitle = legalpro_admin_ui_label('notifications.title', $notifTitle);
+    } elseif (function_exists('legalpro_portal_translate')) {
+        $profileLabel = legalpro_portal_translate('nav.profile', $profileLabel);
+        $signOutLabel = legalpro_portal_translate('nav.sign_out', $signOutLabel);
+        $notifTitle = legalpro_portal_translate('notifications.title', $notifTitle);
     }
->>>>>>> f63da589d24754b69ba747815f2fbedd935808fa
 
     $profileItem = $profileUrl !== ''
         ? '<li><a class="dropdown-item" href="' . htmlspecialchars($profileUrl) . '">' . legalpro_icon('user', 'me-2') . htmlspecialchars($profileLabel) . '</a></li>'
@@ -128,19 +123,19 @@ function legalpro_render_portal_header_utilities(
 
     if ($notifPanelMode) {
         $notifControl = '<div class="legalpro-header-notif-wrap">'
-            . '<button type="button" class="legalpro-header-notif" id="clientNotifBell" title="Notifications" aria-expanded="false" aria-controls="clientNotifPanel">'
+            . '<button type="button" class="legalpro-header-notif" id="clientNotifBell" title="' . htmlspecialchars($notifTitle, ENT_QUOTES, 'UTF-8') . '" aria-expanded="false" aria-controls="clientNotifPanel">'
             . legalpro_icon('bell') . $notifBadge . '</button>'
             . legalpro_render_client_notification_dropdown()
             . '</div>';
     } elseif ($adminNotifApiMode) {
         $notifControl = '<div class="legalpro-header-notif-wrap" data-admin-notif-api="1">'
-            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="Notifications">'
+            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="' . htmlspecialchars($notifTitle, ENT_QUOTES, 'UTF-8') . '">'
             . legalpro_icon('bell') . $notifBadge . '</button>'
             . legalpro_render_admin_notification_dropdown()
             . '</div>';
     } else {
         $notifControl = '<div class="legalpro-header-notif-wrap">'
-            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="' . htmlspecialchars($notifTitle) . '">'
+            . '<button type="button" class="legalpro-header-notif" id="legalproNotifToggle" aria-expanded="false" aria-controls="legalproNotifPanel" title="' . htmlspecialchars($notifTitle, ENT_QUOTES, 'UTF-8') . '">'
             . legalpro_icon('bell') . $notifBadge . '</button>'
             . legalpro_render_notification_panel($notifications, $viewAllUrl)
             . '</div>';

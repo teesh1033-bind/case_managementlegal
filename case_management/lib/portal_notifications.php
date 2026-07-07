@@ -115,6 +115,13 @@ function legalpro_notification_unread_hint(): string
         }
     }
 
+    if (!empty($_SESSION['lawyer_id']) && function_exists('lawyer_t')) {
+        $hint = lawyer_t('notifications.unread_hint');
+        if ($hint !== 'notifications.unread_hint') {
+            return $hint;
+        }
+    }
+
     if (function_exists('client_t')) {
         $hint = client_t('notifications.unread_hint');
         if ($hint !== 'notifications.unread_hint') {
@@ -764,14 +771,34 @@ function legalpro_fetch_client_notifications(PDO $pdo, int $clientId, int $limit
 
 function legalpro_render_notification_panel(array $items, string $viewAllUrl): string
 {
+    if (!function_exists('legalpro_portal_translate')) {
+        $localePath = __DIR__ . '/lawyer-locale.php';
+        if (is_file($localePath)) {
+            require_once $localePath;
+        }
+    }
+
+    $title = function_exists('legalpro_portal_translate')
+        ? legalpro_portal_translate('notifications.title', 'Notifications')
+        : 'Notifications';
+    $viewAll = function_exists('legalpro_portal_translate')
+        ? legalpro_portal_translate('notifications.view_all', 'View all')
+        : 'View all';
+    $emptyTitle = function_exists('legalpro_portal_translate')
+        ? legalpro_portal_translate('notifications.empty_title', 'No new notifications')
+        : 'No new notifications';
+    $emptySub = function_exists('legalpro_portal_translate')
+        ? legalpro_portal_translate('notifications.empty_sub', 'You are all caught up.')
+        : 'You are all caught up.';
+
     $count = count($items);
     $bodyHtml = '';
 
     if ($count === 0) {
         $bodyHtml = '<div class="legalpro-notif-panel__empty">'
             . legalpro_icon('bell', 'legalpro-notif-panel__empty-icon')
-            . '<p>No new notifications</p>'
-            . '<span>You are all caught up.</span>'
+            . '<p>' . htmlspecialchars($emptyTitle) . '</p>'
+            . '<span>' . htmlspecialchars($emptySub) . '</span>'
             . '</div>';
     } else {
         foreach ($items as $item) {
@@ -799,14 +826,14 @@ function legalpro_render_notification_panel(array $items, string $viewAllUrl): s
         }
     }
 
-    return '<div class="legalpro-notif-panel" id="legalproNotifPanel" role="menu" aria-label="Notifications">'
+    return '<div class="legalpro-notif-panel" id="legalproNotifPanel" role="menu" aria-label="' . htmlspecialchars($title) . '">'
         . '<div class="legalpro-notif-panel__head">'
-        . '<h6 class="legalpro-notif-panel__title">Notifications</h6>'
+        . '<h6 class="legalpro-notif-panel__title">' . htmlspecialchars($title) . '</h6>'
         . ($count > 0 ? '<span class="legalpro-notif-panel__count">' . (int) $count . '</span>' : '')
         . '</div>'
         . '<div class="legalpro-notif-panel__body">' . $bodyHtml . '</div>'
         . '<div class="legalpro-notif-panel__foot">'
-        . '<a href="' . htmlspecialchars($viewAllUrl, ENT_QUOTES, 'UTF-8') . '" class="legalpro-notif-panel__view-all">View all</a>'
+        . '<a href="' . htmlspecialchars($viewAllUrl, ENT_QUOTES, 'UTF-8') . '" class="legalpro-notif-panel__view-all">' . htmlspecialchars($viewAll) . '</a>'
         . '</div>'
         . '</div>';
 }

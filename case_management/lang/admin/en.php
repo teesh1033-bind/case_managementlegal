@@ -204,4 +204,4 @@ return [
     'badges.role.staff' => 'Staff',
     'badges.files_none' => 'No files',
     'badges.inactive' => 'Inactive',
-], require __DIR__ . '/page-strings-en.php');
+]; require __DIR__ . '/page-strings-en.php';
