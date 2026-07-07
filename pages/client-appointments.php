@@ -495,11 +495,11 @@ ob_start(); ?>
 
         body.client-appointments-page {
             background: #f0f2f8;
-            --ca-primary: var(--legalpro-theme-primary, #5e72e4);
-            --ca-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
-            --ca-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
-            --ca-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
-            --ca-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            --ca-primary: var(--legalpro-theme-primary, #023e8a);
+            --ca-primary-dark: var(--legalpro-theme-primary-dark, #001845);
+            --ca-primary-soft: var(--lp-cases-accent-soft, rgba(2, 62, 138, 0.12));
+            --ca-primary-border: var(--lp-cases-accent-border, rgba(2, 62, 138, 0.35));
+            --ca-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #023e8a, #001845));
             --ca-field-bg: #fff;
             --ca-field-color: #1e293b;
             --ca-field-border: #e2e8f0;
@@ -557,7 +557,7 @@ ob_start(); ?>
         .ca-table thead th:first-child { padding-left: 1.5rem; }
         .ca-table thead th:last-child  { padding-right: 1.5rem; text-align: right; }
         .ca-table tbody tr { border-bottom: 1px solid #f8fafc; transition: background .1s; }
-        .ca-table tbody tr:hover { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04); }
+        .ca-table tbody tr:hover { background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.04); }
         .ca-table tbody .ca-row.ca-row--off-page { display: none; }
         .ca-appt-table-wrap { padding: 0 0 0.25rem; }
         .ca-appt-pagination {
@@ -591,7 +591,7 @@ ob_start(); ?>
             padding: 0 0.55rem;
             border-radius: 10px;
             border: 1px solid #e9ecef;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.04);
             color: #8392ab;
             font-size: 0.76rem;
             font-weight: 700;
@@ -600,20 +600,20 @@ ob_start(); ?>
             transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
         }
         .ca-appt-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.1);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35);
             color: var(--ca-primary);
             transform: translateY(-1px);
         }
         .ca-appt-pagination__btn:focus-visible {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.22);
         }
         .ca-appt-pagination__btn--active {
             background: var(--ca-gradient);
             border-color: transparent;
             color: #fff;
-            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.32);
         }
         .ca-appt-pagination__btn--active:hover:not(:disabled) {
             color: #fff;
@@ -635,12 +635,12 @@ ob_start(); ?>
             border-top-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
         }
         body.legalpro-dark-mode.client-appointments-page .ca-appt-pagination__btn {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.28);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.28);
             color: #c5cede;
         }
         body.legalpro-dark-mode.client-appointments-page .ca-appt-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.2);
             color: #f8f9fc;
         }
         .ca-table tbody tr:last-child { border-bottom: none; }
@@ -708,10 +708,10 @@ ob_start(); ?>
         }
         body.legalpro-dark-mode .ca-badge.b-declined .ca-badge-dot { background: #f5365c !important; }
         body.legalpro-dark-mode .ca-badge.b-inprogress {
-            background: rgba(94, 114, 228, 0.2) !important;
+            background: rgba(2, 62, 138, 0.2) !important;
             color: #d4dcff !important;
         }
-        body.legalpro-dark-mode .ca-badge.b-inprogress .ca-badge-dot { background: var(--ca-primary, #5e72e4) !important; }
+        body.legalpro-dark-mode .ca-badge.b-inprogress .ca-badge-dot { background: var(--ca-primary, #023e8a) !important; }
 
         /* ── Action buttons ─────────────────────────────────────────── */
         .btn-det {
@@ -748,7 +748,7 @@ ob_start(); ?>
         .ca-book-body { overflow: visible; }
         .ca-book-hdr {
             padding: 1.1rem 1.5rem; border-bottom: 1px solid #f1f5f9;
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.06) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.03) 100%);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.06) 0%, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.03) 100%);
         }
         .ca-book-hdr h5 { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0; }
         .ca-book-hdr p  { font-size: 12px; color: #94a3b8; margin: 3px 0 0; }
@@ -778,7 +778,7 @@ ob_start(); ?>
         .ca-fld .ca-date-picker-wrap .flatpickr-input:focus,
         .ca-fld textarea:focus {
             border-color: var(--ca-primary);
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
         }
         .ca-fld .ca-date-picker-wrap {
             width: 100%;
@@ -1006,7 +1006,7 @@ ob_start(); ?>
         .ca-time-dd-trigger.open,
         .ca-time-dd-trigger:focus:not(:disabled) {
             border-color: var(--ca-primary);
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
         }
         .ca-time-dd-chevron {
             width: 14px; height: 14px; flex-shrink: 0;
@@ -1132,9 +1132,9 @@ ob_start(); ?>
         .client-appointments-page .ca-cal-search-wrap--featured {
             padding: .9rem 1rem 1rem;
             border-radius: 14px;
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
-            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
-            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
         }
         .client-appointments-page .ca-cal-search-label {
             display: block;
@@ -1150,7 +1150,7 @@ ob_start(); ?>
             align-items: center;
             gap: .7rem;
             background: #fff;
-            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.32);
             border-radius: 12px;
             padding: .7rem 1rem;
             transition: border-color .15s, box-shadow .15s, transform .15s;
@@ -1158,7 +1158,7 @@ ob_start(); ?>
         }
         .client-appointments-page .ca-cal-search-field:focus-within {
             border-color: var(--ca-primary);
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
             transform: translateY(-1px);
         }
         .client-appointments-page .ca-cal-search-icon {
@@ -1168,7 +1168,7 @@ ob_start(); ?>
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
             color: var(--ca-primary);
             flex-shrink: 0;
         }
@@ -1222,7 +1222,7 @@ ob_start(); ?>
         }
         .client-appointments-page .ca-cal-search-item:hover,
         .client-appointments-page .ca-cal-search-item:focus-visible {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.08);
             outline: none;
         }
         .client-appointments-page .ca-cal-search-item__dot {
@@ -1257,7 +1257,7 @@ ob_start(); ?>
             text-align: center;
         }
         body.legalpro-dark-mode.client-appointments-page .ca-cal-search-wrap--featured {
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
             border-color: rgba(255, 255, 255, 0.12);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
         }
@@ -1265,17 +1265,17 @@ ob_start(); ?>
             color: #b8c4ff;
         }
         body.legalpro-dark-mode.client-appointments-page .ca-cal-search-icon {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.24);
             color: #d4dcff;
         }
         body.legalpro-dark-mode.client-appointments-page .ca-cal-search-field,
         body.legalpro-dark-mode.client-appointments-page .ca-cal-search-results {
             background: var(--ca-field-bg);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35);
         }
         body.legalpro-dark-mode.client-appointments-page .ca-cal-search-field:focus-within {
-            border-color: #9aaeff;
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+            border-color: #4a90d9;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.22);
         }
         body.legalpro-dark-mode.client-appointments-page .ca-cal-search-input {
             color: var(--ca-field-color);
@@ -1290,14 +1290,14 @@ ob_start(); ?>
             min-width: min(100%, 340px);
         }
         body.client-appointments-page .navbar-main .legalpro-navbar-search .input-group {
-            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.3) !important;
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.3) !important;
             background: rgba(255, 255, 255, 0.96) !important;
             box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
             border-radius: 12px !important;
         }
         body.client-appointments-page .navbar-main .legalpro-navbar-search .input-group:focus-within {
             border-color: var(--ca-primary) !important;
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.16), 0 4px 16px rgba(15, 23, 42, 0.1) !important;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.16), 0 4px 16px rgba(15, 23, 42, 0.1) !important;
         }
         body.client-appointments-page .navbar-main .legalpro-navbar-search .form-control,
         body.client-appointments-page .navbar-main .legalpro-navbar-search input[type="search"].form-control {
@@ -1309,7 +1309,7 @@ ob_start(); ?>
         }
         body.legalpro-dark-mode.client-appointments-page .navbar-main .legalpro-navbar-search .input-group {
             background: var(--lp-dark-surface-raised, #3d455c) !important;
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35) !important;
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35) !important;
         }
     </style>
 </head>

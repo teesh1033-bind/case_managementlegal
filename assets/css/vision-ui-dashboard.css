@@ -2,8 +2,8 @@
  * Vision UI dashboard theme — light default, dark via .legalpro-dark-mode
  */
 body.legalpro-dashboard-page.vision-ui-theme {
-    --vu-primary: #0075ff;
-    --vu-primary-2: #4318ff;
+    --vu-primary: #023e8a;
+    --vu-primary-2: #001845;
     --vu-success: #01b574;
     --vu-danger: #e31a1a;
     --vu-radius: 20px;
@@ -21,23 +21,26 @@ body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) {
     --vu-text: #1b2559;
     --vu-muted: #707eae;
     --vu-shadow: 0 8px 26px rgba(112, 126, 174, 0.12);
-    --vu-shadow-hover: 0 14px 34px rgba(0, 117, 255, 0.14);
+    --vu-shadow-hover: 0 14px 34px rgba(2, 62, 138, 0.14);
     --vu-welcome-bg:
-        radial-gradient(circle at 88% 18%, rgba(0, 117, 255, 0.14), transparent 42%),
-        radial-gradient(circle at 72% 82%, rgba(67, 24, 255, 0.1), transparent 45%),
+        radial-gradient(circle at 88% 18%, rgba(2, 62, 138, 0.14), transparent 42%),
+        radial-gradient(circle at 72% 82%, rgba(0, 24, 69, 0.1), transparent 45%),
         #ffffff;
-    --vu-welcome-btn-bg: rgba(0, 117, 255, 0.08);
-    --vu-welcome-btn-border: rgba(0, 117, 255, 0.2);
-    --vu-welcome-btn-text: #0075ff;
-    --vu-gauge-track: rgba(0, 117, 255, 0.12);
-    --vu-surface-muted: rgba(0, 117, 255, 0.04);
-    --vu-sidebar-bg: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-    --vu-sidebar-active: linear-gradient(135deg, rgba(0, 117, 255, 0.12), rgba(67, 24, 255, 0.08));
+    --vu-welcome-btn-bg: rgba(2, 62, 138, 0.08);
+    --vu-welcome-btn-border: rgba(2, 62, 138, 0.2);
+    --vu-welcome-btn-text: #023e8a;
+    --vu-gauge-track: rgba(2, 62, 138, 0.12);
+    --vu-surface-muted: rgba(2, 62, 138, 0.04);
+    --vu-sidebar-bg: linear-gradient(180deg, #060b28 0%, #0a0e23 100%);
+    --vu-sidebar-active: linear-gradient(135deg, #023e8a 0%, #001845 100%);
+    --vu-sidebar-hover: rgba(255, 255, 255, 0.08);
+    --vu-sidebar-text: rgba(255, 255, 255, 0.78);
+    --vu-sidebar-text-muted: rgba(255, 255, 255, 0.55);
     --vu-collection-bg: rgba(1, 181, 116, 0.12);
     --vu-collection-text: #018f5f;
-    --vu-outline-primary: #0075ff;
-    --vu-fc-btn-bg: rgba(0, 117, 255, 0.1);
-    --vu-fc-btn-text: #0075ff;
+    --vu-outline-primary: #023e8a;
+    --vu-fc-btn-bg: rgba(2, 62, 138, 0.1);
+    --vu-fc-btn-text: #023e8a;
 }
 
 /* ── Dark mode ──────────────────────────────────────────────────────────── */
@@ -50,10 +53,10 @@ body.legalpro-dashboard-page.vision-ui-theme.legalpro-dark-mode {
     --vu-text: #ffffff;
     --vu-muted: #a0aec0;
     --vu-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
-    --vu-shadow-hover: 0 22px 48px rgba(0, 117, 255, 0.18);
+    --vu-shadow-hover: 0 22px 48px rgba(2, 62, 138, 0.18);
     --vu-welcome-bg:
-        radial-gradient(circle at 85% 20%, rgba(0, 117, 255, 0.45), transparent 42%),
-        radial-gradient(circle at 70% 80%, rgba(67, 24, 255, 0.35), transparent 45%),
+        radial-gradient(circle at 85% 20%, rgba(2, 62, 138, 0.45), transparent 42%),
+        radial-gradient(circle at 70% 80%, rgba(0, 24, 69, 0.35), transparent 45%),
         linear-gradient(127deg, rgba(6, 11, 40, 0.94) 28%, rgba(10, 14, 35, 0.9) 100%);
     --vu-welcome-btn-bg: rgba(255, 255, 255, 0.12);
     --vu-welcome-btn-border: rgba(255, 255, 255, 0.18);
@@ -61,11 +64,11 @@ body.legalpro-dashboard-page.vision-ui-theme.legalpro-dark-mode {
     --vu-gauge-track: rgba(255, 255, 255, 0.08);
     --vu-surface-muted: rgba(255, 255, 255, 0.04);
     --vu-sidebar-bg: linear-gradient(180deg, #060b28 0%, #0a0e23 100%);
-    --vu-sidebar-active: linear-gradient(135deg, rgba(0, 117, 255, 0.25), rgba(67, 24, 255, 0.2));
+    --vu-sidebar-active: linear-gradient(135deg, rgba(2, 62, 138, 0.25), rgba(0, 24, 69, 0.2));
     --vu-collection-bg: rgba(1, 181, 116, 0.15);
     --vu-collection-text: #4ade80;
-    --vu-outline-primary: #7cb8ff;
-    --vu-fc-btn-bg: rgba(0, 117, 255, 0.2);
+    --vu-outline-primary: #4a90d9;
+    --vu-fc-btn-bg: rgba(2, 62, 138, 0.2);
     --vu-fc-btn-text: #ffffff;
 }
 
@@ -138,7 +141,7 @@ body.legalpro-dashboard-page.vision-ui-theme .dashboard-glance-icon-wrap {
     height: 48px !important;
     border-radius: 12px !important;
     background: linear-gradient(135deg, var(--vu-primary), var(--vu-primary-2)) !important;
-    box-shadow: 0 8px 18px rgba(0, 117, 255, 0.35);
+    box-shadow: 0 8px 18px rgba(2, 62, 138, 0.35);
 }
 
 body.legalpro-dashboard-page.vision-ui-theme .dashboard-stat-icon-wrap svg,
@@ -261,7 +264,7 @@ body.legalpro-dashboard-page.vision-ui-theme .dashboard-recent-item .text-xs {
 }
 
 body.legalpro-dashboard-page.vision-ui-theme .lp-avatar {
-    background: rgba(0, 117, 255, 0.12);
+    background: rgba(2, 62, 138, 0.12);
     color: var(--vu-primary);
 }
 
@@ -275,7 +278,7 @@ body.legalpro-dashboard-page.vision-ui-theme .lp-progress-fill {
 
 body.legalpro-dashboard-page.vision-ui-theme .btn-outline-primary {
     color: var(--vu-outline-primary) !important;
-    border-color: rgba(0, 117, 255, 0.35) !important;
+    border-color: rgba(2, 62, 138, 0.35) !important;
 }
 
 body.legalpro-dashboard-page.vision-ui-theme .bg-gradient-primary,
@@ -315,7 +318,7 @@ body.legalpro-dashboard-page.vision-ui-theme .fc .fc-daygrid-day-number {
 
 body.legalpro-dashboard-page.vision-ui-theme .fc .fc-button {
     background: var(--vu-fc-btn-bg) !important;
-    border-color: rgba(0, 117, 255, 0.35) !important;
+    border-color: rgba(2, 62, 138, 0.35) !important;
     color: var(--vu-fc-btn-text) !important;
 }
 
@@ -333,21 +336,318 @@ body.legalpro-dashboard-page.vision-ui-theme .cat-legend-pct { color: var(--vu-t
 
 body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar {
     background: var(--vu-sidebar-bg) !important;
-    border-right: 1px solid var(--vu-border) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .legalpro-sidebar-brand__name {
+    color: #fff !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .legalpro-sidebar-brand__role {
+    color: var(--vu-sidebar-text-muted) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .lp-sidebar__collapse-btn,
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .lp-sidebar__close-btn {
+    color: var(--vu-sidebar-text-muted) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .lp-sidebar__collapse-btn:hover,
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .lp-sidebar__close-btn:hover {
+    color: #fff !important;
+    background: var(--vu-sidebar-hover) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .nav-link,
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .nav-link-text,
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .legalpro-sidebar-nav__label,
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .legalpro-sidebar-nav__icon,
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .legalpro-sidebar-nav__icon i,
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link {
+    color: var(--vu-sidebar-text) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .nav-link:hover,
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link:hover {
+    background: var(--vu-sidebar-hover) !important;
+    color: #fff !important;
 }
 
 body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .nav-link.active,
-body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .nav-link:hover {
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-admin-sidebar .legalpro-sidebar-footer .nav-link.active {
     background: var(--vu-sidebar-active) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(2, 62, 138, 0.35);
 }
 
-/* Light mode sidebar text readability */
-body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .legalpro-admin-sidebar .nav-link,
-body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .legalpro-admin-sidebar .nav-link-text,
-body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .legalpro-admin-sidebar .navbar-brand span {
-    color: #1b2559 !important;
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .cat-legend-label { color: var(--vu-muted) !important; }
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .cat-legend-pct { color: var(--vu-text) !important; }
+
+/* ── Light mode: fix panel text (no dark-on-dark / stray text-dark) ───── */
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .card,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .card-body,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-stat-card,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-calendar-hub,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .vu-welcome-card,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .vu-mini-card {
+    color: var(--vu-text);
 }
 
-body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .legalpro-admin-sidebar .nav-link.active {
-    color: #0075ff !important;
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .text-dark,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .vu-panel-title,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .font-weight-bolder,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-stat-card h5,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-stat-card .text-sm.text-uppercase {
+    color: var(--vu-text) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .text-muted,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-stat-card .text-muted,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-recent-item .text-xs,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .lp-top-client .text-xs,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-calendar-hub__title,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-legend-pill,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-upcoming-item__sub,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-calendar-hub__head .lp-section-sub,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .lp-section-sub {
+    color: var(--vu-muted) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .text-info {
+    color: var(--vu-primary) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-stat-card .text-uppercase,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-stat-card p.text-sm.mb-0 {
+    color: var(--vu-muted) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-upcoming-panel__title,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-upcoming-item__title,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-calendar-hub__head .lp-section-hd {
+    color: var(--vu-text) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .dashboard-recent-item h6,
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .vu-panel-title {
+    color: var(--vu-text) !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .legalpro-sidebar-signout {
+    border-color: rgba(245, 54, 92, 0.45);
+    color: #f5365c !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .legalpro-sidebar-signout:hover {
+    background: rgba(245, 54, 92, 0.12);
+    color: #ff6b8a !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .cat-legend-pct { color: var(--vu-text) !important; }
+
+/* ── Dashboard side column (activity + category) ───────────────────────── */
+body.legalpro-dashboard-page.vision-ui-theme .vu-dashboard-side-col {
+    gap: 1rem;
+    min-height: 100%;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-side-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-side-panel .card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-feed-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-feed {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--vu-border);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item:last-child {
+    border-bottom: none;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item:hover {
+    background: var(--vu-surface-muted);
+    border-radius: 10px;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item--hidden {
+    display: none !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item__icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(2, 62, 138, 0.1);
+    color: var(--vu-primary);
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item__icon svg {
+    width: 1rem;
+    height: 1rem;
+    stroke: currentColor;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item--notification .vu-activity-item__icon {
+    background: rgba(1, 181, 116, 0.12);
+    color: var(--vu-success);
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item--document .vu-activity-item__icon {
+    background: rgba(2, 62, 138, 0.12);
+    color: var(--vu-primary);
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item__body {
+    flex: 1;
+    min-width: 0;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item__title {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--vu-text);
+    line-height: 1.25;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item__sub {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--vu-muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-item__time {
+    font-size: 0.68rem;
+    color: var(--vu-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-pagination {
+    margin-top: auto;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--vu-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-pagination__info {
+    margin: 0;
+    font-size: 0.68rem;
+    color: var(--vu-muted);
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-pagination__controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-pagination__btn {
+    min-width: 1.65rem;
+    height: 1.65rem;
+    padding: 0 0.35rem;
+    border: 1px solid var(--vu-border);
+    border-radius: 8px;
+    background: var(--vu-card-solid, #fff);
+    color: var(--vu-primary);
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-pagination__btn:hover:not(:disabled) {
+    background: rgba(2, 62, 138, 0.08);
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-pagination__btn--active {
+    background: var(--vu-primary);
+    border-color: var(--vu-primary);
+    color: #fff;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-pagination__btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-pagination__ellipsis {
+    font-size: 0.68rem;
+    color: var(--vu-muted);
+    padding: 0 0.15rem;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-empty {
+    text-align: center;
+    padding: 1.5rem 0.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-empty__icon {
+    color: var(--vu-muted);
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-empty__title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--vu-text);
+    margin: 0 0 0.2rem;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-empty__sub {
+    font-size: 0.72rem;
+    color: var(--vu-muted);
+    margin: 0;
 }

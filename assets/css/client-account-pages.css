@@ -4,8 +4,8 @@
 .client-settings-page,
 .client-profile-page,
 .lawyer-settings-page {
-    --cpp-primary: var(--legalpro-theme-primary, #5e72e4);
-    --cpp-primary-rgb: var(--legalpro-theme-primary-rgb, 94, 114, 228);
+    --cpp-primary: var(--legalpro-theme-primary, #0077b6);
+    --cpp-primary-rgb: var(--legalpro-theme-primary-rgb, 0, 119, 182);
 }
 
 .cp-account-layout {
@@ -37,8 +37,8 @@
 .cp-panel-body .form-control:focus,
 .cp-panel-body .form-select:focus,
 .cp-panel-body textarea.form-control:focus {
-    border-color: var(--cpp-primary, #5e72e4);
-    box-shadow: 0 0 0 3px rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.12);
+    border-color: var(--cpp-primary, #0077b6);
+    box-shadow: 0 0 0 3px rgba(var(--cpp-primary-rgb, 0, 119, 182), 0.12);
 }
 
 .cp-panel-body .form-control-label,
@@ -95,8 +95,8 @@
 
 .client-settings-page .settings-theme-mode__option:has(input:checked),
 .lawyer-settings-page .settings-theme-mode__option:has(input:checked) {
-    border-color: var(--cpp-primary, #5e72e4);
-    background: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.08);
+    border-color: var(--cpp-primary, #0077b6);
+    background: rgba(var(--cpp-primary-rgb, 0, 119, 182), 0.08);
 }
 
 .client-settings-page .settings-theme-mode__option input,
@@ -164,15 +164,15 @@
 
 .client-settings-page .cs-quick-link:hover,
 .lawyer-settings-page .cs-quick-link:hover {
-    background: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.06);
-    border-color: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.25);
-    color: var(--cpp-primary, #5e72e4);
+    background: rgba(var(--cpp-primary-rgb, 0, 119, 182), 0.06);
+    border-color: rgba(var(--cpp-primary-rgb, 0, 119, 182), 0.25);
+    color: var(--cpp-primary, #0077b6);
 }
 
 .client-settings-page .cs-quick-link__icon,
 .lawyer-settings-page .cs-quick-link__icon {
     display: inline-flex;
-    color: var(--cpp-primary, #5e72e4);
+    color: var(--cpp-primary, #0077b6);
 }
 
 .client-settings-page .cs-quick-link__icon .lp-icon svg,
@@ -228,8 +228,8 @@
     border-radius: 99px;
     font-size: 0.78rem;
     font-weight: 700;
-    background: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.1);
-    color: var(--cpp-primary, #5e72e4);
+    background: rgba(var(--cpp-primary-rgb, 0, 119, 182), 0.1);
+    color: var(--cpp-primary, #0077b6);
     margin-bottom: 1rem;
 }
 

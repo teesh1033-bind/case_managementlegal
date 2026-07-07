@@ -10,7 +10,7 @@ require_once dirname(__DIR__) . '/lib/portal-theme.php';
 
 function legalpro_sidebar_stylesheet_tag(): string
 {
-    return '<link href="../assets/css/legalpro-sidebar-nav.css?v=23" rel="stylesheet" />';
+    return '<link href="../assets/css/legalpro-sidebar-nav.css?v=24" rel="stylesheet" />';
 }
 
 function legalpro_sidebar_resolve_label(array $item): string
@@ -44,6 +44,41 @@ function legalpro_sidebar_resolve_label(array $item): string
     }
 
     return (string) ($item['fallback'] ?? 'Link');
+}
+
+function legalpro_sidebar_default_logout_url(string $portal): string
+{
+    $map = [
+        'admin' => 'admin-logout.php',
+        'client' => 'client-logout.php',
+        'lawyer' => 'lawyer-logout.php',
+    ];
+
+    return $map[$portal] ?? 'login.php';
+}
+
+function legalpro_sidebar_sign_out_label(string $portal): string
+{
+    if ($portal === 'admin' && function_exists('admin_t')) {
+        $label = admin_t('header.sign_out');
+        if ($label !== 'header.sign_out') {
+            return $label;
+        }
+    }
+    if ($portal === 'lawyer' && function_exists('lawyer_t')) {
+        $label = lawyer_t('nav.sign_out');
+        if ($label !== 'nav.sign_out') {
+            return $label;
+        }
+    }
+    if (function_exists('client_t')) {
+        $label = client_t('nav.sign_out');
+        if ($label !== 'nav.sign_out') {
+            return $label;
+        }
+    }
+
+    return 'Sign out';
 }
 
 function legalpro_sidebar_item_active(array $item, string $currentPage, ?callable $isActiveFn): bool
@@ -89,6 +124,7 @@ function legalpro_sidebar_render_items(array $items, string $currentPage, ?calla
  *   current_page: string,
  *   items: array,
  *   footer_items?: array,
+ *   logout_url?: string,
  *   is_active?: callable|null,
  *   compact?: bool,
  *   storage_key?: string,
@@ -104,6 +140,8 @@ function legalpro_render_portal_sidebar(array $config): string
     $currentPage = (string) ($config['current_page'] ?? '');
     $items = $config['items'] ?? [];
     $footerItems = $config['footer_items'] ?? [];
+    $logoutUrl = (string) ($config['logout_url'] ?? legalpro_sidebar_default_logout_url($portal));
+    $signOutLabel = legalpro_sidebar_sign_out_label($portal);
     $isActiveFn = $config['is_active'] ?? null;
     $compact = !empty($config['compact']);
     $storageKey = (string) ($config['storage_key'] ?? legalpro_sidebar_storage_key($portal));
@@ -128,6 +166,14 @@ function legalpro_render_portal_sidebar(array $config): string
                 . '</a>';
         }
         $footerHtml .= '</div>';
+    }
+
+    if ($logoutUrl !== '') {
+        $footerHtml .= '<div class="legalpro-sidebar-footer legalpro-sidebar-footer--signout">'
+            . '<a class="legalpro-sidebar-signout" href="' . htmlspecialchars($logoutUrl) . '" title="' . htmlspecialchars($signOutLabel) . '">'
+            . '<span class="legalpro-sidebar-nav__icon">' . legalpro_icon('log-out') . '</span>'
+            . '<span>' . htmlspecialchars($signOutLabel) . '</span>'
+            . '</a></div>';
     }
 
     $boot = htmlspecialchars($storageKey, ENT_QUOTES, 'UTF-8');

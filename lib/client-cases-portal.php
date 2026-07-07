@@ -750,7 +750,7 @@ function legalpro_client_case_shared_styles(): string
 {
     return <<<'CSS'
         .legalpro-case-context-bar { border: 1px solid #e9ecf3; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
-        .legalpro-case-context-bar__back { color: #5e72e4; text-decoration: none; font-weight: 600; }
+        .legalpro-case-context-bar__back { color: #0077b6; text-decoration: none; font-weight: 600; }
         .legalpro-case-context-bar__back:hover { text-decoration: underline; }
         .legalpro-case-page-head h5 { font-weight: 700; color: #1e293b; }
         .cc-comments-panel .card-header { border-bottom: 1px solid rgba(0,0,0,.06); }
@@ -760,7 +760,7 @@ function legalpro_client_case_shared_styles(): string
             max-height: min(32rem, 60vh); overflow-y: auto; padding-right: 0.15rem;
         }
         .cc-comment-list::-webkit-scrollbar { width: 6px; }
-        .cc-comment-list::-webkit-scrollbar-thumb { background: rgba(94, 114, 228, 0.3); border-radius: 999px; }
+        .cc-comment-list::-webkit-scrollbar-thumb { background: rgba(0, 119, 182, 0.3); border-radius: 999px; }
         .cc-comment-item-inner {
             background: #fff; border: 1px solid rgba(0,0,0,.06); border-radius: 0.75rem;
             padding: 1rem 1.15rem; border-left: 4px solid #8392ab; box-shadow: 0 1px 4px rgba(0,0,0,.04);
@@ -768,7 +768,7 @@ function legalpro_client_case_shared_styles(): string
         .cc-comment-item--client .cc-comment-item-inner { border-left-color: #8898aa; }
         .cc-comment-item--lawyer .cc-comment-item-inner { border-left-color: #2dce89; }
         .cc-comment-item--admin .cc-comment-item-inner { border-left-color: #fb6340; }
-        .cc-comment-item--yours .cc-comment-item-inner { background: #f8f9fe; border-color: rgba(94, 114, 228, 0.2); }
+        .cc-comment-item--yours .cc-comment-item-inner { background: #f8f9fe; border-color: rgba(0, 119, 182, 0.2); }
         .cc-comment-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.65rem; flex-wrap: wrap; }
         .cc-comment-head-main { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
         .cc-comment-author { font-size: 0.875rem; font-weight: 700; color: #344767; line-height: 1.3; }

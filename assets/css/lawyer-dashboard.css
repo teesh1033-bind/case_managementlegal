@@ -2,8 +2,8 @@
  * Lawyer dashboard — modern workspace layout
  */
 .lawyer-dashboard-page {
-    --ld-primary: var(--legalpro-theme-primary, #5e72e4);
-    --ld-primary-rgb: var(--legalpro-theme-primary-rgb, 94, 114, 228);
+    --ld-primary: var(--legalpro-theme-primary, #0077b6);
+    --ld-primary-rgb: var(--legalpro-theme-primary-rgb, 0, 119, 182);
     --ld-gradient: var(--lawyer-portal-gradient, linear-gradient(140deg, #2d3f6f 0%, #4a5fa8 44%, #6f7fd2 100%));
     --ld-success: #2dce89;
     --ld-info: #11cdef;

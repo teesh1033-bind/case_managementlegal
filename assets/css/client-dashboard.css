@@ -2,9 +2,9 @@
  * Client dashboard — modern workspace layout
  */
 .client-dashboard-page {
-    --cd-primary: var(--legalpro-theme-primary, #5e72e4);
-    --cd-primary-rgb: var(--legalpro-theme-primary-rgb, 94, 114, 228);
-    --cd-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 55%, #6b5ce7 100%));
+    --cd-primary: var(--legalpro-theme-primary, #023e8a);
+    --cd-primary-rgb: var(--legalpro-theme-primary-rgb, 2, 62, 138);
+    --cd-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #023e8a 0%, #001845 55%, #6b5ce7 100%));
     --cd-success: #2dce89;
     --cd-warning: #fb6340;
     --cd-muted: #94a3b8;

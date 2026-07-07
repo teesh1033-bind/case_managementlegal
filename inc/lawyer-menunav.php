@@ -65,6 +65,7 @@ echo legalpro_render_portal_sidebar([
     'logo_url' => $companyLogoUrl,
     'current_page' => $currentPage,
     'items' => $lawyerMenuItems,
+    'logout_url' => 'lawyer-logout.php',
     'is_active' => 'lawyerNavIsActive',
 ]);
 ?>

@@ -9,9 +9,9 @@
 .client-settings-page,
 .client-profile-page,
 .lawyer-settings-page {
-    --cpp-primary: var(--legalpro-theme-primary, #5e72e4);
-    --cpp-primary-rgb: var(--legalpro-theme-primary-rgb, 94, 114, 228);
-    --cpp-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 55%, #6b5ce7 100%));
+    --cpp-primary: var(--legalpro-theme-primary, #023e8a);
+    --cpp-primary-rgb: var(--legalpro-theme-primary-rgb, 2, 62, 138);
+    --cpp-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #023e8a 0%, #001845 55%, #6b5ce7 100%));
     --cpp-text: #1e293b;
     --cpp-muted: #94a3b8;
     --cpp-surface: #ffffff;
@@ -638,8 +638,8 @@
 }
 
 .cp-quotation-row--highlight {
-    background: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.08);
-    box-shadow: inset 3px 0 0 var(--cpp-primary, #5e72e4);
+    background: rgba(var(--cpp-primary-rgb, 2, 62, 138), 0.08);
+    box-shadow: inset 3px 0 0 var(--cpp-primary, #023e8a);
 }
 
 body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
@@ -837,9 +837,9 @@ body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
 .client-payments-page .cp-pay-search-wrap--featured {
     padding: 0.9rem 1rem 1rem;
     border-radius: 14px;
-    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
-    border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
-    box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.04) 100%);
+    border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.24);
+    box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
 }
 
 .client-payments-page .cp-pay-search-label {
@@ -848,7 +848,7 @@ body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--cpp-primary, var(--legalpro-theme-primary, #5e72e4));
+    color: var(--cpp-primary, var(--legalpro-theme-primary, #023e8a));
     margin-bottom: 0.55rem;
 }
 
@@ -857,7 +857,7 @@ body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
     align-items: center;
     gap: 0.7rem;
     background: #fff;
-    border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+    border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.32);
     border-radius: 12px;
     padding: 0.7rem 1rem;
     transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
@@ -865,8 +865,8 @@ body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
 }
 
 .client-payments-page .cp-pay-search-field:focus-within {
-    border-color: var(--cpp-primary, var(--legalpro-theme-primary, #5e72e4));
-    box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+    border-color: var(--cpp-primary, var(--legalpro-theme-primary, #023e8a));
+    box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
     transform: translateY(-1px);
 }
 
@@ -877,8 +877,8 @@ body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
     width: 38px;
     height: 38px;
     border-radius: 10px;
-    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
-    color: var(--cpp-primary, var(--legalpro-theme-primary, #5e72e4));
+    background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
+    color: var(--cpp-primary, var(--legalpro-theme-primary, #023e8a));
     flex-shrink: 0;
 }
 
@@ -906,7 +906,7 @@ body.legalpro-dark-mode.client-payments-page .cp-quotation-row--highlight {
 }
 
 body.legalpro-dark-mode.client-payments-page .cp-pay-search-wrap--featured {
-    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+    background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
     border-color: rgba(255, 255, 255, 0.12);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
@@ -916,18 +916,18 @@ body.legalpro-dark-mode.client-payments-page .cp-pay-search-label {
 }
 
 body.legalpro-dark-mode.client-payments-page .cp-pay-search-icon {
-    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+    background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.24);
     color: #d4dcff;
 }
 
 body.legalpro-dark-mode.client-payments-page .cp-pay-search-field {
     background: var(--lp-dark-surface-raised, #3d455c);
-    border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35);
 }
 
 body.legalpro-dark-mode.client-payments-page .cp-pay-search-field:focus-within {
-    border-color: #9aaeff;
-    box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.22);
 }
 
 body.legalpro-dark-mode.client-payments-page .cp-pay-search-input {

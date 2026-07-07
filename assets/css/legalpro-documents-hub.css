@@ -31,9 +31,9 @@
 }
 
 .legalpro-doc-subnav__link.is-active {
-    background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 100%));
+    background: var(--legalpro-theme-gradient, linear-gradient(135deg, #0077b6 0%, #004e77 100%));
     color: #fff;
-    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.28);
+    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.28);
 }
 
 .legalpro-doc-hero {
@@ -127,7 +127,7 @@
     margin-bottom: 0.85rem;
 }
 
-.legalpro-doc-action-card--primary .legalpro-doc-action-card__icon { background: rgba(94, 114, 228, 0.12); color: #5e72e4; }
+.legalpro-doc-action-card--primary .legalpro-doc-action-card__icon { background: rgba(0, 119, 182, 0.12); color: #0077b6; }
 .legalpro-doc-action-card--info .legalpro-doc-action-card__icon { background: rgba(17, 205, 239, 0.12); color: #11cdef; }
 .legalpro-doc-action-card--dark .legalpro-doc-action-card__icon { background: rgba(52, 71, 103, 0.12); color: #344767; }
 .legalpro-doc-action-card--success .legalpro-doc-action-card__icon { background: rgba(45, 206, 137, 0.12); color: #2dce89; }
@@ -149,7 +149,7 @@
     margin-top: 0.75rem;
     font-size: 0.78rem;
     font-weight: 700;
-    color: #5e72e4;
+    color: #0077b6;
 }
 
 .legalpro-doc-panel {
@@ -205,8 +205,8 @@
     width: 3rem;
     height: 3rem;
     border-radius: 50%;
-    background: rgba(94, 114, 228, 0.12);
-    color: #5e72e4;
+    background: rgba(0, 119, 182, 0.12);
+    color: #0077b6;
     margin-bottom: 0.65rem;
 }
 
@@ -343,9 +343,9 @@ body.legalpro-dark-mode.legalpro-settings-page .legalpro-doc-subnav__link.is-act
 body.legalpro-dark-mode.legalpro-payments-activity-page .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.legalpro-client-portal .legalpro-doc-subnav__link.is-active,
 body.legalpro-dark-mode.client-cases-page .legalpro-doc-subnav__link.is-active {
-    background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 100%)) !important;
+    background: var(--legalpro-theme-gradient, linear-gradient(135deg, #0077b6 0%, #004e77 100%)) !important;
     color: #fff !important;
-    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35) !important;
+    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35) !important;
 }
 
 body.legalpro-dark-mode.legalpro-documents-page .navbar-main .breadcrumb-item a,

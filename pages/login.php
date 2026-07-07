@@ -162,9 +162,9 @@ $html = <<<'HTML'
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <style>
         :root {
-            --login-primary: #2b6fff;
-            --login-primary-dark: #1e56cf;
-            --login-accent: #35a6ff;
+            --login-primary: #023e8a;
+            --login-primary-dark: #001845;
+            --login-accent: #0353a4;
             --login-ink: #0f172a;
             --login-muted: #64748b;
             --login-border: rgba(15, 23, 42, 0.08);

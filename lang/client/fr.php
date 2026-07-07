@@ -11,6 +11,7 @@ return [
     'nav.court_tracking' => 'Suivi judiciaire',
     'nav.payments' => 'Paiements',
     'nav.ai_assistant' => 'Assistant IA',
+    'nav.sign_out' => 'Déconnexion',
     'nav.settings' => 'Paramètres',
     'nav.profile' => 'Profil',
     'nav.my_requests' => 'Mes demandes',

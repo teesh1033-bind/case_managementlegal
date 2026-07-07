@@ -76,7 +76,7 @@ $html = <<<'HTML'
             border-radius: 10px;
         }
         .auth-header {
-            background: linear-gradient(135deg, #5e72e4 0%, #11cdef 100%);
+            background: linear-gradient(135deg, #023e8a 0%, #001845 100%);
             color: white;
             border-radius: 10px 10px 0 0;
             padding: 2rem;
@@ -86,7 +86,7 @@ $html = <<<'HTML'
             padding: 2rem;
         }
         body {
-            background: linear-gradient(135deg, #5e72e4 0%, #11cdef 100%);
+            background: linear-gradient(135deg, #023e8a 0%, #001845 100%);
             min-height: 100vh;
         }
     </style>

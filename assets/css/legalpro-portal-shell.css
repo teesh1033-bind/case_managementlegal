@@ -2,16 +2,16 @@
  * Shared modern shell for lawyer & client portals (LegalPro brand colors).
  */
 :root {
-    --lp-portal-primary: #5e72e4;
-    --lp-portal-primary-dark: #825ee4;
-    --lp-portal-sidebar-bg: #1e2a44;
-    --lp-portal-sidebar-bg-deep: #151d30;
+    --lp-portal-primary: #023e8a;
+    --lp-portal-primary-dark: #001845;
+    --lp-portal-sidebar-bg: #021a3a;
+    --lp-portal-sidebar-bg-deep: #001028;
     --lp-portal-sidebar-width: 300px;
     --lp-portal-sidebar-collapsed: 88px;
     --lp-portal-header-height: 76px;
-    --lp-portal-content-bg: #f4f6f9;
+    --lp-portal-content-bg: #f4f7fe;
     --lp-portal-card-radius: 14px;
-    --lp-portal-gradient: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%);
+    --lp-portal-gradient: linear-gradient(135deg, #023e8a 0%, #001845 100%);
 }
 
 /* Lawyer + client page body selectors */
@@ -245,7 +245,7 @@ body.legalpro-sidebar-collapsed .legalpro-sidebar-signout span {
 .legalpro-sidebar-nav .nav-link.active {
     background: var(--legalpro-theme-gradient, var(--lp-portal-gradient)) !important;
     color: #fff !important;
-    box-shadow: 0 8px 18px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+    box-shadow: 0 8px 18px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35);
 }
 
 .legalpro-sidebar-nav__icon {

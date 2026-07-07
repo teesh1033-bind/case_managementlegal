@@ -45,12 +45,9 @@ try {
     foreach ($stmt->fetchAll() as $r) $caseByCategory[] = $r;
 } catch (PDOException $e) {}
 
-// ─── Case status breakdown (for bar chart) ────────────────────────────────────
-$caseByStatus = [];
-try {
-    $stmt = $pdo->query("SELECT COALESCE(status,'open') AS st, COUNT(*) AS cnt FROM cases GROUP BY st ORDER BY cnt DESC");
-    foreach ($stmt->fetchAll() as $r) $caseByStatus[$r['st']] = (int)$r['cnt'];
-} catch (PDOException $e) {}
+require_once __DIR__ . '/../lib/admin-dashboard-activity.php';
+$dashboardActivityItems = legalpro_admin_get_activity_feed($pdo, 60);
+$dashboardActivityHtml = legalpro_admin_render_activity_feed_html($dashboardActivityItems);
 
 // ─── Financial overview — last 6 months ───────────────────────────────────────
 $chartLabels = $chartInvoiced = $chartPaid = [];
@@ -80,57 +77,6 @@ try {
         ORDER BY c.created_at DESC LIMIT 8
     ");
     $recentCases = $stmt->fetchAll();
-} catch (PDOException $e) {}
-
-// ─── Calendar events ──────────────────────────────────────────────────────────
-$calendarEvents = [];
-try {
-    $stmt = $pdo->query("
-        SELECT a.id, a.case_id, a.starts_at, a.ends_at, a.notes, a.status,
-               CONCAT('C-',LPAD(cs.id,4,'0'),' · ',cs.title) AS case_display,
-               TRIM(CONCAT(cl.first_name,' ',cl.last_name)) AS client_name,
-               TRIM(CONCAT(l.first_name,' ',l.last_name)) AS lawyer_name
-        FROM appointments a
-        LEFT JOIN cases cs ON cs.id=a.case_id
-        LEFT JOIN clients cl ON cl.id=cs.client_id
-        LEFT JOIN lawyers l ON l.id=a.lawyer_id
-        WHERE a.starts_at IS NOT NULL ORDER BY a.starts_at ASC
-    ");
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $st = strtolower($row['status'] ?? 'pending');
-        $calendarEvents[] = [
-            'id' => (string)$row['id'],
-            'title' => $row['case_display'] ?: 'General appointment',
-            'start' => $row['starts_at'],
-            'end'   => $row['ends_at'] ?: null,
-            'backgroundColor' => 'transparent',
-            'borderColor'     => 'transparent',
-            'textColor'       => '#344767',
-            'extendedProps' => [
-                'client'        => $row['client_name'] ?: 'Unknown',
-                'lawyer'        => $row['lawyer_name'] ?: 'Unassigned',
-                'notes'         => $row['notes'] ?? '',
-                'status'        => $st,
-                'statusLabel'   => ucfirst($st === 'approved' ? 'accepted' : $st),
-                'appointmentId' => (int)$row['id'],
-            ],
-        ];
-    }
-} catch (PDOException $e) {}
-
-// ─── Upcoming sidebar ─────────────────────────────────────────────────────────
-$upcomingAppointments = [];
-try {
-    $stmt = $pdo->query("
-        SELECT a.id, a.starts_at, a.status,
-               CONCAT('C-',LPAD(cs.id,4,'0'),' · ',cs.title) AS case_display,
-               TRIM(CONCAT(cl.first_name,' ',cl.last_name)) AS client_name
-        FROM appointments a
-        LEFT JOIN cases cs ON cs.id=a.case_id
-        LEFT JOIN clients cl ON cl.id=cs.client_id
-        WHERE a.starts_at >= NOW() ORDER BY a.starts_at ASC LIMIT 8
-    ");
-    $upcomingAppointments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {}
 
 // ─── Top clients by case count ────────────────────────────────────────────────
@@ -173,31 +119,11 @@ if (empty($recentCases)) {
         $recentCasesHtml .= "<a href=\"case-view.php?id={$c['id']}\" style=\"text-decoration:none;color:inherit;\">
             <div class=\"dashboard-recent-item d-flex justify-content-between align-items-center mb-1\">
                 <div class=\"d-flex flex-column\">
-                    <h6 class=\"mb-1 text-dark text-sm font-weight-bold\">{$num} · {$title}</h6>
+                    <h6 class=\"mb-1 text-sm font-weight-bold vu-panel-title\">{$num} · {$title}</h6>
                     <span class=\"text-xs\">" . htmlspecialchars($client) . " · {$date}</span>
                 </div>
                 <span class=\"badge {$badge}\">{$slabel}</span>
             </div></a>";
-    }
-}
-
-// Upcoming appointments
-$upcomingHtml = '';
-if (empty($upcomingAppointments)) {
-    $upcomingHtml = '<div class="dashboard-upcoming-empty">' . legalpro_icon('calendar') . '<span>No upcoming appointments</span></div>';
-} else {
-    foreach ($upcomingAppointments as $up) {
-        $st    = htmlspecialchars(strtolower($up['status'] ?? 'pending'));
-        $time  = date('g:i A', strtotime($up['starts_at']));
-        $date2 = date('M j', strtotime($up['starts_at']));
-        $title = htmlspecialchars($up['case_display'] ?: 'Appointment');
-        $cli   = htmlspecialchars($up['client_name'] ?: '—');
-        $upcomingHtml .= "<button type=\"button\" class=\"dashboard-upcoming-item dashboard-upcoming-item--{$st}\" data-appointment-id=\"{$up['id']}\">
-            <span class=\"dashboard-upcoming-item__time\">{$time}<br><small>{$date2}</small></span>
-            <span class=\"flex-grow-1\">
-                <p class=\"dashboard-upcoming-item__title\">{$title}</p>
-                <p class=\"dashboard-upcoming-item__sub\">{$cli}</p>
-            </span></button>";
     }
 }
 
@@ -218,7 +144,7 @@ if (empty($topClients)) {
             <div class=\"lp-avatar\">{$initials}</div>
             <div class=\"flex-grow-1\">
                 <div class=\"d-flex justify-content-between align-items-baseline mb-1\">
-                    <span class=\"text-sm font-weight-bold text-dark\">{$n}</span>
+                    <span class=\"text-sm font-weight-bold vu-panel-title\">{$n}</span>
                     <span class=\"text-xs text-muted\">{$cnt} case" . ($cnt !== 1 ? 's' : '') . "</span>
                 </div>
                 <div class=\"lp-progress-bar\">
@@ -229,14 +155,11 @@ if (empty($topClients)) {
 }
 
 // ─── JSON for JS ──────────────────────────────────────────────────────────────
-$calendarJson      = json_encode($calendarEvents, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 $chartLabelsJson   = json_encode($chartLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 $chartInvoicedJson = json_encode($chartInvoiced, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 $chartPaidJson     = json_encode($chartPaid, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 $catLabels         = json_encode(array_column($caseByCategory, 'cat'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCategory), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
-$statusLabelsJson  = json_encode(array_map(static fn($s) => ucwords(str_replace('_', ' ', (string)$s)), array_keys($caseByStatus)), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
-$statusDataJson    = json_encode(array_values($caseByStatus), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 ob_start();
 ?>
 <!DOCTYPE html>
@@ -253,59 +176,58 @@ ob_start();
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/vision-ui-dashboard.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/vision-ui-dashboard.css?v=7" rel="stylesheet" />
 
     <style>
         /* Inline extras not yet in the drop-in CSS */
         .lp-avatar {
             width: 36px; height: 36px; border-radius: 10px;
-            background: rgba(94,114,228,0.12);
-            color: #5e72e4; font-size: 0.72rem; font-weight: 800;
+            background: rgba(2,62,138,0.12);
+            color: var(--vu-primary, #023e8a); font-size: 0.72rem; font-weight: 800;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0; letter-spacing: 0.03em;
         }
         .lp-progress-bar {
-            height: 5px; background: #f1f5f9;
+            height: 5px; background: var(--vu-surface-muted, #f1f5f9);
             border-radius: 99px; overflow: hidden;
         }
         .lp-progress-fill {
-            height: 100%; background: linear-gradient(90deg,#5e72e4,#825ee4);
+            height: 100%; background: linear-gradient(90deg,var(--vu-primary,#023e8a),var(--vu-primary-2,#001845));
             border-radius: 99px; transition: width 0.6s cubic-bezier(.4,0,.2,1);
         }
         .lp-kpi-delta {
             display: inline-flex; align-items: center; gap: 3px;
             font-size: 0.72rem; font-weight: 700;
         }
-        .lp-kpi-delta--up   { color: #2dce89; }
-        .lp-kpi-delta--down { color: #f5365c; }
-        /* Collection rate badge */
+        .lp-kpi-delta--up   { color: var(--vu-success, #2dce89); }
+        .lp-kpi-delta--down { color: var(--vu-danger, #f5365c); }
         .lp-collection-badge {
             display: inline-flex; align-items: center; gap: 5px;
-            background: rgba(45,206,137,0.1); color: #1e9e6a;
+            background: var(--vu-collection-bg, rgba(45,206,137,0.1));
+            color: var(--vu-collection-text, #1e9e6a);
             font-size: 0.72rem; font-weight: 700;
             padding: 3px 10px; border-radius: 99px;
         }
-        /* Section header */
         .lp-section-hd {
-            font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 0;
+            font-size: 0.9rem; font-weight: 700;
+            color: var(--vu-text, #1e293b); margin-bottom: 0;
         }
         .lp-section-sub {
-            font-size: 0.75rem; color: #94a3b8; margin-top: 2px;
+            font-size: 0.75rem;
+            color: var(--vu-muted, #94a3b8); margin-top: 2px;
         }
-        .cat-legend-label { color: #64748b; }
-        .cat-legend-pct { color: #1e293b; }
-        /* Command palette hint */
+        .cat-legend-label { color: var(--vu-muted, #64748b); }
+        .cat-legend-pct { color: var(--vu-text, #1e293b); }
         .lp-cmd-hint {
             display: flex; align-items: center; gap: 6px;
-            font-size: 0.71rem; color: #94a3b8;
+            font-size: 0.71rem; color: var(--vu-muted, #94a3b8);
         }
         .lp-cmd-hint kbd {
-            padding: 1px 5px; border: 1px solid #e2e8f0;
-            border-radius: 4px; background: #f8fafc;
+            padding: 1px 5px; border: 1px solid var(--vu-border, #e2e8f0);
+            border-radius: 4px; background: var(--vu-bg-soft, #f8fafc);
             font-family: inherit; font-size: 0.68rem; font-weight: 600;
-            color: #64748b; box-shadow: 0 1px 0 #e2e8f0;
+            color: var(--vu-muted, #64748b); box-shadow: 0 1px 0 var(--vu-border, #e2e8f0);
         }
     </style>
 </head>
@@ -335,50 +257,6 @@ echo ob_get_clean();
     </nav>
 
     <div class="container-fluid py-4 px-4">
-
-        <!-- ── AT-A-GLANCE STRIP ───────────────────────────────────────── -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="dashboard-glance">
-                    <a href="appointments.php" class="dashboard-glance__item">
-                        <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--primary">
-                            <?= legalpro_icon('clock') ?>
-                        </div>
-                        <div>
-                            <div class="dashboard-glance__value"><?= $appointmentsToday ?></div>
-                            <div class="dashboard-glance__label">Appointments today</div>
-                        </div>
-                    </a>
-                    <a href="appointments.php" class="dashboard-glance__item">
-                        <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--info">
-                            <?= legalpro_icon('calendar') ?>
-                        </div>
-                        <div>
-                            <div class="dashboard-glance__value"><?= $appointmentsThisWeek ?></div>
-                            <div class="dashboard-glance__label">This week</div>
-                        </div>
-                    </a>
-                    <a href="appointments.php" class="dashboard-glance__item">
-                        <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--warning">
-                            <?= legalpro_icon('bell') ?>
-                        </div>
-                        <div>
-                            <div class="dashboard-glance__value"><?= $dueToday ?></div>
-                            <div class="dashboard-glance__label">Pending today</div>
-                        </div>
-                    </a>
-                    <a href="invoices.php" class="dashboard-glance__item">
-                        <div class="dashboard-glance-icon-wrap dashboard-glance-icon-wrap--success">
-                            <?= legalpro_icon('file-text') ?>
-                        </div>
-                        <div>
-                            <div class="dashboard-glance__value"><?= $unpaidInvoices ?></div>
-                            <div class="dashboard-glance__label">Open invoices</div>
-                        </div>
-                    </a>
-                </div>
-            </div>
-        </div>
 
         <!-- ── FOUR KPI STAT CARDS ─────────────────────────────────────── -->
         <div class="row mb-4">
@@ -514,11 +392,11 @@ echo ob_get_clean();
         </div>
 
         <!-- ── CHARTS ROW ──────────────────────────────────────────────── -->
-        <div class="row mt-2 mb-4">
+        <div class="row mt-2 mb-4 align-items-stretch">
 
             <!-- Financial overview (line) -->
-            <div class="col-lg-8 mb-4 mb-lg-0">
-                <div class="card h-100">
+            <div class="col-lg-8 mb-4 mb-lg-0 d-flex">
+                <div class="card h-100 flex-fill">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <div>
                             <p class="lp-section-hd">Financial Overview</p>
@@ -537,26 +415,24 @@ echo ob_get_clean();
                 </div>
             </div>
 
-            <!-- Case status + categories -->
-            <div class="col-lg-4">
-                <div class="card h-100 mb-4">
-                    <div class="card-header">
-                        <p class="lp-section-hd">Cases by Status</p>
-                        <p class="lp-section-sub">Current workload distribution</p>
+            <!-- Activity + categories -->
+            <div class="col-lg-4 d-flex flex-column vu-dashboard-side-col">
+                <div class="card vu-side-panel vu-activity-panel flex-fill mb-3">
+                    <div class="card-header pb-2">
+                        <p class="lp-section-hd"><?= htmlspecialchars(admin_t('activity.title')) ?></p>
+                        <p class="lp-section-sub"><?= htmlspecialchars(admin_t('activity.subtitle')) ?></p>
                     </div>
-                    <div class="card-body">
-                        <div style="position:relative;height:160px;">
-                            <canvas id="chart-status" aria-label="Bar chart of case status distribution">Status chart unavailable.</canvas>
-                        </div>
+                    <div class="card-body pt-0">
+                        <?= $dashboardActivityHtml ?>
                     </div>
                 </div>
-                <div class="card h-100">
-                    <div class="card-header">
+                <div class="card vu-side-panel vu-category-panel flex-fill mb-0">
+                    <div class="card-header pb-2">
                         <p class="lp-section-hd">Cases by Category</p>
                         <p class="lp-section-sub">Practice area split</p>
                     </div>
-                    <div class="card-body d-flex flex-column align-items-center">
-                        <div style="position:relative;width:150px;height:150px;">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center pt-0">
+                        <div style="position:relative;width:150px;height:150px;flex-shrink:0;">
                             <canvas id="chart-categories" aria-label="Doughnut chart of case categories">Category chart unavailable.</canvas>
                         </div>
                         <div id="cat-legend" style="margin-top:1rem;width:100%;font-size:.75rem;"></div>
@@ -598,42 +474,6 @@ echo ob_get_clean();
             </div>
         </div>
 
-        <!-- ── APPOINTMENTS CALENDAR ───────────────────────────────────── -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="dashboard-calendar-hub">
-                    <div class="dashboard-calendar-hub__head">
-                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-                            <div>
-                                <p class="lp-section-hd">Appointments Calendar</p>
-                                <p class="lp-section-sub">Click an event for details · drag to reschedule</p>
-                                <div class="dashboard-legend-pills">
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
-                                </div>
-                            </div>
-                            <a href="appointments.php" class="btn btn-sm bg-gradient-primary mb-0">Manage appointments</a>
-                        </div>
-                    </div>
-                    <div class="dashboard-calendar-hub__body">
-                        <div class="dashboard-calendar-layout">
-                            <div id="dashboardCalendar"></div>
-                            <aside class="dashboard-upcoming-panel">
-                                <div class="dashboard-upcoming-panel__title">
-                                    <span>Upcoming</span>
-                                    <a href="appointments.php" class="text-xs font-weight-bold" style="color:#7cb8ff;">View all</a>
-                                </div>
-                                <div class="dashboard-upcoming-list" id="upcomingAppointmentsList">
-                                    <?= $upcomingHtml ?>
-                                </div>
-                            </aside>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <footer class="footer pt-3 pb-4">
             <div class="container-fluid">
                 <div class="copyright text-sm text-muted">
@@ -643,45 +483,6 @@ echo ob_get_clean();
         </footer>
     </div><!-- /container-fluid -->
 </main>
-
-<!-- ── APPOINTMENT DETAIL MODAL ──────────────────────────────────────────── -->
-<div class="modal fade" id="appointmentModal" tabindex="-1" aria-hidden="true" style="z-index:99999;">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header" style="background:linear-gradient(135deg,#0075ff 0%,#4318ff 100%);">
-                <h6 class="modal-title text-white font-weight-bold" id="modalTitle">Appointment</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row g-3 mb-3">
-                    <div class="col-6">
-                        <label>Client</label>
-                        <p id="modalClient" class="mb-0"></p>
-                    </div>
-                    <div class="col-6">
-                        <label>Lawyer</label>
-                        <p id="modalLawyer" class="mb-0"></p>
-                    </div>
-                </div>
-                <div class="row g-3 mb-3">
-                    <div class="col-6">
-                        <label>Status</label>
-                        <p id="modalStatus" class="mb-0"></p>
-                    </div>
-                    <div class="col-6">
-                        <label>Scheduled time</label>
-                        <p id="modalTime" class="mb-0"></p>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label>Notes</label>
-                    <div id="modalNotes" class="appointment-modal-notes p-3 rounded"></div>
-                </div>
-                <a id="modalEditLink" href="appointments.php" class="btn btn-sm bg-gradient-dark appointment-modal-edit-btn w-100 mb-0">Edit appointment</a>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- ── SCRIPTS ────────────────────────────────────────────────────────────── -->
 <script src="../assets/js/core/popper.min.js"></script>
@@ -701,7 +502,7 @@ function vuChartTheme() {
         tick: dark ? '#A0AEC0' : '#707eae',
         grid: dark ? 'rgba(160, 174, 192, 0.15)' : 'rgba(112, 126, 174, 0.18)',
         doughnutBorder: dark ? '#1a1f37' : '#ffffff',
-        invoicedFill: dark ? 'rgba(0, 117, 255, 0.35)' : 'rgba(0, 117, 255, 0.22)',
+        invoicedFill: dark ? 'rgba(2, 62, 138, 0.35)' : 'rgba(2, 62, 138, 0.22)',
         collectedFill: dark ? 'rgba(1, 181, 116, 0.28)' : 'rgba(1, 181, 116, 0.2)'
     };
 }
@@ -714,7 +515,7 @@ function vuChartTheme() {
     var ctx = ctxEl.getContext('2d');
     var g1 = ctx.createLinearGradient(0, 260, 0, 30);
     g1.addColorStop(0, theme.invoicedFill);
-    g1.addColorStop(1, 'rgba(0, 117, 255, 0)');
+    g1.addColorStop(1, 'rgba(2, 62, 138, 0)');
     var g2 = ctx.createLinearGradient(0, 260, 0, 30);
     g2.addColorStop(0, theme.collectedFill);
     g2.addColorStop(1, 'rgba(1, 181, 116, 0)');
@@ -725,7 +526,7 @@ function vuChartTheme() {
             labels: <?= $chartLabelsJson ?>,
             datasets: [{
                 label: 'Invoiced', tension: 0.45, pointRadius: 4,
-                pointBackgroundColor: '#0075FF', borderColor: '#0075FF',
+                pointBackgroundColor: '#023e8a', borderColor: '#023e8a',
                 backgroundColor: g1, borderWidth: 3, fill: true,
                 data: <?= $chartInvoicedJson ?>
             }, {
@@ -760,35 +561,6 @@ function vuChartTheme() {
     });
 })();
 
-/* ── Case status bar chart ───────────────────────────────────────────────── */
-(function() {
-    var ctxEl = document.getElementById('chart-status');
-    if (!ctxEl) return;
-    var theme = vuChartTheme();
-    new Chart(ctxEl, {
-        type: 'bar',
-        data: {
-            labels: <?= $statusLabelsJson ?>,
-            datasets: [{
-                label: 'Cases',
-                data: <?= $statusDataJson ?>,
-                backgroundColor: ['#0075FF', '#4318FF', '#01B574', '#FFB547', '#E31A1A'],
-                borderRadius: 8,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: theme.grid }, ticks: { color: theme.tick } },
-                x: { grid: { display: false }, ticks: { color: theme.tick } }
-            }
-        }
-    });
-})();
-
 /* ── Case category doughnut ──────────────────────────────────────────────── */
 (function() {
     var ctx = document.getElementById('chart-categories');
@@ -796,7 +568,7 @@ function vuChartTheme() {
     var theme = vuChartTheme();
     var labels = <?= $catLabels ?>;
     var data   = <?= $catData ?>;
-    var colors = ['#0075FF', '#01B574', '#4318FF', '#FFB547', '#7551FF', '#E31A1A'];
+    var colors = ['#023e8a', '#01B574', '#001845', '#FFB547', '#7551FF', '#E31A1A'];
 
     new Chart(ctx, {
         type: 'doughnut',
@@ -824,102 +596,6 @@ function vuChartTheme() {
             '<span class="cat-legend-pct" style="font-weight:700;">' + pct + '%</span></div>';
     });
 })();
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('dashboardCalendar');
-    var events = <?= $calendarJson ?>;
-
-    function fmtDT(d) {
-        if (!d) return '—';
-        var dd = String(d.getDate()).padStart(2, '0'),
-            mm = String(d.getMonth() + 1).padStart(2, '0'),
-            yy = d.getFullYear(),
-            h = String(d.getHours()).padStart(2, '0'),
-            mi = String(d.getMinutes()).padStart(2, '0');
-        return dd + '/' + mm + '/' + yy + ' at ' + h + ':' + mi;
-    }
-
-    function openModal(ev) {
-        var p = ev.extendedProps || {};
-        document.getElementById('modalTitle').textContent = ev.title || 'Appointment';
-        document.getElementById('modalClient').textContent = p.client || '—';
-        document.getElementById('modalLawyer').textContent = p.lawyer || '—';
-        document.getElementById('modalStatus').textContent = p.statusLabel || p.status || 'Pending';
-        document.getElementById('modalNotes').textContent = p.notes || 'No notes added.';
-        var start = ev.start instanceof Date ? ev.start : new Date(ev.start);
-        var t = fmtDT(start);
-        if (ev.end) {
-            var e = ev.end instanceof Date ? ev.end : new Date(ev.end);
-            t += ' — ' + fmtDT(e);
-        }
-        document.getElementById('modalTime').textContent = t;
-        document.getElementById('modalEditLink').href = 'new_appointment.php?id=' + (p.appointmentId || ev.id);
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('appointmentModal')).show();
-    }
-
-    function statusKey(s) {
-        var v = String(s || 'pending').toLowerCase();
-        return v === 'approved' ? 'accepted' : v;
-    }
-
-    function renderEvent(arg) {
-        var p = arg.event.extendedProps || {};
-        var sk = statusKey(p.status);
-        var label = arg.event.title;
-        if (label.length > 22) label = label.slice(0, 19) + '…';
-        var el = document.createElement('div');
-        el.className = 'dashboard-cal-event';
-        el.innerHTML = '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + sk + '"></span>' +
-            '<span class="dashboard-cal-event__text">' + (arg.timeText ? arg.timeText + ' ' : '') + label + '</span>';
-        return { domNodes: [el] };
-    }
-
-    var upcomingList = document.getElementById('upcomingAppointmentsList');
-    if (upcomingList) {
-        upcomingList.addEventListener('click', function(e) {
-            var btn = e.target.closest('[data-appointment-id]');
-            if (!btn) return;
-            var id = btn.getAttribute('data-appointment-id');
-            var ev = events.find(function(x) { return String(x.id) === String(id); });
-            if (ev) openModal({ title: ev.title, start: ev.start, end: ev.end, id: ev.id, extendedProps: ev.extendedProps });
-        });
-    }
-
-    if (!calendarEl || typeof FullCalendar === 'undefined') return;
-
-    var cal = new FullCalendar.Calendar(calendarEl, {
-        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
-        height: 'auto', firstDay: 1, navLinks: true, nowIndicator: true,
-        fixedWeekCount: false, dayMaxEvents: 3, moreLinkClick: 'popover',
-        buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
-        eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-        dayHeaderFormat: { weekday: 'short' },
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
-        events: events,
-        eventContent: renderEvent,
-        dateClick: function(info) {
-            if (window.legalproHandleCalendarDateClick) {
-                window.legalproHandleCalendarDateClick(info, function(event) { openModal(event); });
-            }
-        },
-        dayCellDidMount: function(info) {
-            if (window.legalproMountCalendarDayCell) window.legalproMountCalendarDayCell(info);
-        },
-        eventClick: function(info) { info.jsEvent.preventDefault(); openModal(info.event); },
-        eventDidMount: function(info) {
-            if (window.legalproMountCalendarEventClickable) window.legalproMountCalendarEventClickable(info);
-            var p = info.event.extendedProps;
-            var tip = info.event.title;
-            if (p.client) tip += '\nClient: ' + p.client;
-            if (p.lawyer) tip += '\nLawyer: ' + p.lawyer;
-            info.el.title = tip;
-        }
-    });
-    cal.render();
-});
 </script>
 
 <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>

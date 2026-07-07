@@ -83,6 +83,7 @@ echo legalpro_render_portal_sidebar([
     'current_page' => $currentPage,
     'items' => $clientMenuPrimary,
     'footer_items' => $clientMenuFooter,
+    'logout_url' => 'client-logout.php',
     'is_active' => 'clientNavIsActive',
 ]);
 ?>

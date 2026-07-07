@@ -8,7 +8,7 @@
    1. DESIGN TOKENS
    ============================================================ */
 :root {
-    --lp-primary:        #5e72e4;
+    --lp-primary:        #0077b6;
     --lp-primary-dark:   #4a5fd4;
     --lp-primary-light:  #eef0fc;
     --lp-accent:         #11cdef;
@@ -181,9 +181,9 @@ body.legalpro-admin-portal .legalpro-sidebar-nav .nav-link:hover {
     color: rgba(255,255,255,0.9) !important;
 }
 body.legalpro-admin-portal .legalpro-sidebar-nav .nav-link.active {
-    background: rgba(94,114,228,0.22) !important;
+    background: rgba(0,119,182,0.22) !important;
     color: #a5b4fc !important;
-    box-shadow: inset 3px 0 0 #5e72e4;
+    box-shadow: inset 3px 0 0 #0077b6;
 }
 body.legalpro-admin-portal .legalpro-sidebar-nav__icon {
     width: 20px;
@@ -307,7 +307,7 @@ body.legalpro-admin-portal .card-body {
     justify-content: center;
     flex-shrink: 0;
 }
-.dashboard-glance-icon-wrap--primary { background: rgba(94,114,228,0.12); }
+.dashboard-glance-icon-wrap--primary { background: rgba(0,119,182,0.12); }
 .dashboard-glance-icon-wrap--info    { background: rgba(17,205,239,0.12); }
 .dashboard-glance-icon-wrap--warning { background: rgba(251,99,64,0.12); }
 .dashboard-glance-icon-wrap--success { background: rgba(45,206,137,0.12); }
@@ -381,7 +381,7 @@ body.legalpro-admin-portal .card-body {
     flex-shrink: 0;
     float: right;
 }
-.dashboard-stat-icon-wrap--primary { background: rgba(94,114,228,0.12); }
+.dashboard-stat-icon-wrap--primary { background: rgba(0,119,182,0.12); }
 .dashboard-stat-icon-wrap--danger  { background: rgba(245,54,92,0.12); }
 .dashboard-stat-icon-wrap--success { background: rgba(45,206,137,0.12); }
 .dashboard-stat-icon-wrap--warning { background: rgba(251,99,64,0.12); }
@@ -404,7 +404,7 @@ body.legalpro-admin-portal .card-body {
 .dashboard-quick-actions .btn-white {
     background: #fff;
     color: var(--lp-primary) !important;
-    border: 1px solid rgba(94,114,228,0.3);
+    border: 1px solid rgba(0,119,182,0.3);
     box-shadow: var(--lp-shadow-sm);
 }
 .dashboard-quick-actions .btn-white:hover {
@@ -429,7 +429,7 @@ body.legalpro-admin-portal .card-body {
 }
 .dashboard-recent-item:hover {
     background: var(--lp-primary-light);
-    border-color: rgba(94,114,228,0.15);
+    border-color: rgba(0,119,182,0.15);
 }
 .dashboard-recent-item h6 {
     font-size: 0.83rem !important;
@@ -523,7 +523,7 @@ body.legalpro-admin-portal .card-body {
     border-color: var(--lp-primary) !important;
     color: #fff !important;
 }
-#dashboardCalendar .fc-day-today { background: rgba(94,114,228,0.06) !important; }
+#dashboardCalendar .fc-day-today { background: rgba(0,119,182,0.06) !important; }
 #dashboardCalendar .fc-col-header-cell-cushion {
     font-size: 0.72rem;
     font-weight: 700;
@@ -544,8 +544,8 @@ body.legalpro-admin-portal .card-body {
     gap: 5px;
     padding: 2px 7px;
     border-radius: 5px;
-    background: rgba(94,114,228,0.08);
-    border: 1px solid rgba(94,114,228,0.15);
+    background: rgba(0,119,182,0.08);
+    border: 1px solid rgba(0,119,182,0.15);
     cursor: pointer;
 }
 .dashboard-cal-event__dot {
@@ -735,7 +735,7 @@ body.legalpro-admin-portal .form-select {
 body.legalpro-admin-portal .form-control:focus,
 body.legalpro-admin-portal .form-select:focus {
     border-color: var(--lp-primary) !important;
-    box-shadow: 0 0 0 3px rgba(94,114,228,0.15) !important;
+    box-shadow: 0 0 0 3px rgba(0,119,182,0.15) !important;
     outline: none !important;
 }
 
@@ -755,12 +755,12 @@ body.legalpro-admin-portal .btn-sm {
 }
 body.legalpro-admin-portal .bg-gradient-primary,
 body.legalpro-admin-portal .btn-primary {
-    background: linear-gradient(135deg, var(--lp-primary) 0%, #825ee4 100%) !important;
+    background: linear-gradient(135deg, var(--lp-primary) 0%, #004e77 100%) !important;
     border-color: transparent !important;
-    box-shadow: 0 4px 14px rgba(94,114,228,0.35) !important;
+    box-shadow: 0 4px 14px rgba(0,119,182,0.35) !important;
 }
 body.legalpro-admin-portal .bg-gradient-primary:hover {
-    box-shadow: 0 6px 20px rgba(94,114,228,0.45) !important;
+    box-shadow: 0 6px 20px rgba(0,119,182,0.45) !important;
     transform: translateY(-1px);
 }
 
@@ -784,7 +784,7 @@ body.legalpro-admin-portal .bg-gradient-primary:hover {
 .lp-search-bar input:focus {
     width: 280px;
     border-color: var(--lp-primary) !important;
-    box-shadow: 0 0 0 3px rgba(94,114,228,0.12) !important;
+    box-shadow: 0 0 0 3px rgba(0,119,182,0.12) !important;
 }
 .lp-search-bar svg {
     position: absolute;

@@ -77,12 +77,12 @@ body .input-group > .input-group-prepend + .form-select {
 }
 
 .navbar-main .legalpro-navbar-search .input-group:hover {
-  border-color: rgba(94, 114, 228, 0.42);
+  border-color: rgba(0, 119, 182, 0.42);
 }
 
 .navbar-main .legalpro-navbar-search .input-group:focus-within {
-  border-color: var(--lp-admin-primary, var(--bs-primary, #5e72e4));
-  box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.12);
+  border-color: var(--lp-admin-primary, var(--bs-primary, #0077b6));
+  box-shadow: 0 0 0 0.2rem rgba(0, 119, 182, 0.12);
 }
 
 .navbar-main .legalpro-navbar-search .input-group-text {
@@ -167,8 +167,8 @@ body .input-group > .input-group-prepend + .form-select {
 
 .legalpro-search-clear:hover,
 .legalpro-search-clear:focus {
-  color: #5e72e4;
-  background-color: rgba(94, 114, 228, 0.08);
+  color: #0077b6;
+  background-color: rgba(0, 119, 182, 0.08);
   outline: none;
 }
 
@@ -193,12 +193,12 @@ body .input-group > .input-group-prepend + .form-select {
 }
 
 .search-portal-page .search-hero-field:hover {
-  border-color: rgba(94, 114, 228, 0.42) !important;
+  border-color: rgba(0, 119, 182, 0.42) !important;
 }
 
 .search-portal-page .search-hero-field:focus-within {
-  border-color: var(--lp-admin-primary, var(--bs-primary, #5e72e4)) !important;
-  box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.12) !important;
+  border-color: var(--lp-admin-primary, var(--bs-primary, #0077b6)) !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 119, 182, 0.12) !important;
 }
 
 .search-portal-page .search-hero-field .form-control:focus,
@@ -241,8 +241,8 @@ input.form-check-input[type=checkbox].task-lawyer-checkbox:hover {
 input.form-check-input[type=checkbox].lawyer-checkbox:focus,
 input.form-check-input[type=checkbox].task-lawyer-checkbox:focus {
   outline: none;
-  border-color: #5e72e4;
-  box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.15);
+  border-color: #0077b6;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.15);
 }
 
 .form-check:not(.form-switch) .form-check-input[type=checkbox]:checked,

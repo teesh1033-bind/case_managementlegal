@@ -9,10 +9,10 @@
 #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar,
 #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar,
 #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar {
-    background-color: var(--legalpro-theme-primary, #5e72e4) !important;
+    background-color: var(--legalpro-theme-primary, #0077b6) !important;
     background-image: var(
         --legalpro-theme-gradient-310,
-        linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)
+        linear-gradient(310deg, #0077b6 0%, #004e77 100%)
     ) !important;
     border: 1px solid rgba(255, 255, 255, 0.28) !important;
     box-shadow: 0 4px 18px rgba(15, 23, 42, 0.2) !important;
@@ -96,7 +96,7 @@
     background-color: #fff !important;
     background-image: none !important;
     border-color: #fff !important;
-    color: var(--legalpro-theme-primary, #5e72e4) !important;
+    color: var(--legalpro-theme-primary, #0077b6) !important;
     text-shadow: none !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
 }
@@ -131,7 +131,7 @@
 #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon,
 #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon,
 #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active .fc-icon {
-    color: var(--legalpro-theme-primary, #5e72e4) !important;
+    color: var(--legalpro-theme-primary, #0077b6) !important;
 }
 
 /* Dark mode — keep gradient bar + white controls readable */
@@ -191,5 +191,5 @@ body.legalpro-dark-mode #appointmentsCalendar .fc .fc-toolbar.fc-header-toolbar 
 body.legalpro-dark-mode #clientAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active,
 body.legalpro-dark-mode #lawyerAppointmentsCalendar .fc .fc-toolbar.fc-header-toolbar .fc-button.fc-button-active {
     background-color: #fff !important;
-    color: var(--legalpro-theme-primary, #5e72e4) !important;
+    color: var(--legalpro-theme-primary, #0077b6) !important;
 }

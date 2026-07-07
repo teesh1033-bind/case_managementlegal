@@ -898,7 +898,7 @@ function legalpro_documents_shared_styles(): string
         .recent-document-item:hover { background-color: #f8f9fa !important; transition: background-color 0.2s ease; }
         body.legalpro-dark-mode .recent-document-item:hover { background-color: var(--lp-dark-surface-hover, #464f68) !important; }
         #documentsAccordion .doc-case-document-item { transition: background-color 0.15s ease; border-bottom-color: #eef1f6 !important; }
-        #documentsAccordion .doc-case-document-item:hover { background-color: rgba(94, 114, 228, 0.07) !important; }
+        #documentsAccordion .doc-case-document-item:hover { background-color: rgba(0, 119, 182, 0.07) !important; }
         body.legalpro-dark-mode #documentsAccordion .doc-case-document-item { border-bottom-color: var(--lp-dark-border, #3d4660) !important; }
         body.legalpro-dark-mode #documentsAccordion .doc-case-document-item:hover { background-color: rgba(255, 255, 255, 0.05) !important; }
         .document-item > .d-flex.align-items-center:first-child { flex: 1 1 auto; min-width: 0; }
@@ -920,7 +920,7 @@ function legalpro_documents_shared_styles(): string
             stroke-width: 2.35;
         }
         body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--primary {
-            background: rgba(94, 114, 228, 0.28) !important;
+            background: rgba(0, 119, 182, 0.28) !important;
         }
         body.legalpro-dark-mode .document-item-icon.dashboard-stat-icon-wrap--primary .lp-icon svg {
             stroke: #e0e7ff !important;
@@ -952,7 +952,7 @@ function legalpro_documents_shared_styles(): string
             stroke-width: 2.35;
         }
         #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--dark {
-            background: rgba(94, 114, 228, 0.22) !important;
+            background: rgba(0, 119, 182, 0.22) !important;
         }
         #documentsAccordion .doc-case-document-item .document-item-icon.dashboard-stat-icon-wrap--dark .lp-icon svg {
             stroke: #c7d2fe !important;

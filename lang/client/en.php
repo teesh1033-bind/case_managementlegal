@@ -11,6 +11,7 @@ return [
     'nav.court_tracking' => 'Court Tracking',
     'nav.payments' => 'Payments',
     'nav.ai_assistant' => 'AI Assistant',
+    'nav.sign_out' => 'Sign out',
     'nav.settings' => 'Settings',
     'nav.profile' => 'Profile',
     'nav.my_requests' => 'My requests',

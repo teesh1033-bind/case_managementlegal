@@ -380,13 +380,13 @@ $html = <<<'HTML'
         }
         .availability-view-toggle__btn:hover,
         .availability-view-toggle__btn:focus {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
-            color: var(--legalpro-theme-primary, #5e72e4);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.08);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35);
+            color: var(--legalpro-theme-primary, #0077b6);
             outline: none;
         }
         .availability-view-toggle__btn.is-active {
-            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #0077b6, #004e77));
             border-color: transparent;
             color: #fff;
         }
@@ -410,9 +410,9 @@ $html = <<<'HTML'
         .lawyer-availability-page .la-avail-search-wrap--featured {
             padding: .9rem 1rem 1rem;
             border-radius: 14px;
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
-            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
-            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12);
         }
         .lawyer-availability-page .la-avail-search-label {
             display: block;
@@ -420,7 +420,7 @@ $html = <<<'HTML'
             font-weight: 800;
             letter-spacing: .1em;
             text-transform: uppercase;
-            color: #5e72e4;
+            color: #0077b6;
             margin-bottom: .55rem;
         }
         .lawyer-availability-page .la-avail-search-field {
@@ -428,15 +428,15 @@ $html = <<<'HTML'
             align-items: center;
             gap: .7rem;
             background: #fff;
-            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.32);
             border-radius: 12px;
             padding: .7rem 1rem;
             transition: border-color .15s, box-shadow .15s, transform .15s;
             box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
         }
         .lawyer-availability-page .la-avail-search-field:focus-within {
-            border-color: #5e72e4;
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            border-color: #0077b6;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
             transform: translateY(-1px);
         }
         .lawyer-availability-page .la-avail-search-icon {
@@ -446,8 +446,8 @@ $html = <<<'HTML'
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
-            color: #5e72e4;
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12);
+            color: #0077b6;
             flex-shrink: 0;
         }
         .lawyer-availability-page .la-avail-search-field svg {

@@ -574,7 +574,7 @@ $html = <<<'HTML'
             border-color: rgba(251, 140, 0, 0.35);
         }
         .lawyer-tasks-page .lt-task-row--this-week {
-            border-color: rgba(94, 114, 228, 0.28);
+            border-color: rgba(0, 119, 182, 0.28);
         }
         .lawyer-tasks-page .lt-task-due-alert {
             border-radius: 999px;
@@ -594,8 +594,8 @@ $html = <<<'HTML'
             color: #c45c00;
         }
         .lawyer-tasks-page .lt-task-due-alert--week {
-            background: rgba(94, 114, 228, 0.12);
-            color: #5e72e4;
+            background: rgba(0, 119, 182, 0.12);
+            color: #0077b6;
         }
         .lawyer-tasks-page .lt-task-due-chip {
             border-radius: 999px;
@@ -618,8 +618,8 @@ $html = <<<'HTML'
             color: #c45c00;
         }
         .lawyer-tasks-page .lt-task-due-chip--week {
-            background: rgba(94, 114, 228, 0.12);
-            color: #5e72e4;
+            background: rgba(0, 119, 182, 0.12);
+            color: #0077b6;
         }
         .lawyer-tasks-page .lt-task-due-chip--active {
             box-shadow: 0 0 0 2px currentColor;
@@ -631,8 +631,8 @@ $html = <<<'HTML'
         }
         .lawyer-tasks-page .lt-task-comment-file {
             align-items: center;
-            background: rgba(94, 114, 228, 0.08);
-            border: 1px solid rgba(94, 114, 228, 0.16);
+            background: rgba(0, 119, 182, 0.08);
+            border: 1px solid rgba(0, 119, 182, 0.16);
             border-radius: 0.45rem;
             color: #324cdd;
             display: inline-flex;
@@ -644,7 +644,7 @@ $html = <<<'HTML'
             width: fit-content;
         }
         .lawyer-tasks-page .lt-task-comment-file:hover {
-            background: rgba(94, 114, 228, 0.14);
+            background: rgba(0, 119, 182, 0.14);
             color: #243bcc;
         }
         .lawyer-tasks-page .lt-task-row__badges .ca-status-pill {

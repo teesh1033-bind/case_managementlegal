@@ -66,7 +66,7 @@
 }
 
 .case-detail-tabs-wrap::-webkit-scrollbar-thumb {
-    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+    background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35);
     border-radius: 4px;
 }
 
@@ -103,15 +103,15 @@
 }
 
 .case-detail-tabs .nav-link:hover {
-    color: var(--legalpro-theme-primary, #5e72e4);
+    color: var(--legalpro-theme-primary, #0077b6);
     background: rgba(255, 255, 255, 0.72);
-    box-shadow: 0 2px 8px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+    box-shadow: 0 2px 8px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.1);
 }
 
 .case-detail-tabs .nav-link.active {
-    background: var(--legalpro-theme-gradient-310, var(--legalpro-theme-gradient, linear-gradient(310deg, #5e72e4 0%, #825ee4 100%)));
+    background: var(--legalpro-theme-gradient-310, var(--legalpro-theme-gradient, linear-gradient(310deg, #0077b6 0%, #004e77 100%)));
     color: #fff !important;
-    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.3);
+    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.3);
 }
 
 .case-detail-tabs__icon {
@@ -121,7 +121,7 @@
     width: 1.65rem;
     height: 1.65rem;
     border-radius: 0.5rem;
-    background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
+    background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.1);
     font-size: 0.75rem;
     line-height: 0;
     flex-shrink: 0;
@@ -155,8 +155,8 @@
     border-radius: 999px;
     font-size: 0.7rem;
     font-weight: 700;
-    background: rgba(94, 114, 228, 0.12);
-    color: #5e72e4;
+    background: rgba(0, 119, 182, 0.12);
+    color: #0077b6;
     flex-shrink: 0;
 }
 
@@ -206,7 +206,7 @@
 }
 
 .case-feed-item:hover {
-    box-shadow: 0 6px 20px rgba(94, 114, 228, 0.12);
+    box-shadow: 0 6px 20px rgba(0, 119, 182, 0.12);
     transform: translateY(-1px);
 }
 
@@ -260,7 +260,7 @@
 }
 
 .case-status-pill--scheduled {
-    background: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
+    background: linear-gradient(310deg, #0077b6 0%, #004e77 100%);
     color: #fff;
 }
 
@@ -279,7 +279,7 @@
     padding: 2.5rem 1.5rem;
     background: #fff;
     border-radius: 0.85rem;
-    border: 1px dashed rgba(94, 114, 228, 0.25);
+    border: 1px dashed rgba(0, 119, 182, 0.25);
 }
 
 .case-feed-empty__icon.dashboard-stat-icon-wrap {
@@ -357,7 +357,7 @@
 
 .admin-task-comment {
     background: #f0f4ff;
-    border-left: 3px solid #5e72e4;
+    border-left: 3px solid #0077b6;
     padding: 0.5rem 0.75rem;
     border-radius: 0 6px 6px 0;
     max-width: 28rem;
@@ -369,7 +369,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #5e72e4;
+    color: #0077b6;
     margin-bottom: 0.2rem;
 }
 
@@ -381,15 +381,15 @@
 
 .case-summary-empty {
     cursor: pointer;
-    border: 1px dashed rgba(94, 114, 228, 0.35);
+    border: 1px dashed rgba(0, 119, 182, 0.35);
     border-radius: 0.75rem;
     transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .case-summary-empty:hover,
 .case-summary-empty:focus {
-    background-color: rgba(94, 114, 228, 0.06);
-    border-color: rgba(94, 114, 228, 0.55);
+    background-color: rgba(0, 119, 182, 0.06);
+    border-color: rgba(0, 119, 182, 0.55);
     outline: none;
 }
 
@@ -399,7 +399,7 @@
 
 /* Dark mode — sidebar shell */
 body.legalpro-dark-mode .case-detail-hub__sidebar {
-    background: linear-gradient(180deg, rgba(94, 114, 228, 0.08) 0%, var(--lp-dark-surface-raised, #2f3547) 100%) !important;
+    background: linear-gradient(180deg, rgba(0, 119, 182, 0.08) 0%, var(--lp-dark-surface-raised, #2f3547) 100%) !important;
     border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.08)) !important;
 }
 
@@ -419,13 +419,13 @@ body.legalpro-dark-mode .case-detail-tabs .nav-link:hover {
 }
 
 body.legalpro-dark-mode .case-detail-tabs .nav-link.active {
-    background: var(--legalpro-theme-gradient-310, var(--legalpro-theme-gradient, linear-gradient(310deg, #5e72e4 0%, #825ee4 100%))) !important;
+    background: var(--legalpro-theme-gradient-310, var(--legalpro-theme-gradient, linear-gradient(310deg, #0077b6 0%, #004e77 100%))) !important;
     color: #fff !important;
-    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35) !important;
+    box-shadow: 0 6px 16px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35) !important;
 }
 
 body.legalpro-dark-mode .case-detail-tabs__icon {
-    background: rgba(94, 114, 228, 0.15) !important;
+    background: rgba(0, 119, 182, 0.15) !important;
     color: #c4b5fd !important;
 }
 
@@ -435,7 +435,7 @@ body.legalpro-dark-mode .case-detail-tabs .nav-link.active .case-detail-tabs__ic
 }
 
 body.legalpro-dark-mode .case-detail-tabs__count {
-    background: rgba(94, 114, 228, 0.18) !important;
+    background: rgba(0, 119, 182, 0.18) !important;
     color: #c4b5fd !important;
 }
 
@@ -535,13 +535,13 @@ body.legalpro-dark-mode .case-detail-hub .chat-messages {
 }
 
 .case-quotation-lines {
-    background: rgba(94, 114, 228, 0.04);
+    background: rgba(0, 119, 182, 0.04);
     border-radius: 0.65rem;
     padding: 0.5rem 0.65rem;
 }
 
 .case-quotation-totals {
-    background: rgba(94, 114, 228, 0.06);
+    background: rgba(0, 119, 182, 0.06);
     border-radius: 0.75rem;
     padding: 0.85rem 1rem;
 }
@@ -558,10 +558,10 @@ body.legalpro-dark-mode.admin-case-view-page #quotations #case-quotation-form-ca
 body.legalpro-dark-mode.admin-case-view-page #stages #case-summary-form-card .btn-dark,
 body.legalpro-dark-mode.admin-case-view-page #case-comment-form-card .btn-dark,
 body.legalpro-dark-mode.admin-case-view-page #comments .case-detail-form-card .btn-dark {
-    background: linear-gradient(135deg, #5e72e4 0%, #825ee4 100%) !important;
+    background: linear-gradient(135deg, #0077b6 0%, #004e77 100%) !important;
     border: none !important;
     color: #fff !important;
-    box-shadow: 0 4px 12px rgba(94, 114, 228, 0.28) !important;
+    box-shadow: 0 4px 12px rgba(0, 119, 182, 0.28) !important;
 }
 
 body.legalpro-dark-mode.admin-case-view-page .case-detail-tab-actions .btn.bg-gradient-dark:hover,
@@ -604,8 +604,8 @@ body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .b
 body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-primary:hover,
 body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-primary:focus {
     color: #fff !important;
-    background-color: rgba(94, 114, 228, 0.22) !important;
-    border-color: rgba(94, 114, 228, 0.55) !important;
+    background-color: rgba(0, 119, 182, 0.22) !important;
+    border-color: rgba(0, 119, 182, 0.55) !important;
 }
 
 body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .btn-outline-danger {

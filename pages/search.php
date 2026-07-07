@@ -304,13 +304,13 @@ $resultsQueryClass = 'search-results-query';
         .search-portal-page--lawyer .search-hero,
         .search-portal-page--admin .search-hero {
             border-radius: 1.15rem;
-            background: linear-gradient(135deg, rgba(94, 114, 228, 0.88) 0%, rgba(30, 42, 88, 0.95) 100%);
+            background: linear-gradient(135deg, rgba(0, 119, 182, 0.88) 0%, rgba(30, 42, 88, 0.95) 100%);
             box-shadow: 0 1rem 2.25rem rgba(23, 43, 77, 0.16);
             border: none;
         }
         body.search-portal-page--client {
-            --cs-primary: var(--legalpro-theme-primary, #5e72e4);
-            --cs-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            --cs-primary: var(--legalpro-theme-primary, #0077b6);
+            --cs-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #0077b6, #004e77));
         }
         .search-portal-page--client .search-hero.cd-hero-card {
             background: var(--cs-gradient);
@@ -360,7 +360,7 @@ $resultsQueryClass = 'search-results-query';
         .search-portal-page--client .search-hero.cd-hero-card .search-hero-submit,
         .search-portal-page--client .search-hero.cd-hero-card .btn-primary-solid {
             background: #fff !important;
-            color: var(--legalpro-theme-primary, #5e72e4) !important;
+            color: var(--legalpro-theme-primary, #0077b6) !important;
             border: none !important;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
         }
@@ -368,7 +368,7 @@ $resultsQueryClass = 'search-results-query';
         .search-portal-page--client .search-hero.cd-hero-card .btn-primary-solid:hover {
             opacity: 0.92;
             background: #fff !important;
-            color: var(--legalpro-theme-primary, #5e72e4) !important;
+            color: var(--legalpro-theme-primary, #0077b6) !important;
         }
         body.legalpro-dark-mode.search-portal-page--client .search-hero.cd-hero-card .search-hero-submit,
         body.legalpro-dark-mode.search-portal-page--client .search-hero.cd-hero-card .btn-primary-solid {
@@ -403,9 +403,9 @@ $resultsQueryClass = 'search-results-query';
             transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
         }
         .search-portal-page .search-result-row:hover {
-            border-color: rgba(94, 114, 228, 0.35);
-            background: rgba(94, 114, 228, 0.04);
-            box-shadow: 0 0.35rem 1rem rgba(94, 114, 228, 0.08);
+            border-color: rgba(0, 119, 182, 0.35);
+            background: rgba(0, 119, 182, 0.04);
+            box-shadow: 0 0.35rem 1rem rgba(0, 119, 182, 0.08);
         }
         .search-portal-page .search-result-row .flex-grow-1 { min-width: 0; }
         .search-portal-page .search-results-title {

@@ -324,10 +324,10 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
         .lawyer-court-tracking-page {
-            --lct-primary: var(--legalpro-theme-primary, #5e72e4);
+            --lct-primary: var(--legalpro-theme-primary, #0077b6);
         }
         .fc .fc-toolbar.fc-header-toolbar {
-            background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
+            background-image: linear-gradient(310deg, #0077b6 0%, #004e77 100%);
             border-radius: 0.5rem;
             padding: 0.65rem 1rem;
             margin-bottom: 1rem;
@@ -366,9 +366,9 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
         .lawyer-court-tracking-page .lct-cal-search-wrap--featured {
             padding: .9rem 1rem 1rem;
             border-radius: 14px;
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
-            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
-            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12);
         }
         .lawyer-court-tracking-page .lct-cal-search-label {
             display: block;
@@ -384,7 +384,7 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
             align-items: center;
             gap: .7rem;
             background: #fff;
-            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.32);
             border-radius: 12px;
             padding: .7rem 1rem;
             transition: border-color .15s, box-shadow .15s, transform .15s;
@@ -392,7 +392,7 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
         }
         .lawyer-court-tracking-page .lct-cal-search-field:focus-within {
             border-color: var(--lct-primary);
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
             transform: translateY(-1px);
         }
         .lawyer-court-tracking-page .lct-cal-search-icon {
@@ -402,7 +402,7 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12);
             color: var(--lct-primary);
             flex-shrink: 0;
         }
@@ -454,7 +454,7 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
         }
         .lawyer-court-tracking-page .lct-cal-search-item:hover,
         .lawyer-court-tracking-page .lct-cal-search-item:focus-visible {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.08);
             outline: none;
         }
         .lawyer-court-tracking-page .lct-cal-search-item__dot {
@@ -464,7 +464,7 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
             margin-top: .45rem;
             flex-shrink: 0;
         }
-        .lawyer-court-tracking-page .lct-cal-search-item__dot--scheduled { background: #5e72e4; }
+        .lawyer-court-tracking-page .lct-cal-search-item__dot--scheduled { background: #0077b6; }
         .lawyer-court-tracking-page .lct-cal-search-item__dot--completed { background: #2dce89; }
         .lawyer-court-tracking-page .lct-cal-search-item__dot--postponed { background: #fb6340; }
         .lawyer-court-tracking-page .lct-cal-search-item__dot--cancelled { background: #f5365c; }
@@ -490,14 +490,14 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
             text-align: center;
         }
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-wrap--featured {
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
             border-color: rgba(255, 255, 255, 0.12);
         }
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-label { color: #b8c4ff; }
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-field,
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-results {
             background: var(--lp-dark-surface-raised, #3d455c);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35);
         }
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-input { color: var(--lp-dark-text, #f8f9fc); }
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-cal-search-item__title { color: var(--lp-dark-text, #f8f9fc); }
@@ -533,7 +533,7 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
             padding: 0 0.55rem;
             border-radius: 10px;
             border: 1px solid #e9ecef;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.04);
             color: #8392ab;
             font-size: 0.76rem;
             font-weight: 700;
@@ -542,20 +542,20 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
             transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
         }
         .lct-court-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.1);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35);
             color: var(--lct-primary);
             transform: translateY(-1px);
         }
         .lct-court-pagination__btn:focus-visible {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.22);
         }
         .lct-court-pagination__btn--active {
-            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #0077b6, #004e77));
             border-color: transparent;
             color: #fff;
-            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.32);
         }
         .lct-court-pagination__btn--active:hover:not(:disabled) {
             color: #fff;
@@ -582,7 +582,7 @@ $courtSearchResetAria = lawyer_tf('header.search_reset', 'Reset');
             color: #cbd5e1;
         }
         body.legalpro-dark-mode.lawyer-court-tracking-page .lct-court-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.2);
             color: #f8f9fc;
         }
     </style>

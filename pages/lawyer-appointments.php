@@ -614,7 +614,7 @@ $html = <<<'HTML'
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
         .lawyer-appointments-page {
-            --la-primary: var(--legalpro-theme-primary, #5e72e4);
+            --la-primary: var(--legalpro-theme-primary, #0077b6);
         }
         .lawyer-appointment-actions {
             align-items: center;
@@ -658,9 +658,9 @@ $html = <<<'HTML'
         .lawyer-appointments-page .la-cal-search-wrap--featured {
             padding: .9rem 1rem 1rem;
             border-radius: 14px;
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
-            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
-            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12);
         }
         .lawyer-appointments-page .la-cal-search-label {
             display: block;
@@ -676,7 +676,7 @@ $html = <<<'HTML'
             align-items: center;
             gap: .7rem;
             background: #fff;
-            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.32);
             border-radius: 12px;
             padding: .7rem 1rem;
             transition: border-color .15s, box-shadow .15s, transform .15s;
@@ -684,7 +684,7 @@ $html = <<<'HTML'
         }
         .lawyer-appointments-page .la-cal-search-field:focus-within {
             border-color: var(--la-primary);
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
             transform: translateY(-1px);
         }
         .lawyer-appointments-page .la-cal-search-icon {
@@ -694,7 +694,7 @@ $html = <<<'HTML'
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12);
             color: var(--la-primary);
             flex-shrink: 0;
         }
@@ -746,7 +746,7 @@ $html = <<<'HTML'
         }
         .lawyer-appointments-page .la-cal-search-item:hover,
         .lawyer-appointments-page .la-cal-search-item:focus-visible {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.08);
             outline: none;
         }
         .lawyer-appointments-page .la-cal-search-item__dot {
@@ -781,14 +781,14 @@ $html = <<<'HTML'
             text-align: center;
         }
         body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-wrap--featured {
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
             border-color: rgba(255, 255, 255, 0.12);
         }
         body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-label { color: #b8c4ff; }
         body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-field,
         body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-results {
             background: var(--lp-dark-surface-raised, #3d455c);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35);
         }
         body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-input { color: var(--lp-dark-text, #f8f9fc); }
         body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-item__title { color: var(--lp-dark-text, #f8f9fc); }
@@ -824,7 +824,7 @@ $html = <<<'HTML'
             padding: 0 0.55rem;
             border-radius: 10px;
             border: 1px solid #e9ecef;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.04);
             color: #8392ab;
             font-size: 0.76rem;
             font-weight: 700;
@@ -833,20 +833,20 @@ $html = <<<'HTML'
             transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
         }
         .la-appt-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.1);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35);
             color: var(--la-primary);
             transform: translateY(-1px);
         }
         .la-appt-pagination__btn:focus-visible {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.22);
         }
         .la-appt-pagination__btn--active {
-            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #0077b6, #004e77));
             border-color: transparent;
             color: #fff;
-            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.32);
         }
         .la-appt-pagination__btn--active:hover:not(:disabled) {
             color: #fff;
@@ -873,7 +873,7 @@ $html = <<<'HTML'
             color: #cbd5e1;
         }
         body.legalpro-dark-mode.lawyer-appointments-page .la-appt-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.2);
             color: #f8f9fc;
         }
     </style>
@@ -1109,7 +1109,7 @@ $html = <<<'HTML'
     <div class="modal fade" id="lawyerAppointmentModal" tabindex="-1" aria-hidden="true" style="z-index:99999;">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header" style="background:linear-gradient(135deg,var(--legalpro-theme-primary,#5e72e4) 0%,#825ee4 100%);">
+                <div class="modal-header" style="background:linear-gradient(135deg,var(--legalpro-theme-primary,#0077b6) 0%,#004e77 100%);">
                     <h6 class="modal-title text-white font-weight-bold" id="lawyerApptModalTitle">Appointment</h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>

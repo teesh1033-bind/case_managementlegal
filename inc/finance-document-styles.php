@@ -7,8 +7,8 @@ function legalpro_finance_theme_colors(): array
 {
     $theme = getPortalTheme();
     $preset = $theme['preset'] ?? [];
-    $primary = (string) ($preset['primary'] ?? '#5e72e4');
-    $primaryDark = (string) ($preset['primary_dark'] ?? '#825ee4');
+    $primary = (string) ($preset['primary'] ?? '#0077b6');
+    $primaryDark = (string) ($preset['primary_dark'] ?? '#004e77');
     $rgb = portalThemeRgbFromHex($primary);
 
     return [

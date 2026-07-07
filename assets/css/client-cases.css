@@ -2,9 +2,9 @@
  * Client cases page — modern layout (aligned with client-dashboard)
  */
 .client-cases-page {
-    --cc-primary: var(--legalpro-theme-primary, #5e72e4);
-    --cc-primary-rgb: var(--legalpro-theme-primary-rgb, 94, 114, 228);
-    --cc-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4 0%, #825ee4 55%, #6b5ce7 100%));
+    --cc-primary: var(--legalpro-theme-primary, #0077b6);
+    --cc-primary-rgb: var(--legalpro-theme-primary-rgb, 0, 119, 182);
+    --cc-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #0077b6 0%, #004e77 55%, #6b5ce7 100%));
     --cc-text: #1e293b;
     --cc-muted: #94a3b8;
     --cc-surface: #ffffff;

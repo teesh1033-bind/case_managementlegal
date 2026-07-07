@@ -97,7 +97,7 @@ body.legalpro-dark-mode.legalpro-admin-portal .navbar-main .legalpro-header-them
 }
 
 .dashboard-glance-icon-wrap--primary .lp-icon svg {
-    stroke: #5e72e4;
+    stroke: #0077b6;
 }
 
 .dashboard-glance-icon-wrap--info .lp-icon svg {
@@ -121,21 +121,21 @@ body.legalpro-dark-mode.legalpro-admin-portal .navbar-main .legalpro-header-them
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(94, 114, 228, 0.12);
+    background: rgba(0, 119, 182, 0.12);
 }
 
 .dashboard-stat-icon-wrap .lp-icon svg {
     width: 1.35rem;
     height: 1.35rem;
-    stroke: #5e72e4;
+    stroke: #0077b6;
 }
 
 .dashboard-stat-icon-wrap--primary {
-    background: rgba(94, 114, 228, 0.12);
+    background: rgba(0, 119, 182, 0.12);
 }
 
 .dashboard-stat-icon-wrap--primary .lp-icon svg {
-    stroke: #5e72e4;
+    stroke: #0077b6;
 }
 
 .dashboard-stat-icon-wrap--danger {
@@ -200,5 +200,5 @@ body.legalpro-admin-portal.legalpro-dashboard-page .dashboard-stat-card .icon-sh
 .cd-list-item .lp-icon svg {
     width: 0.85rem;
     height: 0.85rem;
-    stroke: #5e72e4;
+    stroke: #0077b6;
 }

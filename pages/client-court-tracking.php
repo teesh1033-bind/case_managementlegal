@@ -213,10 +213,10 @@ if (!empty($_SESSION['error_message'])) {
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body.client-court-tracking-page {
-            --cct-primary: var(--legalpro-theme-primary, #5e72e4);
-            --cct-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
-            --cct-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
-            --cct-primary-border: var(--lp-cases-accent-border, rgba(94, 114, 228, 0.35));
+            --cct-primary: var(--legalpro-theme-primary, #023e8a);
+            --cct-primary-dark: var(--legalpro-theme-primary-dark, #001845);
+            --cct-primary-soft: var(--lp-cases-accent-soft, rgba(2, 62, 138, 0.12));
+            --cct-primary-border: var(--lp-cases-accent-border, rgba(2, 62, 138, 0.35));
             --cct-r: 16px;
             --cct-shadow: 0 2px 12px rgba(0,0,0,0.07);
         }
@@ -255,7 +255,7 @@ if (!empty($_SESSION['error_message'])) {
         .cct-table thead th:first-child { padding-left: 1.5rem; }
         .cct-table thead th:last-child { padding-right: 1.5rem; text-align: right; }
         .cct-table tbody tr { border-bottom: 1px solid #f8fafc; transition: background .1s; }
-        .cct-table tbody tr:hover { background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04); }
+        .cct-table tbody tr:hover { background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.04); }
         .cct-table tbody .cct-court-row.cct-court-row--off-page { display: none; }
         .cct-court-table-wrap { padding: 0 0 0.25rem; }
         .cct-court-pagination {
@@ -288,7 +288,7 @@ if (!empty($_SESSION['error_message'])) {
             padding: 0 0.55rem;
             border-radius: 10px;
             border: 1px solid #e9ecef;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.04);
             color: #8392ab;
             font-size: 0.76rem;
             font-weight: 700;
@@ -297,20 +297,20 @@ if (!empty($_SESSION['error_message'])) {
             transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
         }
         .cct-court-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.1);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.1);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35);
             color: var(--cct-primary);
             transform: translateY(-1px);
         }
         .cct-court-pagination__btn:focus-visible {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.22);
         }
         .cct-court-pagination__btn--active {
             background: var(--cct-gradient);
             border-color: transparent;
             color: #fff;
-            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.32);
         }
         .cct-court-pagination__btn--active:hover:not(:disabled) {
             color: #fff;
@@ -332,12 +332,12 @@ if (!empty($_SESSION['error_message'])) {
             border-top-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
         }
         body.legalpro-dark-mode.client-court-tracking-page .cct-court-pagination__btn {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.28);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.28);
             color: #c5cede;
         }
         body.legalpro-dark-mode.client-court-tracking-page .cct-court-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.2);
             color: #f8f9fc;
         }
         .cct-table tbody td { padding: .85rem 1rem; vertical-align: middle; }
@@ -388,9 +388,9 @@ if (!empty($_SESSION['error_message'])) {
         .client-court-tracking-page .cct-cal-search-wrap--featured {
             padding: .9rem 1rem 1rem;
             border-radius: 14px;
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.04) 100%);
-            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
-            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.04) 100%);
+            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.24);
+            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
         }
         .client-court-tracking-page .cct-cal-search-label {
             display: block;
@@ -406,7 +406,7 @@ if (!empty($_SESSION['error_message'])) {
             align-items: center;
             gap: .7rem;
             background: #fff;
-            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.32);
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.32);
             border-radius: 12px;
             padding: .7rem 1rem;
             transition: border-color .15s, box-shadow .15s, transform .15s;
@@ -414,7 +414,7 @@ if (!empty($_SESSION['error_message'])) {
         }
         .client-court-tracking-page .cct-cal-search-field:focus-within {
             border-color: var(--cct-primary);
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
             transform: translateY(-1px);
         }
         .client-court-tracking-page .cct-cal-search-icon {
@@ -424,7 +424,7 @@ if (!empty($_SESSION['error_message'])) {
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
             color: var(--cct-primary);
             flex-shrink: 0;
         }
@@ -478,7 +478,7 @@ if (!empty($_SESSION['error_message'])) {
         }
         .client-court-tracking-page .cct-cal-search-item:hover,
         .client-court-tracking-page .cct-cal-search-item:focus-visible {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.08);
             outline: none;
         }
         .client-court-tracking-page .cct-cal-search-item__dot {
@@ -488,7 +488,7 @@ if (!empty($_SESSION['error_message'])) {
             margin-top: .45rem;
             flex-shrink: 0;
         }
-        .client-court-tracking-page .cct-cal-search-item__dot--scheduled { background: #5e72e4; }
+        .client-court-tracking-page .cct-cal-search-item__dot--scheduled { background: #023e8a; }
         .client-court-tracking-page .cct-cal-search-item__dot--completed { background: #2dce89; }
         .client-court-tracking-page .cct-cal-search-item__dot--postponed { background: #fb6340; }
         .client-court-tracking-page .cct-cal-search-item__dot--cancelled { background: #f5365c; }
@@ -514,7 +514,7 @@ if (!empty($_SESSION['error_message'])) {
             text-align: center;
         }
         body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-wrap--featured {
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
+            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
             border-color: rgba(255, 255, 255, 0.12);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
         }
@@ -522,17 +522,17 @@ if (!empty($_SESSION['error_message'])) {
             color: #b8c4ff;
         }
         body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-icon {
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.24);
+            background: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.24);
             color: #d4dcff;
         }
         body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-field,
         body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-results {
             background: var(--lp-dark-surface-raised, #3d455c);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35);
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35);
         }
         body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-field:focus-within {
-            border-color: #9aaeff;
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.22);
+            border-color: #4a90d9;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.22);
         }
         body.legalpro-dark-mode.client-court-tracking-page .cct-cal-search-input {
             color: var(--lp-dark-text, #f8f9fc);
@@ -547,14 +547,14 @@ if (!empty($_SESSION['error_message'])) {
             min-width: min(100%, 340px);
         }
         body.client-court-tracking-page .navbar-main .legalpro-navbar-search .input-group {
-            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.3) !important;
+            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.3) !important;
             background: rgba(255, 255, 255, 0.96) !important;
             box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
             border-radius: 12px !important;
         }
         body.client-court-tracking-page .navbar-main .legalpro-navbar-search .input-group:focus-within {
             border-color: var(--cct-primary) !important;
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.16), 0 4px 16px rgba(15, 23, 42, 0.1) !important;
+            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.16), 0 4px 16px rgba(15, 23, 42, 0.1) !important;
         }
         body.client-court-tracking-page .navbar-main .legalpro-navbar-search .form-control,
         body.client-court-tracking-page .navbar-main .legalpro-navbar-search input[type="search"].form-control {
@@ -566,7 +566,7 @@ if (!empty($_SESSION['error_message'])) {
         }
         body.legalpro-dark-mode.client-court-tracking-page .navbar-main .legalpro-navbar-search .input-group {
             background: var(--lp-dark-surface-raised, #3d455c) !important;
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.35) !important;
+            border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35) !important;
         }
         .court-date-modal .modal-dialog { max-width: 600px; }
 

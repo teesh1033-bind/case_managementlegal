@@ -424,7 +424,7 @@ $html = <<<'HTML'
 	<div class="modal fade" id="appointmentCalendarModal" tabindex="-1" aria-hidden="true">
 		<div class="modal-dialog modal-dialog-centered">
 			<div class="modal-content">
-				<div class="modal-header" style="background:linear-gradient(135deg,#5e72e4 0%,#825ee4 100%);">
+				<div class="modal-header" style="background:linear-gradient(135deg,#0077b6 0%,#004e77 100%);">
 					<h6 class="modal-title text-white font-weight-bold" id="appointmentModalTitle">Appointment</h6>
 					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>

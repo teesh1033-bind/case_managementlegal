@@ -694,8 +694,8 @@ function legalpro_settings_shared_styles(): string
             margin: 0;
         }
         .settings-theme-mode__option:has(input:checked) {
-            border-color: var(--legalpro-theme-primary, #5e72e4);
-            background: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.08);
+            border-color: var(--legalpro-theme-primary, #0077b6);
+            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.08);
         }
         .settings-theme-mode__option input { margin: 0; }
         .settings-theme-swatches {
@@ -726,7 +726,7 @@ function legalpro_settings_shared_styles(): string
         .settings-theme-swatch.active .settings-theme-swatch__dot,
         .settings-theme-swatch:has(input:checked) .settings-theme-swatch__dot {
             border-color: #344767;
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.25);
+            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.25);
         }
         .settings-theme-swatch__label {
             font-size: 0.75rem;

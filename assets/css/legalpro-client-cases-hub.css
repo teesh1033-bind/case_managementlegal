@@ -53,8 +53,8 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: rgba(var(--cpp-primary-rgb, 94, 114, 228), 0.1);
-    color: var(--cpp-primary, #5e72e4);
+    background: rgba(var(--cpp-primary-rgb, 0, 119, 182), 0.1);
+    color: var(--cpp-primary, #0077b6);
 }
 
 .ccv-detail-item__icon .lp-icon svg {

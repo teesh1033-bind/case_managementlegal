@@ -28,8 +28,8 @@ body.legalpro-lawyer-portal .lp-pill--status-pending {
 body.legalpro-lawyer-portal .ca-status-pill--scheduled,
 body.legalpro-lawyer-portal .lp-pill--status-progress,
 body.legalpro-lawyer-portal .lp-pill--priority-medium {
-    background: rgba(94, 114, 228, 0.14) !important;
-    color: #5e72e4 !important;
+    background: rgba(0, 119, 182, 0.14) !important;
+    color: #0077b6 !important;
 }
 body.legalpro-lawyer-portal .ca-status-pill--done,
 body.legalpro-lawyer-portal .lp-pill--status-closed {
@@ -64,7 +64,7 @@ body.legalpro-lawyer-portal .lc-category-pill {
     justify-content: center !important;
     padding: 0.35rem 0.65rem !important;
     border-radius: 2rem !important;
-    background: rgba(94, 114, 228, 0.08) !important;
+    background: rgba(0, 119, 182, 0.08) !important;
     color: #324cdd !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;

@@ -209,8 +209,96 @@
         }
     }
 
+    function initDashboardActivityPagination() {
+        var wrap = qs('.vu-activity-feed-wrap');
+        if (!wrap) {
+            return;
+        }
+
+        var i18n = window.LEGALPRO_DASHBOARD_ACTIVITY || {};
+        var perPage = parseInt(wrap.getAttribute('data-activity-per-page') || '5', 10);
+        var itemsWord = wrap.getAttribute('data-activity-label') || 'activities';
+        var items = Array.prototype.slice.call(wrap.querySelectorAll('.vu-activity-feed .vu-activity-item'));
+        if (!items.length || items.length <= perPage) {
+            return;
+        }
+
+        var nav = qs('.vu-activity-pagination', wrap);
+        var rangeEl = qs('[data-activity-range]', wrap);
+        var pagesEl = qs('[data-activity-pages]', wrap);
+        if (!nav || !rangeEl || !pagesEl) {
+            return;
+        }
+
+        var currentPage = 1;
+        var totalPages = Math.ceil(items.length / perPage);
+
+        function formatRange(start, end, total) {
+            var template = i18n.showingRange || 'Showing :start–:end of :total :items';
+            return template
+                .replace(':start', String(start))
+                .replace(':end', String(end))
+                .replace(':total', String(total))
+                .replace(':items', itemsWord);
+        }
+
+        function pageButton(label, page, options) {
+            options = options || {};
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'vu-activity-pagination__btn';
+            if (options.active) {
+                btn.className += ' vu-activity-pagination__btn--active';
+            }
+            btn.textContent = label;
+            if (options.disabled) {
+                btn.disabled = true;
+            } else if (page) {
+                btn.addEventListener('click', function () {
+                    showPage(page);
+                });
+            }
+            return btn;
+        }
+
+        function showPage(page) {
+            currentPage = Math.max(1, Math.min(totalPages, page));
+            items.forEach(function (item, index) {
+                var itemPage = Math.floor(index / perPage) + 1;
+                item.classList.toggle('vu-activity-item--hidden', itemPage !== currentPage);
+            });
+
+            var start = (currentPage - 1) * perPage + 1;
+            var end = Math.min(currentPage * perPage, items.length);
+            rangeEl.textContent = formatRange(start, end, items.length);
+
+            pagesEl.innerHTML = '';
+            var prev = pageButton('«', currentPage - 1, { disabled: currentPage === 1 });
+            pagesEl.appendChild(prev);
+
+            for (var p = 1; p <= totalPages; p++) {
+                if (totalPages > 5 && p > 2 && p < totalPages - 1 && Math.abs(p - currentPage) > 1) {
+                    if (p === 3 || p === totalPages - 2) {
+                        var gap = document.createElement('span');
+                        gap.className = 'vu-activity-pagination__ellipsis';
+                        gap.textContent = '…';
+                        pagesEl.appendChild(gap);
+                    }
+                    continue;
+                }
+                pagesEl.appendChild(pageButton(String(p), p, { active: p === currentPage }));
+            }
+
+            var next = pageButton('»', currentPage + 1, { disabled: currentPage === totalPages });
+            pagesEl.appendChild(next);
+        }
+
+        showPage(1);
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         initThemeToggle();
         initAdminNotifications();
+        initDashboardActivityPagination();
     });
 })();

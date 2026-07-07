@@ -63,9 +63,9 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 <?php if (!defined('LEGALPRO_ADMIN_PORTAL_HEAD')): ?>
 <?php include __DIR__ . '/portal-theme-head-early.php'; ?>
 <?php legalpro_icons_head_scripts(); ?>
-<link href="../assets/css/legalpro-portal-shell.css?v=21" rel="stylesheet" />
-<link href="../assets/css/legalpro-admin-portal.css?v=37" rel="stylesheet" />
-<link href="../assets/css/dashboard-enhancements.css?v=16" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=23" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=39" rel="stylesheet" />
+<link href="../assets/css/dashboard-enhancements.css?v=18" rel="stylesheet" />
 <?php echo legalpro_sidebar_stylesheet_tag(); ?>
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>
@@ -80,6 +80,7 @@ echo legalpro_render_portal_sidebar([
     'logo_url' => $companyLogoUrl,
     'current_page' => $currentPage,
     'items' => $menuItems,
+    'logout_url' => 'admin-logout.php',
     'is_active' => 'legalpro_admin_menu_is_active',
     'compact' => true,
 ]);
@@ -94,7 +95,10 @@ echo legalpro_render_portal_sidebar([
     'emptyTitle' => admin_t('notifications.empty_title'),
     'loadError' => admin_t('notifications.load_error'),
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;</script>
-<script src="../assets/js/admin-portal.js?v=6"></script>
+<script>window.LEGALPRO_DASHBOARD_ACTIVITY=<?= json_encode([
+    'showingRange' => admin_t('activity.showing_range'),
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;</script>
+<script src="../assets/js/admin-portal.js?v=7"></script>
 <script src="../assets/js/legalpro-admin-table-pagination.js?v=1" defer></script>
 <?php legalpro_icons_footer_scripts(); ?>
 <!-- LEGALPRO_I18N_SKIP_END -->

@@ -1,14 +1,33 @@
 <?php
 
+/** Canonical brand blue — keep in sync with CSS :root fallbacks. */
+function legalproBrandPrimary(): string
+{
+    return '#023e8a';
+}
+
+function legalproBrandPrimaryDark(): string
+{
+    return '#001845';
+}
+
+function legalproBrandPrimaryRgb(): string
+{
+    return '2, 62, 138';
+}
+
 function getPortalThemeColorPresets(): array
 {
+    $brand = legalproBrandPrimary();
+    $brandDark = legalproBrandPrimaryDark();
+
     return [
         'primary' => [
-            'label' => 'Purple',
-            'primary' => '#5e72e4',
-            'primary_dark' => '#825ee4',
-            'sidebar_bg' => '#1e2a44',
-            'sidebar_deep' => '#151d30',
+            'label' => 'Blue',
+            'primary' => $brand,
+            'primary_dark' => $brandDark,
+            'sidebar_bg' => '#021a3a',
+            'sidebar_deep' => '#001028',
             'badge_class' => 'bg-gradient-primary',
         ],
         'dark' => [
@@ -69,7 +88,7 @@ function portalThemeNormalizeHex(string $hex): ?string
 
 function portalThemeRgbFromHex(string $hex): array
 {
-    $hex = ltrim(portalThemeNormalizeHex($hex) ?? '#5e72e4', '#');
+    $hex = ltrim(portalThemeNormalizeHex($hex) ?? legalproBrandPrimary(), '#');
     return [
         hexdec(substr($hex, 0, 2)),
         hexdec(substr($hex, 2, 2)),
@@ -97,7 +116,7 @@ function portalThemeMixHex(string $hex1, string $hex2, float $ratio): string
 
 function portalThemeBuildCustomPreset(string $primaryHex): array
 {
-    $primary = portalThemeNormalizeHex($primaryHex) ?? '#5e72e4';
+    $primary = portalThemeNormalizeHex($primaryHex) ?? legalproBrandPrimary();
     $rgb = portalThemeRgbFromHex($primary);
     $primaryDark = portalThemeHexFromRgb(
         min(255, $rgb[0] + 36),
@@ -118,7 +137,7 @@ function portalThemeBuildCustomPreset(string $primaryHex): array
 function getPortalThemeColorOptions(): array
 {
     return array_merge(getPortalThemeColorPresets(), [
-        'custom' => portalThemeBuildCustomPreset((string) getSetting('portal_theme_custom_primary', '#5e72e4')),
+        'custom' => portalThemeBuildCustomPreset((string) getSetting('portal_theme_custom_primary', legalproBrandPrimary())),
     ]);
 }
 
@@ -139,7 +158,7 @@ function getPortalTheme(): array
         'mode' => $mode,
         'color' => $color,
         'preset' => $presets[$color],
-        'custom_primary' => portalThemeNormalizeHex((string) getSetting('portal_theme_custom_primary', '#5e72e4')) ?? '#5e72e4',
+        'custom_primary' => portalThemeNormalizeHex((string) getSetting('portal_theme_custom_primary', legalproBrandPrimary())) ?? legalproBrandPrimary(),
     ];
 }
 
@@ -1436,7 +1455,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item__time {'
-        . 'color: #9aaeff !important;'
+        . 'color: #4a90d9 !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item__time small {'
@@ -3188,7 +3207,7 @@ function portalThemePrimaryRgb(string $hex): string
         $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
     }
     if (strlen($hex) !== 6) {
-        return '94, 114, 228';
+        return legalproBrandPrimaryRgb();
     }
 
     return hexdec(substr($hex, 0, 2)) . ', ' . hexdec(substr($hex, 2, 2)) . ', ' . hexdec(substr($hex, 4, 2));
@@ -3490,7 +3509,7 @@ function portalThemeHexToRgba(string $hex, float $alpha): string
         $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
     }
     if (strlen($hex) !== 6) {
-        return 'rgba(94, 114, 228, ' . $alpha . ')';
+        return 'rgba(2, 62, 138, ' . $alpha . ')';
     }
 
     $r = hexdec(substr($hex, 0, 2));

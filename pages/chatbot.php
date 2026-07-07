@@ -210,7 +210,7 @@ $html = <<<'HTML'
 	<style>
 		.chat-window { height: 460px; overflow-y: auto; background: transparent; border-radius: 0.75rem; border: 1px solid #e9ecef; padding: 1rem; }
 		.chat-message-user { justify-content: flex-end; }
-		.chat-message-user .chat-bubble { background: var(--legalpro-theme-primary, #5e72e4); color: #fff; border-radius: 1rem 1rem 0.25rem 1rem; }
+		.chat-message-user .chat-bubble { background: var(--legalpro-theme-primary, #023e8a); color: #fff; border-radius: 1rem 1rem 0.25rem 1rem; }
 		.chat-message-bot .chat-bubble { background: #f8f9fe; color: #344767; border-radius: 1rem 1rem 1rem 0.25rem; border: 1px solid #e9ecef; }
 		.chat-bubble { max-width: 85%; padding: 0.75rem 1rem; font-size: 0.875rem; line-height: 1.5; white-space: normal; }
 		.chat-bubble strong { font-weight: 700; }
@@ -245,20 +245,20 @@ $html = <<<'HTML'
 		/* Client portal chatbot */
 		body.client-chatbot-page {
 			background: #f0f2f8;
-			--cb-primary: var(--legalpro-theme-primary, #5e72e4);
-			--cb-primary-dark: var(--legalpro-theme-primary-dark, #825ee4);
-			--cb-primary-soft: var(--lp-cases-accent-soft, rgba(94, 114, 228, 0.12));
-			--cb-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #5e72e4, #825ee4));
+			--cb-primary: var(--legalpro-theme-primary, #023e8a);
+			--cb-primary-dark: var(--legalpro-theme-primary-dark, #001845);
+			--cb-primary-soft: var(--lp-cases-accent-soft, rgba(2, 62, 138, 0.12));
+			--cb-gradient: var(--legalpro-theme-gradient, linear-gradient(135deg, #023e8a, #001845));
 			--cb-shadow: 0 2px 12px rgba(0,0,0,0.07);
 		}
 		.client-chatbot-page .chat-message-user .chat-bubble { background: var(--cb-primary); }
 		.client-chatbot-page .chat-message-bot .chat-bubble {
 			background: var(--cb-primary-soft);
-			border-color: rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.15);
+			border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.15);
 		}
 		.client-chatbot-page .chat-compose .chat-input:focus {
 			border-color: var(--cb-primary);
-			box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 94, 114, 228), 0.12);
+			box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.12);
 		}
 		.cb-hero-card {
 			background: var(--cb-gradient);
@@ -339,7 +339,7 @@ $html = <<<'HTML'
 		}
 		.chat-tips p strong,
 		.cb-tips p strong {
-			color: var(--legalpro-theme-primary, #5e72e4);
+			color: var(--legalpro-theme-primary, #023e8a);
 			font-weight: 700;
 		}
 		.client-chatbot-page .cb-tips {

@@ -80,7 +80,7 @@
 
 /* FullCalendar — gradient toolbar + white month title (May 2026, etc.) */
 .fc .fc-toolbar.fc-header-toolbar {
-    background-image: linear-gradient(310deg, #5e72e4 0%, #825ee4 100%);
+    background-image: linear-gradient(310deg, #0077b6 0%, #004e77 100%);
     border: 1px solid rgba(255, 255, 255, 0.28);
     box-shadow: 0 4px 18px rgba(15, 23, 42, 0.2);
     border-radius: 0.5rem;
@@ -143,7 +143,7 @@
     background-color: #fff !important;
     background-image: none !important;
     border-color: #fff !important;
-    color: #5e72e4 !important;
+    color: #0077b6 !important;
     text-shadow: none;
 }
 
@@ -190,9 +190,9 @@
 /* Modern soft status badges — replace heavy gradient fills (excludes theme color swatches) */
 .badge.bg-gradient-primary:not(.filter),
 .badge.bg-gradient-info:not(.filter) {
-    background: rgba(94, 114, 228, 0.14) !important;
+    background: rgba(0, 119, 182, 0.14) !important;
     background-image: none !important;
-    color: #5e72e4 !important;
+    color: #0077b6 !important;
     border: none !important;
     font-weight: 700 !important;
     border-radius: 999px !important;
@@ -237,7 +237,7 @@
 
 body.legalpro-dark-mode .badge.bg-gradient-primary:not(.filter),
 body.legalpro-dark-mode .badge.bg-gradient-info:not(.filter) {
-    background: rgba(94, 114, 228, 0.22) !important;
+    background: rgba(0, 119, 182, 0.22) !important;
     color: #a5b4fc !important;
 }
 
