@@ -637,6 +637,8 @@ function create_invoice_from_quotation(PDO $pdo, array $quotation): int
         return $existingInvoiceId;
     }
 
+    ensure_invoice_bank_columns($pdo);
+
     $clientId = (int) ($quotation['client_id'] ?? 0);
     $caseId = (int) ($quotation['case_id'] ?? 0);
     if ($clientId <= 0) {
@@ -662,20 +664,31 @@ function create_invoice_from_quotation(PDO $pdo, array $quotation): int
     $invoiceNumber = quotation_get_next_invoice_number($pdo);
     $issueDate = date('Y-m-d');
     $dueDate = date('Y-m-d', strtotime('+14 days'));
+    $bankAccountSlot = isset($quotation['bank_account_slot']) ? (int) $quotation['bank_account_slot'] : getDefaultBankAccountSlot();
+    $paymentTerms = trim((string) ($quotation['payment_terms'] ?? ''));
+    $paymentInstructions = trim((string) ($quotation['payment_instructions'] ?? ''));
+    $taxRate = (float) ($quotation['tax_rate'] ?? 0);
 
     $stmt = $pdo->prepare('
-        INSERT INTO invoices (invoice_number, client_id, case_id, amount, status, issue_date, due_date, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO invoices (
+            invoice_number, client_id, case_id, amount, tax_rate, status, issue_date, due_date, notes,
+            bank_account_slot, payment_terms, payment_instructions
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ');
     $stmt->execute([
         $invoiceNumber,
         $clientId,
         $caseId > 0 ? $caseId : null,
         $amount,
+        $taxRate,
         'sent',
         $issueDate,
         $dueDate,
         $notes,
+        $bankAccountSlot,
+        $paymentTerms !== '' ? $paymentTerms : null,
+        $paymentInstructions !== '' ? $paymentInstructions : null,
     ]);
 
     return (int) $pdo->lastInsertId();

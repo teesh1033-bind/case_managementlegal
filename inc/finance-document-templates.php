@@ -359,6 +359,10 @@ function legalpro_render_payment_receipt_document_html(array $payment, int $paym
     }
     $balance = max((float) ($payment['estimated_fees'] ?? 0) - $paidToDate, 0);
 
+    $receiptBankSlot = isset($payment['invoice_bank_account_slot']) ? (int) $payment['invoice_bank_account_slot'] : getDefaultBankAccountSlot();
+    $receiptPaymentTerms = isset($payment['invoice_payment_terms']) ? (string) $payment['invoice_payment_terms'] : getDefaultPaymentTerms();
+    $receiptPaymentInstructions = isset($payment['invoice_payment_instructions']) ? (string) $payment['invoice_payment_instructions'] : getDefaultPaymentInstructions();
+
     return '<div class="fin-doc">'
         . legalpro_render_finance_document_top(fin_doc_t('payment_receipt'), $receiptNumber)
         . '<div class="fin-doc-body">'
@@ -387,7 +391,7 @@ function legalpro_render_payment_receipt_document_html(array $payment, int $paym
         . '</table></div>'
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">' . fin_doc_t('notes') . '</div>'
         . '<div class="fin-doc-notes">' . nl2br(legalpro_finance_h($payment['notes'] ?: fin_doc_t('no_notes'))) . '</div></div>'
-        . legalpro_render_finance_payment_details_html(getDefaultBankAccountSlot(), getDefaultPaymentTerms(), getDefaultPaymentInstructions(), fin_doc_t('status_paid'))
+        . legalpro_render_finance_payment_details_html($receiptBankSlot, $receiptPaymentTerms, $receiptPaymentInstructions, fin_doc_t('status_paid'))
         . '<div class="fin-doc-section"><div class="fin-doc-section-title">' . fin_doc_t('issued_by') . '</div>'
         . '<div class="fin-doc-footer">' . legalpro_finance_h($firm['name']) . ' · ' . nl2br(legalpro_finance_h($firm['address'])) . '<br>'
         . fin_doc_t('email') . ': ' . legalpro_finance_h($firm['email']) . ' · ' . fin_doc_t('phone') . ': ' . legalpro_finance_h($firm['phone']) . '</div></div>'

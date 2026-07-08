@@ -21,10 +21,14 @@ $stmt = $pdo->prepare("
         c.priority,
         CONCAT(cl.first_name, ' ', cl.last_name) AS client_name,
         cl.email AS client_email,
-        cl.phone AS client_phone
+        cl.phone AS client_phone,
+        i.bank_account_slot AS invoice_bank_account_slot,
+        i.payment_terms AS invoice_payment_terms,
+        i.payment_instructions AS invoice_payment_instructions
     FROM payments p
     LEFT JOIN cases c ON c.id = p.case_id
     LEFT JOIN clients cl ON cl.id = p.client_id
+    LEFT JOIN invoices i ON i.id = p.invoice_id
     WHERE p.id = ?
 ");
 $stmt->execute([$paymentId]);

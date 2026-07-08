@@ -1,7 +1,11 @@
 <?php
 /**
- * Bank accounts for invoices / quotations (up to 3 slots).
+ * Bank accounts for invoices / quotations.
  */
+
+if (!defined('LEGALPRO_BANK_ACCOUNT_MAX_SLOTS')) {
+    define('LEGALPRO_BANK_ACCOUNT_MAX_SLOTS', 5);
+}
 
 function bank_account_empty_slot(int $slot): array
 {
@@ -21,20 +25,20 @@ function getBankAccounts(): array
 {
     $raw = getSetting('bank_accounts', '');
     if ($raw === '' || $raw === null) {
-        return [
-            bank_account_empty_slot(1),
-            bank_account_empty_slot(2),
-            bank_account_empty_slot(3),
-        ];
+        $defaults = [];
+        for ($i = 1; $i <= LEGALPRO_BANK_ACCOUNT_MAX_SLOTS; $i++) {
+            $defaults[] = bank_account_empty_slot($i);
+        }
+        return $defaults;
     }
 
     $decoded = json_decode((string) $raw, true);
     if (!is_array($decoded)) {
-        return [
-            bank_account_empty_slot(1),
-            bank_account_empty_slot(2),
-            bank_account_empty_slot(3),
-        ];
+        $defaults = [];
+        for ($i = 1; $i <= LEGALPRO_BANK_ACCOUNT_MAX_SLOTS; $i++) {
+            $defaults[] = bank_account_empty_slot($i);
+        }
+        return $defaults;
     }
 
     $bySlot = [];
@@ -43,13 +47,13 @@ function getBankAccounts(): array
             continue;
         }
         $slot = (int) ($row['slot'] ?? 0);
-        if ($slot >= 1 && $slot <= 3) {
+        if ($slot >= 1 && $slot <= LEGALPRO_BANK_ACCOUNT_MAX_SLOTS) {
             $bySlot[$slot] = array_merge(bank_account_empty_slot($slot), $row);
         }
     }
 
     $accounts = [];
-    for ($i = 1; $i <= 3; $i++) {
+    for ($i = 1; $i <= LEGALPRO_BANK_ACCOUNT_MAX_SLOTS; $i++) {
         $accounts[] = $bySlot[$i] ?? bank_account_empty_slot($i);
     }
 
@@ -60,12 +64,12 @@ function getDefaultBankAccountSlot(): int
 {
     $slot = (int) getSetting('default_bank_account_slot', 1);
 
-    return ($slot >= 1 && $slot <= 3) ? $slot : 1;
+    return ($slot >= 1 && $slot <= LEGALPRO_BANK_ACCOUNT_MAX_SLOTS) ? $slot : 1;
 }
 
 function getBankAccountBySlot(int $slot): ?array
 {
-    if ($slot < 1 || $slot > 3) {
+    if ($slot < 1 || $slot > LEGALPRO_BANK_ACCOUNT_MAX_SLOTS) {
         return null;
     }
 
@@ -134,7 +138,7 @@ function getDefaultPaymentInstructions(): string
 function saveBankAccountsSettings(array $post): array
 {
     $accounts = [];
-    for ($slot = 1; $slot <= 3; $slot++) {
+    for ($slot = 1; $slot <= LEGALPRO_BANK_ACCOUNT_MAX_SLOTS; $slot++) {
         $prefix = 'bank_' . $slot . '_';
         $accounts[] = [
             'slot' => $slot,
@@ -149,7 +153,7 @@ function saveBankAccountsSettings(array $post): array
     }
 
     $defaultSlot = (int) ($post['default_bank_account_slot'] ?? 1);
-    if ($defaultSlot < 1 || $defaultSlot > 3) {
+    if ($defaultSlot < 1 || $defaultSlot > LEGALPRO_BANK_ACCOUNT_MAX_SLOTS) {
         $defaultSlot = 1;
     }
 
@@ -165,7 +169,7 @@ function saveBankAccountsSettings(array $post): array
 function bank_account_slot_from_value($value): int
 {
     $slot = (int) $value;
-    if ($slot >= 1 && $slot <= 3) {
+    if ($slot >= 1 && $slot <= LEGALPRO_BANK_ACCOUNT_MAX_SLOTS) {
         return $slot;
     }
 

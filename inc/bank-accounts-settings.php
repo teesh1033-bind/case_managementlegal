@@ -40,7 +40,7 @@ function renderBankAccountsSettingsHtml(bool $embedded = true): string
     }
 
     $defaultOptions = '';
-    for ($i = 1; $i <= 3; $i++) {
+    for ($i = 1; $i <= LEGALPRO_BANK_ACCOUNT_MAX_SLOTS; $i++) {
         $defaultOptions .= '<option value="' . $i . '"' . ($i === $defaultSlot ? ' selected' : '') . '>Bank account ' . $i . '</option>';
     }
 
@@ -49,7 +49,7 @@ function renderBankAccountsSettingsHtml(bool $embedded = true): string
         . '<div class="lp-bank-ui__head">'
         . '<span class="lp-bank-ui__head-icon">' . legalpro_icon('landmark') . '</span>'
         . '<div><h6 class="lp-bank-ui__title">Bank accounts for invoices</h6>'
-        . '<p class="lp-bank-ui__subtitle">Set up to three accounts. The default is pre-selected on new invoices; you can change it per invoice when generating.</p></div>'
+        . '<p class="lp-bank-ui__subtitle">Set up multiple accounts. The default is pre-selected on new invoices; you can change it per invoice when generating.</p></div>'
         . '</div>'
         . '<div class="lp-bank-preview"><div class="lp-bank-preview__title">How this appears on invoices</div>'
         . '<p class="lp-bank-preview__text mb-0">Bank name: … · Account name: … · Account number: … · Sort code: … · IBAN: … · BIC / SWIFT: … · Reference: …</p></div>'
