@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../lib/finance-reference-numbers.php';
 
 ensure_invoice_bank_columns($pdo);
 
@@ -37,25 +38,6 @@ try {
     }
 }
 
-function getNextInvoiceNumber(PDO $pdo): string
-{
-    $maxNum = 0;
-    try {
-        $stmt = $pdo->query("SELECT invoice_number FROM invoices WHERE invoice_number IS NOT NULL AND invoice_number != ''");
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $num = $row['invoice_number'];
-            if (preg_match('/^INV\s+(\d+)/i', $num, $matches)) {
-                $maxNum = max($maxNum, (int)$matches[1]);
-            } elseif (preg_match('/^Invoice\s+(\d+)/i', $num, $matches)) {
-                $maxNum = max($maxNum, (int)$matches[1]);
-            }
-        }
-    } catch (PDOException $e) {
-        // default to INV 001
-    }
-    return 'INV ' . str_pad((string)($maxNum + 1), 3, '0', STR_PAD_LEFT);
-}
-
 $statusOptions = [
     'draft' => 'Draft',
     'sent' => 'Sent',
@@ -69,7 +51,7 @@ $prefillAmount = isset($_GET['amount']) ? (float) $_GET['amount'] : 0;
 
 $formData = [
     'invoice_id' => '',
-    'invoice_number' => getNextInvoiceNumber($pdo),
+    'invoice_number' => legalpro_generate_invoice_number($pdo),
     'client_id' => $selectedClientId ?: '',
     'case_id' => $selectedCaseId ?: '',
     'amount' => $prefillAmount > 0 ? $prefillAmount : '',
@@ -113,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         $previousStatus = null;
-        $invoiceNumber = $invoiceId ? '' : getNextInvoiceNumber($pdo);
+        $invoiceNumber = $invoiceId ? '' : legalpro_generate_invoice_number($pdo);
         if ($invoiceId) {
             try {
                 $stmt = $pdo->prepare("SELECT status, invoice_number FROM invoices WHERE id = ?");
@@ -156,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                     $msg = 'Invoice updated successfully.';
                 } else {
-                    $invoiceNumber = getNextInvoiceNumber($pdo);
+                    $invoiceNumber = legalpro_generate_invoice_number($pdo);
                     $stmt = $pdo->prepare("
                         INSERT INTO invoices (invoice_number, client_id, case_id, amount, tax_rate, status, issue_date, due_date, notes, bank_account_slot, payment_terms, payment_instructions)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -175,9 +157,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $checkPayment->execute([$invoiceId]);
                         $existingPaymentId = $checkPayment->fetchColumn();
                         if (!$existingPaymentId) {
+                            $receiptNumber = legalpro_generate_receipt_number($pdo);
                             $paymentStmt = $pdo->prepare("
-                                INSERT INTO payments (case_id, client_id, invoice_id, amount, method, reference, notes, payment_date, recorded_by)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                INSERT INTO payments (case_id, client_id, invoice_id, amount, method, reference, notes, payment_date, recorded_by, receipt_number)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             ");
                             $paymentStmt->execute([
                                 $caseId,
@@ -188,7 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $invoiceNumber,
                                 'Auto-generated from invoice ' . $invoiceNumber,
                                 $issueDate ?: date('Y-m-d'),
-                                'system'
+                                'system',
+                                $receiptNumber,
                             ]);
                             $paymentNotice = ' Linked payment recorded.';
                         }
@@ -401,7 +385,7 @@ if (empty($invoices)) {
             <td class="align-middle text-center">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
             <td class="align-middle text-end">
                 <div class="legalpro-admin-list-row__actions">
-                    <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-dark mb-0" title="Edit Invoice">Edit</a>
+                    <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="' . legalpro_portal_accent_action_btn_class() . '" title="Edit Invoice">Edit</a>
                     <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary mb-0" title="Download invoice PDF" target="_blank">Download PDF</a>
                     <form method="post" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete">
@@ -450,26 +434,18 @@ $html = <<<'HTML'
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/legalpro-finance-pages.css?v=6" rel="stylesheet" />
+    {ADMIN_PORTAL_HEAD}
+    <link href="../assets/css/legalpro-finance-pages.css?v=7" rel="stylesheet" />
+    <link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />
     <?php echo legalpro_bank_accounts_stylesheet_tag(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Finance</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Invoices</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Invoices</h6>
-                </nav>
-            </div>
-        </nav>
+		{PAGE_NAVBAR}
         <div class="container-fluid py-4">
+            {FINANCE_SUBNAV}
             {MESSAGE}
             <div class="fin-hero-card">
                 <p class="fin-hero-kicker">Finance</p>
@@ -719,6 +695,7 @@ $invoiceBankSectionHtml = legalpro_render_invoice_bank_section(
 );
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{FINANCE_SUBNAV}', legalpro_finance_subnav_html('invoices'), $html);
 $html = str_replace('{FORM_TITLE}', htmlspecialchars($formTitle), $html);
 $html = str_replace('{FORM_BUTTON}', htmlspecialchars($formButtonLabel), $html);
 $html = str_replace('{FORM_INVOICE_ID}', htmlspecialchars($formData['invoice_id']), $html);
@@ -742,6 +719,7 @@ $html = str_replace('{CASE_FINANCIAL_JSON}', json_encode($caseFinancialData), $h
 $html = str_replace('{CURRENCY_ZERO}', formatCurrency(0), $html);
 
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
+$html = legalpro_apply_admin_page_shell($html, 'Invoices', 'Billing and invoice records');
 
 ob_start();
 include __DIR__ . '/../inc/menunav.php';

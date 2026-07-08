@@ -64,6 +64,17 @@ function legalpro_payments_activity_pages(): array
     return legalpro_payments_portal_pages();
 }
 
+function legalpro_payments_activity_page_subtitle(string $pageKey): string
+{
+    $map = [
+        'payments' => 'Record payments and review activity',
+        'payments-recent' => 'Recently recorded payments',
+        'payments-outstanding' => 'Unpaid balances and follow-ups',
+    ];
+
+    return $map[$pageKey] ?? '';
+}
+
 function legalpro_payments_activity_message_html(array $state): string
 {
     if (empty($state['message'])) {
@@ -738,13 +749,7 @@ function legalpro_payments_activity_render_page(string $pageKey, string $content
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <div>
-                    <h6 class="font-weight-bolder mb-0">Payments</h6>
-                </div>
-            </div>
-        </nav>
+        ' . legalpro_render_admin_page_navbar($navTitle, legalpro_payments_activity_page_subtitle($pageKey)) . '
         <div class="container-fluid py-4">
             ' . legalpro_payments_activity_message_html($state) . '
             ' . $contentHtml . '

@@ -228,7 +228,6 @@ $html = <<<'HTML'
             </div>
             <div class="cd-hero-actions">
                 <a href="client-cases.php" class="btn btn-primary-solid">{DASH_VIEW_CASES}</a>
-                <a href="chatbot.php" class="btn btn-ghost">{DASH_ASK_ASSISTANT}</a>
             </div>
         </section>
 
@@ -336,7 +335,6 @@ $html = str_replace('{DASH_ARIA}', htmlspecialchars(client_t('dashboard.aria_ove
 $html = str_replace('{DASH_KICKER}', htmlspecialchars(client_t('dashboard.kicker')), $html);
 $html = str_replace('{DASH_SUB}', htmlspecialchars(client_t('dashboard.subtitle')), $html);
 $html = str_replace('{DASH_VIEW_CASES}', htmlspecialchars(client_t('dashboard.view_cases_btn')), $html);
-$html = str_replace('{DASH_ASK_ASSISTANT}', htmlspecialchars(client_t('dashboard.ask_assistant_btn')), $html);
 $html = str_replace('{LBL_TOTAL_CASES}', htmlspecialchars(client_t('dashboard.total_cases')), $html);
 $html = str_replace('{LBL_ACTIVE}', htmlspecialchars(client_t('dashboard.active')), $html);
 $html = str_replace('{LBL_PENDING}', htmlspecialchars(client_t('dashboard.pending')), $html);

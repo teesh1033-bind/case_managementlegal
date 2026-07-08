@@ -203,6 +203,9 @@ $navUserClass = 'text-white';
 $navbarBlurAttr = $portal === 'client' ? 'navbar-scroll="true"' : 'data-scroll="false"';
 $caseCount = count($cases);
 $aptCount = count($appointments);
+$searchSubtitle = $q === ''
+    ? 'Search cases and appointments'
+    : ($caseCount + $aptCount) . ' result' . (($caseCount + $aptCount) === 1 ? '' : 's');
 $iconSearchCases = legalpro_icon('briefcase');
 $iconSearchAppts = legalpro_icon('calendar');
 
@@ -460,44 +463,21 @@ $resultsQueryClass = 'search-results-query';
         <?php if ($portal === 'client'): ?>
             <?php
             require_once __DIR__ . '/../inc/client-portal-navbar.php';
-            echo legalpro_render_client_page_navbar('Search', 'Search', 'Search cases…', [
-                'client_name' => $userLabel,
-                'search_value' => $q,
-            ]);
+            echo legalpro_render_client_page_navbar('Search', 'Search', '', array_merge(
+                legalpro_client_page_search_options('search.php'),
+                [
+                    'client_name' => $userLabel,
+                    'subtitle' => $searchSubtitle,
+                ]
+            ));
+            ?>
+        <?php elseif ($portal === 'lawyer'): ?>
+            <?php
+            require_once __DIR__ . '/../lib/lawyer-portal-i18n.php';
+            echo legalpro_render_lawyer_breadcrumb_navbar('Search', [], ['subtitle' => $searchSubtitle]);
             ?>
         <?php else: ?>
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" <?php echo $navbarBlurAttr; ?>>
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm">
-                            <a class="<?php echo h($navBreadcrumbMuted); ?>" href="<?php echo h($dashboardHref); ?>"><?php echo h($portalTitle); ?></a>
-                        </li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Search</li>
-                    </ol>
-                    <h5 class="<?php echo h($navHeadingClass); ?>">Search</h5>
-                </nav>
-                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4 justify-content-end" id="navbar">
-                    <ul class="navbar-nav justify-content-end">
-                        <li class="nav-item d-flex align-items-center">
-                            <span class="nav-link font-weight-bold px-0 <?php echo h($navUserClass); ?>">
-                                <i class="fa fa-user me-sm-1"></i>
-                                <span class="d-sm-inline d-none">Welcome, <?php echo $un; ?></span>
-                            </span>
-                        </li>
-                        <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
-                            <a href="javascript:;" class="nav-link p-0 <?php echo h($navUserClass); ?>" id="iconNavbarSidenav">
-                                <div class="sidenav-toggler-inner">
-                                    <i class="sidenav-toggler-line"></i>
-                                    <i class="sidenav-toggler-line"></i>
-                                    <i class="sidenav-toggler-line"></i>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+            <?php echo legalpro_render_admin_page_navbar('Search', $searchSubtitle); ?>
         <?php endif; ?>
 
         <div class="container-fluid py-4">

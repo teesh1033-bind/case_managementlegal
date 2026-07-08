@@ -9,7 +9,7 @@ legalpro_admin_settings_load($state);
 $content = '<div class="card mb-4">
     <div class="card-header pb-0">
         <h6 class="mb-0">Settings workspace</h6>
-        <p class="text-sm text-muted mb-0">Choose a section below to update branding, appearance, finance, practice catalog, or AI assistant.</p>
+        <p class="text-sm text-muted mb-0">Choose a section below to update branding, appearance, finance, practice catalog, AI assistant, or role access.</p>
     </div>
     <div class="card-body">' . legalpro_settings_hub_cards_html() . '</div>
 </div>';

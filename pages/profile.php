@@ -149,24 +149,15 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-    <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+{ADMIN_PORTAL_HEAD}
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main"></aside>
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="dashboard.php">Dashboard</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Profile</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">My Profile</h6>
-                </nav>
-            </div>
-        </nav>
+		{PAGE_NAVBAR}
 
         <div class="container-fluid py-4">
             {MESSAGE}
@@ -270,6 +261,7 @@ $html = str_replace('{NEW_PASSWORD_INVALID_CLASS}', $passwordInvalidClass, $html
 $html = str_replace('{CONFIRM_PASSWORD_INVALID_CLASS}', $confirmInvalidClass, $html);
 $html = str_replace('{NEW_PASSWORD_ERROR}', $passwordErrorHtml, $html);
 $html = str_replace('{CONFIRM_PASSWORD_ERROR}', $confirmErrorHtml, $html);
+$html = legalpro_apply_admin_page_shell($html, 'My Profile', 'Your admin account');
 
 ob_start();
 include __DIR__ . '/../inc/menunav.php';

@@ -116,9 +116,9 @@ body.legalpro-sidebar-collapsed #sidenav-main.lp-sidebar .lp-sidebar__collapse-b
     color: rgba(255, 255, 255, 0.38);
 }
 
-/* Admin compact width */
+/* Admin compact — padding/fonts only; width matches all portals */
 #sidenav-main.legalpro-admin-sidebar--compact {
-    --lp-portal-sidebar-width: 248px;
+    --lp-portal-sidebar-width: var(--lp-sidebar-width, 280px);
 }
 
 #sidenav-main.legalpro-admin-sidebar--compact .legalpro-sidebar-brand {

@@ -81,7 +81,7 @@ if (empty($clients)) {
                 <span class="text-sm" title="' . $caseTitles . '">' . $caseTitlesShort . '</span>
             </td>
             <td class="align-middle text-end lp-table-actions">
-                <a href="lawyer-client-view.php?id=' . (int)$client['id'] . '" class="btn btn-sm btn-primary mb-0">' . htmlspecialchars(lawyer_tf('common.view', 'View')) . '</a>
+                <a href="lawyer-client-view.php?id=' . (int)$client['id'] . '" class="' . legalpro_portal_accent_action_btn_class() . '">' . htmlspecialchars(lawyer_tf('common.view', 'View')) . '</a>
             </td>
         </tr>';
     }

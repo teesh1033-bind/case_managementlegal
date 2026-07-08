@@ -10,12 +10,13 @@ require_once __DIR__ . '/legalpro-icons.php';
 ?>
 <?php include __DIR__ . '/portal-theme-head-early.php'; ?>
 <?php legalpro_icons_head_scripts(); ?>
-<link href="../assets/css/legalpro-portal-shell.css?v=23" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=26" rel="stylesheet" />
 <link href="../assets/css/legalpro-lawyer-portal.css?v=29" rel="stylesheet" />
-<link href="../assets/css/legalpro-admin-portal.css?v=30" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=40" rel="stylesheet" />
 <link href="../assets/css/dashboard-enhancements.css?v=16" rel="stylesheet" />
 <link href="../assets/css/legalpro-sidebar-nav.css?v=24" rel="stylesheet" />
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>
+<?php include __DIR__ . '/portal-calendar-assets.php'; ?>
 <?php include __DIR__ . '/lawyer-portal-badges-css.php'; ?>
 <script src="../assets/js/lawyer-search-reset.js?v=1"></script>

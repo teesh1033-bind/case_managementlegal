@@ -6,6 +6,8 @@
 require_once __DIR__ . '/legalpro-icons.php';
 require_once __DIR__ . '/../lib/portal_notifications.php';
 require_once __DIR__ . '/../lib/admin-locale.php';
+require_once __DIR__ . '/../lib/portal-theme.php';
+require_once __DIR__ . '/../lib/branding.php';
 
 function legalpro_admin_notification_count(?PDO $pdo = null): int
 {
@@ -45,6 +47,88 @@ function legalpro_admin_initials(string $name): string
 function legalpro_portal_initials(string $name, string $fallback = 'U'): string
 {
     return legalpro_admin_initials($name !== '' ? $name : $fallback);
+}
+
+/**
+ * Unified page header block (logo + title + optional subtitle) for all portals.
+ */
+function legalpro_render_portal_page_navbar(string $pageTitle, string $subtitle = '', array $options = []): string
+{
+    $titleTag = (string) ($options['title_tag'] ?? 'h6');
+    if (!in_array($titleTag, ['h5', 'h6'], true)) {
+        $titleTag = 'h6';
+    }
+
+    $logoUrl = trim((string) ($options['logo_url'] ?? ''));
+    if ($logoUrl === '') {
+        $logoUrl = getCompanyLogoUrl();
+    }
+
+    $showLogo = !isset($options['show_logo']) || (bool) $options['show_logo'];
+    $navbarClass = trim((string) ($options['navbar_class'] ?? ''));
+    $extraClass = trim((string) ($options['page_head_class'] ?? ''));
+    $dataScroll = (string) ($options['data_scroll'] ?? 'false');
+
+    $pageTitleEsc = htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
+    $subtitleHtml = '';
+    if (trim($subtitle) !== '') {
+        $subtitleHtml = '<p class="legalpro-portal-page-head__sub mb-0">'
+            . htmlspecialchars($subtitle, ENT_QUOTES, 'UTF-8')
+            . '</p>';
+    }
+
+    $logoHtml = '';
+    if ($showLogo) {
+        $companyName = function_exists('getCompanyName') ? getCompanyName() : 'LegalPro';
+        $logoHtml = '<img src="' . htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8') . '" width="40" height="40" alt="'
+            . htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8')
+            . ' logo" class="legalpro-portal-page-head__logo" loading="eager" decoding="async">';
+    }
+
+    $pageHeadClass = 'legalpro-portal-page-head' . ($extraClass !== '' ? ' ' . $extraClass : '');
+
+    return '
+        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl' . ($navbarClass !== '' ? ' ' . $navbarClass : '') . '" id="navbarBlur" data-scroll="' . htmlspecialchars($dataScroll, ENT_QUOTES, 'UTF-8') . '">
+            <div class="container-fluid py-1 px-3">
+                <div class="' . htmlspecialchars($pageHeadClass, ENT_QUOTES, 'UTF-8') . '">
+                    ' . $logoHtml . '
+                    <div class="legalpro-portal-page-head__text">
+                        <' . $titleTag . ' class="legalpro-portal-page-head__title mb-0">' . $pageTitleEsc . '</' . $titleTag . '>
+                        ' . $subtitleHtml . '
+                    </div>
+                </div>
+            </div>
+        </nav>';
+}
+
+/**
+ * Admin portal page header (logo + title + optional subtitle).
+ */
+function legalpro_render_admin_page_navbar(string $pageTitle, string $subtitle = '', array $options = []): string
+{
+    return legalpro_render_portal_page_navbar($pageTitle, $subtitle, $options);
+}
+
+/**
+ * Capture admin portal head assets for nowdoc page templates.
+ */
+function legalpro_capture_admin_portal_head(): string
+{
+    ob_start();
+    include __DIR__ . '/admin-portal-head.php';
+    return (string) ob_get_clean();
+}
+
+/**
+ * Inject unified page header + portal head into admin nowdoc HTML.
+ */
+function legalpro_apply_admin_page_shell(string $html, string $pageTitle, string $subtitle = ''): string
+{
+    if (strpos($html, '{ADMIN_PORTAL_HEAD}') !== false) {
+        $html = str_replace('{ADMIN_PORTAL_HEAD}', legalpro_capture_admin_portal_head(), $html);
+    }
+
+    return str_replace('{PAGE_NAVBAR}', legalpro_render_admin_page_navbar($pageTitle, $subtitle), $html);
 }
 
 function legalpro_lawyer_notification_count(?PDO $pdo = null, ?int $lawyerId = null): int
@@ -617,6 +701,45 @@ function legalpro_render_page_toolbar(string $title, string $subtitle = '', stri
     </div>';
 }
 
+function legalpro_finance_portal_pages(): array
+{
+    return [
+        'financial-summary' => [
+            'file' => 'financial-summary.php',
+            'title_key' => 'nav.finance_summary',
+            'fallback' => 'Summary',
+        ],
+        'invoices' => [
+            'file' => 'invoices.php',
+            'title_key' => 'nav.invoices',
+            'fallback' => 'Invoices',
+        ],
+    ];
+}
+
+function legalpro_finance_subnav_html(string $activeKey): string
+{
+    $pages = legalpro_finance_portal_pages();
+    $aria = function_exists('admin_t') ? admin_t('settings.finance_nav') : 'Finance sections';
+    if ($aria === 'settings.finance_nav') {
+        $aria = 'Finance sections';
+    }
+
+    $html = '<nav class="legalpro-doc-subnav" aria-label="' . htmlspecialchars($aria) . '">';
+    foreach ($pages as $key => $page) {
+        $active = $key === $activeKey ? ' is-active' : '';
+        $label = function_exists('admin_t') ? admin_t($page['title_key']) : $page['fallback'];
+        if ($label === $page['title_key']) {
+            $label = $page['fallback'];
+        }
+        $html .= '<a class="legalpro-doc-subnav__link' . $active . '" href="' . htmlspecialchars($page['file']) . '">'
+            . htmlspecialchars($label) . '</a>';
+    }
+    $html .= '</nav>';
+
+    return $html;
+}
+
 function legalpro_format_case_number(int $caseId, ?string $createdAt = null): string
 {
     $year = $createdAt ? date('Y', strtotime($createdAt)) : date('Y');
@@ -767,9 +890,13 @@ function legalpro_court_date_status_meta(string $status): array
 
 function legalpro_court_date_status_badge(string $status): string
 {
-    $meta = legalpro_court_date_status_meta($status);
+    if (!function_exists('legalpro_portal_court_date_status_badge')) {
+        require_once __DIR__ . '/../lib/portal_list_ui.php';
+    }
 
-    return '<span class="lp-pill ' . $meta['pill'] . '">' . htmlspecialchars($meta['label']) . '</span>';
+    return legalpro_portal_court_date_status_badge($status, static function (string $key, string $rawStatus): string {
+        return legalpro_court_date_status_meta($rawStatus)['label'];
+    });
 }
 
 function legalpro_lawyer_active_status_badge(bool $isActive): string
@@ -922,23 +1049,20 @@ function legalpro_document_count_badge(int $count, bool $compact = false): strin
 
 function client_court_date_status_badge(string $status): string
 {
-    $key = strtolower(trim($status));
-    $map = [
-        'scheduled' => ['label_key' => 'badge.court_scheduled', 'pill' => 'ca-status-pill--scheduled'],
-        'completed' => ['label_key' => 'badge.court_completed', 'pill' => 'ca-status-pill--done'],
-        'cancelled' => ['label_key' => 'badge.court_cancelled', 'pill' => 'ca-status-pill--declined'],
-        'postponed' => ['label_key' => 'badge.court_postponed', 'pill' => 'ca-status-pill--pending'],
-    ];
-
-    if (!isset($map[$key])) {
-        $label = function_exists('client_status_label') ? client_status_label($status) : ucwords(str_replace('_', ' ', $key));
-
-        return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+    if (!function_exists('legalpro_portal_court_date_status_badge')) {
+        require_once __DIR__ . '/../lib/portal_list_ui.php';
     }
 
-    $label = function_exists('client_t') ? client_t($map[$key]['label_key']) : $map[$key]['label_key'];
+    return legalpro_portal_court_date_status_badge($status, static function (string $key): string {
+        $map = [
+            'scheduled' => 'badge.court_scheduled',
+            'completed' => 'badge.court_completed',
+            'cancelled' => 'badge.court_cancelled',
+            'postponed' => 'badge.court_postponed',
+        ];
 
-    return '<span class="ca-status-pill ' . $map[$key]['pill'] . '">' . htmlspecialchars($label) . '</span>';
+        return function_exists('client_t') ? client_t($map[$key] ?? 'badge.court_scheduled') : ucfirst($key);
+    });
 }
 
 function client_case_status_badge(string $status): string
@@ -982,93 +1106,20 @@ function client_case_priority_badge(string $priority): string
 
 function lawyer_appointment_status_badge(array $appointment): string
 {
-    $status = strtolower((string) ($appointment['status'] ?? ''));
-    $startsAt = !empty($appointment['starts_at']) ? strtotime($appointment['starts_at']) : 0;
-    $now = time();
-
-    if ($status === 'pending') {
-        $label = function_exists('lawyer_tf')
-            ? lawyer_tf('appointments.status_pending_approval', 'Pending approval')
-            : 'Pending approval';
-
-        return '<span class="ca-status-pill ca-status-pill--pending">' . htmlspecialchars($label) . '</span>';
-    }
-    if ($status === 'rejected') {
-        $label = function_exists('lawyer_appointment_status_label')
-            ? lawyer_appointment_status_label('rejected')
-            : 'Rejected';
-
-        return '<span class="ca-status-pill ca-status-pill--declined">' . htmlspecialchars($label) . '</span>';
-    }
-    if ($status === 'accepted') {
-        if ($startsAt > 0 && $startsAt < $now) {
-            $label = function_exists('lawyer_appointment_status_label')
-                ? lawyer_appointment_status_label('completed')
-                : 'Completed';
-
-            return '<span class="ca-status-pill ca-status-pill--done">' . htmlspecialchars($label) . '</span>';
-        }
-        if ($startsAt > 0 && date('Y-m-d', $startsAt) === date('Y-m-d')) {
-            $label = function_exists('lawyer_appointment_status_label')
-                ? lawyer_appointment_status_label('today')
-                : 'Today';
-
-            return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
-        }
-
-        $label = function_exists('lawyer_appointment_status_label')
-            ? lawyer_appointment_status_label('scheduled')
-            : 'Scheduled';
-
-        return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
+    if (!function_exists('admin_appointment_status_badge')) {
+        require_once __DIR__ . '/../lib/appointment_list_ui.php';
     }
 
-    $label = function_exists('lawyer_appointment_status_label')
-        ? lawyer_appointment_status_label($status)
-        : ucwords(str_replace('_', ' ', $status));
-
-    return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+    return admin_appointment_status_badge(legalpro_normalize_appointment_row($appointment));
 }
 
 function client_appointment_status_badge(array $appointment): string
 {
-    $status = strtolower((string) ($appointment['status'] ?? ''));
-    if ($status === 'approved') {
-        $status = 'accepted';
-    }
-    $startsAt = !empty($appointment['starts_at']) ? strtotime($appointment['starts_at']) : 0;
-    $now = time();
-
-    if ($status === 'pending') {
-        $label = function_exists('client_t') ? client_t('badge.appt_awaiting') : 'Awaiting confirmation';
-
-        return '<span class="ca-status-pill ca-status-pill--pending">' . htmlspecialchars($label) . '</span>';
-    }
-    if ($status === 'rejected') {
-        $label = function_exists('client_t') ? client_t('badge.appt_declined') : 'Declined';
-
-        return '<span class="ca-status-pill ca-status-pill--declined">' . htmlspecialchars($label) . '</span>';
-    }
-    if ($status === 'accepted') {
-        if ($startsAt > 0 && $startsAt < $now) {
-            $label = function_exists('client_t') ? client_t('badge.appt_completed') : 'Completed';
-
-            return '<span class="ca-status-pill ca-status-pill--done">' . htmlspecialchars($label) . '</span>';
-        }
-        if ($startsAt > 0 && date('Y-m-d', $startsAt) === date('Y-m-d')) {
-            $label = function_exists('client_t') ? client_t('badge.appt_today') : 'Today';
-
-            return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
-        }
-
-        $label = function_exists('client_t') ? client_t('badge.appt_confirmed') : 'Confirmed';
-
-        return '<span class="ca-status-pill ca-status-pill--scheduled">' . htmlspecialchars($label) . '</span>';
+    if (!function_exists('admin_appointment_status_badge')) {
+        require_once __DIR__ . '/../lib/appointment_list_ui.php';
     }
 
-    $label = function_exists('client_status_label') ? client_status_label($status) : ucwords(str_replace('_', ' ', $status));
-
-    return '<span class="ca-status-pill ca-status-pill--muted">' . htmlspecialchars($label) . '</span>';
+    return admin_appointment_status_badge(legalpro_normalize_appointment_row($appointment));
 }
 
 /**

@@ -1,0 +1,313 @@
+/**
+ * View / Edit / Open / Delete action buttons — solid colors by default (all portals).
+ */
+
+/* ── Accent actions (View, Edit, Open) ─────────────────────────────────── */
+.lp-portal-accent-btn,
+.btn-legalpro-case-open,
+.btn-view,
+.btn-cct-view,
+.btn-det,
+.case-stage-edit-btn,
+.case-quotation-edit-btn,
+.cc-comment-edit-btn,
+.lt-task-edit-btn,
+.appointment-modal-edit-btn,
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-dark:not(.btn-danger):not(.btn-secondary):not(:disabled),
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-primary:not(.btn-danger),
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-outline-primary:not(.btn-danger),
+.court-actions .btn.btn-sm.btn-dark:not(.btn-danger),
+.court-actions .btn.btn-sm.btn-primary:not(.btn-danger),
+.court-actions .btn.btn-sm.btn-outline-primary:not(.btn-danger),
+.legalpro-lawyer-portal .table tbody a.btn.btn-sm.btn-primary:not(.btn-danger),
+.legalpro-lawyer-portal .table tbody button.btn.btn-sm.btn-primary:not(.btn-danger),
+.legalpro-lawyer-portal .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+.legalpro-lawyer-portal .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+.legalpro-client-portal .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+.legalpro-client-portal .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+.table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+.table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+a.btn.btn-sm.btn-dark[href*="case-edit"],
+a.btn.btn-sm.btn-dark[href*="edit="]:not([href*="delete"]),
+a.btn.btn-sm.btn-outline-primary[target="_blank"]:not(.btn-danger),
+a.btn.btn-sm.btn-primary.cdoc-touch-btn:not(.btn-danger),
+a.btn.btn-sm.btn-outline-primary.cdoc-touch-btn[href*="view"]:not(.btn-danger),
+a.btn.btn-sm.btn-outline-info[href*="view=1"],
+.btn.btn-sm[title="View"]:not(.btn-danger):not(:disabled),
+.btn.btn-sm[title="Edit"]:not(.btn-danger):not(:disabled):not(.btn-secondary),
+.btn.btn-sm[title="Open"]:not(.btn-danger),
+.btn.btn-sm[title="Edit Invoice"]:not(.btn-danger),
+.lp-appt-list-actions a.lp-appt-list-edit-btn {
+    background: var(--legalpro-theme-primary, #023e8a) !important;
+    background-image: var(
+        --legalpro-theme-gradient,
+        linear-gradient(135deg, var(--legalpro-theme-primary, #023e8a) 0%, var(--legalpro-theme-primary-dark, #001845) 100%)
+    ) !important;
+    border: 1px solid var(--legalpro-theme-primary, #023e8a) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.28) !important;
+    text-shadow: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.lp-portal-accent-btn:hover,
+.lp-portal-accent-btn:focus,
+.lp-appt-list-actions a.lp-appt-list-edit-btn:hover,
+.lp-appt-list-actions a.lp-appt-list-edit-btn:focus,
+.btn-legalpro-case-open:hover,
+.btn-legalpro-case-open:focus,
+.btn-view:hover,
+.btn-view:focus,
+.btn-cct-view:hover,
+.btn-cct-view:focus,
+.btn-det:hover,
+.btn-det:focus,
+.case-stage-edit-btn:hover,
+.case-stage-edit-btn:focus,
+.case-quotation-edit-btn:hover,
+.case-quotation-edit-btn:focus,
+.cc-comment-edit-btn:hover,
+.cc-comment-edit-btn:focus,
+.lt-task-edit-btn:hover,
+.lt-task-edit-btn:focus,
+.appointment-modal-edit-btn:hover,
+.appointment-modal-edit-btn:focus,
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-dark:not(.btn-danger):not(.btn-secondary):not(:disabled):hover,
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-primary:not(.btn-danger):hover,
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+.court-actions .btn.btn-sm.btn-dark:not(.btn-danger):hover,
+.court-actions .btn.btn-sm.btn-primary:not(.btn-danger):hover,
+.court-actions .btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+.legalpro-lawyer-portal .table tbody a.btn.btn-sm.btn-primary:not(.btn-danger):hover,
+.legalpro-lawyer-portal .table tbody button.btn.btn-sm.btn-primary:not(.btn-danger):hover,
+.legalpro-lawyer-portal .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+.legalpro-lawyer-portal .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+.legalpro-client-portal .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+.legalpro-client-portal .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+.table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+.table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+a.btn.btn-sm.btn-dark[href*="case-edit"]:hover,
+a.btn.btn-sm.btn-dark[href*="edit="]:not([href*="delete"]):hover,
+a.btn.btn-sm.btn-outline-primary[target="_blank"]:not(.btn-danger):hover,
+a.btn.btn-sm.btn-primary.cdoc-touch-btn:not(.btn-danger):hover,
+a.btn.btn-sm.btn-outline-primary.cdoc-touch-btn[href*="view"]:not(.btn-danger):hover,
+a.btn.btn-sm.btn-outline-info[href*="view=1"]:hover,
+.btn.btn-sm[title="View"]:not(.btn-danger):not(:disabled):hover,
+.btn.btn-sm[title="Edit"]:not(.btn-danger):not(:disabled):not(.btn-secondary):hover,
+.btn.btn-sm[title="Open"]:not(.btn-danger):hover,
+.btn.btn-sm[title="Edit Invoice"]:not(.btn-danger):hover {
+    background: var(--legalpro-theme-primary-dark, #001845) !important;
+    background-image: none !important;
+    border-color: var(--legalpro-theme-primary-dark, #001845) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.38) !important;
+    transform: translateY(-1px);
+}
+
+.lp-portal-accent-btn:disabled:not(.lp-appt-list-edit-btn--locked),
+.lp-portal-accent-btn.disabled,
+.btn.btn-sm[title="Edit"].btn-secondary:disabled {
+    background: #e9ecef !important;
+    background-image: none !important;
+    border-color: #dee2e6 !important;
+    color: #8392ab !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+.lp-portal-accent-btn.lp-appt-list-edit-btn--locked:disabled {
+    opacity: 0.58 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.2) !important;
+}
+
+/* ── Danger actions (Delete, Remove) ─────────────────────────────────────── */
+.lp-portal-danger-btn,
+.lp-appt-list-btn--delete,
+.btn.btn-sm.btn-danger:not(:disabled),
+.btn.btn-sm.btn-outline-danger:not(:disabled),
+.btn.btn-sm[title="Delete"]:not(:disabled),
+.btn.btn-sm[title="Remove"]:not(:disabled),
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-danger:not(:disabled),
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-outline-danger:not(:disabled),
+.court-actions .btn.btn-sm.btn-danger:not(:disabled),
+.court-actions .btn.btn-sm.btn-outline-danger:not(:disabled),
+.legalpro-lawyer-portal .table tbody .btn.btn-sm.btn-danger:not(:disabled),
+.legalpro-lawyer-portal .table tbody .btn.btn-sm.btn-outline-danger:not(:disabled),
+.legalpro-client-portal .table tbody .btn.btn-sm.btn-danger:not(:disabled),
+.legalpro-client-portal .table tbody .btn.btn-sm.btn-outline-danger:not(:disabled),
+.table tbody .btn.btn-sm.btn-danger:not(:disabled),
+.table tbody .btn.btn-sm.btn-outline-danger:not(:disabled),
+.doc-delete-btn:not(:disabled) {
+    background: #f5365c !important;
+    background-image: linear-gradient(135deg, #f5365c 0%, #d62850 100%) !important;
+    border: 1px solid #f5365c !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(245, 54, 92, 0.28) !important;
+    text-shadow: none !important;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.lp-portal-danger-btn:hover,
+.lp-portal-danger-btn:focus,
+.lp-appt-list-btn--delete:hover,
+.lp-appt-list-btn--delete:focus,
+.btn.btn-sm.btn-danger:not(:disabled):hover,
+.btn.btn-sm.btn-outline-danger:not(:disabled):hover,
+.btn.btn-sm[title="Delete"]:not(:disabled):hover,
+.btn.btn-sm[title="Remove"]:not(:disabled):hover,
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-danger:not(:disabled):hover,
+.legalpro-admin-list-row__actions .btn.btn-sm.btn-outline-danger:not(:disabled):hover,
+.court-actions .btn.btn-sm.btn-danger:not(:disabled):hover,
+.court-actions .btn.btn-sm.btn-outline-danger:not(:disabled):hover,
+.legalpro-lawyer-portal .table tbody .btn.btn-sm.btn-danger:not(:disabled):hover,
+.legalpro-lawyer-portal .table tbody .btn.btn-sm.btn-outline-danger:not(:disabled):hover,
+.legalpro-client-portal .table tbody .btn.btn-sm.btn-danger:not(:disabled):hover,
+.legalpro-client-portal .table tbody .btn.btn-sm.btn-outline-danger:not(:disabled):hover,
+.table tbody .btn.btn-sm.btn-danger:not(:disabled):hover,
+.table tbody .btn.btn-sm.btn-outline-danger:not(:disabled):hover,
+.doc-delete-btn:not(:disabled):hover {
+    background: #d62850 !important;
+    background-image: none !important;
+    border-color: #d62850 !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(245, 54, 92, 0.38) !important;
+    transform: translateY(-1px);
+}
+
+/* ── Dark mode: accent ─────────────────────────────────────────────────── */
+body.legalpro-dark-mode .lp-portal-accent-btn,
+body.legalpro-dark-mode .btn-legalpro-case-open,
+body.legalpro-dark-mode .btn-view,
+body.legalpro-dark-mode .btn-cct-view,
+body.legalpro-dark-mode .btn-det,
+body.legalpro-dark-mode .case-stage-edit-btn,
+body.legalpro-dark-mode .case-quotation-edit-btn,
+body.legalpro-dark-mode .cc-comment-edit-btn,
+body.legalpro-dark-mode .lt-task-edit-btn,
+body.legalpro-dark-mode .appointment-modal-edit-btn,
+body.legalpro-dark-mode .legalpro-admin-list-row__actions .btn.btn-sm.btn-dark:not(.btn-danger):not(.btn-secondary):not(:disabled),
+body.legalpro-dark-mode .legalpro-admin-list-row__actions .btn.btn-sm.btn-primary:not(.btn-danger),
+body.legalpro-dark-mode .legalpro-admin-list-row__actions .btn.btn-sm.btn-outline-primary:not(.btn-danger),
+body.legalpro-dark-mode .court-actions .btn.btn-sm.btn-dark:not(.btn-danger),
+body.legalpro-dark-mode .court-actions .btn.btn-sm.btn-primary:not(.btn-danger),
+body.legalpro-dark-mode .court-actions .btn.btn-sm.btn-outline-primary:not(.btn-danger),
+body.legalpro-dark-mode .legalpro-lawyer-portal .table tbody a.btn.btn-sm.btn-primary:not(.btn-danger),
+body.legalpro-dark-mode .legalpro-lawyer-portal .table tbody button.btn.btn-sm.btn-primary:not(.btn-danger),
+body.legalpro-dark-mode .legalpro-lawyer-portal .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+body.legalpro-dark-mode .legalpro-lawyer-portal .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+body.legalpro-dark-mode .legalpro-client-portal .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+body.legalpro-dark-mode .legalpro-client-portal .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+body.legalpro-dark-mode .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+body.legalpro-dark-mode .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger),
+body.legalpro-dark-mode a.btn.btn-sm.btn-dark[href*="case-edit"],
+body.legalpro-dark-mode a.btn.btn-sm.btn-dark[href*="edit="]:not([href*="delete"]),
+body.legalpro-dark-mode a.btn.btn-sm.btn-outline-primary[target="_blank"]:not(.btn-danger),
+body.legalpro-dark-mode a.btn.btn-sm.btn-primary.cdoc-touch-btn:not(.btn-danger),
+body.legalpro-dark-mode a.btn.btn-sm.btn-outline-primary.cdoc-touch-btn[href*="view"]:not(.btn-danger),
+body.legalpro-dark-mode a.btn.btn-sm.btn-outline-info[href*="view=1"],
+body.legalpro-dark-mode .btn.btn-sm[title="View"]:not(.btn-danger):not(:disabled),
+body.legalpro-dark-mode .btn.btn-sm[title="Edit"]:not(.btn-danger):not(:disabled):not(.btn-secondary),
+body.legalpro-dark-mode .btn.btn-sm[title="Open"]:not(.btn-danger),
+body.legalpro-dark-mode .btn.btn-sm[title="Edit Invoice"]:not(.btn-danger),
+body.legalpro-dark-mode .lp-appt-list-actions a.lp-appt-list-edit-btn {
+    background: var(--legalpro-theme-primary, #023e8a) !important;
+    background-image: var(
+        --legalpro-theme-gradient,
+        linear-gradient(135deg, var(--legalpro-theme-primary, #023e8a) 0%, var(--legalpro-theme-primary-dark, #001845) 100%)
+    ) !important;
+    border-color: var(--legalpro-theme-primary, #023e8a) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.legalpro-dark-mode .lp-portal-accent-btn:hover,
+body.legalpro-dark-mode .btn-legalpro-case-open:hover,
+body.legalpro-dark-mode .btn-view:hover,
+body.legalpro-dark-mode .btn-cct-view:hover,
+body.legalpro-dark-mode .btn-det:hover,
+body.legalpro-dark-mode .case-stage-edit-btn:hover,
+body.legalpro-dark-mode .case-quotation-edit-btn:hover,
+body.legalpro-dark-mode .cc-comment-edit-btn:hover,
+body.legalpro-dark-mode .lt-task-edit-btn:hover,
+body.legalpro-dark-mode .appointment-modal-edit-btn:hover,
+body.legalpro-dark-mode .legalpro-admin-list-row__actions .btn.btn-sm.btn-dark:not(.btn-danger):not(.btn-secondary):not(:disabled):hover,
+body.legalpro-dark-mode .legalpro-admin-list-row__actions .btn.btn-sm.btn-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .legalpro-admin-list-row__actions .btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .court-actions .btn.btn-sm.btn-dark:not(.btn-danger):hover,
+body.legalpro-dark-mode .court-actions .btn.btn-sm.btn-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .court-actions .btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .legalpro-lawyer-portal .table tbody a.btn.btn-sm.btn-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .legalpro-lawyer-portal .table tbody button.btn.btn-sm.btn-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .legalpro-lawyer-portal .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .legalpro-lawyer-portal .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .legalpro-client-portal .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .legalpro-client-portal .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .table tbody a.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode .table tbody button.btn.btn-sm.btn-outline-primary:not(.btn-danger):hover,
+body.legalpro-dark-mode a.btn.btn-sm.btn-dark[href*="case-edit"]:hover,
+body.legalpro-dark-mode a.btn.btn-sm.btn-outline-primary[target="_blank"]:not(.btn-danger):hover,
+body.legalpro-dark-mode a.btn.btn-sm.btn-primary.cdoc-touch-btn:not(.btn-danger):hover,
+body.legalpro-dark-mode a.btn.btn-sm.btn-outline-primary.cdoc-touch-btn[href*="view"]:not(.btn-danger):hover,
+body.legalpro-dark-mode a.btn.btn-sm.btn-outline-info[href*="view=1"]:hover,
+body.legalpro-dark-mode .btn.btn-sm[title="View"]:not(.btn-danger):not(:disabled):hover,
+body.legalpro-dark-mode .btn.btn-sm[title="Edit"]:not(.btn-danger):not(:disabled):not(.btn-secondary):hover,
+body.legalpro-dark-mode .btn.btn-sm[title="Open"]:not(.btn-danger):hover,
+body.legalpro-dark-mode .btn.btn-sm[title="Edit Invoice"]:not(.btn-danger):hover,
+body.legalpro-dark-mode .lp-appt-list-actions a.lp-appt-list-edit-btn:hover {
+    background: var(--legalpro-theme-primary-dark, #001845) !important;
+    background-image: none !important;
+    border-color: var(--legalpro-theme-primary-dark, #001845) !important;
+    color: #fff !important;
+}
+
+body.legalpro-dark-mode .lp-portal-accent-btn:disabled:not(.lp-appt-list-edit-btn--locked),
+body.legalpro-dark-mode .btn.btn-sm[title="Edit"].btn-secondary:disabled {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #94a3b8 !important;
+    box-shadow: none !important;
+}
+
+body.legalpro-dark-mode .lp-portal-accent-btn.lp-appt-list-edit-btn--locked:disabled {
+    opacity: 0.58 !important;
+}
+
+/* ── Dark mode: danger ───────────────────────────────────────────────────── */
+body.legalpro-dark-mode .lp-portal-danger-btn,
+body.legalpro-dark-mode .lp-appt-list-btn--delete,
+body.legalpro-dark-mode .btn.btn-sm.btn-danger:not(:disabled),
+body.legalpro-dark-mode .btn.btn-sm.btn-outline-danger:not(:disabled),
+body.legalpro-dark-mode .btn.btn-sm[title="Delete"]:not(:disabled),
+body.legalpro-dark-mode .btn.btn-sm[title="Remove"]:not(:disabled),
+body.legalpro-dark-mode .legalpro-admin-list-row__actions .btn.btn-sm.btn-danger:not(:disabled),
+body.legalpro-dark-mode .legalpro-admin-list-row__actions .btn.btn-sm.btn-outline-danger:not(:disabled),
+body.legalpro-dark-mode .table tbody .btn.btn-sm.btn-danger:not(:disabled),
+body.legalpro-dark-mode .table tbody .btn.btn-sm.btn-outline-danger:not(:disabled),
+body.legalpro-dark-mode .doc-delete-btn:not(:disabled) {
+    background: #f5365c !important;
+    background-image: linear-gradient(135deg, #f5365c 0%, #d62850 100%) !important;
+    border-color: #f5365c !important;
+    color: #fff !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.legalpro-dark-mode .lp-portal-danger-btn:hover,
+body.legalpro-dark-mode .lp-appt-list-btn--delete:hover,
+body.legalpro-dark-mode .btn.btn-sm.btn-danger:not(:disabled):hover,
+body.legalpro-dark-mode .btn.btn-sm.btn-outline-danger:not(:disabled):hover,
+body.legalpro-dark-mode .btn.btn-sm[title="Delete"]:not(:disabled):hover,
+body.legalpro-dark-mode .btn.btn-sm[title="Remove"]:not(:disabled):hover,
+body.legalpro-dark-mode .table tbody .btn.btn-sm.btn-danger:not(:disabled):hover,
+body.legalpro-dark-mode .table tbody .btn.btn-sm.btn-outline-danger:not(:disabled):hover,
+body.legalpro-dark-mode .doc-delete-btn:not(:disabled):hover {
+    background: #d62850 !important;
+    background-image: none !important;
+    border-color: #d62850 !important;
+    color: #fff !important;
+}

@@ -198,7 +198,7 @@ if (empty($cases)) {
             <td>' . htmlspecialchars($deadline) . '</td>
             <td>' . legalpro_case_status_badge($status) . '</td>
             <td class="text-end">
-                <a class="btn btn-sm btn-legalpro-case-open mb-0" href="case-view.php?id=' . $caseId . '">Open</a>
+                <a class="btn btn-sm lp-portal-accent-btn mb-0" href="case-view.php?id=' . $caseId . '">Open</a>
             </td>
         </tr>';
     }
@@ -234,21 +234,14 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+	{ADMIN_PORTAL_HEAD}
 	<link href="../assets/css/legalpro-admin-portal.css?v=27" rel="stylesheet" />
-	<?php legalpro_icons_asset_links(); ?>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-cases-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-			<div class="container-fluid py-1 px-3">
-				<div>
-					<h6 class="font-weight-bolder mb-0">Cases</h6>
-					<p class="dashboard-welcome-sub mb-0 mt-1">Legal case workspaces — manage clients, documents, billing &amp; more</p>
-				</div>
-			</div>
-		</nav>
+		{PAGE_NAVBAR}
 		<div class="container-fluid py-4">
 			{MESSAGE}
 
@@ -395,6 +388,7 @@ HTML;
 
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = legalpro_apply_admin_page_shell($html, 'Cases', 'Legal case workspaces — manage clients, documents, billing & more');
 $html = str_replace('{NEW_CASE_BTN}', $newCaseBtn, $html);
 $html = str_replace('{CASES_SEARCH_ICON}', $casesSearchIcon, $html);
 $html = str_replace('{CASES_SUBTITLE}', htmlspecialchars($casesSubtitle), $html);

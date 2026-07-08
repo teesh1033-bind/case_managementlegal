@@ -21,6 +21,12 @@ if ($context['role'] === 'guest') {
     exit;
 }
 
+if ($context['role'] === 'client') {
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'error' => 'The AI assistant is not available in the client portal.']);
+    exit;
+}
+
 try {
     $engine = new ChatbotAI($pdo, $context);
 

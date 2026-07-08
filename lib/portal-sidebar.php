@@ -10,7 +10,7 @@ require_once dirname(__DIR__) . '/lib/portal-theme.php';
 
 function legalpro_sidebar_stylesheet_tag(): string
 {
-    return '<link href="../assets/css/legalpro-sidebar-nav.css?v=24" rel="stylesheet" />';
+    return '<link href="../assets/css/legalpro-sidebar-nav.css?v=25" rel="stylesheet" />';
 }
 
 function legalpro_sidebar_resolve_label(array $item): string
@@ -203,7 +203,7 @@ function legalpro_render_portal_sidebar(array $config): string
         . '<script>(function(){var b=document.body;if(!b)return;b.classList.remove("g-sidenav-hidden");b.classList.add("g-sidenav-show");'
         . 'try{if(localStorage.getItem("' . $boot . '")==="1"){b.classList.add("legalpro-sidebar-collapsed");}}catch(e){}'
         . 'if(window.innerWidth>=1200){b.classList.add("g-sidenav-pinned");}})();</script>'
-        . '<script src="../assets/js/legalpro-sidebar.js?v=6" defer></script>';
+        . '<script src="../assets/js/legalpro-sidebar.js?v=7" defer></script>';
 }
 
 function legalpro_sidebar_storage_key(string $portal): string

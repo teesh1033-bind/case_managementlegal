@@ -183,7 +183,7 @@ if (empty($clientCases)) {
             <div class="lcv-case-card__badges">' . $statusBadge . $priorityBadge . $primaryBadge . '</div>
             <p class="lcv-case-card__desc">' . htmlspecialchars($description) . '</p>
             <div class="lcv-case-card__foot">
-                <a href="lawyer-case-view.php?id=' . (int) $case['id'] . '" class="btn btn-sm btn-primary mb-0">' . htmlspecialchars(lawyer_tf('client_view.view_case', 'View case')) . '</a>
+                <a href="lawyer-case-view.php?id=' . (int) $case['id'] . '" class="' . legalpro_portal_accent_action_btn_class() . '">' . htmlspecialchars(lawyer_tf('client_view.view_case', 'View case')) . '</a>
             </div>
         </article>';
     }
@@ -266,7 +266,7 @@ if (empty($clientDocuments)) {
         if ($filePath !== '') {
             $safeFilePath = htmlspecialchars($filePath);
             $documentActionsHtml = '
-                <a href="../uploads/' . $safeFilePath . '" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="../uploads/' . $safeFilePath . '" target="_blank" class="btn btn-sm lp-portal-accent-btn">View</a>
                 <a href="../uploads/' . $safeFilePath . '" download class="btn btn-sm btn-outline-secondary">Download</a>';
         }
 

@@ -16,7 +16,6 @@ $clientMenuPrimary = [
     ['title_key' => 'nav.appointments', 'url' => 'client-appointments.php', 'icon' => 'calendar', 'id' => 'client-appointments'],
     ['title_key' => 'nav.court_tracking', 'url' => 'client-court-tracking.php', 'icon' => 'landmark', 'id' => 'client-court-tracking'],
     ['title_key' => 'nav.payments', 'url' => 'client-payments.php', 'icon' => 'credit-card', 'id' => 'client-payments'],
-    ['title_key' => 'nav.ai_assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
 
 $clientMenuFooter = [];
@@ -36,9 +35,6 @@ if (!function_exists('clientNavIsActive')) {
             return true;
         }
         if ($itemId === 'client-documents' && $currentPage === 'client-documents') {
-            return true;
-        }
-        if ($itemId === 'chatbot' && $currentPage === 'chatbot') {
             return true;
         }
         if ($itemId === 'client-appointments' && $currentPage === 'client-appointments') {
@@ -85,6 +81,7 @@ echo legalpro_render_portal_sidebar([
     'footer_items' => $clientMenuFooter,
     'logout_url' => 'client-logout.php',
     'is_active' => 'clientNavIsActive',
+    'compact' => true,
 ]);
 ?>
 

@@ -294,7 +294,7 @@ if (empty($lawyers)) {
             </td>
             <td class="text-end">
                 <div class="legalpro-admin-list-row__actions">
-                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-legalpro-lawyer-edit mb-0">Edit</a>
+                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="' . legalpro_portal_accent_action_btn_class() . '">Edit</a>
                     <form method="post" onsubmit="return confirm(\'Are you sure you want to delete ' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete_lawyer">
                         <input type="hidden" name="lawyer_id" value="' . (int)$lawyer['id'] . '">
@@ -377,23 +377,15 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-    <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-admin-portal.css?v=41" rel="stylesheet" />
-    <?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
-    <?php legalpro_icons_asset_links(); ?>
+<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+{ADMIN_PORTAL_HEAD}
+    <link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-lawyers-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg ">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <div>
-                    <h6 class="font-weight-bolder mb-0">Lawyer Management</h6>
-                    <p class="dashboard-welcome-sub mb-0 mt-1">Manage lawyers, specializations, and case assignments</p>
-                </div>
-            </div>
-        </nav>
+		{PAGE_NAVBAR}
         <div class="container-fluid py-4">
             {MESSAGE}
 
@@ -727,6 +719,7 @@ $html = str_replace(array_keys($replacements), array_values($replacements), $htm
 
 // rewrite internal links from .html to .php
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
+$html = legalpro_apply_admin_page_shell($html, 'Lawyer Management', 'Manage lawyer accounts and assignments');
 ob_start();
 include __DIR__ . '/../inc/menunav.php';
 $sidebar = ob_get_clean();

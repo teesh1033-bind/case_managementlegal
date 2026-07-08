@@ -525,7 +525,7 @@ if (empty($stages)) {
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h6 class="mb-0">#' . (int) $stage['stage_number'] . ' · ' . htmlspecialchars($stage['title']) . '</h6>
                     <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-dark mb-0 case-stage-edit-btn" data-stage="' . $stagePayload . '">Edit</button>
+                        <button type="button" class="btn btn-sm lp-portal-accent-btn mb-0 case-stage-edit-btn" data-stage="' . $stagePayload . '">Edit</button>
                         <form method="POST" action="" class="d-inline" onsubmit="return confirm(\'Delete this summary entry?\');">
                             <input type="hidden" name="form_type" value="delete_stage">
                             <input type="hidden" name="stage_id" value="' . (int) $stage['id'] . '">
@@ -879,8 +879,8 @@ if (empty($quotations)) {
             ? 'Created ' . date('M j, Y', strtotime($quotation['created_at']))
             : '';
 
-        $editBtn = '<button type="button" class="btn btn-sm btn-outline-primary mb-0 case-quotation-edit-btn" data-quotation-id="' . $quoteId . '">Edit</button>';
-        $pdfBtn = '<a href="client-quotation-view.php?id=' . $quoteId . '&view=1" class="btn btn-sm btn-outline-info mb-0" target="_blank" rel="noopener">View</a>';
+        $editBtn = '<button type="button" class="btn btn-sm lp-portal-accent-btn mb-0 case-quotation-edit-btn" data-quotation-id="' . $quoteId . '">Edit</button>';
+        $pdfBtn = '<a href="client-quotation-view.php?id=' . $quoteId . '&view=1" class="btn btn-sm lp-portal-accent-btn mb-0" target="_blank" rel="noopener">View</a>';
 
         $quotationItems .= '<article class="case-feed-item case-quotation-card flex-wrap align-items-start">'
             . '<div class="case-feed-item__icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary d-inline-flex align-items-center justify-content-center">'
@@ -988,17 +988,7 @@ $html = <<<'HTML'
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
     </aside>
     <main class="main-content position-relative border-radius-lg ">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="tables.php">Cases</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Case View</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">{CASE_NUMBER} · {CASE_TITLE}</h6>
-                </nav>
-            </div>
-        </nav>
+        {PAGE_NAVBAR}
         <div class="container-fluid py-4">
             {MESSAGE}
 
@@ -1010,7 +1000,7 @@ $html = <<<'HTML'
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Case Summary</h6>
                                 <div class="d-flex gap-2">
-                                    <a href="case-edit.php?id={CASE_ID}" class="btn btn-sm btn-dark">
+                                    <a href="case-edit.php?id={CASE_ID}" class="btn btn-sm lp-portal-accent-btn">
                                         <i class="ni ni-settings me-1"></i>Edit Case
                                     </a>
                                     <a href="document-upload.php?case_id={CASE_ID}" class="btn btn-sm btn-outline-primary">
@@ -1434,6 +1424,7 @@ $replacements = [
     '{EVENTS_COUNT}' => count($caseEvents),
     '{ADMIN_PORTAL_HEAD}' => $adminPortalHeadHtml,
     '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
+    '{PAGE_NAVBAR}' => legalpro_render_admin_page_navbar($caseNumber . ' · ' . $case['title'], 'Case workspace'),
 ];
 
 $html = str_replace(array_keys($replacements), array_values($replacements), $html);

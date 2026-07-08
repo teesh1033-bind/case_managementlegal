@@ -613,7 +613,7 @@ function legalpro_client_case_documents_html(array $state): string
                     <div class="cdoc-row__meta">' . htmlspecialchars(client_t('case.doc_uploaded_by')) . ' ' . htmlspecialchars($doc['uploaded_by']) . ' · ' . htmlspecialchars(client_format_date($doc['uploaded_at'])) . '</div>
                 </div>
                 <div class="cdoc-row__actions">
-                    <a href="' . htmlspecialchars($viewUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary cdoc-touch-btn">' . htmlspecialchars(client_t('common.view')) . '</a>
+                    <a href="' . htmlspecialchars($viewUrl) . '" target="_blank" class="btn btn-sm lp-portal-accent-btn cdoc-touch-btn">' . htmlspecialchars(client_t('common.view')) . '</a>
                     <a href="' . htmlspecialchars($downloadUrl) . '" download="' . htmlspecialchars($downloadName) . '" class="btn btn-sm btn-primary cdoc-touch-btn">' . htmlspecialchars(client_t('documents.download')) . '</a>
                     ' . $ackHtml . '
                 </div>
@@ -680,7 +680,7 @@ function legalpro_client_case_comments_html(array $state): string
                 $headActions = '
                     <div class="cc-comment-head-actions">
                         <time class="cc-comment-time" datetime="' . htmlspecialchars(date('c', strtotime($comment['created_at']))) . '">' . htmlspecialchars($timeLabel) . '</time>
-                        <button type="button" class="btn btn-sm btn-outline-primary mb-0 cc-comment-edit-btn" data-comment-id="' . $commentId . '">' . htmlspecialchars(client_t('common.edit')) . '</button>
+                        <button type="button" class="btn btn-sm lp-portal-accent-btn mb-0 cc-comment-edit-btn" data-comment-id="' . $commentId . '">' . htmlspecialchars(client_t('common.edit')) . '</button>
                         <form method="post" class="cc-comment-delete-form" onsubmit="return confirm(\'' . htmlspecialchars(client_t('case.comment_delete_confirm'), ENT_QUOTES) . '\');">
                             <input type="hidden" name="delete_comment_id" value="' . $commentId . '">
                             <button type="submit" class="btn btn-sm btn-outline-danger mb-0">' . htmlspecialchars(client_t('common.delete')) . '</button>

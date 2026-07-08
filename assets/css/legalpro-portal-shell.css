@@ -4,9 +4,10 @@
 :root {
     --lp-portal-primary: #023e8a;
     --lp-portal-primary-dark: #001845;
-    --lp-portal-sidebar-bg: #021a3a;
-    --lp-portal-sidebar-bg-deep: #001028;
-    --lp-portal-sidebar-width: 300px;
+    --lp-sidebar-width: 280px;
+    --lp-portal-sidebar-bg: #000000;
+    --lp-portal-sidebar-bg-deep: #000000;
+    --lp-portal-sidebar-width: var(--lp-sidebar-width);
     --lp-portal-sidebar-collapsed: 88px;
     --lp-portal-header-height: 76px;
     --lp-portal-content-bg: #f4f7fe;
@@ -131,8 +132,8 @@ body.lawyer-tasks-page .legalpro-admin-sidebar,
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: var(--lp-portal-sidebar-width) !important;
-    max-width: var(--lp-portal-sidebar-width) !important;
+    width: var(--lp-sidebar-width) !important;
+    max-width: var(--lp-sidebar-width) !important;
     height: 100vh !important;
     margin: 0 !important;
     border-radius: 0 !important;
@@ -318,8 +319,8 @@ body.client-settings-page .main-content,
 body.client-chatbot-page .main-content,
 .search-portal-page--lawyer .main-content,
 .search-portal-page--client .main-content {
-    margin-left: var(--lp-portal-sidebar-width) !important;
-    width: calc(100% - var(--lp-portal-sidebar-width)) !important;
+    margin-left: var(--lp-sidebar-width) !important;
+    width: calc(100% - var(--lp-sidebar-width)) !important;
     max-width: none !important;
     background: transparent !important;
     border-radius: 0 !important;
@@ -475,7 +476,7 @@ body.client-profile-page .navbar-main,
     position: fixed !important;
     top: 0 !important;
     right: 0 !important;
-    left: var(--lp-portal-sidebar-width) !important;
+    left: var(--lp-sidebar-width) !important;
     width: auto !important;
     z-index: 1030 !important;
     overflow: visible !important;
@@ -769,4 +770,81 @@ body.legalpro-dark-mode.lawyer-court-tracking-page {
     background: var(--lp-dark-bg, #2a3040) !important;
     background-color: var(--lp-dark-bg, #2a3040) !important;
     background-image: linear-gradient(180deg, #2e3446 0%, #2a3040 45%, #272c3c 100%) !important;
+}
+
+/* ── Unified page header (logo + title + subtitle, all portals) ─────────── */
+:root {
+    --lp-portal-page-head-logo-size: 40px;
+    --lp-portal-page-head-gap: 0.75rem;
+    --lp-portal-page-head-title-size: 1rem;
+    --lp-portal-page-head-title-weight: 700;
+    --lp-portal-page-head-sub-size: 0.8125rem;
+}
+
+body.legalpro-admin-portal {
+    --lp-portal-header-height: var(--lp-admin-header-height, 76px);
+}
+
+.legalpro-portal-page-head {
+    display: flex;
+    align-items: center;
+    gap: var(--lp-portal-page-head-gap);
+    min-height: 44px;
+}
+
+.legalpro-portal-page-head__logo {
+    width: var(--lp-portal-page-head-logo-size);
+    height: var(--lp-portal-page-head-logo-size);
+    min-width: var(--lp-portal-page-head-logo-size);
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 4px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.legalpro-portal-page-head__text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.legalpro-portal-page-head__title {
+    font-size: var(--lp-portal-page-head-title-size) !important;
+    font-weight: var(--lp-portal-page-head-title-weight) !important;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    color: #344767 !important;
+}
+
+.legalpro-portal-page-head__sub {
+    font-size: var(--lp-portal-page-head-sub-size) !important;
+    font-weight: 500 !important;
+    color: #67748e !important;
+    line-height: 1.3;
+}
+
+body.legalpro-admin-portal .navbar-main .legalpro-portal-page-head__title,
+body.legalpro-lawyer-portal .navbar-main .legalpro-portal-page-head__title,
+body.legalpro-client-portal .navbar-main .legalpro-portal-page-head__title,
+body.lawyer-appointments-page .navbar-main .legalpro-portal-page-head__title,
+body.client-appointments-page .navbar-main .legalpro-portal-page-head__title,
+body.admin-appointments-page .navbar-main .legalpro-portal-page-head__title {
+    font-size: var(--lp-portal-page-head-title-size) !important;
+    font-weight: var(--lp-portal-page-head-title-weight) !important;
+}
+
+body.legalpro-dark-mode .legalpro-portal-page-head__title {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode .legalpro-portal-page-head__sub {
+    color: var(--lp-dark-text-secondary, #94a3b8) !important;
+}
+
+body.legalpro-dark-mode .legalpro-portal-page-head__logo {
+    background: rgba(255, 255, 255, 0.96);
 }

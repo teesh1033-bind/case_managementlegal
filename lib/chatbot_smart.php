@@ -633,21 +633,43 @@ class ChatbotSmartEngine
         }
 
         try {
-            $start = $dateStr . ' ' . $timeStr . ':00';
-            $end = date('Y-m-d H:i:s', strtotime($start . ' +1 hour'));
-            $notes = 'Booked via AI assistant';
-            $stmt = $this->pdo->prepare("INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
-            $stmt->execute([$clientId, $caseId, $lawyerId, $start, $end, $notes]);
-            $apptId = (int) $this->pdo->lastInsertId();
-            syncAppointmentAvailabilitySlot($this->pdo, [
-                'id' => $apptId,
-                'lawyer_id' => $lawyerId,
-                'starts_at' => $start,
-                'ends_at' => $end,
-                'status' => 'pending',
-            ]);
+            $bookingResult = legalpro_with_locked_lawyer_booking($this->pdo, function () use ($clientId, $caseId, $lawyerId, $dateStr, $timeStr) {
+                $capacity = legalpro_assert_lawyer_slot_capacity_for_booking(
+                    $this->pdo,
+                    $lawyerId,
+                    $dateStr,
+                    $timeStr
+                );
+                if (!$capacity['ok']) {
+                    return $capacity;
+                }
 
-            $when = date('l, M j \a\t g:i A', strtotime($start));
+                $start = $dateStr . ' ' . $timeStr . ':00';
+                $end = date('Y-m-d H:i:s', strtotime($start . ' +1 hour'));
+                $notes = 'Booked via AI assistant';
+                $stmt = $this->pdo->prepare("INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+                $stmt->execute([$clientId, $caseId, $lawyerId, $start, $end, $notes]);
+                $apptId = (int) $this->pdo->lastInsertId();
+                syncAppointmentAvailabilitySlot($this->pdo, [
+                    'id' => $apptId,
+                    'lawyer_id' => $lawyerId,
+                    'starts_at' => $start,
+                    'ends_at' => $end,
+                    'status' => 'pending',
+                ]);
+
+                return ['ok' => true, 'start' => $start];
+            });
+
+            if (empty($bookingResult['ok'])) {
+                return [
+                    'ok' => true,
+                    'reply' => '**' . ($bookingResult['message'] ?? 'That slot is not available.') . "**\n\nTry another time or open **Appointments** to see available slots.",
+                    'links' => [['label' => 'Appointments', 'url' => 'client-appointments.php']],
+                ];
+            }
+
+            $when = date('l, M j \a\t g:i A', strtotime($bookingResult['start']));
             return [
                 'ok' => true,
                 'reply' => "**Appointment requested** for {$when} on **" . $this->caseLabel($caseId) . "**.\n\nStatus: **pending** — your lawyer will confirm.",

@@ -31,7 +31,7 @@ body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) {
     --vu-welcome-btn-text: #023e8a;
     --vu-gauge-track: rgba(2, 62, 138, 0.12);
     --vu-surface-muted: rgba(2, 62, 138, 0.04);
-    --vu-sidebar-bg: linear-gradient(180deg, #060b28 0%, #0a0e23 100%);
+    --vu-sidebar-bg: #000000;
     --vu-sidebar-active: linear-gradient(135deg, #023e8a 0%, #001845 100%);
     --vu-sidebar-hover: rgba(255, 255, 255, 0.08);
     --vu-sidebar-text: rgba(255, 255, 255, 0.78);
@@ -63,7 +63,7 @@ body.legalpro-dashboard-page.vision-ui-theme.legalpro-dark-mode {
     --vu-welcome-btn-text: #ffffff;
     --vu-gauge-track: rgba(255, 255, 255, 0.08);
     --vu-surface-muted: rgba(255, 255, 255, 0.04);
-    --vu-sidebar-bg: linear-gradient(180deg, #060b28 0%, #0a0e23 100%);
+    --vu-sidebar-bg: #000000;
     --vu-sidebar-active: linear-gradient(135deg, rgba(2, 62, 138, 0.25), rgba(0, 24, 69, 0.2));
     --vu-collection-bg: rgba(1, 181, 116, 0.15);
     --vu-collection-text: #4ade80;

@@ -5,6 +5,10 @@ require_once __DIR__ . '/../inc/legalpro-icons.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
+require_once __DIR__ . '/../lib/appointment_list_ui.php';
+require_once __DIR__ . '/../lib/portal_list_ui.php';
+require_once __DIR__ . '/../lib/portal_calendar_events.php';
+require_once __DIR__ . '/../inc/portal-calendar-studio.php';
 
 $message = '';
 $messageType = '';
@@ -74,7 +78,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Handle appointment deletion
     if (isset($_POST['delete_appointment'])) {
-        $appointmentId = (int)$_POST['appointment_id'];
+        $appointmentId = isset($_POST['appointment_id']) ? (int) $_POST['appointment_id'] : 0;
+
+        if ($appointmentId <= 0) {
+            header('Location: appointments.php?msg=' . urlencode('Invalid appointment selected.') . '&type=danger');
+            exit;
+        }
 
         try {
             // Get appointment details for tracking before deletion
@@ -95,15 +104,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'lawyer_id' => $appointment['lawyer_id']
                 ]);
 
-                $message = 'Appointment deleted successfully.';
-                $messageType = 'success';
-            } else {
-                $message = 'Appointment not found.';
-                $messageType = 'danger';
+                header('Location: appointments.php?msg=' . urlencode('Appointment deleted successfully.') . '&type=success');
+                exit;
             }
+
+            header('Location: appointments.php?msg=' . urlencode('Appointment not found.') . '&type=danger');
+            exit;
         } catch (PDOException $e) {
-            $message = 'Unable to delete appointment: ' . htmlspecialchars($e->getMessage());
-            $messageType = 'danger';
+            header('Location: appointments.php?msg=' . urlencode('Unable to delete appointment: ' . $e->getMessage()) . '&type=danger');
+            exit;
         }
     }
 }
@@ -135,67 +144,22 @@ try {
 }
 
 // Build appointment table rows
-$iconApptRow = legalpro_icon('calendar-clock');
 $appointmentsRows = '';
 if (empty($appointments)) {
-    $appointmentsRows = '<tr><td colspan="5" class="text-center py-5">
+    $appointmentsRows = '<tr><td colspan="7" class="text-center py-5">
         <div class="text-center">
             <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary d-inline-flex align-items-center justify-content-center mb-3" style="width:3rem;height:3rem;min-width:3rem;">' . legalpro_icon('calendar-clock') . '</div>
             <p class="text-muted mt-0 mb-0">No appointments booked yet.</p>
-            <p class="text-xs text-muted mb-0">Use the New Appointment page to book your first appointment.</p>
+            <p class="text-xs text-muted mb-0">Click a date on the calendar or use New Appointment to schedule.</p>
         </div>
     </td></tr>';
 } else {
     foreach ($appointments as $appointment) {
-        // Determine display based on available data
-        $caseDisplay = isset($appointment['case_display']) && !empty($appointment['case_display'])
-            ? $appointment['case_display']
-            : 'No Case Assigned';
-
-        $clientFirstName = isset($appointment['client_first_name']) ? $appointment['client_first_name'] : '';
-        $clientLastName = isset($appointment['client_last_name']) ? $appointment['client_last_name'] : '';
-        $clientName = trim($clientFirstName . ' ' . $clientLastName);
-        $clientName = $clientName ? $clientName : 'Unknown Client';
-        $lawyerName = $appointment['lawyer_name'] ? $appointment['lawyer_name'] : 'Unassigned';
-
-        $startsAt = $appointment['starts_at'] ? date('m/d/y · H:i', strtotime($appointment['starts_at'])) : 'TBD';
-        $status = isset($appointment['status']) ? strtolower($appointment['status']) : 'pending';
-        if ($status === 'accepted') {
-            $editActionHtml = '<button type="button" class="btn btn-sm btn-secondary mb-0" disabled title="Accepted appointments cannot be edited">Edit</button>';
-        } elseif ($status === 'rejected') {
-            $editActionHtml = '<a href="new_appointment.php?id=' . (int) $appointment['id'] . '" class="btn btn-sm bg-gradient-primary text-white mb-0" title="Choose another lawyer or time; the assigned lawyer must accept or reject">Reassign</a>';
-        } else {
-            $editActionHtml = '<a href="new_appointment.php?id=' . (int) $appointment['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>';
-        }
-        $statusBadge = lawyer_appointment_status_badge($appointment);
-        $searchBlob = strtolower($caseDisplay . ' ' . $clientName . ' ' . $lawyerName . ' ' . $startsAt . ' ' . $status);
-
-        $appointmentsRows .= '
-        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td class="align-middle ps-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0">' . $iconApptRow . '</div>
-                    <div>
-                        <h6 class="text-sm mb-0">' . htmlspecialchars($caseDisplay) . '</h6>
-                        <p class="text-xs text-muted mb-0">' . htmlspecialchars($clientName) . '</p>
-                    </div>
-                </div>
-            </td>
-            <td class="align-middle">
-                <p class="text-sm font-weight-bold mb-0">' . htmlspecialchars($lawyerName) . '</p>
-                <p class="text-xs text-muted mb-0">Lawyer</p>
-            </td>
-            <td class="align-middle text-center">
-                <p class="text-sm font-weight-bold mb-0">' . htmlspecialchars($startsAt) . '</p>
-            </td>
-            <td class="align-middle text-center">' . $statusBadge . '</td>
-            <td class="align-middle text-end pe-3">
-                <div class="legalpro-admin-list-row__actions">
-                    ' . $editActionHtml . '
-                    <a href="javascript:void(0)" class="btn btn-sm btn-danger mb-0" onclick="deleteAppointment(' . (int)$appointment['id'] . ', \'' . addslashes($caseDisplay) . '\'); return false;">Delete</a>
-                </div>
-            </td>
-        </tr>';
+        $appointmentsRows .= legalpro_render_portal_appointment_table_row(
+            $appointment,
+            admin_appointment_list_actions_html($appointment),
+            ['person_header' => 'client', 'include_calendar' => true, 'row_id_prefix' => 'appt-row-']
+        );
     }
 }
 
@@ -208,48 +172,30 @@ if ($message) {
     </div>';
 }
 
-// Calendar events (appointments only)
-$appointmentCalendarEvents = [];
-foreach ($appointments as $row) {
-    if (empty($row['starts_at'])) {
-        continue;
+$apptStatTotal = count($appointments);
+$apptStatPending = 0;
+$apptStatAccepted = 0;
+$apptStatUpcoming = 0;
+$apptNow = time();
+foreach ($appointments as $apptRow) {
+    $apptStatus = strtolower((string) ($apptRow['status'] ?? 'pending'));
+    if ($apptStatus === 'pending') {
+        $apptStatPending++;
     }
-
-    $status = strtolower((string) ($row['status'] ?? 'pending'));
-    $caseDisplay = !empty($row['case_display'])
-        ? $row['case_display']
-        : (!empty($row['case_title']) ? $row['case_title'] : 'General appointment');
-    $clientName = trim(($row['client_first_name'] ?? '') . ' ' . ($row['client_last_name'] ?? ''));
-    $lawyerName = trim((string) ($row['lawyer_name'] ?? ''));
-
-    $startsLabel = !empty($row['starts_at'])
-        ? date('M j, Y · g:i A', strtotime($row['starts_at']))
-        : 'Date TBD';
-    $searchHay = strtolower(
-        $caseDisplay . ' ' . $clientName . ' ' . $lawyerName . ' ' . $startsLabel . ' ' . $status
-    );
-
-    $appointmentCalendarEvents[] = [
-        'id' => (string) $row['id'],
-        'title' => $caseDisplay,
-        'start' => $row['starts_at'],
-        'end' => !empty($row['ends_at']) ? $row['ends_at'] : null,
-        'backgroundColor' => 'transparent',
-        'borderColor' => 'transparent',
-        'textColor' => '#344767',
-        'extendedProps' => [
-            'client' => $clientName !== '' ? $clientName : 'Unknown',
-            'lawyer' => $lawyerName !== '' ? $lawyerName : 'Unassigned',
-            'notes' => $row['notes'] ?? '',
-            'status' => $status,
-            'statusLabel' => ucfirst($status === 'approved' ? 'accepted' : $status),
-            'appointmentId' => (int) $row['id'],
-            'caseDisplay' => $caseDisplay,
-            'startsLabel' => $startsLabel,
-            'searchHay' => $searchHay,
-        ],
-    ];
+    if (in_array($apptStatus, ['approved', 'accepted'], true)) {
+        $apptStatAccepted++;
+    }
+    if (!empty($apptRow['starts_at']) && strtotime((string) $apptRow['starts_at']) >= $apptNow && $apptStatus !== 'rejected') {
+        $apptStatUpcoming++;
+    }
 }
+
+// Calendar events (appointments only)
+$appointmentCalendarEvents = legalpro_portal_build_appointment_calendar_events($appointments, [
+    'subtitle_field' => 'client',
+    'subtitle_fallback' => 'Unknown',
+    'title_fallback' => 'Appointment',
+]);
 
 $appointmentCalendarEventsJson = json_encode(
     $appointmentCalendarEvents,
@@ -274,6 +220,7 @@ if (empty($upcomingForCalendar)) {
     usort($upcomingForCalendar, function ($a, $b) {
         return strtotime($a['starts_at']) <=> strtotime($b['starts_at']);
     });
+    $upcomingAppointmentsCalendarHtml = '<div class="lp-appt-timeline">';
     foreach (array_slice($upcomingForCalendar, 0, 8) as $row) {
         $status = strtolower((string) ($row['status'] ?? 'pending'));
         $caseDisplay = !empty($row['case_display']) ? $row['case_display'] : 'Appointment';
@@ -283,15 +230,56 @@ if (empty($upcomingForCalendar)) {
         $dayLabel = date('M j', strtotime($row['starts_at']));
 
         $upcomingAppointmentsCalendarHtml .= '
-        <button type="button" class="dashboard-upcoming-item dashboard-upcoming-item--' . htmlspecialchars($status) . '" data-appointment-id="' . (int) $row['id'] . '">
-            <span class="dashboard-upcoming-item__time">' . htmlspecialchars($hourLabel) . '<br><small style="font-weight:500;opacity:.8">' . htmlspecialchars($dayLabel) . '</small></span>
+        <button type="button" class="lp-appt-timeline__item lp-appt-timeline__item--' . htmlspecialchars($status) . '" data-appointment-id="' . (int) $row['id'] . '">
+            <span class="lp-appt-timeline__time">' . htmlspecialchars($hourLabel) . '<small>' . htmlspecialchars($dayLabel) . '</small></span>
             <span class="flex-grow-1">
-                <p class="dashboard-upcoming-item__title">' . htmlspecialchars($caseDisplay) . '</p>
-                <p class="dashboard-upcoming-item__sub">' . htmlspecialchars($clientName) . '</p>
+                <p class="lp-appt-timeline__title">' . htmlspecialchars($caseDisplay) . '</p>
+                <p class="lp-appt-timeline__sub">' . htmlspecialchars($clientName) . '</p>
             </span>
         </button>';
     }
+    $upcomingAppointmentsCalendarHtml .= '</div>';
 }
+
+$apptListSubtitle = $apptStatTotal . ' total appointment' . ($apptStatTotal === 1 ? '' : 's');
+
+$adminAppointmentsCalendarSection = legalpro_render_portal_schedule_hub_calendar([
+    'calendar_id' => 'appointmentsCalendar',
+    'add_href' => 'new_appointment.php',
+    'add_title' => 'Schedule appointment',
+    'add_aria' => 'Schedule appointment',
+], 'appointmentsCalendarHub');
+
+$adminAppointmentsListSection = legalpro_render_portal_schedule_hub_list_section(
+    'appointmentsTable',
+    'Appointment List',
+    $apptListSubtitle,
+    'appointmentsSearchInput',
+    'Search by service…',
+    'Search by service',
+    'appointmentsStatusFilter',
+    legalpro_portal_appointment_status_options(),
+    'appointmentsTableBody',
+    $appointmentsRows,
+    'appointmentsFilterEmpty',
+    [
+        'empty_message' => 'No appointments match your filters.',
+        'pagination_aria' => 'Appointments pagination',
+    ]
+);
+
+$adminAppointmentsListFilterScript = legalpro_portal_list_filter_script(
+    'appointmentsSearchInput',
+    'appointmentsTableBody',
+    'appointmentsFilterEmpty',
+    '.legalpro-admin-list-row',
+    'appointmentsStatusFilter'
+);
+
+ob_start();
+include __DIR__ . '/../inc/admin-portal-head.php';
+$adminPortalHeadHtml = ob_get_clean();
+$portalThemeBodyClass = legalpro_portal_theme_body_class();
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -307,106 +295,20 @@ $html = <<<'HTML'
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=33" rel="stylesheet" />
-	<link href="../assets/css/dashboard-enhancements.css?v=16" rel="stylesheet" />
-	<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
-	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
-	<?php legalpro_icons_asset_links(); ?>
+	<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+	{ADMIN_PORTAL_HEAD}
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-appointments-page<?php echo legalpro_portal_theme_body_class(); ?>">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-appointments-page lp-schedule-hub-page{PORTAL_THEME_BODY_CLASS}">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-			<div class="container-fluid py-1 px-3">
-				<div>
-					<h6 class="font-weight-bolder mb-0"><i class="ni ni-calendar-grid-58 me-2 text-primary"></i>Appointments</h6>
-				</div>
-			</div>
-		</nav>
+		{APPT_PAGE_NAVBAR}
 		<div class="container-fluid py-4">
 			{MESSAGE}
 
-			<div class="row mb-4">
-				<div class="col-12">
-					<div class="dashboard-calendar-hub">
-						<div class="dashboard-calendar-hub__head">
-							<div class="admin-calendar-hub__intro">
-								<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 w-100">
-									<div>
-										<h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Appointments Calendar</h6>
-										<p class="text-sm mb-0 text-muted">Use the search bar below to find appointments quickly, or click a calendar event</p>
-										<div class="dashboard-legend-pills">
-											<span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> Pending</span>
-											<span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> Accepted</span>
-											<span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> Rejected</span>
-										</div>
-									</div>
-									<a href="new_appointment.php" class="btn btn-sm bg-gradient-primary mb-0 appointments-schedule-btn">
-										<i class="ni ni-fat-add appointments-schedule-btn__icon me-1"></i> Schedule Appointment
-									</a>
-								</div>
-							</div>
-							{APPOINTMENTS_CAL_SEARCH}
-						</div>
-						<div class="dashboard-calendar-hub__body">
-							<div class="dashboard-calendar-layout">
-								<div id="appointmentsCalendar"></div>
-								<aside class="dashboard-upcoming-panel">
-									<div class="dashboard-upcoming-panel__title">
-										<span>Upcoming</span>
-										<a href="#appointmentsTable" class="text-xs text-primary font-weight-bold">View list</a>
-									</div>
-									<div class="dashboard-upcoming-list" id="upcomingAppointmentsList">
-										{UPCOMING_APPOINTMENTS_CALENDAR}
-									</div>
-								</aside>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+			{CALENDAR_SECTION}
 
-			<div class="row" id="appointmentsTable">
-				<div class="col-12">
-					<div class="card">
-						<div class="card-header pb-3 pt-3 lp-card-header-primary">
-							<div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-								<div>
-									<h6 class="mb-0 text-white">All Appointments</h6>
-									<p class="text-xs mb-0 opacity-8">View and manage scheduled appointments</p>
-								</div>
-							</div>
-						</div>
-						<div class="card-body px-0 pt-0 pb-2">
-							{APPOINTMENTS_SEARCH}
-							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
-							<div class="table-responsive">
-								<table class="table align-items-center mb-0">
-									<thead>
-										<tr>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-3">Case & Client</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Lawyer / Staff</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Date & Time</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Status</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-3">Actions</th>
-										</tr>
-									</thead>
-									<tbody id="appointmentsTableBody">
-										{APPOINTMENT_ROWS}
-										<tr id="appointmentsFilterEmpty" class="d-none">
-											<td colspan="5" class="text-center text-muted text-sm py-4">No appointments match your search.</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-							<nav class="lp-admin-pagination" data-lp-pagination-nav aria-label="Appointments pagination" hidden><p class="lp-admin-pagination__info" data-lp-range></p><div class="lp-admin-pagination__controls" data-lp-pages></div></nav>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+			{LIST_SECTION}
 			<footer class="footer pt-3">
 				<div class="container-fluid">
 					<div class="row align-items-center justify-content-lg-between">
@@ -424,7 +326,7 @@ $html = <<<'HTML'
 	<div class="modal fade" id="appointmentCalendarModal" tabindex="-1" aria-hidden="true">
 		<div class="modal-dialog modal-dialog-centered">
 			<div class="modal-content">
-				<div class="modal-header" style="background:linear-gradient(135deg,#0077b6 0%,#004e77 100%);">
+				<div class="modal-header lp-cal-view-modal-header">
 					<h6 class="modal-title text-white font-weight-bold" id="appointmentModalTitle">Appointment</h6>
 					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
@@ -453,7 +355,7 @@ $html = <<<'HTML'
 						<label class="text-xs text-uppercase text-muted">Notes</label>
 						<div id="appointmentModalNotes" class="appointment-modal-notes p-3 rounded"></div>
 					</div>
-					<a id="appointmentModalEditLink" href="new_appointment.php" class="btn btn-sm bg-gradient-dark appointment-modal-edit-btn w-100 mb-0">Edit appointment</a>
+					<a id="appointmentModalEditLink" href="new_appointment.php" class="btn btn-sm lp-portal-accent-btn appointment-modal-edit-btn w-100 mb-0">Edit appointment</a>
 				</div>
 			</div>
 		</div>
@@ -479,9 +381,7 @@ $html = <<<'HTML'
 		}
 
 		document.addEventListener('DOMContentLoaded', function () {
-			var calendarEl = document.getElementById('appointmentsCalendar');
 			var appointmentEvents = {APPOINTMENT_CALENDAR_EVENTS_JSON};
-			var upcomingList = document.getElementById('upcomingAppointmentsList');
 
 			function formatAppointmentDateTime(dateValue) {
 				if (!dateValue) {
@@ -497,11 +397,6 @@ $html = <<<'HTML'
 				var h = String(date.getHours()).padStart(2, '0');
 				var mi = String(date.getMinutes()).padStart(2, '0');
 				return dd + '/' + mm + '/' + yy + ' at ' + h + ':' + mi;
-			}
-
-			function appointmentStatusKey(status) {
-				var value = String(status || 'pending').toLowerCase();
-				return value === 'approved' ? 'accepted' : value;
 			}
 
 			function openAppointmentModal(eventLike) {
@@ -526,225 +421,76 @@ $html = <<<'HTML'
 				}
 			}
 
-			function renderAppointmentEvent(arg) {
-				var props = arg.event.extendedProps || {};
-				var statusKey = appointmentStatusKey(props.status);
-				var timeText = arg.timeText || '';
-				var title = arg.event.title || 'Appointment';
-				if (title.length > 22) {
-					title = title.slice(0, 19) + '...';
+			function focusAppointmentRow(id) {
+				var row = document.getElementById('appt-row-' + id);
+				var wrap = document.querySelector('#appointmentsTable [data-lp-admin-paginate]');
+				if (wrap && window.LegalproAdminTablePagination && row) {
+					window.LegalproAdminTablePagination.focusRow(wrap, row);
+				} else if (row) {
+					row.scrollIntoView({ behavior: 'smooth', block: 'center' });
 				}
-				var wrap = document.createElement('div');
-				wrap.className = 'dashboard-cal-event';
-				wrap.innerHTML =
-					'<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
-					'<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
-				return { domNodes: [wrap] };
 			}
 
-			if (upcomingList) {
-				upcomingList.addEventListener('click', function (e) {
-					var btn = e.target.closest('[data-appointment-id]');
-					if (!btn) {
-						return;
-					}
-					var id = btn.getAttribute('data-appointment-id');
-					var match = appointmentEvents.find(function (item) {
-						return String(item.id) === String(id);
-					});
-					if (match) {
-						openAppointmentModal({
-							id: match.id,
-							title: match.title,
-							start: match.start,
-							end: match.end,
-							extendedProps: match.extendedProps
+			function scheduleAppointmentOnDate(ymd) {
+				if (ymd) {
+					window.location.href = 'new_appointment.php?date=' + encodeURIComponent(ymd);
+				}
+			}
+
+			if (typeof LegalproCalendarStudio !== 'undefined') {
+				LegalproCalendarStudio.mountScheduleHub({
+					mode: 'appointment',
+					calendarEl: '#appointmentsCalendar',
+					events: appointmentEvents,
+					agendaEmptyText: 'No appointments this month',
+					agendaIdAttr: 'data-appointment-id',
+					scheduleActionLabel: 'Schedule appointment',
+					viewActionLabel: 'View appointment',
+					onAgendaDelete: function (id) {
+						var delMatch = appointmentEvents.find(function (ev) {
+							return String(ev.id) === String(id);
 						});
+						var delTitle = delMatch ? (delMatch.title || 'Appointment') : 'this appointment';
+						deleteAppointment(id, delTitle);
+					},
+					onAgendaItemClick: function (id, match) {
+						if (match) {
+							openAppointmentModal(match);
+						}
+						focusAppointmentRow(id);
+					},
+					onDateClick: function (ymd) {
+						scheduleAppointmentOnDate(ymd);
+					},
+					onEventClick: function (event) {
+						openAppointmentModal(event);
+						focusAppointmentRow(event.id);
 					}
 				});
 			}
-
-			if (!calendarEl || typeof FullCalendar === 'undefined') {
-				return;
-			}
-
-			var calendar = new FullCalendar.Calendar(calendarEl, {
-				initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
-				height: 'auto',
-				firstDay: 1,
-				navLinks: true,
-				nowIndicator: true,
-				fixedWeekCount: false,
-				dayMaxEvents: 3,
-				moreLinkClick: 'popover',
-				buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
-				eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-				dayHeaderFormat: { weekday: 'short' },
-				headerToolbar: {
-					left: 'prev,next today',
-					center: 'title',
-					right: 'dayGridMonth,timeGridWeek,listWeek'
-				},
-				events: appointmentEvents,
-				eventContent: renderAppointmentEvent,
-				dateClick: function(info) {
-					if (window.legalproHandleCalendarDateClick) {
-						window.legalproHandleCalendarDateClick(info, function(event) {
-							openAppointmentModal(event);
-						});
-					}
-				},
-				dayCellDidMount: function(info) {
-					if (window.legalproMountCalendarDayCell) {
-						window.legalproMountCalendarDayCell(info);
-					}
-				},
-				eventClick: function (info) {
-					info.jsEvent.preventDefault();
-					openAppointmentModal(info.event);
-				},
-				eventDidMount: function (info) {
-					if (window.legalproMountCalendarEventClickable) {
-						window.legalproMountCalendarEventClickable(info);
-					}
-					var props = info.event.extendedProps || {};
-					var tip = info.event.title;
-					if (props.client) {
-						tip += '\nClient: ' + props.client;
-					}
-					if (props.lawyer) {
-						tip += '\nLawyer: ' + props.lawyer;
-					}
-					info.el.setAttribute('title', tip);
-				}
-			});
-			calendar.render();
-
-			function escapeHtmlAdmin(str) {
-				return String(str)
-					.replace(/&/g, '&amp;')
-					.replace(/</g, '&lt;')
-					.replace(/>/g, '&gt;')
-					.replace(/"/g, '&quot;');
-			}
-
-			(function initAdminAppointmentsCalendarSearch(cal) {
-				var input = document.getElementById('aaCalSearchInput');
-				var resultsEl = document.getElementById('aaCalSearchResults');
-				if (!input || !resultsEl) {
-					return;
-				}
-
-				function hideResults() {
-					resultsEl.hidden = true;
-					resultsEl.innerHTML = '';
-				}
-
-				input.addEventListener('input', function () {
-					var q = input.value.trim().toLowerCase();
-					if (!q) {
-						hideResults();
-						return;
-					}
-
-					var matches = appointmentEvents.filter(function (ev) {
-						var props = ev.extendedProps || {};
-						var hay = props.searchHay || ((ev.title || '') + ' ' + (props.client || '')).toLowerCase();
-						return hay.indexOf(q) !== -1;
-					}).sort(function (a, b) {
-						return new Date(b.start).getTime() - new Date(a.start).getTime();
-					});
-
-					if (!matches.length) {
-						resultsEl.innerHTML = '<div class="admin-cal-search-empty">No appointments match your search.</div>';
-						resultsEl.hidden = false;
-						return;
-					}
-
-					var html = '';
-					matches.slice(0, 12).forEach(function (ev) {
-						var props = ev.extendedProps || {};
-						var statusKey = appointmentStatusKey(props.status);
-						html += '<button type="button" class="admin-cal-search-item" data-appointment-id="' + escapeHtmlAdmin(props.appointmentId || ev.id) + '" data-start="' + escapeHtmlAdmin(ev.start || '') + '">' +
-							'<span class="admin-cal-search-item__dot admin-cal-search-item__dot--' + escapeHtmlAdmin(statusKey) + '" aria-hidden="true"></span>' +
-							'<span class="admin-cal-search-item__body">' +
-								'<p class="admin-cal-search-item__title">' + escapeHtmlAdmin(ev.title || 'Appointment') + '</p>' +
-								'<p class="admin-cal-search-item__sub">' + escapeHtmlAdmin(props.startsLabel || '') + ' · ' + escapeHtmlAdmin(props.client || 'Client') + ' · ' + escapeHtmlAdmin(props.statusLabel || props.status || 'Pending') + '</p>' +
-							'</span>' +
-						'</button>';
-					});
-					resultsEl.innerHTML = html;
-					resultsEl.hidden = false;
-				});
-
-				input.addEventListener('keydown', function (e) {
-					if (e.key === 'Escape') {
-						hideResults();
-						input.blur();
-					}
-				});
-
-				resultsEl.addEventListener('click', function (e) {
-					var btn = e.target.closest('[data-appointment-id]');
-					if (!btn) {
-						return;
-					}
-					var id = btn.getAttribute('data-appointment-id');
-					var start = btn.getAttribute('data-start');
-					if (cal && start) {
-						cal.gotoDate(start);
-					}
-					var match = appointmentEvents.find(function (item) {
-						return String(item.id) === String(id);
-					});
-					if (match) {
-						openAppointmentModal({
-							id: match.id,
-							title: match.title,
-							start: match.start,
-							end: match.end,
-							extendedProps: match.extendedProps
-						});
-					}
-					document.getElementById('appointmentsTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
-					hideResults();
-				});
-
-				document.addEventListener('click', function (e) {
-					if (!e.target.closest('.admin-cal-search-wrap')) {
-						hideResults();
-					}
-				});
-			})(calendar);
 		});
 	</script>
-	{APPOINTMENTS_SEARCH_SCRIPT}
+	{LIST_FILTER_SCRIPT}
 </body>
 </html>
 HTML;
 
-$appointmentsCalSearchHtml = legalpro_render_admin_featured_cal_search(
-    'aaCalSearchInput',
-    'aaCalSearchResults',
-    'Search appointments',
-    'Search by case, client, lawyer, date, or status…'
-);
-$appointmentsSearchHtml = legalpro_render_admin_featured_list_search(
-    'appointmentsSearchInput',
-    'Search appointment list',
-    'Filter the table below by case, client, lawyer, or status…'
-);
-$appointmentsSearchScript = legalpro_admin_list_search_script('appointmentsSearchInput', 'appointmentsTableBody', 'appointmentsFilterEmpty');
-
+$apptPageNavbar = legalpro_render_portal_page_navbar('Appointments', $apptStatUpcoming . ' upcoming');
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
-$html = str_replace('{APPOINTMENT_ROWS}', $appointmentsRows, $html);
+$html = str_replace('{ADMIN_PORTAL_HEAD}', $adminPortalHeadHtml, $html);
+$html = str_replace('{PORTAL_THEME_BODY_CLASS}', $portalThemeBodyClass, $html);
+$html = str_replace('{APPT_PAGE_NAVBAR}', $apptPageNavbar, $html);
+$html = str_replace('{CALENDAR_SECTION}', $adminAppointmentsCalendarSection, $html);
+$html = str_replace('{LIST_SECTION}', $adminAppointmentsListSection, $html);
+$html = str_replace('{LIST_FILTER_SCRIPT}', $adminAppointmentsListFilterScript, $html);
+$html = str_replace('{APPT_STAT_TOTAL}', (string) $apptStatTotal, $html);
+$html = str_replace('{APPT_STAT_UPCOMING}', (string) $apptStatUpcoming, $html);
+$html = str_replace('{APPT_STAT_PENDING}', (string) $apptStatPending, $html);
+$html = str_replace('{APPT_STAT_ACCEPTED}', (string) $apptStatAccepted, $html);
 $html = str_replace('{UPCOMING_APPOINTMENTS_CALENDAR}', $upcomingAppointmentsCalendarHtml, $html);
 $html = str_replace('{APPOINTMENT_CALENDAR_EVENTS_JSON}', $appointmentCalendarEventsJson, $html);
-$html = str_replace('{APPOINTMENTS_CAL_SEARCH}', $appointmentsCalSearchHtml, $html);
-$html = str_replace('{APPOINTMENTS_SEARCH}', $appointmentsSearchHtml, $html);
-$html = str_replace('{APPOINTMENTS_SEARCH_SCRIPT}', $appointmentsSearchScript, $html);
 
-// rewrite internal links from .html to .php (fallback if any remain)
+// rewrite internal links
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
 
 ob_start();

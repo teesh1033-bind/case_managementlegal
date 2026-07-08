@@ -4,6 +4,11 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
 require_once __DIR__ . '/../lib/client-locale.php';
 require_once __DIR__ . '/../lib/client-portal-i18n.php';
+require_once __DIR__ . '/../lib/portal_list_ui.php';
+require_once __DIR__ . '/../lib/appointment_list_ui.php';
+require_once __DIR__ . '/../lib/portal_calendar_events.php';
+require_once __DIR__ . '/../inc/portal-calendar-studio.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 if (!isset($_SESSION['client_id'])) {
     header('Location: login.php');
@@ -13,7 +18,7 @@ if (!isset($_SESSION['client_id'])) {
 $client_id   = $_SESSION['client_id'];
 $client_name = $_SESSION['client_name'];
 
-// ── Status meta helper ────────────────────────────────────────────────────────
+// â”€â”€ Status meta helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function clientAppointmentStatusMeta(string $status, int $startsAt, ?int $endsAt): array
 {
     $now = time();
@@ -43,7 +48,7 @@ function clientAppointmentStatusBadge(array $meta): string
          . '</span>';
 }
 
-// ── AJAX: appointment details ─────────────────────────────────────────────────
+// â”€â”€ AJAX: appointment details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'appointment_details') {
     header('Content-Type: application/json; charset=utf-8');
     $appointmentId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -101,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['msg'])) {
     $messageType = isset($_GET['type']) ? (string) $_GET['type'] : 'success';
 }
 
-// ── POST handling ─────────────────────────────────────────────────────────────
+// â”€â”€ POST handling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? 'book';
 
@@ -149,20 +154,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $message     = $availabilityResult['message'];
                         $messageType = 'danger';
                     } else {
-                        $startDateTime = $appointment_date . ' ' . $appointment_time . ':00';
-                        $endDateTime   = date('Y-m-d H:i:s', strtotime($startDateTime . ' +1 hour'));
-                        $stmt = $pdo->prepare("INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
-                        $stmt->execute([$client_id, $case_id, $lawyer_id, $startDateTime, $endDateTime, $notes]);
-                        $appointmentId = (int) $pdo->lastInsertId();
-                        syncAppointmentAvailabilitySlot($pdo, [
-                            'id'        => $appointmentId,
-                            'lawyer_id' => $lawyer_id,
-                            'starts_at' => $startDateTime,
-                            'ends_at'   => $endDateTime,
-                            'status'    => 'pending',
-                        ]);
-                        $message     = client_t('appointments.msg_submitted');
-                        $messageType = 'success';
+                        try {
+                            $bookingResult = legalpro_with_locked_lawyer_booking($pdo, function () use (
+                                $pdo,
+                                $lawyer_id,
+                                $appointment_date,
+                                $appointment_time,
+                                $client_id,
+                                $case_id,
+                                $notes
+                            ) {
+                                $capacity = legalpro_assert_lawyer_slot_capacity_for_booking(
+                                    $pdo,
+                                    $lawyer_id,
+                                    $appointment_date,
+                                    $appointment_time
+                                );
+                                if (!$capacity['ok']) {
+                                    return $capacity;
+                                }
+
+                                $startDateTime = $appointment_date . ' ' . $appointment_time . ':00';
+                                $endDateTime   = date('Y-m-d H:i:s', strtotime($startDateTime . ' +1 hour'));
+                                $stmt = $pdo->prepare("INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+                                $stmt->execute([$client_id, $case_id, $lawyer_id, $startDateTime, $endDateTime, $notes]);
+                                $appointmentId = (int) $pdo->lastInsertId();
+                                syncAppointmentAvailabilitySlot($pdo, [
+                                    'id'        => $appointmentId,
+                                    'lawyer_id' => $lawyer_id,
+                                    'starts_at' => $startDateTime,
+                                    'ends_at'   => $endDateTime,
+                                    'status'    => 'pending',
+                                ]);
+
+                                return ['ok' => true];
+                            });
+
+                            if (empty($bookingResult['ok'])) {
+                                $message     = $bookingResult['message'] ?? client_t('appointments.msg_book_error');
+                                $messageType = 'danger';
+                            } else {
+                                $message     = client_t('appointments.msg_submitted');
+                                $messageType = 'success';
+                            }
+                        } catch (PDOException $e) {
+                            $message     = client_t('appointments.msg_book_error');
+                            $messageType = 'danger';
+                        }
                     }
                 }
             } catch (PDOException $e) {
@@ -178,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// ── Data loading ──────────────────────────────────────────────────────────────
+// â”€â”€ Data loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 try {
     $stmt = $pdo->prepare("SELECT id, title FROM cases WHERE client_id = ? ORDER BY title ASC");
     $stmt->execute([$client_id]);
@@ -228,7 +266,7 @@ $heroHtml = client_portal_render_hero([
     ],
 ]);
 
-// ── Available lawyers ─────────────────────────────────────────────────────────
+// â”€â”€ Available lawyers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $availableLawyers = [];
 try {
     $stmt = $pdo->prepare("
@@ -249,7 +287,7 @@ try {
     $availableLawyers = [];
 }
 
-// ── Availability maps ─────────────────────────────────────────────────────────
+// â”€â”€ Availability maps â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $lawyerAvailabilityByDate = [];
 $lawyerAvailabilityByDay    = [];
 $lawyerHasAvailability    = [];
@@ -270,7 +308,7 @@ try {
     $lawyerHasWorkingHours    = $maps['hasWorkingHours'] ?? [];
 } catch (PDOException $e) {}
 
-// ── Build selects ─────────────────────────────────────────────────────────────
+// â”€â”€ Build selects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $caseOptions = '<option value="">' . htmlspecialchars(client_t('common.select_case')) . '</option>';
 foreach ($clientCases as $c) {
     $caseOptions .= '<option value="' . $c['id'] . '">' . htmlspecialchars($c['title']) . '</option>';
@@ -281,10 +319,10 @@ foreach ($availableLawyers as $l) {
     $lawyerOptions .= '<option value="' . $l['id'] . '">' . htmlspecialchars($l['first_name'] . ' ' . $l['last_name']) . '</option>';
 }
 
-// ── Build appointment rows ────────────────────────────────────────────────────
+// ── Build appointment rows ───────────────────────────────────────────────────
 $appointmentsRows = '';
 if (empty($appointments)) {
-    $appointmentsRows = '<tr><td colspan="5">
+    $appointmentsRows = '<tr class="lp-admin-pagination-skip"><td colspan="7">
         <div class="ca-empty">
             <div class="ca-empty-icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -297,113 +335,37 @@ if (empty($appointments)) {
         </div>
     </td></tr>';
 } else {
+    $clientApptAccentBtn = legalpro_portal_accent_action_btn_class();
     foreach ($appointments as $apt) {
-        $aid         = (int) $apt['id'];
-        $caseTitle   = $apt['case_title'] ?: client_t('common.general_appointment');
-        $lawyerName  = $apt['lawyer_name'] ?: client_t('common.tbd');
-        $displayDate = date('M j, Y', strtotime($apt['starts_at']));
-        $displayTime = date('g:i A', strtotime($apt['starts_at']));
-        $meta        = clientAppointmentStatusMeta(
-            strtolower((string) ($apt['status'] ?? '')),
-            strtotime($apt['starts_at']),
-            !empty($apt['ends_at']) ? strtotime($apt['ends_at']) : null
-        );
-        $badge       = clientAppointmentStatusBadge($meta);
-        $notesRaw    = trim((string) ($apt['notes'] ?? ''));
-        $notesDisp   = $notesRaw === '' ? '—' : (strlen($notesRaw) > 52 ? htmlspecialchars(substr($notesRaw, 0, 52)) . '…' : htmlspecialchars($notesRaw));
-        $isRejected  = ($meta['key'] === 'rejected');
-
+        $aid = (int) $apt['id'];
+        $displayKey = admin_appointment_display_key($apt);
         $deleteBtn = '';
-        if ($isRejected) {
-            $deleteBtn = '<form method="POST" style="display:inline" onsubmit="return confirm(' . json_encode(client_t('appointments.delete_confirm'), JSON_UNESCAPED_UNICODE) . ')">
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" name="appointment_id" value="' . $aid . '">
-                <button type="submit" class="btn-del cdoc-touch-btn">' . htmlspecialchars(client_t('appointments.delete')) . '</button>
-            </form>';
+        if ($displayKey === 'cancelled') {
+            $deleteBtn = '<form method="POST" style="display:inline" onsubmit="return confirm(' . json_encode(client_t('appointments.delete_confirm'), JSON_UNESCAPED_UNICODE) . ')">'
+                . '<input type="hidden" name="action" value="delete">'
+                . '<input type="hidden" name="appointment_id" value="' . $aid . '">'
+                . '<button type="submit" class="' . legalpro_portal_danger_action_btn_class() . ' mb-0">'
+                . htmlspecialchars(client_t('appointments.delete')) . '</button></form>';
         }
-
-        $searchHay = strtolower(implode(' ', [
-            $caseTitle,
-            $lawyerName,
-            $displayDate,
-            $displayTime,
-            $meta['label'],
-            $notesRaw,
-            'appointment',
-            (string) $aid,
-        ]));
-
-        $appointmentsRows .= '<tr class="ca-row" data-search="' . htmlspecialchars($searchHay, ENT_QUOTES, 'UTF-8') . '">
-            <td>
-                <div style="display:flex;align-items:center;gap:10px">
-                    <div class="ca-apt-icon">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <rect x="3" y="4" width="18" height="18" rx="2"/>
-                            <path d="M16 2v4M8 2v4M3 10h18"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="apt-title">' . htmlspecialchars($caseTitle) . '</p>
-                        <p class="apt-date">' . htmlspecialchars($displayDate) . ' · ' . htmlspecialchars($displayTime) . '</p>
-                    </div>
-                </div>
-            </td>
-            <td><span class="lawyer-name">' . htmlspecialchars($lawyerName) . '</span></td>
-            <td style="text-align:center">' . $badge . '</td>
-            <td>
-                <p class="apt-notes" title="' . htmlspecialchars($notesRaw) . '">' . $notesDisp . '</p>
-            </td>
-            <td>
-                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap">
-                    <button type="button" class="btn-det cdoc-touch-btn" onclick="viewAppointmentDetails(' . $aid . ')">' . htmlspecialchars(client_t('appointments.details')) . '</button>
-                    ' . $deleteBtn . '
-                </div>
-            </td>
-        </tr>';
+        $actionsHtml = '<div class="legalpro-admin-list-row__actions lp-appt-list-actions">'
+            . '<button type="button" class="' . $clientApptAccentBtn . ' mb-0" onclick="viewAppointmentDetails(' . $aid . ')">'
+            . htmlspecialchars(client_t('appointments.details')) . '</button>'
+            . $deleteBtn
+            . '</div>';
+        $appointmentsRows .= legalpro_render_portal_appointment_table_row(
+            $apt,
+            $actionsHtml,
+            ['person_header' => 'lawyer', 'include_calendar' => true, 'row_id_prefix' => 'ca-appt-']
+        );
     }
 }
 
-// ── Calendar events (FullCalendar) ─────────────────────────────────────────
-$appointmentCalendarEvents = [];
-foreach ($appointments as $row) {
-    if (empty($row['starts_at'])) {
-        continue;
-    }
-
-    $status = strtolower((string) ($row['status'] ?? 'pending'));
-    $caseTitle = $row['case_title'] ?: client_t('js.appointment');
-    $lawyerName = trim((string) ($row['lawyer_name'] ?? ''));
-    $notes = trim((string) ($row['notes'] ?? ''));
-    $startsLabel = date('M j, Y g:i A', strtotime($row['starts_at']));
-
-    $appointmentCalendarEvents[] = [
-        'id' => (string) $row['id'],
-        'title' => $caseTitle,
-        'start' => $row['starts_at'],
-        'end' => !empty($row['ends_at']) ? $row['ends_at'] : null,
-        'backgroundColor' => 'transparent',
-        'borderColor' => 'transparent',
-        'textColor' => '#344767',
-        'extendedProps' => [
-            'lawyer' => $lawyerName !== '' ? $lawyerName : 'TBD',
-            'notes' => $notes,
-            'status' => $status,
-            'statusLabel' => ucfirst($status),
-            'appointmentId' => (int) $row['id'],
-            'startsLabel' => $startsLabel,
-            'searchHay' => strtolower(implode(' ', array_filter([
-                $caseTitle,
-                $lawyerName,
-                $status,
-                $notes,
-                $startsLabel,
-                date('Y-m-d', strtotime($row['starts_at'])),
-                date('m/d/Y', strtotime($row['starts_at'])),
-                (string) $row['id'],
-            ]))),
-        ],
-    ];
-}
+// â”€â”€ Calendar events (FullCalendar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+$appointmentCalendarEvents = legalpro_portal_build_appointment_calendar_events($appointments, [
+    'subtitle_field' => 'lawyer',
+    'subtitle_fallback' => client_t('common.tbd'),
+    'title_fallback' => client_t('common.general_appointment'),
+]);
 
 $appointmentCalendarEventsJson = json_encode(
     $appointmentCalendarEvents,
@@ -448,7 +410,7 @@ if (empty($upcomingForCalendar)) {
     }
 }
 
-// ── Message HTML ──────────────────────────────────────────────────────────────
+// â”€â”€ Message HTML â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 $messageHtml = '';
 if ($message) {
     $alertStyle = $messageType === 'success'
@@ -465,7 +427,63 @@ $clientPageNavbar = legalpro_render_client_page_navbar(
     client_t('appointments.navbar'),
     client_t('appointments.navbar'),
     client_t('appointments.search_placeholder'),
-    legalpro_client_page_search_options('client-appointments.php')
+    array_merge(legalpro_client_page_search_options('client-appointments.php'), [
+        'subtitle' => $apptUpcoming . ' ' . strtolower(client_t('appointments.upcoming')),
+    ])
+);
+
+$clientCalendarSectionHtml = legalpro_render_portal_schedule_hub_calendar([
+    'calendar_id' => 'clientAppointmentsCalendar',
+    'add_onclick' => 'openBookAppointmentPanel()',
+    'add_title' => client_t('appointments.book_title'),
+    'add_aria' => client_t('appointments.book_title'),
+    'legend' => legalpro_portal_appointment_calendar_legend(static function (string $key, string $label): string {
+        $map = [
+            'scheduled' => client_t('appointments.filter_scheduled'),
+            'confirmed' => client_t('appointments.filter_confirmed'),
+            'rescheduled' => client_t('appointments.filter_rescheduled'),
+            'past' => client_t('appointments.filter_past'),
+            'completed' => client_t('appointments.filter_completed'),
+            'cancelled' => client_t('appointments.filter_cancelled'),
+        ];
+
+        return $map[$key] ?? $label;
+    }),
+], 'clientAppointmentsCalendarHub');
+
+$clientAppointmentsListWrapped = legalpro_render_portal_schedule_hub_list_section(
+    'caAppointmentsTable',
+    client_t('appointments.list_title'),
+    $apptTotal . ' ' . strtolower(client_t('payments.word_total')),
+    'clientAppointmentsSearchInput',
+    client_t('appointments.search_placeholder_list'),
+    client_t('appointments.search_label'),
+    'clientAppointmentsStatusFilter',
+    legalpro_portal_appointment_status_options(),
+    'clientAppointmentsTableBody',
+    $appointmentsRows,
+    'clientAppointmentsFilterEmpty',
+    [
+        'header_labels' => [
+            'datetime' => client_t('appointments.col_datetime'),
+            'title' => client_t('appointments.col_title'),
+            'person' => client_t('appointments.col_lawyer'),
+            'case' => client_t('appointments.col_case'),
+            'status' => client_t('appointments.col_status'),
+            'calendar' => client_t('appointments.col_calendar'),
+            'actions' => client_t('appointments.col_actions'),
+        ],
+        'empty_message' => client_t('appointments.no_match_filters'),
+        'pagination_aria' => client_t('appointments.pagination_aria'),
+    ]
+);
+
+$clientListFilterScript = legalpro_portal_list_filter_script(
+    'clientAppointmentsSearchInput',
+    'clientAppointmentsTableBody',
+    'clientAppointmentsFilterEmpty',
+    '.legalpro-admin-list-row',
+    'clientAppointmentsStatusFilter'
 );
 
 ob_start(); ?>
@@ -476,13 +494,12 @@ ob_start(); ?>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
-    <title>LegalPro – <?= htmlspecialchars(client_t('appointments.page_title')) ?></title>
+    <title>LegalPro â€“ <?= htmlspecialchars(client_t('appointments.page_title')) ?></title>
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=4" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/client-portal-head.php'; ?>
     <link href="../assets/css/client-portal-pages.css?v=5" rel="stylesheet" />
     <?php
@@ -516,16 +533,12 @@ ob_start(); ?>
             --ca-time-available-color: #6ee7b7;
         }
 
-        /* ── Layout ─────────────────────────────────────────────────── */
-        .ca-layout {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 1.25rem;
-            align-items: start;
+        /* Booking card (full width below list) */
+        .ca-book-card {
+            width: 100%;
         }
-        @media (max-width: 900px) { .ca-layout { grid-template-columns: 1fr; } }
 
-        /* ── Table card ─────────────────────────────────────────────── */
+        /* ── Table card ── */
         .ca-panel {
             background: #fff;
             border-radius: 16px;
@@ -648,7 +661,7 @@ ob_start(); ?>
         .ca-table tbody td:first-child { padding-left: 1.5rem; }
         .ca-table tbody td:last-child  { padding-right: 1.5rem; }
 
-        /* ── Appointment cell ───────────────────────────────────────── */
+        /* â”€â”€ Appointment cell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .ca-apt-icon {
             width: 36px; height: 36px;
             border-radius: 10px;
@@ -666,7 +679,7 @@ ob_start(); ?>
         .lawyer-name { font-size: 12px; font-weight: 500; color: #334155; }
         .apt-notes { font-size: 12px; color: #94a3b8; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
 
-        /* ── Badges ─────────────────────────────────────────────────── */
+        /* â”€â”€ Badges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .ca-badge {
             display: inline-flex; align-items: center; gap: 5px;
             padding: .22rem .65rem; border-radius: 99px;
@@ -713,14 +726,14 @@ ob_start(); ?>
         }
         body.legalpro-dark-mode .ca-badge.b-inprogress .ca-badge-dot { background: var(--ca-primary, #023e8a) !important; }
 
-        /* ── Action buttons ─────────────────────────────────────────── */
+        /* â”€â”€ Action buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .btn-det {
             padding: .3rem .8rem; border-radius: 8px;
-            border: 1.5px solid var(--ca-primary); color: var(--ca-primary);
-            font-size: 12px; font-weight: 600; background: none; cursor: pointer;
-            transition: background .15s, color .15s;
+            border: 1px solid var(--ca-primary); color: #fff;
+            font-size: 12px; font-weight: 700; background: var(--ca-primary); cursor: pointer;
+            transition: background .15s, border-color .15s, transform .15s;
         }
-        .btn-det:hover { background: var(--ca-primary); color: #fff; }
+        .btn-det:hover { background: var(--ca-primary-dark, #001845); border-color: var(--ca-primary-dark, #001845); color: #fff; }
         .btn-del {
             padding: .3rem .8rem; border-radius: 8px;
             border: 1.5px solid #dc2626; color: #fff;
@@ -729,7 +742,7 @@ ob_start(); ?>
         }
         .btn-del:hover { background: #b91c1c; color: #fff; border-color: #b91c1c; }
 
-        /* ── Empty state ────────────────────────────────────────────── */
+        /* â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .ca-empty { padding: 3.5rem 1.5rem; text-align: center; }
         .ca-empty-icon {
             width: 52px; height: 52px; border-radius: 14px;
@@ -740,7 +753,7 @@ ob_start(); ?>
         .ca-empty h5 { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: .35rem; }
         .ca-empty p  { font-size: 13px; color: #94a3b8; max-width: 22rem; margin: 0 auto; }
 
-        /* ── Booking panel ──────────────────────────────────────────── */
+        /* â”€â”€ Booking panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .ca-book-card {
             background: #fff; border-radius: 16px;
             border: 1px solid #e9ecf3; overflow: visible;
@@ -793,7 +806,7 @@ ob_start(); ?>
             transform: none !important;
         }
 
-        /* Booking calendar — compact panel */
+        /* Booking calendar â€” compact panel */
         .client-appointments-page .flatpickr-calendar {
             width: 268px !important;
             max-width: calc(100vw - 24px);
@@ -923,7 +936,7 @@ ob_start(); ?>
             background: var(--ca-primary-soft);
             border-color: transparent;
         }
-        /* Unavailable / past — faded like native disabled days */
+        /* Unavailable / past â€” faded like native disabled days */
         .client-appointments-page .flatpickr-day.flatpickr-disabled,
         .client-appointments-page .flatpickr-day.legalpro-day-unavailable,
         .client-appointments-page .flatpickr-day.flatpickr-disabled.legalpro-day-unavailable {
@@ -983,7 +996,7 @@ ob_start(); ?>
             cursor: not-allowed;
         }
 
-        /* ── Time dropdown ──────────────────────────────────────────── */
+        /* â”€â”€ Time dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .ca-time-dd { position: relative; }
         .ca-time-dd-trigger {
             width: 100%; padding: .55rem .75rem;
@@ -1057,7 +1070,7 @@ ob_start(); ?>
             background: #6ee7b7; flex-shrink: 0;
         }
 
-        /* ── Availability alert ─────────────────────────────────────── */
+        /* â”€â”€ Availability alert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .ca-avail-alert {
             border-radius: 8px; padding: .55rem .8rem;
             font-size: 12px; margin-top: .5rem; display: none;
@@ -1065,7 +1078,7 @@ ob_start(); ?>
         .ca-avail-alert.warning { background: #fef9c3; color: #854d0e; }
         .ca-avail-alert.info    { background: var(--ca-primary-soft); color: var(--ca-primary); }
 
-        /* ── Book button ────────────────────────────────────────────── */
+        /* â”€â”€ Book button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .ca-book-btn {
             width: 100%; padding: .65rem 1rem;
             border-radius: 10px;
@@ -1078,7 +1091,7 @@ ob_start(); ?>
         .ca-book-btn:active { transform: scale(.98); }
         .ca-book-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-        /* ── Modal ──────────────────────────────────────────────────── */
+        /* â”€â”€ Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .ca-modal .modal-content {
             border-radius: 16px; border: 1px solid #e9ecf3;
             box-shadow: 0 20px 60px rgba(0,0,0,.12);
@@ -1111,7 +1124,7 @@ ob_start(); ?>
             color: var(--lp-dark-text-muted, #a8b5cc) !important;
         }
 
-        /* ── Appointments calendar (same hub as admin) ───────────────── */
+        /* â”€â”€ Appointments calendar (same hub as admin) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
         .client-appointments-page .ca-calendar-hub {
             margin-bottom: 1.5rem;
         }
@@ -1313,7 +1326,7 @@ ob_start(); ?>
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-appointments-page<?php echo legalpro_portal_theme_body_class(); ?>">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-appointments-page lp-schedule-hub-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
 
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
@@ -1328,87 +1341,14 @@ ob_start(); ?>
 
             <?= $heroHtml ?>
 
-            <!-- Calendar hub (same as admin appointments) ----------------->
-            <div class="dashboard-calendar-hub ca-calendar-hub">
-                <div class="dashboard-calendar-hub__head">
-                    <div class="ca-calendar-hub__intro">
-                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title"><?= htmlspecialchars(client_t('appointments.calendar_hub_title')) ?></h6>
-                        <p class="text-sm mb-0 text-muted"><?= htmlspecialchars(client_t('appointments.calendar_hub_sub')) ?></p>
-                        <div class="dashboard-legend-pills">
-                            <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> <?= htmlspecialchars(client_t('appointments.legend_pending')) ?></span>
-                            <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> <?= htmlspecialchars(client_t('appointments.legend_accepted')) ?></span>
-                            <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> <?= htmlspecialchars(client_t('appointments.legend_rejected')) ?></span>
-                        </div>
-                    </div>
-                    <div class="ca-cal-search-wrap ca-cal-search-wrap--featured">
-                        <label class="ca-cal-search-label" for="caCalSearchInput"><?= htmlspecialchars(client_t('appointments.search_label')) ?></label>
-                        <div class="ca-cal-search-field">
-                            <span class="ca-cal-search-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
-                                    <circle cx="11" cy="11" r="7"></circle>
-                                    <path d="M20 20l-3-3"></path>
-                                </svg>
-                            </span>
-                            <input type="search" id="caCalSearchInput" class="ca-cal-search-input"
-                                   placeholder="<?= htmlspecialchars(client_t('appointments.search_placeholder_long')) ?>" autocomplete="off">
-                        </div>
-                        <div class="ca-cal-search-results" id="caCalSearchResults" hidden></div>
-                    </div>
-                </div>
-                <div class="dashboard-calendar-hub__body">
-                    <div class="dashboard-calendar-layout">
-                        <div id="clientAppointmentsCalendar"></div>
-                        <aside class="dashboard-upcoming-panel">
-                            <div class="dashboard-upcoming-panel__title">
-                                <span><?= htmlspecialchars(client_t('appointments.upcoming')) ?></span>
-                                <a href="#caAppointmentsTable" class="text-xs font-weight-bold" style="color:var(--ca-primary)"><?= htmlspecialchars(client_t('appointments.view_list')) ?></a>
-                            </div>
-                            <div class="dashboard-upcoming-list" id="clientUpcomingAppointmentsList">
-                                <?= $upcomingAppointmentsCalendarHtml ?>
-                            </div>
-                        </aside>
-                    </div>
-                </div>
-            </div>
+            <?= $clientCalendarSectionHtml ?>
 
-            <!-- Main layout ------------------------------------------------->
-            <div class="ca-layout">
+            <?= $clientAppointmentsListWrapped ?>
 
-                <!-- Appointments table -->
-                <div class="ca-panel" id="caAppointmentsTable">
-                    <div class="ca-panel-hdr">
-                        <div>
-                            <h5><?= htmlspecialchars(client_t('appointments.list_title')) ?></h5>
-                            <p><?= htmlspecialchars(client_t('appointments.list_sub_newest')) ?></p>
-                        </div>
-                        <span class="ca-count" id="caCount"><?= $apptTotal ?> <?= htmlspecialchars(client_t('payments.word_total')) ?></span>
-                    </div>
-                    <div class="ca-appt-table-wrap" id="clientAppointmentsTableWrap" data-appt-per-page="10">
-                    <div class="table-responsive">
-                        <table class="ca-table">
-                            <thead>
-                                <tr>
-                                    <th><?= htmlspecialchars(client_t('appointments.col_appointment')) ?></th>
-                                    <th><?= htmlspecialchars(client_t('appointments.col_lawyer')) ?></th>
-                                    <th style="text-align:center"><?= htmlspecialchars(client_t('appointments.col_status')) ?></th>
-                                    <th><?= htmlspecialchars(client_t('appointments.col_notes')) ?></th>
-                                    <th style="text-align:right"><?= htmlspecialchars(client_t('appointments.col_actions')) ?></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?= $appointmentsRows ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <nav class="ca-appt-pagination" id="clientAppointmentsPagination" aria-label="<?= htmlspecialchars(client_t('appointments.pagination_aria')) ?>" hidden>
-                        <p class="ca-appt-pagination__info" data-appt-range></p>
-                        <div class="ca-appt-pagination__controls" data-appt-pages></div>
-                    </nav>
-                    </div>
-                </div>
-
-                <!-- Booking panel -->
-                <div class="ca-book-card" style="position:sticky;top:1rem">
+            <!-- Book appointment -->
+            <div class="row lp-appt-book-section">
+                <div class="col-12">
+                <div class="ca-book-card">
                     <div class="ca-book-hdr">
                         <h5><?= htmlspecialchars(client_t('appointments.book_title')) ?></h5>
                         <p><?= htmlspecialchars(client_t('appointments.book_sub')) ?></p>
@@ -1465,8 +1405,8 @@ ob_start(); ?>
                         </form>
                     </div>
                 </div>
-
-            </div><!-- /ca-layout -->
+                </div>
+            </div>
             </div><!-- /cp-page -->
         </div><!-- /container -->
     </main>
@@ -1845,6 +1785,36 @@ ob_start(); ?>
         LegalproAvailabilityDatePicker.create(dateInput, appointmentDatePickerOptions());
     }
 
+    function scheduleFromCalendarDate(date) {
+        var bookCard = document.querySelector('.ca-book-card');
+        if (bookCard) {
+            bookCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        var ymd = window.legalproFormatCalendarDateYmd
+            ? window.legalproFormatCalendarDateYmd(date)
+            : '';
+        if (!ymd) {
+            return;
+        }
+
+        var dateInput = document.getElementById('appointment_date');
+        if (!dateInput) {
+            return;
+        }
+
+        if (typeof LegalproAvailabilityDatePicker !== 'undefined') {
+            var fp = LegalproAvailabilityDatePicker.instances.appointment_date;
+            if (fp && typeof fp.setDate === 'function') {
+                fp.setDate(ymd, true);
+                return;
+            }
+        }
+
+        dateInput.value = ymd;
+        onDateChange();
+    }
+
     function onLawyerChange() {
         resetTimeSelect();
         lawyerSlotsCache = {};
@@ -1881,7 +1851,7 @@ ob_start(); ?>
         }
 
         trigger.disabled = true;
-        showDateAlert('info', i18n('loading_times', 'Loading available times…'));
+        showDateAlert('info', i18n('loading_times', 'Loading available timesâ€¦'));
 
         fetchLawyerSlotsForDate(lawyerId, dateVal)
             .then(function(allSlots) {
@@ -1921,7 +1891,7 @@ ob_start(); ?>
         if (hasWorkingHoursConfig(lawyerId)) {
             showDateAlert('info', i18n('times_limited_hours', 'Times are limited to the lawyer\'s working hours.'));
         } else if (!published) {
-            showDateAlert('info', i18n('standard_hours', 'Standard business hours are 9:00 AM – 5:00 PM on weekdays.'));
+            showDateAlert('info', i18n('standard_hours', 'Standard business hours are 9:00 AM â€“ 5:00 PM on weekdays.'));
         } else {
             hideDateAlert();
         }
@@ -2011,127 +1981,25 @@ ob_start(); ?>
         });
     }
 
-    function initClientAppointmentsTablePagination() {
-        var wrap = document.getElementById('clientAppointmentsTableWrap');
-        var nav = document.getElementById('clientAppointmentsPagination');
-        if (!wrap || !nav) {
-            return;
+    function openBookAppointmentPanel() {
+        var panel = document.querySelector('.ca-book-card');
+        if (panel) {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+    }
 
-        var perPage = parseInt(wrap.getAttribute('data-appt-per-page') || '10', 10);
-        var rows = Array.prototype.slice.call(document.querySelectorAll('.ca-table tbody .ca-row'));
-        var rangeEl = nav.querySelector('[data-appt-range]');
-        var pagesEl = nav.querySelector('[data-appt-pages]');
-
-        if (!rows.length || rows.length <= perPage) {
-            nav.hidden = true;
-            return;
+    function focusClientAppointmentRow(id) {
+        var rows = document.querySelectorAll('#clientAppointmentsTableBody .legalpro-admin-list-row');
+        var row = null;
+        rows.forEach(function(r) {
+            if (row) return;
+            var btn = r.querySelector('[onclick*="' + id + '"]');
+            if (btn) row = r;
+        });
+        var wrap = document.querySelector('#caAppointmentsTable [data-lp-admin-paginate]');
+        if (wrap && window.LegalproAdminTablePagination && row) {
+            window.LegalproAdminTablePagination.focusRow(wrap, row);
         }
-
-        nav.hidden = false;
-        var currentPage = 1;
-        var totalPages = Math.ceil(rows.length / perPage);
-
-        function pageButton(label, page, options) {
-            options = options || {};
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'ca-appt-pagination__btn';
-            if (options.nav) {
-                btn.className += ' ca-appt-pagination__btn--nav';
-            }
-            if (options.active) {
-                btn.className += ' ca-appt-pagination__btn--active';
-            }
-            btn.textContent = label;
-            btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
-            if (options.disabled) {
-                btn.disabled = true;
-            } else if (page) {
-                btn.addEventListener('click', function() {
-                    showPage(page);
-                });
-            }
-            return btn;
-        }
-
-        function ellipsis() {
-            var span = document.createElement('span');
-            span.className = 'ca-appt-pagination__ellipsis';
-            span.textContent = '…';
-            span.setAttribute('aria-hidden', 'true');
-            return span;
-        }
-
-        function visiblePages() {
-            if (totalPages <= 7) {
-                var all = [];
-                for (var p = 1; p <= totalPages; p++) {
-                    all.push(p);
-                }
-                return all;
-            }
-            var pages = [1];
-            var start = Math.max(2, currentPage - 1);
-            var end = Math.min(totalPages - 1, currentPage + 1);
-            if (start > 2) {
-                pages.push('gap');
-            }
-            for (var i = start; i <= end; i++) {
-                pages.push(i);
-            }
-            if (end < totalPages - 1) {
-                pages.push('gap');
-            }
-            pages.push(totalPages);
-            return pages;
-        }
-
-        function renderControls() {
-            if (!pagesEl) {
-                return;
-            }
-            pagesEl.innerHTML = '';
-            pagesEl.appendChild(pageButton(i18n('prev_short', '‹ Prev'), currentPage - 1, {
-                nav: true,
-                disabled: currentPage === 1,
-                ariaLabel: i18n('prev_page', 'Previous page')
-            }));
-            visiblePages().forEach(function(page) {
-                if (page === 'gap') {
-                    pagesEl.appendChild(ellipsis());
-                    return;
-                }
-                pagesEl.appendChild(pageButton(String(page), page, {
-                    active: page === currentPage,
-                    ariaLabel: i18n('page', 'Page') + ' ' + page + (page === currentPage ? ', ' + i18n('current', 'current') : '')
-                }));
-            });
-            pagesEl.appendChild(pageButton(i18n('next_short', 'Next ›'), currentPage + 1, {
-                nav: true,
-                disabled: currentPage === totalPages,
-                ariaLabel: i18n('next_page', 'Next page')
-            }));
-        }
-
-        function showPage(page) {
-            currentPage = Math.max(1, Math.min(totalPages, page));
-            rows.forEach(function(row, index) {
-                var rowPage = Math.floor(index / perPage) + 1;
-                row.classList.toggle('ca-row--off-page', rowPage !== currentPage);
-            });
-
-            var start = (currentPage - 1) * perPage + 1;
-            var end = Math.min(currentPage * perPage, rows.length);
-            if (rangeEl) {
-                rangeEl.textContent = i18n('showing_range', 'Showing :start–:end of :total')
-                    .replace(':start', start).replace(':end', end).replace(':total', rows.length);
-            }
-            renderControls();
-        }
-
-        window.caApptShowPage = showPage;
-        showPage(1);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -2165,219 +2033,37 @@ ob_start(); ?>
             onLawyerChange();
         }
 
-        var calendarEl = document.getElementById('clientAppointmentsCalendar');
-        var upcomingList = document.getElementById('clientUpcomingAppointmentsList');
-
-        function appointmentStatusKey(status) {
-            var value = String(status || 'pending').toLowerCase();
-            return value === 'approved' ? 'accepted' : value;
-        }
-
-        function renderAppointmentEvent(arg) {
-            var props = arg.event.extendedProps || {};
-            var statusKey = appointmentStatusKey(props.status);
-            var timeText = arg.timeText || '';
-            var title = arg.event.title || i18n('appointment_fallback', 'Appointment');
-            if (title.length > 22) {
-                title = title.slice(0, 19) + '...';
-            }
-            var wrap = document.createElement('div');
-            wrap.className = 'dashboard-cal-event';
-            wrap.innerHTML =
-                '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
-                '<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
-            return { domNodes: [wrap] };
-        }
-
-        if (upcomingList) {
-            upcomingList.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-appointment-id]');
-                if (!btn) {
-                    return;
-                }
-                viewAppointmentDetails(parseInt(btn.getAttribute('data-appointment-id'), 10));
-            });
-        }
-
-        if (calendarEl && typeof FullCalendar !== 'undefined') {
-            clientAppointmentsCalendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
-                height: 'auto',
-                firstDay: 1,
-                navLinks: true,
-                nowIndicator: true,
-                fixedWeekCount: false,
-                dayMaxEvents: 3,
-                moreLinkClick: 'popover',
-                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
-                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-                dayHeaderFormat: { weekday: 'short' },
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'
-                },
+        if (typeof LegalproCalendarStudio !== 'undefined') {
+            clientAppointmentsCalendar = LegalproCalendarStudio.mountScheduleHub({
+                mode: 'appointment',
+                calendarEl: '#clientAppointmentsCalendar',
                 events: clientAppointmentEvents,
-                eventContent: renderAppointmentEvent,
-                dateClick: function(info) {
-                    if (window.legalproHandleCalendarDateClick) {
-                        window.legalproHandleCalendarDateClick(info, function(event) {
-                            var props = event.extendedProps || {};
-                            viewAppointmentDetails(props.appointmentId || parseInt(event.id, 10));
-                        });
-                    }
+                displayLabels: {
+                    scheduled: i18n('filter_scheduled', 'Scheduled'),
+                    confirmed: i18n('filter_confirmed', 'Confirmed'),
+                    rescheduled: i18n('filter_rescheduled', 'Rescheduled'),
+                    past: i18n('filter_past', 'Past'),
+                    completed: i18n('filter_completed', 'Completed'),
+                    cancelled: i18n('filter_cancelled', 'Cancelled')
                 },
-                dayCellDidMount: function(info) {
-                    if (window.legalproMountCalendarDayCell) {
-                        window.legalproMountCalendarDayCell(info);
-                    }
+                agendaEmptyText: i18n('agenda_empty', 'No appointments this month'),
+                agendaIdAttr: 'data-appointment-id',
+                scheduleActionLabel: i18n('book_title', 'Book appointment'),
+                viewActionLabel: i18n('details', 'View details'),
+                onAgendaItemClick: function(id) {
+                    viewAppointmentDetails(parseInt(id, 10));
+                    focusClientAppointmentRow(id);
                 },
-                eventClick: function(info) {
-                    info.jsEvent.preventDefault();
-                    var props = info.event.extendedProps || {};
-                    viewAppointmentDetails(props.appointmentId || parseInt(info.event.id, 10));
-                },
-                eventDidMount: function(info) {
-                    if (window.legalproMountCalendarEventClickable) {
-                        window.legalproMountCalendarEventClickable(info);
-                    }
-                    var props = info.event.extendedProps || {};
-                    var tip = info.event.title;
-                    if (props.lawyer) {
-                        tip += '\nLawyer: ' + props.lawyer;
-                    }
-                    info.el.setAttribute('title', tip);
-                }
-            });
-            clientAppointmentsCalendar.render();
-            initClientCalendarSearch();
-        }
-
-        function initClientCalendarSearch() {
-            var input = document.getElementById('caCalSearchInput');
-            var resultsEl = document.getElementById('caCalSearchResults');
-            if (!input || !resultsEl) {
-                return;
-            }
-
-            function hideResults() {
-                resultsEl.hidden = true;
-                resultsEl.innerHTML = '';
-            }
-
-            function renderSearchResults(matches) {
-                var query = input.value.trim();
-                if (!query) {
-                    hideResults();
-                    return;
-                }
-                if (!matches.length) {
-                    resultsEl.innerHTML = '<div class="ca-cal-search-empty">' + i18n('no_appt_search_match', 'No appointments match your search.') + '</div>';
-                    resultsEl.hidden = false;
-                    return;
-                }
-
-                var html = '';
-                matches.slice(0, 12).forEach(function(ev) {
-                    var props = ev.extendedProps || {};
-                    var statusKey = appointmentStatusKey(props.status);
-                    var title = ev.title || i18n('appointment_fallback', 'Appointment');
-                    var when = props.startsLabel || '';
-                    var lawyer = props.lawyer || 'TBD';
-                    html += '<button type="button" class="ca-cal-search-item" data-appointment-id="' + escapeHtml(props.appointmentId || ev.id) + '" data-start="' + escapeHtml(ev.start || '') + '">' +
-                        '<span class="ca-cal-search-item__dot ca-cal-search-item__dot--' + escapeHtml(statusKey) + '" aria-hidden="true"></span>' +
-                        '<span class="ca-cal-search-item__body">' +
-                            '<p class="ca-cal-search-item__title">' + escapeHtml(title) + '</p>' +
-                            '<p class="ca-cal-search-item__sub">' + escapeHtml(when) + ' · ' + escapeHtml(lawyer) + ' · ' + escapeHtml(props.statusLabel || props.status || i18n('status_pending', 'Pending')) + '</p>' +
-                        '</span>' +
-                    '</button>';
-                });
-                resultsEl.innerHTML = html;
-                resultsEl.hidden = false;
-            }
-
-            input.addEventListener('input', function() {
-                var q = input.value.trim().toLowerCase();
-                if (!q) {
-                    hideResults();
-                    return;
-                }
-
-                var matches = clientAppointmentEvents.filter(function(ev) {
-                    var props = ev.extendedProps || {};
-                    var hay = props.searchHay || ((ev.title || '') + ' ' + (props.lawyer || '')).toLowerCase();
-                    return hay.indexOf(q) !== -1;
-                });
-
-                matches.sort(function(a, b) {
-                    return new Date(b.start).getTime() - new Date(a.start).getTime();
-                });
-
-                renderSearchResults(matches);
-            });
-
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    hideResults();
-                    input.blur();
-                }
-            });
-
-            resultsEl.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-appointment-id]');
-                if (!btn) {
-                    return;
-                }
-                var id = parseInt(btn.getAttribute('data-appointment-id'), 10);
-                var start = btn.getAttribute('data-start');
-                if (clientAppointmentsCalendar && start) {
-                    clientAppointmentsCalendar.gotoDate(start);
-                }
-                viewAppointmentDetails(id);
-                hideResults();
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.ca-cal-search-wrap')) {
-                    hideResults();
+                onDateClick: function(ymd, date) { if (date) { scheduleFromCalendarDate(date); } },
+                onEventClick: function(event) {
+                    var props = event.extendedProps || {};
+                    viewAppointmentDetails(props.appointmentId || parseInt(event.id, 10));
                 }
             });
         }
-
-        initClientAppointmentsTablePagination();
     });
     </script>
-    <script>
-    (function () {
-        function applyClientPageSearch() {
-            var params = new URLSearchParams(window.location.search);
-            var q = (params.get('q') || '').trim().toLowerCase();
-            var rows = document.querySelectorAll('.ca-table tbody .ca-row[data-search]');
-            var visible = 0;
-            rows.forEach(function (row) {
-                if (!q) {
-                    row.style.display = '';
-                    visible++;
-                    return;
-                }
-                var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
-                var show = hay.indexOf(q) !== -1;
-                row.style.display = show ? '' : 'none';
-                if (show) {
-                    visible++;
-                }
-            });
-            var countEl = document.querySelector('#caCount');
-            if (countEl) {
-                countEl.textContent = visible + ' ' + (visible === 1 ? 'appointment' : 'appointments') + ' total';
-            }
-            if (typeof window.caApptShowPage === 'function') {
-                window.caApptShowPage(1);
-            }
-        }
-        document.addEventListener('DOMContentLoaded', applyClientPageSearch);
-    })();
-    </script>
+    <?= $clientListFilterScript ?>
 </body>
 </html>
 <?php

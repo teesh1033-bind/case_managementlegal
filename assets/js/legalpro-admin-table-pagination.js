@@ -148,7 +148,12 @@
         }
 
         if (state.nav) {
-            state.nav.hidden = activeRows.length <= state.perPage;
+            state.nav.hidden = activeRows.length === 0;
+        }
+
+        if (state.pagesEl) {
+            state.pagesEl.hidden = state.totalPages <= 1;
+            state.pagesEl.style.display = state.totalPages <= 1 ? 'none' : '';
         }
 
         renderControls(state);
@@ -208,10 +213,47 @@
         scope.querySelectorAll('[data-lp-admin-paginate]').forEach(refreshWrap);
     }
 
+    function focusRow(wrap, rowEl) {
+        if (!wrap || !rowEl) {
+            return;
+        }
+        var state = instances.get(wrap);
+        if (!state) {
+            initWrap(wrap);
+            state = instances.get(wrap);
+        }
+        if (!state) {
+            return;
+        }
+        state.allRows = getRows(wrap);
+        var activeRows = getActiveRows(state.allRows);
+        var index = activeRows.indexOf(rowEl);
+        if (index >= 0) {
+            showPage(state, Math.floor(index / state.perPage) + 1);
+        }
+        rowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        rowEl.classList.add('table-warning');
+        setTimeout(function () {
+            rowEl.classList.remove('table-warning');
+        }, 2200);
+    }
+
+    function focusRowById(wrap, rowId) {
+        if (!wrap || !rowId) {
+            return;
+        }
+        var rowEl = document.getElementById(rowId);
+        if (rowEl) {
+            focusRow(wrap, rowEl);
+        }
+    }
+
     global.LegalproAdminTablePagination = {
         init: initAll,
         refresh: refreshWrap,
-        refreshAll: refreshAll
+        refreshAll: refreshAll,
+        focusRow: focusRow,
+        focusRowById: focusRowById
     };
 
     if (document.readyState === 'loading') {

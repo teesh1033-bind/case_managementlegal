@@ -100,7 +100,7 @@ if (empty($documents)) {
                 <div class="cdoc-row__meta">' . $caseTitle . ' · ' . $by . ' · ' . $uploaded . '</div>
             </div>
             <div class="cdoc-row__actions">
-                <a href="' . $viewUrl . '" target="_blank" rel="noopener" class="btn btn-sm btn-primary cdoc-touch-btn">' . htmlspecialchars(client_t('common.view')) . '</a>
+                <a href="' . $viewUrl . '" target="_blank" rel="noopener" class="btn btn-sm lp-portal-accent-btn cdoc-touch-btn">' . htmlspecialchars(client_t('common.view')) . '</a>
                 <a href="' . $downloadUrl . '" download="' . $downloadName . '" class="btn btn-sm btn-outline-primary cdoc-touch-btn">' . htmlspecialchars(client_t('documents.download')) . '</a>
                 ' . $ackBtn . '
             </div>

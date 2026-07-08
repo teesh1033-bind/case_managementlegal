@@ -4,7 +4,9 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/case_events.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
+require_once __DIR__ . '/../lib/appointment_list_ui.php';
 require_once __DIR__ . '/../inc/availability-date-picker.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 if (!isset($_SESSION['admin_id'])) {
     header('Location: admin-login.php');
@@ -26,7 +28,8 @@ $formData = [
     'date' => '',
     'time' => '',
     'duration_minutes' => '60',
-    'notes' => ''
+    'notes' => '',
+    'status' => 'scheduled',
 ];
 
 try {
@@ -48,6 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         $durationMinutes = 60;
     }
     $notes = isset($_POST['notes']) ? trim($_POST['notes']) : '';
+    $displayStatus = admin_appointment_booking_normalize_display_status((string) ($_POST['status'] ?? 'scheduled'));
+    $statusPayload = admin_appointment_booking_display_to_storage($displayStatus, $notes);
+    $status = $statusPayload['status'];
+    $notes = $statusPayload['notes'];
 
     $clientId = 0;
     $clientName = '';
@@ -80,7 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
         'date' => $date,
         'time' => $time,
         'duration_minutes' => (string) $durationMinutes,
-        'notes' => $notes
+        'notes' => $notes,
+        'status' => $displayStatus,
     ];
 
     $dateTime = null;
@@ -117,7 +125,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
             $endsAt = (clone $dateTime)->modify('+' . $durationMinutes . ' minutes')->format('Y-m-d H:i:s');
 
             try {
-                if ($appointmentId) {
+                $excludeAppointmentId = $appointmentId > 0 ? $appointmentId : null;
+                $pdo->beginTransaction();
+                $capacityLocked = legalpro_assert_lawyer_slot_capacity_for_booking(
+                    $pdo,
+                    $lawyerId,
+                    $date,
+                    $time,
+                    $durationMinutes,
+                    $excludeAppointmentId
+                );
+                if (!$capacityLocked['ok']) {
+                    $pdo->rollBack();
+                    $message = $capacityLocked['message'];
+                    $messageType = 'danger';
+                } elseif ($appointmentId) {
                     $lawyerCheck = $pdo->prepare("SELECT id FROM lawyers WHERE id = ? AND is_active = 1");
                     $lawyerCheck->execute([$lawyerId]);
                     if (!$lawyerCheck->fetch()) {
@@ -138,10 +160,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                             if ($previousStatus === '') {
                                 $previousStatus = 'pending';
                             }
-                            $updatedStatus = $previousStatus;
-                            // Rejected appointments must go back to pending so the assigned lawyer
-                            // can accept or reject (including when admin picks a different lawyer).
-                            if ($previousStatus === 'rejected') {
+                            if ($previousStatus === 'accepted') {
+                                $previousStatus = 'approved';
+                            }
+                            $updatedStatus = $status;
+                            if ($previousStatus === 'rejected' && $updatedStatus === 'rejected') {
                                 $updatedStatus = 'pending';
                             }
 
@@ -176,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                                 ]);
                             }
 
-                            $msg = $previousStatus === 'rejected'
+                            $msg = $previousStatus === 'rejected' && $updatedStatus === 'pending'
                                 ? 'Appointment reassigned. The lawyer must accept or reject this request.'
                                 : 'Appointment updated successfully.';
                         }
@@ -193,9 +216,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                     } else {
                         $stmt = $pdo->prepare("
                             INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status)
-                            VALUES (?, ?, ?, ?, ?, ?, 'pending')
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
                         ");
-                        $stmt->execute([$clientId, $caseId, $lawyerId, $startsAt, $endsAt, $notes]);
+                        $stmt->execute([$clientId, $caseId, $lawyerId, $startsAt, $endsAt, $notes, $status]);
                         $newAppointmentId = (int) $pdo->lastInsertId();
 
                         syncAppointmentAvailabilitySlot($pdo, [
@@ -203,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                             'lawyer_id' => $lawyerId,
                             'starts_at' => $startsAt,
                             'ends_at' => $endsAt,
-                            'status' => 'pending',
+                            'status' => $status,
                         ]);
 
                         ensureLawyerAssignedToCase($pdo, $caseId, $lawyerId);
@@ -219,10 +242,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_type']) && $_POS
                 }
 
                 if ($messageType !== 'danger') {
+                    $pdo->commit();
                     header('Location: appointments.php?msg=' . urlencode($msg) . '&type=success');
                     exit;
                 }
+
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
             } catch (PDOException $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
                 $message = 'Error saving appointment: ' . htmlspecialchars($e->getMessage());
                 $messageType = 'danger';
             }
@@ -266,11 +297,19 @@ if (empty($formData['appointment_id']) && isset($_GET['id']) && ctype_digit($_GE
             'date' => $startsAt ? $startsAt->format('Y-m-d') : '',
             'time' => $startsAt ? $startsAt->format('H:i') : '',
             'duration_minutes' => (string) $inferredDuration,
-            'notes' => $appointment['notes']
+            'notes' => $appointment['notes'],
+            'status' => admin_appointment_booking_display_status($appointment),
         ];
     } else {
         $message = 'Appointment not found.';
         $messageType = 'danger';
+    }
+}
+
+if (empty($formData['appointment_id']) && empty($formData['date']) && isset($_GET['date'])) {
+    $prefillDate = trim((string) $_GET['date']);
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $prefillDate) && strtotime($prefillDate) !== false) {
+        $formData['date'] = $prefillDate;
     }
 }
 
@@ -404,16 +443,20 @@ if ($isEditing) {
     }
 }
 $isRejectedReassign = $isEditing && $editingAppointmentStatus === 'rejected';
+if ($isRejectedReassign) {
+    $formData['status'] = 'scheduled';
+}
+$statusChipsHtml = admin_appointment_booking_status_chips_html((string) ($formData['status'] ?? 'scheduled'));
 $formTitle = $isRejectedReassign ? 'Reassign Appointment' : ($isEditing ? 'Update Appointment' : 'Book Appointment');
 $pageTitle = $isRejectedReassign ? 'Reassign Appointment' : ($isEditing ? 'Edit Appointment' : 'New Appointment');
 $submitLabel = $isRejectedReassign ? 'Assign & send to lawyer' : ($isEditing ? 'Save Changes' : 'Submit Request');
 $rejectedReassignNoticeHtml = '';
 if ($isRejectedReassign) {
-    $rejectedReassignNoticeHtml = '<div class="alert alert-info py-2 mb-3" role="alert">'
-        . '<i class="ni ni-info-16"></i> This appointment was rejected. Choose a lawyer and time, then save. '
-        . 'The assigned lawyer will receive it as <strong>pending</strong> and can accept or reject.</div>';
+    $rejectedReassignNoticeHtml = '<div class="alert alert-info lp-appt-book-alert py-2 mb-3" role="alert">'
+        . '<i class="ni ni-info-16"></i> This appointment was rejected. Choose a lawyer, time, and status, then save. '
+        . 'Use <strong>Pending</strong> to send the request back to the lawyer for approval.</div>';
 }
-$cancelLink = '<a href="appointments.php" class="btn btn-outline-secondary btn-sm mb-0" title="Back to appointments"><i class="ni ni-bold-left me-1"></i> Back to list</a>';
+$cancelLink = '<a href="appointments.php" class="btn btn-sm lp-appt-book-card__back mb-0" title="Back to appointments"><i class="ni ni-bold-left me-1"></i> Back to list</a>';
 $messageHtml = '';
 if ($message) {
     $messageHtml = '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">
@@ -437,13 +480,10 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+{ADMIN_PORTAL_HEAD}
+	<link href="../assets/css/legalpro-appointment-booking-form.css?v=2" rel="stylesheet" />
 	{AVAILABILITY_DATE_PICKER_HEAD}
 	<style>
-		#appointment_time option.lp-time-unavailable,
-		#appointment_time option:disabled {
-			color: #94a3b8;
-			text-decoration: line-through;
-		}
 		#lawyer_select option,
 		#case_select option,
 		#appointment_time option {
@@ -451,7 +491,7 @@ $html = <<<'HTML'
 		}
 	</style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-new-appointment-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
 		<div class="sidenav-header">
@@ -459,104 +499,107 @@ $html = <<<'HTML'
 		</div>
 	</aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-			<div class="container-fluid py-1 px-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="appointments.php">Appointments</a></li>
-						<li class="breadcrumb-item text-sm text-white active" aria-current="page">{PAGE_TITLE}</li>
-					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">{PAGE_TITLE}</h6>
-				</nav>
-			</div>
-		</nav>
+		{PAGE_NAVBAR}
 		<div class="container-fluid py-4">
 			{MESSAGE}
 
 			<div class="row justify-content-center">
-				<div class="col-lg-8">
-					<div class="card" id="appointment-form">
-						<div class="card-header pb-0 pt-3">
-							<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-								<div class="d-flex align-items-center">
-									<div class="icon icon-shape icon-md bg-gradient-dark shadow text-center border-radius-md me-3">
-										<i class="ni ni-calendar-grid-58 text-white text-lg opacity-10"></i>
-									</div>
-									<div>
-										<h6 class="mb-0">{FORM_TITLE}</h6>
-										<p class="text-xs text-muted mb-0">Fill in the details below</p>
-									</div>
+				<div class="col-xl-10 col-lg-11">
+					<div class="lp-appt-book-card" id="appointment-form">
+						<div class="lp-appt-book-card__head">
+							<div class="lp-appt-book-card__head-main">
+								<span class="lp-appt-book-card__icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+								</span>
+								<div>
+									<h6 class="lp-appt-book-card__title">{FORM_TITLE}</h6>
+									<p class="lp-appt-book-card__sub">Case, schedule, and status in one place</p>
 								</div>
-								{CANCEL_EDIT_LINK}
 							</div>
+							{CANCEL_EDIT_LINK}
 						</div>
-						<div class="card-body pt-3">
+						<div class="lp-appt-book-card__body">
 							{REJECTED_REASSIGN_NOTICE}
-							<form method="post" id="appointmentForm">
+							<form method="post" id="appointmentForm" novalidate>
 								<input type="hidden" name="form_type" value="save">
 								<input type="hidden" name="appointment_id" value="{APPOINTMENT_ID}">
 
-								<div class="form-group mb-3">
-									<label class="form-control-label text-sm font-weight-bold">Case <span class="text-danger">*</span></label>
-									<select class="form-control" name="case_id" id="case_select" required>
-										{CASE_OPTIONS}
-									</select>
-								</div>
+								<div class="lp-appt-book-grid">
+									<section class="lp-appt-book-section" aria-labelledby="apptBookCaseHeading">
+										<h6 class="lp-appt-book-section__title" id="apptBookCaseHeading">Case details</h6>
 
-								<div class="form-group mb-3">
-									<label class="form-control-label text-sm font-weight-bold">Client</label>
-									<input class="form-control" type="text" id="client_display" value="{CLIENT_NAME}" readonly>
-									<small class="text-muted">Automatically populated based on selected case</small>
-								</div>
+										<div class="lp-appt-book-field">
+											<label for="case_select">Case <span class="lp-appt-book-req">*</span></label>
+											<select name="case_id" id="case_select" required>
+												{CASE_OPTIONS}
+											</select>
+										</div>
 
-								<div class="form-group mb-3">
-									<label class="form-control-label text-sm font-weight-bold">Lawyer / Staff <span class="text-danger">*</span></label>
-									<select class="form-control" name="lawyer_id" id="lawyer_select" required>
-										{LAWYER_OPTIONS}
-									</select>
-									<small class="text-muted">One lawyer receives this appointment and can accept or reject it.</small>
-								</div>
+										<div class="lp-appt-book-field">
+											<label for="client_display">Client</label>
+											<input type="text" id="client_display" value="{CLIENT_NAME}" readonly>
+											<p class="lp-appt-book-hint">Filled automatically from the selected case.</p>
+										</div>
 
-								<div class="row">
-									<div class="col-md-4">
-										<div class="form-group mb-3">
-											<label class="form-control-label text-sm font-weight-bold">Date <span class="text-danger">*</span></label>
-											<div class="legalpro-date-picker-wrap">
-												<input class="form-control" type="text" name="date" id="appointment_date" value="{DATE_VALUE}" placeholder="Select date" required readonly>
+										<div class="lp-appt-book-field">
+											<label for="lawyer_select">Lawyer / staff <span class="lp-appt-book-req">*</span></label>
+											<select name="lawyer_id" id="lawyer_select" required>
+												{LAWYER_OPTIONS}
+											</select>
+											<p class="lp-appt-book-hint">One lawyer receives this appointment and can accept or reject it.</p>
+										</div>
+
+										<div class="lp-appt-book-field">
+											<label for="appointment_status">Status <span class="lp-appt-book-req">*</span></label>
+											<div class="lp-appt-book-status-field">
+												<select name="status" id="appointment_status" required aria-label="Appointment status">
+													{STATUS_OPTIONS}
+												</select>
+												<span class="lp-appt-book-status-chevron" aria-hidden="true">{STATUS_CHEVRON}</span>
 											</div>
-											<small class="text-muted">Crossed-out dates have no available times for the selected lawyer.</small>
+											<p class="lp-appt-book-hint">Pending awaits lawyer approval; Confirmed marks it accepted.</p>
 										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group mb-3">
-											<label class="form-control-label text-sm font-weight-bold">Time category <span class="text-danger">*</span></label>
-											<select class="form-control" name="duration_minutes" id="appointment_duration" required>
-												<option value="60"{DURATION_60_SELECTED}>1 hour</option>
-												<option value="30"{DURATION_30_SELECTED}>30 minutes</option>
-											</select>
-											<small class="text-muted">30 min uses slots every half hour (e.g. 9:00–9:30).</small>
-										</div>
-									</div>
-									<div class="col-md-4">
-										<div class="form-group mb-3">
-											<label class="form-control-label text-sm font-weight-bold">Time <span class="text-danger">*</span></label>
-											<select class="form-control" name="time" id="appointment_time" required>
-												<option value="">Select time</option>
-											</select>
-										</div>
-									</div>
-								</div>
-								<small class="text-muted d-block mb-3">Unavailable times cannot be selected.</small>
-								<div id="availabilityMessage" class="mb-3" style="display: none;"></div>
-								<small class="text-muted d-block mb-3">Appointments can only be booked when the lawyer has published availability for the selected date. Unavailable blocks and existing appointments are excluded.</small>
+									</section>
 
-								<div class="form-group mb-4">
-									<label class="form-control-label text-sm font-weight-bold">Notes</label>
-									<textarea class="form-control" rows="3" name="notes" placeholder="Brief reason for appointment or additional details...">{NOTES_VALUE}</textarea>
+									<section class="lp-appt-book-section" aria-labelledby="apptBookScheduleHeading">
+										<h6 class="lp-appt-book-section__title" id="apptBookScheduleHeading">Schedule</h6>
+
+										<div class="lp-appt-book-field">
+											<label for="appointment_date">Date <span class="lp-appt-book-req">*</span></label>
+											<div class="legalpro-date-picker-wrap">
+												<input type="text" name="date" id="appointment_date" value="{DATE_VALUE}" placeholder="Select date" required readonly>
+											</div>
+											<p class="lp-appt-book-hint">Crossed-out dates have no available times for the selected lawyer.</p>
+										</div>
+
+										<div class="lp-appt-book-schedule-row">
+											<div class="lp-appt-book-field">
+												<label for="appointment_duration">Duration <span class="lp-appt-book-req">*</span></label>
+												<select name="duration_minutes" id="appointment_duration" required>
+													<option value="60"{DURATION_60_SELECTED}>1 hour</option>
+													<option value="30"{DURATION_30_SELECTED}>30 minutes</option>
+												</select>
+											</div>
+											<div class="lp-appt-book-field" style="grid-column: span 2;">
+												<label for="appointment_time">Time <span class="lp-appt-book-req">*</span></label>
+												<select name="time" id="appointment_time" required>
+													<option value="">Select time</option>
+												</select>
+											</div>
+										</div>
+
+										<p class="lp-appt-book-hint">Unavailable times cannot be selected. Slots follow lawyer availability.</p>
+										<div id="availabilityMessage" class="lp-appt-book-avail-msg" style="display: none;"></div>
+									</section>
 								</div>
 
-								<div class="d-flex gap-2">
-									<button class="btn btn-dark btn-sm mb-0" type="submit" id="submitAppointmentBtn" disabled>
+								<div class="lp-appt-book-field mb-3">
+									<label for="appointment_notes">Notes</label>
+									<textarea id="appointment_notes" rows="3" name="notes" placeholder="Brief reason for appointment or additional details…">{NOTES_VALUE}</textarea>
+								</div>
+
+								<div class="lp-appt-book-actions">
+									<button class="btn lp-portal-accent-btn btn-sm mb-0 lp-appt-book-submit" type="submit" id="submitAppointmentBtn" disabled>
 										<i class="ni ni-check-bold me-1"></i> {SUBMIT_LABEL}
 									</button>
 								</div>
@@ -1269,6 +1312,26 @@ $html = <<<'HTML'
                     timeInput.setCustomValidity('');
                 });
             }
+
+            var statusField = document.querySelector('.lp-appt-book-status-field');
+            var statusSelect = document.getElementById('appointment_status');
+            if (statusField && statusSelect) {
+                statusField.addEventListener('mousedown', function (e) {
+                    if (e.target === statusSelect) {
+                        return;
+                    }
+                    e.preventDefault();
+                    if (typeof statusSelect.showPicker === 'function') {
+                        try {
+                            statusSelect.showPicker();
+                            return;
+                        } catch (err) {
+                            /* fall through */
+                        }
+                    }
+                    statusSelect.focus();
+                });
+            }
 		});
 	</script>
 	{AVAILABILITY_DATE_PICKER_FOOT}
@@ -1288,6 +1351,7 @@ $availabilityDatePickerFoot = ob_get_clean();
 $html = str_replace('{AVAILABILITY_DATE_PICKER_HEAD}', $availabilityDatePickerHead, $html);
 $html = str_replace('{AVAILABILITY_DATE_PICKER_FOOT}', $availabilityDatePickerFoot, $html);
 $html = str_replace('{PAGE_TITLE}', htmlspecialchars($pageTitle), $html);
+$html = legalpro_apply_admin_page_shell($html, $pageTitle, 'Case, schedule, and status');
 $html = str_replace('{FORM_TITLE}', htmlspecialchars($formTitle), $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{REJECTED_REASSIGN_NOTICE}', $rejectedReassignNoticeHtml, $html);
@@ -1311,6 +1375,8 @@ $html = str_replace('{LAWYER_HAS_SCHEDULE_JSON}', json_encode($lawyerHasSchedule
 $html = str_replace('{LAWYER_WORKING_HOURS_JSON}', json_encode($lawyerWorkingHours), $html);
 $html = str_replace('{LAWYER_HAS_WORKING_HOURS_JSON}', json_encode($lawyerHasWorkingHours), $html);
 $html = str_replace('{NOTES_VALUE}', htmlspecialchars($formData['notes']), $html);
+$html = str_replace('{STATUS_OPTIONS}', $statusOptionsHtml, $html);
+$html = str_replace('{STATUS_CHEVRON}', admin_appointment_booking_status_chevron_svg(), $html);
 $html = str_replace('{SUBMIT_LABEL}', htmlspecialchars($submitLabel), $html);
 $html = str_replace('{CANCEL_EDIT_LINK}', $cancelLink, $html);
 

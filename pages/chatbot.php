@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/chatbot_assistant.php';
 require_once __DIR__ . '/../lib/chatbot_ai.php';
 
@@ -12,7 +13,8 @@ if ($context['role'] === 'guest') {
 
 $role = $context['role'];
 if ($role === 'client') {
-    require_once __DIR__ . '/../lib/client-locale.php';
+    header('Location: client-dashboard.php');
+    exit;
 }
 
 $companyBranding = getCompanyBranding();
@@ -73,19 +75,14 @@ $portalBodyClass .= legalpro_portal_theme_body_class();
 
 $headerBgClass = ($role === 'client') ? 'bg-primary' : 'bg-legalpro-admin';
 
-$topNavbarHtml = '
-		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
-			<div class="container-fluid py-1 px-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Assistant</a></li>
-						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Chatbot</li>
-					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">AI Assistant</h6>
-				</nav>
-			</div>
-		</nav>';
-if ($role === 'client') {
+if ($role === 'admin') {
+    $topNavbarHtml = legalpro_render_admin_page_navbar('AI Assistant', 'AI-powered legal assistant');
+} elseif ($role === 'lawyer') {
+    require_once __DIR__ . '/../lib/lawyer-portal-i18n.php';
+    $topNavbarHtml = legalpro_render_lawyer_breadcrumb_navbar('AI Assistant', [], [
+        'subtitle' => 'AI-powered legal assistant',
+    ]);
+} else {
     require_once __DIR__ . '/../inc/client-portal-navbar.php';
     $topNavbarHtml = legalpro_render_client_page_navbar(client_t('chatbot.title'), client_t('chatbot.title'), '', [
         'client_name' => $context['display_name'],

@@ -1,7 +1,21 @@
 <?php
 
 require_once __DIR__ . '/case_events.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/admin-locale.php';
+
+function legalpro_documents_page_subtitle(string $pageKey): string
+{
+    $map = [
+        'documents' => 'Upload, templates, generate, and browse files',
+        'document-upload' => 'Add files to case workspaces',
+        'document-templates' => 'Reusable document templates',
+        'document-generate' => 'Create drafts from templates',
+        'document-browse' => 'Search and open stored files',
+    ];
+
+    return $map[$pageKey] ?? '';
+}
 
 function legalpro_documents_portal_pages(): array
 {
@@ -670,7 +684,7 @@ function legalpro_documents_portal_build_fragments(array &$state): void
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <a class="btn btn-sm btn-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" rel="noopener">View</a>
+                    <a class="btn btn-sm lp-portal-accent-btn" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" rel="noopener">View</a>
                     <a class="btn btn-sm btn-success" href="' . htmlspecialchars($downloadUrl) . '" download>Download</a>
                 </div>
             </div>';
@@ -694,7 +708,7 @@ function legalpro_documents_document_row_actions_html(array $doc, int $caseId, b
 {
     $downloadUrl = !empty($doc['filepath']) ? '../' . ltrim((string) $doc['filepath'], '/') : '#';
     $html = '<div class="d-flex gap-2 flex-wrap justify-content-end">'
-        . '<a class="btn btn-sm btn-primary" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" rel="noopener">View</a>'
+        . '<a class="btn btn-sm lp-portal-accent-btn" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" rel="noopener">View</a>'
         . '<a class="btn btn-sm btn-success" href="' . htmlspecialchars($downloadUrl) . '" download>Download</a>';
 
     if ($allowDelete) {
@@ -745,7 +759,7 @@ function legalpro_documents_generated_actions_html(?array $draft): string
         </div>
         <div class="card-body d-flex flex-wrap gap-2 align-items-center">
             <span class="text-sm text-muted me-2">' . $title . '</span>
-            <a href="document-download.php?view=1" class="btn btn-sm btn-primary" target="_blank" rel="noopener">View document</a>
+            <a href="document-download.php?view=1" class="btn btn-sm lp-portal-accent-btn" target="_blank" rel="noopener">View document</a>
             <a href="document-download.php" class="btn btn-sm btn-secondary" target="_blank" rel="noopener">Download PDF</a>
             <a href="document-download.php?print=1" class="btn btn-sm btn-outline-dark" target="_blank" rel="noopener">Print</a>
         </div>
@@ -1098,17 +1112,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="documents.php">' . htmlspecialchars($documentsNavLabel) . '</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">' . htmlspecialchars($page['title']) . '</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">' . htmlspecialchars($navTitle) . '</h6>
-                </nav>
-            </div>
-        </nav>
+        ' . legalpro_render_admin_page_navbar($navTitle, legalpro_documents_page_subtitle($pageKey)) . '
         <div class="container-fluid py-4">
             ' . legalpro_documents_message_html($state) . '
             ' . $subnav . '

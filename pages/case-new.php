@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -461,6 +462,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+{ADMIN_PORTAL_HEAD}
 	<style>
 		.case-details-form .form-group { margin-bottom: 1rem; }
 		.case-details-form .row.g-3 { margin-bottom: 1rem; }
@@ -480,17 +482,7 @@ $html = <<<'HTML'
 	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
 	</aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
-			<div class="container-fluid py-1 px-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="tables.php">Cases</a></li>
-						<li class="breadcrumb-item text-sm text-white active" aria-current="page">{FORM_TITLE}</li>
-					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">{FORM_TITLE}</h6>
-				</nav>
-			</div>
-		</nav>
+		{PAGE_NAVBAR}
 		<div class="container-fluid py-4">
 			<div class="row">
 				<div class="col-lg-8">
@@ -829,6 +821,7 @@ $html = <<<'HTML'
 HTML;
 
 $html = str_replace('{FORM_TITLE}', htmlspecialchars($formTitle), $html);
+$html = legalpro_apply_admin_page_shell($html, $formTitle, 'Create a new case workspace');
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CASE_ID}', htmlspecialchars($formData['case_id']), $html);
 $html = str_replace('{CLIENT_OPTIONS}', $clientOptions, $html);

@@ -4,6 +4,10 @@ require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/appointment_availability.php';
 require_once __DIR__ . '/../lib/case_lawyers.php';
+require_once __DIR__ . '/../lib/portal_list_ui.php';
+require_once __DIR__ . '/../lib/appointment_list_ui.php';
+require_once __DIR__ . '/../lib/portal_calendar_events.php';
+require_once __DIR__ . '/../inc/portal-calendar-studio.php';
 
 // Check if lawyer is logged in
 if (!isset($_SESSION['lawyer_id'])) {
@@ -67,31 +71,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])
                     $message = $availabilityCheck['message'] ?? 'The selected time is not available.';
                     $messageType = 'danger';
                 } else {
-                    $startsAt = $appointmentDate . ' ' . (preg_match('/^\d{2}:\d{2}$/', $appointmentTime) ? $appointmentTime . ':00' : $appointmentTime);
-                    $endsAt = date('Y-m-d H:i:s', strtotime($startsAt . ' +' . $durationMinutes . ' minutes'));
-                    $clientId = (int) ($caseRow['client_id'] ?? 0);
+                    try {
+                        $bookingResult = legalpro_with_locked_lawyer_booking($pdo, function () use (
+                            $pdo,
+                            $lawyerId,
+                            $appointmentDate,
+                            $appointmentTime,
+                            $durationMinutes,
+                            $caseId,
+                            $caseRow,
+                            $notes,
+                            $newStatus
+                        ) {
+                            $capacity = legalpro_assert_lawyer_slot_capacity_for_booking(
+                                $pdo,
+                                $lawyerId,
+                                $appointmentDate,
+                                $appointmentTime,
+                                $durationMinutes
+                            );
+                            if (!$capacity['ok']) {
+                                return $capacity;
+                            }
 
-                    $stmt = $pdo->prepare("
-                        INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                    ");
-                    $stmt->execute([$clientId > 0 ? $clientId : null, $caseId, $lawyerId, $startsAt, $endsAt, $notes, $newStatus]);
-                    $appointmentId = (int) $pdo->lastInsertId();
+                            $startsAt = $appointmentDate . ' ' . (preg_match('/^\d{2}:\d{2}$/', $appointmentTime) ? $appointmentTime . ':00' : $appointmentTime);
+                            $endsAt = date('Y-m-d H:i:s', strtotime($startsAt . ' +' . $durationMinutes . ' minutes'));
+                            $clientId = (int) ($caseRow['client_id'] ?? 0);
 
-                    syncAppointmentAvailabilitySlot($pdo, [
-                        'id' => $appointmentId,
-                        'lawyer_id' => $lawyerId,
-                        'starts_at' => $startsAt,
-                        'ends_at' => $endsAt,
-                        'status' => $newStatus,
-                    ]);
+                            $stmt = $pdo->prepare("
+                                INSERT INTO appointments (client_id, case_id, lawyer_id, starts_at, ends_at, notes, status)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                            ");
+                            $stmt->execute([$clientId > 0 ? $clientId : null, $caseId, $lawyerId, $startsAt, $endsAt, $notes, $newStatus]);
+                            $appointmentId = (int) $pdo->lastInsertId();
 
-                    ensureLawyerAssignedToCase($pdo, $caseId, $lawyerId);
+                            syncAppointmentAvailabilitySlot($pdo, [
+                                'id' => $appointmentId,
+                                'lawyer_id' => $lawyerId,
+                                'starts_at' => $startsAt,
+                                'ends_at' => $endsAt,
+                                'status' => $newStatus,
+                            ]);
 
-                    $message = $newStatus === 'accepted'
-                        ? 'Appointment scheduled and confirmed with your client.'
-                        : 'Appointment created and sent to your client for review.';
-                    $messageType = 'success';
+                            ensureLawyerAssignedToCase($pdo, $caseId, $lawyerId);
+
+                            return ['ok' => true];
+                        });
+
+                        if (empty($bookingResult['ok'])) {
+                            $message = $bookingResult['message'] ?? 'The selected time is not available.';
+                            $messageType = 'danger';
+                        } else {
+                            $message = $newStatus === 'accepted'
+                                ? 'Appointment scheduled and confirmed with your client.'
+                                : 'Appointment created and sent to your client for review.';
+                            $messageType = 'success';
+                        }
+                    } catch (PDOException $e) {
+                        $message = 'Error creating appointment: ' . htmlspecialchars($e->getMessage());
+                        $messageType = 'danger';
+                    }
                 }
             }
         } catch (PDOException $e) {
@@ -156,30 +195,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['appointment_action'])
                         $message = $availabilityCheck['message'] ?? 'The selected time is not available.';
                         $messageType = 'danger';
                     } else {
-                        $startsAt = $newDate . ' ' . (preg_match('/^\d{2}:\d{2}$/', $newTime) ? $newTime . ':00' : $newTime);
-                        $endsAt = date('Y-m-d H:i:s', strtotime($startsAt . ' +' . $durationMinutes . ' minutes'));
-                        $notes = (string) ($appointment['notes'] ?? '');
-                        if ($rescheduleNotes !== '') {
-                            $notes = trim(($notes !== '' ? $notes . "\n\n" : '') . '[Rescheduled by lawyer] ' . $rescheduleNotes);
+                        try {
+                            $bookingResult = legalpro_with_locked_lawyer_booking($pdo, function () use (
+                                $pdo,
+                                $lawyerId,
+                                $newDate,
+                                $newTime,
+                                $durationMinutes,
+                                $appointmentId,
+                                $appointment,
+                                $rescheduleNotes,
+                                $newStatus
+                            ) {
+                                $capacity = legalpro_assert_lawyer_slot_capacity_for_booking(
+                                    $pdo,
+                                    $lawyerId,
+                                    $newDate,
+                                    $newTime,
+                                    $durationMinutes,
+                                    $appointmentId
+                                );
+                                if (!$capacity['ok']) {
+                                    return $capacity;
+                                }
+
+                                $startsAt = $newDate . ' ' . (preg_match('/^\d{2}:\d{2}$/', $newTime) ? $newTime . ':00' : $newTime);
+                                $endsAt = date('Y-m-d H:i:s', strtotime($startsAt . ' +' . $durationMinutes . ' minutes'));
+                                $notes = (string) ($appointment['notes'] ?? '');
+                                if ($rescheduleNotes !== '') {
+                                    $notes = trim(($notes !== '' ? $notes . "\n\n" : '') . '[Rescheduled by lawyer] ' . $rescheduleNotes);
+                                }
+
+                                $stmt = $pdo->prepare("
+                                    UPDATE appointments
+                                    SET starts_at = ?, ends_at = ?, status = ?, notes = ?
+                                    WHERE id = ? AND lawyer_id = ?
+                                ");
+                                $stmt->execute([$startsAt, $endsAt, $newStatus, $notes, $appointmentId, $lawyerId]);
+
+                                syncAppointmentAvailabilitySlot($pdo, [
+                                    'id' => $appointmentId,
+                                    'lawyer_id' => $lawyerId,
+                                    'starts_at' => $startsAt,
+                                    'ends_at' => $endsAt,
+                                    'status' => $newStatus,
+                                ]);
+
+                                return ['ok' => true];
+                            });
+
+                            if (empty($bookingResult['ok'])) {
+                                $message = $bookingResult['message'] ?? 'The selected time is not available.';
+                                $messageType = 'danger';
+                            } else {
+                                $message = 'Appointment rescheduled successfully.';
+                                $messageType = 'success';
+                            }
+                        } catch (PDOException $e) {
+                            $message = 'Unable to reschedule appointment: ' . htmlspecialchars($e->getMessage());
+                            $messageType = 'danger';
                         }
-
-                        $stmt = $pdo->prepare("
-                            UPDATE appointments
-                            SET starts_at = ?, ends_at = ?, status = ?, notes = ?
-                            WHERE id = ? AND lawyer_id = ?
-                        ");
-                        $stmt->execute([$startsAt, $endsAt, $newStatus, $notes, $appointmentId, $lawyerId]);
-
-                        syncAppointmentAvailabilitySlot($pdo, [
-                            'id' => $appointmentId,
-                            'lawyer_id' => $lawyerId,
-                            'starts_at' => $startsAt,
-                            'ends_at' => $endsAt,
-                            'status' => $newStatus,
-                        ]);
-
-                        $message = 'Appointment rescheduled successfully.';
-                        $messageType = 'success';
                     }
                 }
             } else {
@@ -429,102 +504,38 @@ if (empty($appointments)) {
     </div></td></tr>';
 } else {
     foreach ($appointments as $appointment) {
-        $appointmentDate = date('M d, Y', strtotime($appointment['starts_at']));
-        $appointmentTime = date('g:i A', strtotime($appointment['starts_at']));
-        $isToday = date('Y-m-d', strtotime($appointment['starts_at'])) === date('Y-m-d');
-
-        $statusBadge = lawyer_appointment_status_badge($appointment);
-
-        $rowClass = $appointment['status'] === 'rejected' ? 'table-danger' : ($isToday && $appointment['status'] === 'accepted' ? 'table-info' : '');
-
-        $appointmentsTable .= '
-        <tr id="apt-' . (int) $appointment['id'] . '" class="la-appt-row ' . $rowClass . '">
-            <td class="align-middle">
-                <div class="d-flex align-items-center">
-                    <div class="lawyer-appt-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0 me-3">' . $iconApptRow . '</div>
-                    <div>
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($appointment['case_title']) . '</h6>
-                        <p class="text-xs text-muted mb-0">Case #' . htmlspecialchars($appointment['case_id']) . '</p>
-                    </div>
-                </div>
-            </td>
-            <td class="align-middle">
-                <h6 class="mb-0 text-sm">' . htmlspecialchars($appointment['first_name'] . ' ' . $appointment['last_name']) . '</h6>
-                <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointment['email']) . '</p>
-            </td>
-            <td class="align-middle text-center">
-                <span class="text-sm font-weight-bold">' . htmlspecialchars($appointmentDate) . '</span>
-                <p class="text-xs text-muted mb-0">' . htmlspecialchars($appointmentTime) . '</p>
-            </td>
-            <td class="align-middle">' . htmlspecialchars($appointment['notes'] ?: lawyer_tf('appointments.no_notes', 'No notes')) . '</td>
-            <td class="align-middle text-center">' . $statusBadge . '</td>
-            <td class="align-middle text-center lawyer-appointment-case-cell">' . buildLawyerAppointmentCaseLink($appointment) . '</td>
-            <td class="align-middle text-end lp-table-actions lawyer-appointment-actions-cell">' . buildLawyerAppointmentActions($appointment) . '</td>
-        </tr>';
+        $actionsHtml = '<div class="legalpro-admin-list-row__actions lp-appt-list-actions lawyer-appointment-actions-cell">'
+            . buildLawyerAppointmentActions($appointment)
+            . '</div>';
+        $appointmentsTable .= legalpro_render_portal_appointment_table_row(
+            $appointment,
+            $actionsHtml,
+            ['person_header' => 'client', 'include_calendar' => true, 'row_id_prefix' => 'apt-']
+        );
     }
 }
 
 // Calendar events for FullCalendar hub
-$appointmentCalendarEvents = [];
-foreach ($appointments as $row) {
-    if (empty($row['starts_at'])) {
-        continue;
-    }
+$appointmentCalendarEvents = legalpro_portal_build_appointment_calendar_events($appointments, [
+    'subtitle_field' => 'client',
+    'subtitle_fallback' => lawyer_tf('common.client', 'Client'),
+    'title_fallback' => lawyer_tf('common.appointment', 'Appointment'),
+    'extend_props' => static function (array $row, array $props): array {
+        $status = strtolower((string) ($props['status'] ?? 'pending'));
+        $startsAt = (string) ($row['starts_at'] ?? '');
 
-    $status = strtolower((string) ($row['status'] ?? 'pending'));
-    if ($status === 'approved') {
-        $status = 'accepted';
-    }
-    $caseId = (int) ($row['case_id'] ?? 0);
-    $caseTitle = $row['case_title'] ?: 'Appointment';
-    $caseDisplay = ($caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) . ' · ' : '') . $caseTitle;
-    $clientName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
-    $clientEmail = trim((string) ($row['email'] ?? ''));
-    $notes = trim((string) ($row['notes'] ?? ''));
-    $startsLabel = lawyer_portal_format_datetime($row['starts_at']);
-    $durationMinutes = lawyerAppointmentDurationMinutes($row);
-    $rescheduleDate = date('Y-m-d', strtotime($row['starts_at']));
-    $rescheduleTime = date('H:i', strtotime($row['starts_at']));
-    $rescheduleStatus = ($status === 'accepted') ? 'accepted' : 'pending';
-    $canReschedule = !in_array($status, ['accepted', 'rejected'], true);
-
-    $appointmentCalendarEvents[] = [
-        'id' => (string) $row['id'],
-        'title' => $caseDisplay,
-        'start' => $row['starts_at'],
-        'end' => !empty($row['ends_at']) ? $row['ends_at'] : null,
-        'backgroundColor' => 'transparent',
-        'borderColor' => 'transparent',
-        'textColor' => '#344767',
-        'extendedProps' => [
-            'client' => $clientName !== '' ? $clientName : 'Client',
-            'clientEmail' => $clientEmail,
-            'notes' => $notes,
-            'status' => $status,
+        return array_merge($props, [
+            'clientEmail' => trim((string) ($row['email'] ?? '')),
             'statusLabel' => lawyer_appointment_status_label($status),
-            'appointmentId' => (int) $row['id'],
-            'caseId' => $caseId,
-            'durationMinutes' => $durationMinutes,
-            'rescheduleDate' => $rescheduleDate,
-            'rescheduleTime' => $rescheduleTime,
-            'rescheduleStatus' => $rescheduleStatus,
-            'canReschedule' => $canReschedule,
-            'startsLabel' => $startsLabel,
-            'searchHay' => strtolower(implode(' ', array_filter([
-                $caseTitle,
-                $clientName,
-                $clientEmail,
-                $status,
-                $notes,
-                $startsLabel,
-                date('Y-m-d', strtotime($row['starts_at'])),
-                date('m/d/Y', strtotime($row['starts_at'])),
-                (string) ($row['case_id'] ?? ''),
-                (string) $row['id'],
-            ]))),
-        ],
-    ];
-}
+            'durationMinutes' => lawyerAppointmentDurationMinutes($row),
+            'rescheduleDate' => $startsAt !== '' ? date('Y-m-d', strtotime($startsAt)) : '',
+            'rescheduleTime' => $startsAt !== '' ? date('H:i', strtotime($startsAt)) : '',
+            'rescheduleStatus' => ($status === 'accepted') ? 'accepted' : 'pending',
+            'canReschedule' => !in_array($status, ['accepted', 'rejected'], true),
+            'startsLabel' => $startsAt !== '' ? lawyer_portal_format_datetime($startsAt) : '',
+        ]);
+    },
+]);
 
 $appointmentCalendarEventsJson = json_encode(
     $appointmentCalendarEvents,
@@ -581,7 +592,10 @@ include __DIR__ . '/../inc/lawyer-menunav.php';
 $navHtml = ob_get_clean();
 
 $pageTitle = lawyer_tf('appointments.page_title', 'My Appointments');
-$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle);
+$lawyerApptUpcoming = count($upcomingForCalendar);
+$breadcrumbNavbar = legalpro_render_lawyer_breadcrumb_navbar($pageTitle, [], [
+    'subtitle' => $lawyerApptUpcoming . ' ' . strtolower(lawyer_tf('appointments.upcoming', 'upcoming')),
+]);
 $apptI18nJson = json_encode([
     'dateLocale' => lawyer_portal_js_date_locale(),
     'fcLocale' => lawyer_portal_fc_locale(),
@@ -594,6 +608,63 @@ $apptI18nJson = json_encode([
     'noMatchSearch' => lawyer_tf('appointments.no_match_search', 'No appointments match your search.'),
     'use24h' => getLawyerPortalLocale() === 'fr',
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+
+$calendarStudioHtml = legalpro_render_portal_schedule_hub_calendar([
+    'calendar_id' => 'lawyerAppointmentsCalendar',
+    'add_onclick' => 'openCreateAppointmentModal()',
+    'add_title' => lawyer_tf('appointments.schedule', 'Schedule appointment'),
+    'add_aria' => lawyer_tf('appointments.schedule', 'Schedule appointment'),
+    'legend' => legalpro_portal_appointment_calendar_legend(static function (string $key, string $label): string {
+        $map = [
+            'scheduled' => lawyer_tf('appointments.status_scheduled', 'Scheduled'),
+            'confirmed' => lawyer_tf('appointments.status_confirmed', 'Confirmed'),
+            'rescheduled' => lawyer_tf('appointments.status_rescheduled', 'Rescheduled'),
+            'past' => lawyer_tf('appointments.status_past', 'Past'),
+            'completed' => lawyer_tf('appointments.status_completed', 'Completed'),
+            'cancelled' => lawyer_tf('appointments.status_cancelled', 'Cancelled'),
+        ];
+
+        return $map[$key] ?? $label;
+    }),
+], 'lawyerAppointmentsCalendarHub');
+
+$appointmentsListSection = legalpro_render_portal_schedule_hub_list_section(
+    'lawyerAppointmentsTable',
+    lawyer_tf('appointments.list_title', 'Appointment List'),
+    $appointmentsCountLabel,
+    'lawyerAppointmentsSearchInput',
+    lawyer_tf('appointments.search_placeholder_list', 'Search by matter, client, date, or status…'),
+    lawyer_tf('appointments.search_label', 'Search appointments'),
+    'lawyerAppointmentsStatusFilter',
+    legalpro_portal_appointment_status_options(),
+    'lawyerAppointmentsTableBody',
+    $appointmentsTable,
+    'lawyerAppointmentsFilterEmpty',
+    [
+        'header_labels' => [
+            'datetime' => lawyer_tf('appointments.col_datetime', 'Date & Time'),
+            'title' => lawyer_tf('appointments.col_matter', 'Title'),
+            'person' => lawyer_tf('appointments.col_client', 'Client'),
+            'case' => lawyer_tf('common.case', 'Case'),
+            'status' => lawyer_tf('appointments.col_status', 'Status'),
+            'calendar' => lawyer_tf('appointments.col_calendar', 'Calendar'),
+            'actions' => lawyer_tf('common.actions', 'Actions'),
+        ],
+        'empty_message' => lawyer_tf('appointments.no_match_filters', 'No appointments match your filters.'),
+        'pagination_aria' => lawyer_tf('appointments.pagination_aria', 'Appointments pagination'),
+    ]
+);
+
+$calendarSectionHtml = $calendarStudioHtml;
+$appointmentsListSectionWrapped = $appointmentsListSection;
+
+$listFilterScript = legalpro_portal_list_filter_script(
+    'lawyerAppointmentsSearchInput',
+    'lawyerAppointmentsTableBody',
+    'lawyerAppointmentsFilterEmpty',
+    '.legalpro-admin-list-row',
+    'lawyerAppointmentsStatusFilter'
+);
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -611,7 +682,6 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/lawyer-portal-head.php'; ?>
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <style>
         .lawyer-appointments-page {
             --la-primary: var(--legalpro-theme-primary, #0077b6);
@@ -646,239 +716,9 @@ $html = <<<'HTML'
         #create_appointment_time option:disabled {
             color: #adb5bd;
         }
-        .lawyer-appointments-page .dashboard-calendar-hub__head {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .lawyer-appointments-page .la-cal-search-wrap {
-            position: relative;
-            width: 100%;
-        }
-        .lawyer-appointments-page .la-cal-search-wrap--featured {
-            padding: .9rem 1rem 1rem;
-            border-radius: 14px;
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12) 0%, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.04) 100%);
-            border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.24);
-            box-shadow: 0 6px 22px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12);
-        }
-        .lawyer-appointments-page .la-cal-search-label {
-            display: block;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: var(--la-primary);
-            margin-bottom: .55rem;
-        }
-        .lawyer-appointments-page .la-cal-search-field {
-            display: flex;
-            align-items: center;
-            gap: .7rem;
-            background: #fff;
-            border: 2px solid rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.32);
-            border-radius: 12px;
-            padding: .7rem 1rem;
-            transition: border-color .15s, box-shadow .15s, transform .15s;
-            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07);
-        }
-        .lawyer-appointments-page .la-cal-search-field:focus-within {
-            border-color: var(--la-primary);
-            box-shadow: 0 0 0 4px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.18), 0 4px 16px rgba(15, 23, 42, 0.1);
-            transform: translateY(-1px);
-        }
-        .lawyer-appointments-page .la-cal-search-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.12);
-            color: var(--la-primary);
-            flex-shrink: 0;
-        }
-        .lawyer-appointments-page .la-cal-search-field svg {
-            width: 18px;
-            height: 18px;
-            color: currentColor;
-        }
-        .lawyer-appointments-page .la-cal-search-input {
-            border: none;
-            outline: none;
-            background: transparent;
-            width: 100%;
-            font-size: 15px;
-            font-weight: 600;
-            color: #1e293b;
-            font-family: inherit;
-        }
-        .lawyer-appointments-page .la-cal-search-input::placeholder {
-            color: #64748b;
-            font-weight: 500;
-        }
-        .lawyer-appointments-page .la-cal-search-results {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: calc(100% + 6px);
-            z-index: 30;
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
-            max-height: 320px;
-            overflow-y: auto;
-            padding: .35rem;
-        }
-        .lawyer-appointments-page .la-cal-search-item {
-            display: flex;
-            align-items: flex-start;
-            gap: .75rem;
-            width: 100%;
-            text-align: left;
-            border: none;
-            background: transparent;
-            border-radius: 10px;
-            padding: .65rem .75rem;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .lawyer-appointments-page .la-cal-search-item:hover,
-        .lawyer-appointments-page .la-cal-search-item:focus-visible {
-            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.08);
-            outline: none;
-        }
-        .lawyer-appointments-page .la-cal-search-item__dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-top: .45rem;
-            flex-shrink: 0;
-        }
-        .lawyer-appointments-page .la-cal-search-item__dot--pending { background: #fb6340; }
-        .lawyer-appointments-page .la-cal-search-item__dot--accepted { background: #2dce89; }
-        .lawyer-appointments-page .la-cal-search-item__dot--rejected { background: #f5365c; }
-        .lawyer-appointments-page .la-cal-search-item__body { min-width: 0; flex: 1; }
-        .lawyer-appointments-page .la-cal-search-item__title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 0 0 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .lawyer-appointments-page .la-cal-search-item__sub {
-            font-size: 11.5px;
-            color: #64748b;
-            margin: 0;
-        }
-        .lawyer-appointments-page .la-cal-search-empty {
-            padding: 1rem .75rem;
-            font-size: 12px;
-            color: #94a3b8;
-            text-align: center;
-        }
-        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-wrap--featured {
-            background: linear-gradient(135deg, rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.2) 0%, rgba(61, 69, 92, 0.55) 100%);
-            border-color: rgba(255, 255, 255, 0.12);
-        }
-        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-label { color: #b8c4ff; }
-        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-field,
-        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-results {
-            background: var(--lp-dark-surface-raised, #3d455c);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35);
-        }
-        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-input { color: var(--lp-dark-text, #f8f9fc); }
-        body.legalpro-dark-mode.lawyer-appointments-page .la-cal-search-item__title { color: var(--lp-dark-text, #f8f9fc); }
-        .la-appt-table-wrap { padding: 0 1rem 1rem; }
-        .la-appt-pagination {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            padding: 0.9rem 0.15rem 0.25rem;
-            margin-top: 0.35rem;
-            border-top: 1px solid #e9ecef;
-        }
-        .la-appt-pagination__info {
-            margin: 0;
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: #8392ab;
-        }
-        .la-appt-pagination__controls {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            flex-wrap: wrap;
-        }
-        .la-appt-pagination__btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 2rem;
-            height: 2rem;
-            padding: 0 0.55rem;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.04);
-            color: #8392ab;
-            font-size: 0.76rem;
-            font-weight: 700;
-            line-height: 1;
-            cursor: pointer;
-            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-        }
-        .la-appt-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.1);
-            border-color: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.35);
-            color: var(--la-primary);
-            transform: translateY(-1px);
-        }
-        .la-appt-pagination__btn:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.22);
-        }
-        .la-appt-pagination__btn--active {
-            background: var(--legalpro-theme-gradient, linear-gradient(135deg, #0077b6, #004e77));
-            border-color: transparent;
-            color: #fff;
-            box-shadow: 0 4px 14px rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.32);
-        }
-        .la-appt-pagination__btn--active:hover:not(:disabled) {
-            color: #fff;
-            transform: translateY(-1px);
-        }
-        .la-appt-pagination__btn--nav { min-width: auto; padding: 0 0.75rem; }
-        .la-appt-pagination__btn:disabled { opacity: 0.42; cursor: not-allowed; transform: none; box-shadow: none; }
-        .la-appt-pagination__ellipsis {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 1.5rem;
-            height: 2rem;
-            color: #8392ab;
-            font-size: 0.85rem;
-            font-weight: 700;
-        }
-        body.legalpro-dark-mode.lawyer-appointments-page .la-appt-pagination {
-            border-top-color: rgba(255, 255, 255, 0.1);
-        }
-        body.legalpro-dark-mode.lawyer-appointments-page .la-appt-pagination__btn {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.12);
-            color: #cbd5e1;
-        }
-        body.legalpro-dark-mode.lawyer-appointments-page .la-appt-pagination__btn:hover:not(:disabled) {
-            background: rgba(var(--legalpro-theme-primary-rgb, 0, 119, 182), 0.2);
-            color: #f8f9fc;
-        }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-appointments-page{PORTAL_THEME_BODY_CLASS}">
+<body class="g-sidenav-show bg-gray-100 legalpro-lawyer-portal lawyer-appointments-page lp-schedule-hub-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-lawyer position-absolute w-100"></div>
 
     {NAVIGATION}
@@ -889,103 +729,9 @@ $html = <<<'HTML'
         <div class="container-fluid py-4">
             {MESSAGE}
 
-            <!-- Appointments calendar -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="dashboard-calendar-hub la-calendar-hub">
-                        <div class="dashboard-calendar-hub__head">
-                            <div class="la-calendar-hub__intro">
-                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 w-100">
-                                    <div>
-                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">{LBL_CALENDAR_TITLE}</h6>
-                                        <p class="text-sm mb-0 text-muted">{LBL_CALENDAR_SUB}</p>
-                                        <div class="dashboard-legend-pills">
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--pending"><i></i> {LBL_STATUS_PENDING}</span>
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--accepted"><i></i> {LBL_STATUS_ACCEPTED}</span>
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--rejected"><i></i> {LBL_STATUS_REJECTED}</span>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn btn-sm bg-gradient-primary mb-0" onclick="openCreateAppointmentModal()">
-                                        {LBL_SCHEDULE}
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="la-cal-search-wrap la-cal-search-wrap--featured">
-                                <label class="la-cal-search-label" for="laCalSearchInput">{LBL_SEARCH_APPTS}</label>
-                                <div class="la-cal-search-field">
-                                    <span class="la-cal-search-icon" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
-                                            <circle cx="11" cy="11" r="7"></circle>
-                                            <path d="M20 20l-3-3"></path>
-                                        </svg>
-                                    </span>
-                                    <input type="search" id="laCalSearchInput" class="la-cal-search-input"
-                                           placeholder="{PH_SEARCH_CAL}" autocomplete="off">
-                                    <button type="button" class="lp-lawyer-search-reset-btn" data-lawyer-search-reset="laCalSearchInput" aria-label="{LBL_RESET_SEARCH}">{LBL_RESET}</button>
-                                </div>
-                                <div class="la-cal-search-results" id="laCalSearchResults" hidden></div>
-                            </div>
-                        </div>
-                        <div class="dashboard-calendar-hub__body">
-                            <div class="dashboard-calendar-layout">
-                                <div id="lawyerAppointmentsCalendar"></div>
-                                <aside class="dashboard-upcoming-panel">
-                                    <div class="dashboard-upcoming-panel__title">
-                                        <span>{LBL_UPCOMING}</span>
-                                        <a href="#lawyerAppointmentsTable" class="text-xs text-primary font-weight-bold">{LBL_VIEW_LIST}</a>
-                                    </div>
-                                    <div class="dashboard-upcoming-list" id="lawyerUpcomingAppointmentsList">
-                                        {UPCOMING_APPOINTMENTS_CALENDAR}
-                                    </div>
-                                </aside>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {CALENDAR_SECTION}
 
-            <!-- Appointments Table -->
-            <div class="row" id="lawyerAppointmentsTable">
-                <div class="col-12">
-                    <div class="card mb-4">
-                        <div class="card-header pb-0 pt-3">
-                            <div class="d-flex align-items-center">
-                                <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary me-3">{ICON_CARD_HEADER}</div>
-                                <div>
-                                    <h6 class="mb-0">{PAGE_TITLE}</h6>
-                                    <p class="text-xs text-muted mb-0">{LBL_CARD_SUB} · <span id="lawyerApptTableCount">{APPOINTMENTS_COUNT_LABEL}</span></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body px-0 pt-0 pb-2">
-                            <div class="la-appt-table-wrap" id="lawyerAppointmentsTableWrap" data-appt-per-page="10">
-                            <div class="table-responsive">
-                                <table class="table align-items-center mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_MATTER}</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_CLIENT}</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_DATETIME}</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_NOTES}</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_STATUS}</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_CASE}</th>
-                                            <th class="text-end text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{COL_ACTIONS}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {APPOINTMENTS_TABLE}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <nav class="la-appt-pagination" id="lawyerAppointmentsPagination" aria-label="Appointments pagination" hidden>
-                                <p class="la-appt-pagination__info" data-appt-range></p>
-                                <div class="la-appt-pagination__controls" data-appt-pages></div>
-                            </nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {APPOINTMENTS_LIST_SECTION}
         </div>
 
         <footer class="footer pt-3">
@@ -1152,157 +898,57 @@ $html = <<<'HTML'
             return div.innerHTML;
         }
 
-        function appointmentStatusKey(status) {
-            var value = String(status || 'pending').toLowerCase();
-            return value === 'approved' ? 'accepted' : value;
-        }
-
         function focusLawyerAppointmentRow(id) {
             var row = document.getElementById('apt-' + id);
-            if (!row) {
-                return;
+            var wrap = document.querySelector('#lawyerAppointmentsTable [data-lp-admin-paginate]');
+            if (wrap && window.LegalproAdminTablePagination && row) {
+                window.LegalproAdminTablePagination.focusRow(wrap, row);
+            } else if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-            if (typeof window.lawyerApptShowPage === 'function') {
-                var rows = Array.prototype.slice.call(document.querySelectorAll('.la-appt-row'));
-                var index = rows.indexOf(row);
-                if (index >= 0) {
-                    var wrap = document.getElementById('lawyerAppointmentsTableWrap');
-                    var perPage = wrap ? parseInt(wrap.getAttribute('data-appt-per-page') || '10', 10) : 10;
-                    window.lawyerApptShowPage(Math.floor(index / perPage) + 1);
-                }
-            }
-            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            row.classList.add('table-warning');
-            setTimeout(function() {
-                row.classList.remove('table-warning');
-            }, 2200);
         }
 
-        function initLawyerAppointmentsTablePagination() {
-            var wrap = document.getElementById('lawyerAppointmentsTableWrap');
-            var nav = document.getElementById('lawyerAppointmentsPagination');
-            if (!wrap || !nav) {
+        function initLawyerAppointmentsCalendar() {
+            if (typeof LegalproCalendarStudio === 'undefined') {
                 return;
             }
-
-            var perPage = parseInt(wrap.getAttribute('data-appt-per-page') || '10', 10);
-            var rows = Array.prototype.slice.call(document.querySelectorAll('.la-appt-row'));
-            var rangeEl = nav.querySelector('[data-appt-range]');
-            var pagesEl = nav.querySelector('[data-appt-pages]');
-            var countEl = document.getElementById('lawyerApptTableCount');
-
-            if (!rows.length || rows.length <= perPage) {
-                nav.hidden = true;
-                return;
-            }
-
-            nav.hidden = false;
-            var currentPage = 1;
-            var totalPages = Math.ceil(rows.length / perPage);
-
-            function pageButton(label, page, options) {
-                options = options || {};
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'la-appt-pagination__btn';
-                if (options.nav) {
-                    btn.className += ' la-appt-pagination__btn--nav';
-                }
-                if (options.active) {
-                    btn.className += ' la-appt-pagination__btn--active';
-                }
-                btn.textContent = label;
-                btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
-                if (options.disabled) {
-                    btn.disabled = true;
-                } else if (page) {
-                    btn.addEventListener('click', function () {
-                        showPage(page);
-                    });
-                }
-                return btn;
-            }
-
-            function ellipsis() {
-                var span = document.createElement('span');
-                span.className = 'la-appt-pagination__ellipsis';
-                span.textContent = '…';
-                span.setAttribute('aria-hidden', 'true');
-                return span;
-            }
-
-            function visiblePages() {
-                if (totalPages <= 7) {
-                    var all = [];
-                    for (var p = 1; p <= totalPages; p++) {
-                        all.push(p);
+            lawyerAppointmentsCalendar = LegalproCalendarStudio.mountScheduleHub({
+                mode: 'appointment',
+                calendarEl: '#lawyerAppointmentsCalendar',
+                events: lawyerAppointmentEvents,
+                displayLabels: {
+                    scheduled: apptI18n.statusScheduled || 'Scheduled',
+                    confirmed: apptI18n.statusConfirmed || 'Confirmed',
+                    rescheduled: apptI18n.statusRescheduled || 'Rescheduled',
+                    past: apptI18n.statusPast || 'Past',
+                    completed: apptI18n.statusCompleted || 'Completed',
+                    cancelled: apptI18n.statusCancelled || 'Cancelled'
+                },
+                agendaEmptyText: apptI18n.noAgenda || 'No appointments this month',
+                agendaIdAttr: 'data-appointment-id',
+                scheduleActionLabel: apptI18n.schedule || 'Schedule appointment',
+                viewActionLabel: apptI18n.viewDetails || 'View appointment',
+                onAgendaItemClick: function(id, match) {
+                    if (match) {
+                        openLawyerAppointmentModal(match);
+                    } else {
+                        openLawyerAppointmentModalById(parseInt(id, 10));
                     }
-                    return all;
+                    focusLawyerAppointmentRow(id);
+                },
+                onDateClick: function(ymd) {
+                    openCreateAppointmentModal(ymd);
+                },
+                onEventClick: function(event) {
+                    openLawyerAppointmentModal(event);
+                    focusLawyerAppointmentRow(event.id);
                 }
-                var pages = [1];
-                var start = Math.max(2, currentPage - 1);
-                var end = Math.min(totalPages - 1, currentPage + 1);
-                if (start > 2) {
-                    pages.push('gap');
-                }
-                for (var i = start; i <= end; i++) {
-                    pages.push(i);
-                }
-                if (end < totalPages - 1) {
-                    pages.push('gap');
-                }
-                pages.push(totalPages);
-                return pages;
-            }
-
-            function renderControls() {
-                if (!pagesEl) {
-                    return;
-                }
-                pagesEl.innerHTML = '';
-                pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
-                    nav: true,
-                    disabled: currentPage === 1,
-                    ariaLabel: 'Previous page'
-                }));
-                visiblePages().forEach(function (page) {
-                    if (page === 'gap') {
-                        pagesEl.appendChild(ellipsis());
-                        return;
-                    }
-                    pagesEl.appendChild(pageButton(String(page), page, {
-                        active: page === currentPage,
-                        ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
-                    }));
-                });
-                pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
-                    nav: true,
-                    disabled: currentPage === totalPages,
-                    ariaLabel: 'Next page'
-                }));
-            }
-
-            function showPage(page) {
-                currentPage = Math.max(1, Math.min(totalPages, page));
-                rows.forEach(function (row, index) {
-                    var rowPage = Math.floor(index / perPage) + 1;
-                    row.style.display = rowPage === currentPage ? '' : 'none';
-                });
-
-                var start = (currentPage - 1) * perPage + 1;
-                var end = Math.min(currentPage * perPage, rows.length);
-                if (rangeEl) {
-                    rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
-                }
-                if (countEl) {
-                    countEl.textContent = rows.length + (rows.length === 1 ? ' appointment' : ' appointments');
-                }
-                renderControls();
-            }
-
-            window.lawyerApptShowPage = showPage;
-            showPage(1);
+            });
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initLawyerAppointmentsCalendar();
+        });
 
         function fmtLawyerApptDT(value) {
             if (!value) {
@@ -1449,182 +1095,8 @@ $html = <<<'HTML'
                 document.addEventListener('click', outsideClick);
             }, 0);
         }
-
-        function initLawyerAppointmentsCalendar() {
-            var calendarEl = document.getElementById('lawyerAppointmentsCalendar');
-            var upcomingList = document.getElementById('lawyerUpcomingAppointmentsList');
-            if (!calendarEl || typeof FullCalendar === 'undefined') {
-                initLawyerCalendarSearch();
-                return;
-            }
-
-            function renderAppointmentEvent(arg) {
-                var props = arg.event.extendedProps || {};
-                var statusKey = appointmentStatusKey(props.status);
-                var timeText = arg.timeText || '';
-                var title = arg.event.title || apptI18n.appointment;
-                if (title.length > 22) {
-                    title = title.slice(0, 19) + '...';
-                }
-                var wrap = document.createElement('div');
-                wrap.className = 'dashboard-cal-event';
-                wrap.innerHTML =
-                    '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
-                    '<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
-                return { domNodes: [wrap] };
-            }
-
-            if (upcomingList) {
-                upcomingList.addEventListener('click', function(e) {
-                    var btn = e.target.closest('[data-appointment-id]');
-                    if (!btn) {
-                        return;
-                    }
-                    openLawyerAppointmentModalById(parseInt(btn.getAttribute('data-appointment-id'), 10));
-                });
-            }
-
-            lawyerAppointmentsCalendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
-                locale: apptI18n.fcLocale,
-                height: 'auto',
-                firstDay: 1,
-                navLinks: true,
-                nowIndicator: true,
-                fixedWeekCount: false,
-                dayMaxEvents: 3,
-                moreLinkClick: 'day',
-                buttonText: apptI18n.fcButtons,
-                eventTimeFormat: apptI18n.use24h
-                    ? { hour: '2-digit', minute: '2-digit', hour12: false }
-                    : { hour: '2-digit', minute: '2-digit', hour12: false },
-                dayHeaderFormat: { weekday: 'short' },
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'
-                },
-                events: lawyerAppointmentEvents,
-                eventContent: renderAppointmentEvent,
-                dateClick: function(info) {
-                    if (window.legalproHandleCalendarDateClick) {
-                        window.legalproHandleCalendarDateClick(info, function(event, allEvents, clickInfo) {
-                            var dayEvents = allEvents && allEvents.length ? allEvents : [event];
-                            if (dayEvents.length > 1 && clickInfo && clickInfo.jsEvent) {
-                                showLawyerDayEventPicker(dayEvents, clickInfo.jsEvent, openLawyerAppointmentModal);
-                            } else {
-                                openLawyerAppointmentModal(event);
-                            }
-                        });
-                    }
-                },
-                dayCellDidMount: function(info) {
-                    if (window.legalproMountCalendarDayCell) {
-                        window.legalproMountCalendarDayCell(info);
-                    }
-                },
-                eventClick: function(info) {
-                    info.jsEvent.preventDefault();
-                    openLawyerAppointmentModal(info.event);
-                },
-                eventDidMount: function(info) {
-                    if (window.legalproMountCalendarEventClickable) {
-                        window.legalproMountCalendarEventClickable(info);
-                    }
-                    var props = info.event.extendedProps || {};
-                    var tip = info.event.title;
-                    if (props.client) {
-                        tip += '\n' + apptI18n.client + ': ' + props.client;
-                    }
-                    info.el.setAttribute('title', tip);
-                }
-            });
-            lawyerAppointmentsCalendar.render();
-            initLawyerCalendarSearch();
-        }
-
-        function initLawyerCalendarSearch() {
-            var input = document.getElementById('laCalSearchInput');
-            var resultsEl = document.getElementById('laCalSearchResults');
-            if (!input || !resultsEl) {
-                return;
-            }
-
-            function hideResults() {
-                resultsEl.hidden = true;
-                resultsEl.innerHTML = '';
-            }
-
-            input.addEventListener('input', function() {
-                var q = input.value.trim().toLowerCase();
-                if (!q) {
-                    hideResults();
-                    return;
-                }
-
-                var matches = lawyerAppointmentEvents.filter(function(ev) {
-                    var props = ev.extendedProps || {};
-                    var hay = props.searchHay || ((ev.title || '') + ' ' + (props.client || '')).toLowerCase();
-                    return hay.indexOf(q) !== -1;
-                }).sort(function(a, b) {
-                    return new Date(b.start).getTime() - new Date(a.start).getTime();
-                });
-
-                if (!matches.length) {
-                    resultsEl.innerHTML = '<div class="la-cal-search-empty">' + escapeHtmlLa(apptI18n.noMatchSearch) + '</div>';
-                    resultsEl.hidden = false;
-                    return;
-                }
-
-                var html = '';
-                matches.slice(0, 12).forEach(function(ev) {
-                    var props = ev.extendedProps || {};
-                    var statusKey = appointmentStatusKey(props.status);
-                    html += '<button type="button" class="la-cal-search-item" data-appointment-id="' + escapeHtmlLa(props.appointmentId || ev.id) + '" data-start="' + escapeHtmlLa(ev.start || '') + '">' +
-                        '<span class="la-cal-search-item__dot la-cal-search-item__dot--' + escapeHtmlLa(statusKey) + '" aria-hidden="true"></span>' +
-                        '<span class="la-cal-search-item__body">' +
-                            '<p class="la-cal-search-item__title">' + escapeHtmlLa(ev.title || apptI18n.appointment) + '</p>' +
-                            '<p class="la-cal-search-item__sub">' + escapeHtmlLa(props.startsLabel || '') + ' · ' + escapeHtmlLa(props.client || apptI18n.client) + ' · ' + escapeHtmlLa(props.statusLabel || props.status || apptI18n.pending) + '</p>' +
-                        '</span>' +
-                    '</button>';
-                });
-                resultsEl.innerHTML = html;
-                resultsEl.hidden = false;
-            });
-
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    hideResults();
-                    input.blur();
-                }
-            });
-
-            resultsEl.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-appointment-id]');
-                if (!btn) {
-                    return;
-                }
-                var id = parseInt(btn.getAttribute('data-appointment-id'), 10);
-                var start = btn.getAttribute('data-start');
-                if (lawyerAppointmentsCalendar && start) {
-                    lawyerAppointmentsCalendar.gotoDate(start);
-                }
-                openLawyerAppointmentModalById(id);
-                hideResults();
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.la-cal-search-wrap')) {
-                    hideResults();
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            initLawyerAppointmentsTablePagination();
-            initLawyerAppointmentsCalendar();
-        });
     </script>
+    {LIST_FILTER_SCRIPT}
     <script src="../assets/js/core/popper.min.js"></script>
     <script src="../assets/js/core/bootstrap.min.js"></script>
     <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
@@ -1639,12 +1111,16 @@ $html = <<<'HTML'
         var rescheduleOriginalDate = '';
         var rescheduleOriginalTime = '';
 
-        function openCreateAppointmentModal() {
+        function openCreateAppointmentModal(prefillDate) {
             var form = document.getElementById('createAppointmentForm');
             if (form) {
                 form.reset();
             }
             document.getElementById('create_duration_minutes').value = '60';
+            var dateInput = document.getElementById('create_appointment_date');
+            if (dateInput && prefillDate) {
+                dateInput.value = prefillDate;
+            }
             if (typeof window.renderCreateTimeOptions === 'function') {
                 window.renderCreateTimeOptions('');
             }
@@ -2113,7 +1589,9 @@ $replacements = [
     '{COL_ACTIONS}' => htmlspecialchars(lawyer_tf('common.actions', 'Actions')),
     '{APPT_I18N_JSON}' => $apptI18nJson,
     '{FC_LOCALE_SCRIPT}' => lawyer_portal_fc_locale_script(),
-    '{LBL_CARD_SUB}' => htmlspecialchars(lawyer_tf('appointments.card_sub', 'Schedule meetings with clients, accept requests, or reschedule')),
+    '{CALENDAR_SECTION}' => $calendarSectionHtml,
+    '{APPOINTMENTS_LIST_SECTION}' => $appointmentsListSectionWrapped,
+    '{LIST_FILTER_SCRIPT}' => $listFilterScript,
     '{MESSAGE}' => $messageHtml,
     '{MIN_DATE}' => date('Y-m-d'),
     '{LAWYER_AVAILABILITY_BY_DATE_JSON}' => json_encode($rescheduleAvailabilityByDate, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP),

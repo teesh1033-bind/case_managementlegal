@@ -115,7 +115,7 @@ if (empty($cases)) {
                 <span class="text-xs text-muted">' . date('M d, Y', strtotime($case['created_at'])) . '</span>
             </td>
             <td class="align-middle text-end lp-table-actions">
-                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="btn btn-sm btn-primary mb-0">' . htmlspecialchars(lawyer_tf('common.view', 'View')) . '</a>
+                <a href="lawyer-case-view.php?id=' . (int)$case['id'] . '" class="' . legalpro_portal_accent_action_btn_class() . '">' . htmlspecialchars(lawyer_tf('common.view', 'View')) . '</a>
             </td>
         </tr>';
     }

@@ -24,6 +24,16 @@
         });
     }
 
+    function formatCalendarDateYmd(date) {
+        if (!(date instanceof Date) || isNaN(date.getTime())) {
+            return '';
+        }
+        var y = date.getFullYear();
+        var m = String(date.getMonth() + 1).padStart(2, '0');
+        var d = String(date.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+    }
+
     function mountCalendarEventClickable(info) {
         if (!info || !info.el) {
             return;
@@ -58,6 +68,9 @@
             return;
         }
 
+        info.el.classList.add('lp-cal-day-schedulable');
+        info.el.style.cursor = 'pointer';
+
         var events = getEventsOnDate(info.view.calendar, info.date);
         if (events.length > 0) {
             info.el.classList.add('lp-cal-day-has-events');
@@ -65,8 +78,17 @@
         }
     }
 
-    function handleCalendarDateClick(info, openEvent) {
-        if (!info || !info.view || !info.date || typeof openEvent !== 'function') {
+    function handleCalendarDateClick(info, openEvent, onScheduleDate) {
+        if (!info || !info.view || !info.date) {
+            return;
+        }
+
+        if (typeof onScheduleDate === 'function') {
+            onScheduleDate(info);
+            return;
+        }
+
+        if (typeof openEvent !== 'function') {
             return;
         }
 
@@ -77,6 +99,7 @@
     }
 
     window.legalproGetCalendarEventsOnDate = getEventsOnDate;
+    window.legalproFormatCalendarDateYmd = formatCalendarDateYmd;
     window.legalproMountCalendarEventClickable = mountCalendarEventClickable;
     window.legalproMountCalendarDayCell = mountCalendarDayCell;
     window.legalproHandleCalendarDateClick = handleCalendarDateClick;

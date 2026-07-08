@@ -4,7 +4,24 @@
  */
 
 require_once __DIR__ . '/../inc/bank-accounts-settings.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/admin-locale.php';
+require_once __DIR__ . '/admin-role-access.php';
+
+function legalpro_settings_page_subtitle(string $pageKey): string
+{
+    $map = [
+        'settings' => 'Manage branding, appearance, finance, and more',
+        'settings-branding' => 'Company name, logo, and contact details',
+        'settings-appearance' => 'Theme, accent colors, and language',
+        'settings-finance' => 'Currency, bank accounts, and invoices',
+        'settings-catalog' => 'Services, categories, and specializations',
+        'settings-ai' => 'OpenAI key and assistant model',
+        'settings-role-access' => 'Control staff portal access',
+    ];
+
+    return $map[$pageKey] ?? '';
+}
 
 function legalpro_settings_portal_pages(): array
 {
@@ -39,6 +56,12 @@ function legalpro_settings_portal_pages(): array
             'title' => 'AI Assistant',
             'nav' => 'AI Assistant',
         ],
+        'settings-role-access' => [
+            'file' => 'settings-role-access.php',
+            'title' => 'Role Access',
+            'nav' => 'Role Access',
+            'admin_only' => true,
+        ],
     ];
 }
 
@@ -56,6 +79,7 @@ function legalpro_settings_redirect_for_form(string $formType): string
         'add_lawyer_specialization' => 'settings-catalog.php',
         'remove_lawyer_specialization' => 'settings-catalog.php',
         'chatbot_ai' => 'settings-ai.php',
+        'role_access' => 'settings-role-access.php',
     ];
 
     return $map[$formType] ?? 'settings.php';
@@ -282,6 +306,19 @@ function legalpro_admin_settings_handle_post(array &$state): void
         header('Location: ' . $redirect . '?msg=' . urlencode('AI assistant settings saved.') . '&type=success');
         exit;
     }
+
+    if ($formType === 'role_access') {
+        if (!legalpro_admin_can_manage_role_access()) {
+            $state['message'] = 'Access denied. Only administrators can manage role access.';
+            $state['messageType'] = 'danger';
+            return;
+        }
+
+        $posted = isset($_POST['perm_staff']) && is_array($_POST['perm_staff']) ? $_POST['perm_staff'] : [];
+        $result = legalpro_save_admin_role_permissions($posted);
+        header('Location: ' . $redirect . '?msg=' . urlencode($result['message']) . '&type=success');
+        exit;
+    }
 }
 
 function legalpro_admin_settings_init_state(): array
@@ -294,6 +331,11 @@ function legalpro_admin_settings_init_state(): array
         'message' => '',
         'messageType' => '',
     ];
+
+    if (empty($_SESSION['admin_id'])) {
+        header('Location: login.php');
+        exit;
+    }
 
     if (isset($_GET['msg']) && isset($_GET['type'])) {
         $state['message'] = urldecode((string) $_GET['msg']);
@@ -394,6 +436,7 @@ function legalpro_admin_settings_load(array &$state): void
     $state['chatbotAiEnabledChecked'] = $chatbotAiEnabled ? ' checked' : '';
     $state['openaiKeyPlaceholder'] = $openaiKeyStored ? '•••••••••••••••• (saved — leave blank to keep)' : 'sk-...';
     $state['openaiModelOptionsHtml'] = $openaiModelOptionsHtml;
+    $state['roleAccessStaffPermissions'] = legalpro_get_admin_role_permissions()['staff'] ?? legalpro_admin_default_role_permissions('staff');
 }
 
 function legalpro_settings_hub_cards_html(): string
@@ -406,6 +449,7 @@ function legalpro_settings_hub_cards_html(): string
         'settings-finance' => ['desc' => 'Currency, bank accounts, and invoice defaults.', 'icon' => 'landmark', 'accent' => 'success'],
         'settings-catalog' => ['desc' => 'Services, case categories, and lawyer specializations.', 'icon' => 'clipboard-list', 'accent' => 'dark'],
         'settings-ai' => ['desc' => 'OpenAI key and model for the AI assistant.', 'icon' => 'bot', 'accent' => 'warning'],
+        'settings-role-access' => ['desc' => admin_t('settings.hub_role_access_desc'), 'icon' => 'shield-check', 'accent' => 'danger'],
     ];
 
     $html = '<div class="row g-3">';
@@ -414,6 +458,9 @@ function legalpro_settings_hub_cards_html(): string
             continue;
         }
         $page = $pages[$key];
+        if (!empty($page['admin_only']) && !legalpro_admin_can_manage_role_access()) {
+            continue;
+        }
         $html .= '
         <div class="col-md-6 col-xl-4">
             <a href="' . htmlspecialchars($page['file']) . '" class="card legalpro-doc-hub-card h-100 text-decoration-none">
@@ -438,6 +485,9 @@ function legalpro_settings_subnav_html(string $activeKey): string
     $html .= '<a class="legalpro-doc-subnav__link' . $overviewActive . '" href="settings.php">Overview</a>';
     foreach ($pages as $key => $page) {
         if ($key === 'settings') {
+            continue;
+        }
+        if (!empty($page['admin_only']) && !legalpro_admin_can_manage_role_access()) {
             continue;
         }
         $active = $key === $activeKey ? ' is-active' : '';
@@ -741,6 +791,8 @@ function legalpro_settings_shared_styles(): string
         .legalpro-doc-hub-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
         body.legalpro-dark-mode .legalpro-doc-hub-card { border-color: var(--lp-dark-border); }
         body.legalpro-dark-mode .legalpro-doc-hub-card h6 { color: var(--lp-dark-text) !important; }
+        .legalpro-role-access-table .form-check-input { cursor: pointer; }
+        .legalpro-role-access-table tbody tr:hover { background: rgba(0, 119, 182, 0.04); }
 CSS;
 }
 
@@ -777,19 +829,7 @@ function legalpro_settings_render_page(string $pageKey, string $contentHtml, arr
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="settings.php">Settings</a></li>'
-        . ($pageKey !== 'settings'
-            ? '<li class="breadcrumb-item text-sm text-white active" aria-current="page">' . htmlspecialchars($page['title']) . '</li>'
-            : '')
-        . '</ol>
-                    <h6 class="font-weight-bolder text-white mb-0">' . htmlspecialchars($navTitle) . '</h6>
-                </nav>
-            </div>
-        </nav>
+        ' . legalpro_render_admin_page_navbar($navTitle, legalpro_settings_page_subtitle($pageKey)) . '
         <div class="container-fluid py-4">
             ' . legalpro_settings_message_html($state) . '
             ' . $subnav . '

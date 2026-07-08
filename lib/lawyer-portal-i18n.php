@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/lawyer-locale.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 /**
  * Translate with English fallback when the key is missing.
@@ -29,60 +30,10 @@ function legalpro_render_lawyer_breadcrumb_navbar(
     array $crumbs = [],
     array $options = []
 ): string {
-    $titleTag = (string) ($options['title_tag'] ?? 'h6');
-    if (!in_array($titleTag, ['h5', 'h6'], true)) {
-        $titleTag = 'h6';
-    }
+    $subtitle = (string) ($options['subtitle'] ?? '');
+    unset($options['subtitle']);
 
-    $parentLabel = htmlspecialchars(
-        (string) ($options['parent_label'] ?? lawyer_tf('nav.lawyer_portal', 'Lawyer Portal')),
-        ENT_QUOTES,
-        'UTF-8'
-    );
-    $parentUrl = htmlspecialchars(
-        (string) ($options['parent_url'] ?? 'lawyer-dashboard.php'),
-        ENT_QUOTES,
-        'UTF-8'
-    );
-    $parentLinkClass = htmlspecialchars(
-        (string) ($options['parent_link_class'] ?? 'opacity-5'),
-        ENT_QUOTES,
-        'UTF-8'
-    );
-    $pageTitleEsc = htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
-
-    $crumbHtml = '<li class="breadcrumb-item text-sm">'
-        . '<a class="' . $parentLinkClass . ' text-white" href="' . $parentUrl . '">' . $parentLabel . '</a>'
-        . '</li>';
-
-    foreach ($crumbs as $crumb) {
-        $label = htmlspecialchars((string) ($crumb['label'] ?? ''), ENT_QUOTES, 'UTF-8');
-        if ($label === '') {
-            continue;
-        }
-        $url = trim((string) ($crumb['url'] ?? ''));
-        if ($url !== '') {
-            $crumbHtml .= '<li class="breadcrumb-item text-sm">'
-                . '<a class="opacity-5 text-white" href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '">' . $label . '</a>'
-                . '</li>';
-        } else {
-            $crumbHtml .= '<li class="breadcrumb-item text-sm text-white active" aria-current="page">' . $label . '</li>';
-        }
-    }
-
-    $crumbHtml .= '<li class="breadcrumb-item text-sm text-white active" aria-current="page">' . $pageTitleEsc . '</li>';
-
-    return '
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">'
-                        . $crumbHtml .
-                    '</ol>
-                    <' . $titleTag . ' class="font-weight-bolder text-white mb-0">' . $pageTitleEsc . '</' . $titleTag . '>
-                </nav>
-            </div>
-        </nav>';
+    return legalpro_render_portal_page_navbar($pageTitle, $subtitle, $options);
 }
 
 function lawyer_status_label(string $status): string

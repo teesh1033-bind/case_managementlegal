@@ -20,5 +20,6 @@ if (function_exists('renderCurrencyHeadScript')) {
     renderCurrencyHeadScript();
 }
 echo '<link href="../assets/css/calendar-toolbar-visible.css?v=2" rel="stylesheet" />' . "\n";
-echo '<script src="../assets/js/calendar-event-clickable.js?v=2"></script>' . "\n";
+echo '<link href="../assets/css/legalpro-portal-action-buttons.css?v=5" rel="stylesheet" />' . "\n";
+echo '<script src="../assets/js/calendar-event-clickable.js?v=3"></script>' . "\n";
 include __DIR__ . '/portal-theme-calendar-dark.php';

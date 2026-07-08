@@ -377,6 +377,7 @@ $html = <<<'HTML'
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+{ADMIN_PORTAL_HEAD}
 	<link href="../assets/css/legalpro-admin-portal.css?v=25" rel="stylesheet" />
 	<link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
 	<link href="../assets/css/legalpro-finance-pages.css?v=5" rel="stylesheet" />
@@ -399,17 +400,7 @@ $html = <<<'HTML'
 		</div>
 	</aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
-			<div class="container-fluid py-1 px-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="../pages/clients.html">Clients</a></li>
-						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Client Detail</li>
-					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">Client Detail</h6>
-				</nav>
-			</div>
-		</nav>
+		{PAGE_NAVBAR}
 		<div class="container-fluid py-4">
 			<div class="row">
 				<div class="col-lg-8">
@@ -785,6 +776,7 @@ $html = str_replace('{MESSAGE}', $messageHtml, $html);
 
 // rewrite internal links from .html to .php
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
+$html = legalpro_apply_admin_page_shell($html, 'Client Detail', 'Client profile and cases');
 ob_start(); include __DIR__ . '/../inc/menunav.php'; $sidebar = ob_get_clean();
 $html = preg_replace('/<aside[\s\S]*?<\/aside>/', $sidebar, $html, 1);
 ob_start(); include __DIR__ . '/../inc/footer.php'; $footer = ob_get_clean();

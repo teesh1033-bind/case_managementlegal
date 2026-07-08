@@ -285,21 +285,58 @@ function legalpro_client_resolve_finance_document_urls(?PDO $pdo, int $clientId,
         }
     }
 
-    if (preg_match('/(?:receipt|payment)[_\s-]+(?:rc[_\s-]*)?(\d+)/i', $probe, $m)) {
+    if (!function_exists('legalpro_resolve_receipt_number')) {
+        require_once __DIR__ . '/finance-reference-numbers.php';
+    }
+
+    if (preg_match('/\b(RCP?-[A-Z0-9]{4,})\b/i', $probe, $m)) {
+        $receiptRef = strtoupper($m[1]);
+        try {
+            legalpro_ensure_payment_receipt_number_column($pdo);
+            $stmt = $pdo->prepare('SELECT id, receipt_number FROM payments WHERE client_id = ? AND receipt_number = ? LIMIT 1');
+            $stmt->execute([$clientId, $receiptRef]);
+            $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($payment) {
+                $paymentId = (int) $payment['id'];
+                $safe = preg_replace('/[^A-Za-z0-9_\-]/', '', (string) ($payment['receipt_number'] ?? $receiptRef)) ?: $receiptRef;
+
+                return [
+                    'view_url' => 'payment-receipt.php?id=' . $paymentId . '&view=1',
+                    'download_url' => 'payment-receipt.php?id=' . $paymentId,
+                    'download_filename' => 'receipt-' . $safe . '.pdf',
+                    'display_label' => preg_replace('/\.html?$/i', '.pdf', $label) ?: ('Receipt ' . ($payment['receipt_number'] ?? $receiptRef)),
+                    'is_finance_pdf' => true,
+                ];
+            }
+        } catch (PDOException $e) {
+            // Keep static file fallback.
+        }
+    }
+
+    if (preg_match('/(?:receipt|payment)[_\s-]+(?:rcp?[_\s-]*)?(\d+)/i', $probe, $m)) {
         $paymentId = (int) $m[1];
         if ($paymentId > 0) {
             try {
-                $stmt = $pdo->prepare('SELECT id FROM payments WHERE id = ? AND client_id = ? LIMIT 1');
+                $stmt = $pdo->prepare('SELECT id, receipt_number FROM payments WHERE id = ? AND client_id = ? LIMIT 1');
                 $stmt->execute([$paymentId, $clientId]);
                 $payment = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($payment) {
-                    $safe = 'RC-' . str_pad((string) $paymentId, 6, '0', STR_PAD_LEFT);
+                    $safe = preg_replace(
+                        '/[^A-Za-z0-9_\-]/',
+                        '',
+                        (string) (trim((string) ($payment['receipt_number'] ?? '')) !== ''
+                            ? $payment['receipt_number']
+                            : legalpro_legacy_receipt_number($paymentId))
+                    ) ?: legalpro_legacy_receipt_number($paymentId);
+                    $displayNumber = trim((string) ($payment['receipt_number'] ?? '')) !== ''
+                        ? (string) $payment['receipt_number']
+                        : legalpro_legacy_receipt_number($paymentId);
 
                     return [
                         'view_url' => 'payment-receipt.php?id=' . $paymentId . '&view=1',
                         'download_url' => 'payment-receipt.php?id=' . $paymentId,
                         'download_filename' => 'receipt-' . $safe . '.pdf',
-                        'display_label' => preg_replace('/\.html?$/i', '.pdf', $label) ?: ('Receipt ' . $safe),
+                        'display_label' => preg_replace('/\.html?$/i', '.pdf', $label) ?: ('Receipt ' . $displayNumber),
                         'is_finance_pdf' => true,
                     ];
                 }
@@ -1164,7 +1201,7 @@ function legalpro_client_render_bottom_nav(string $currentPage): string
     $items = [
         ['id' => 'client-dashboard', 'url' => 'client-dashboard.php', 'icon' => 'layout-dashboard', 'label_key' => 'nav.home', 'fallback' => 'Home'],
         ['id' => 'client-cases', 'url' => 'client-cases.php', 'icon' => 'briefcase', 'label_key' => 'nav.my_cases', 'fallback' => 'Cases'],
-        ['id' => 'chatbot', 'url' => 'chatbot.php', 'icon' => 'message-circle', 'label_key' => 'nav.messages', 'fallback' => 'Messages'],
+        ['id' => 'client-appointments', 'url' => 'client-appointments.php', 'icon' => 'calendar', 'label_key' => 'nav.appointments', 'fallback' => 'Appointments'],
         ['id' => 'client-more', 'url' => '#', 'icon' => 'menu', 'label_key' => 'nav.more', 'fallback' => 'More', 'is_more' => true],
     ];
 

@@ -25,16 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'Invalid login type selected.';
         $messageType = 'danger';
     } elseif ($loginType === 'admin') {
-        // Admin login logic
         try {
-            $stmt = $pdo->prepare("
-                SELECT u.*
-                FROM users u
-                WHERE u.username = ? AND u.role IN ('admin', 'staff')
-            ");
+            $stmt = $pdo->prepare("SELECT u.* FROM users u WHERE u.username = ? AND u.role IN ('admin', 'staff')");
             $stmt->execute([$username]);
             $user = $stmt->fetch();
-
             if (!$user) {
                 $message = 'Admin user not found. Please check your username.';
                 $messageType = 'danger';
@@ -45,15 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Invalid password. Please check your password.';
                 $messageType = 'danger';
             } else {
-                // Set session variables for admin
                 $_SESSION['admin_id'] = $user['id'];
                 $_SESSION['admin_username'] = $user['username'];
                 $_SESSION['admin_role'] = $user['role'];
                 $_SESSION['admin_name'] = $user['username'];
                 require_once __DIR__ . '/../lib/admin-locale.php';
                 $_SESSION['admin_locale'] = getAdminPortalLocale((int) $user['id']);
-
-                // Redirect to admin dashboard
                 header('Location: dashboard.php');
                 exit;
             }
@@ -62,17 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'danger';
         }
     } elseif ($loginType === 'lawyer') {
-        // Lawyer login logic
         try {
             $stmt = $pdo->prepare("
                 SELECT u.*, l.id as lawyer_id, l.first_name, l.last_name
-                FROM users u
-                LEFT JOIN lawyers l ON l.user_id = u.id
+                FROM users u LEFT JOIN lawyers l ON l.user_id = u.id
                 WHERE u.username = ? AND l.id IS NOT NULL
             ");
             $stmt->execute([$username]);
             $user = $stmt->fetch();
-
             if (!$user) {
                 $message = 'Lawyer account not found. Please check your username or contact administrator.';
                 $messageType = 'danger';
@@ -80,13 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Invalid password. Please check your password.';
                 $messageType = 'danger';
             } else {
-                // Set session variables for lawyer
                 $_SESSION['lawyer_id'] = $user['lawyer_id'];
                 $_SESSION['lawyer_user_id'] = $user['id'];
                 $_SESSION['lawyer_name'] = $user['first_name'] . ' ' . $user['last_name'];
                 $_SESSION['lawyer_username'] = $user['username'];
-
-                // Redirect to lawyer dashboard
                 header('Location: lawyer-dashboard.php');
                 exit;
             }
@@ -95,17 +80,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'danger';
         }
     } elseif ($loginType === 'client') {
-        // Client login logic
         try {
             $stmt = $pdo->prepare("
                 SELECT u.*, c.id as client_id, c.first_name, c.last_name
-                FROM users u
-                LEFT JOIN clients c ON c.user_id = u.id
+                FROM users u LEFT JOIN clients c ON c.user_id = u.id
                 WHERE u.username = ? AND c.id IS NOT NULL
             ");
             $stmt->execute([$username]);
             $user = $stmt->fetch();
-
             if (!$user) {
                 $message = 'Client account not found. Please check your username or contact administrator.';
                 $messageType = 'danger';
@@ -113,14 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Invalid password. Please check your password.';
                 $messageType = 'danger';
             } else {
-                // Set session variables for client
                 $_SESSION['client_id'] = $user['client_id'];
                 $_SESSION['client_user_id'] = $user['id'];
                 $_SESSION['client_name'] = $user['first_name'] . ' ' . $user['last_name'];
                 $_SESSION['client_username'] = $user['username'];
                 $_SESSION['client_locale'] = getClientPortalLocale((int) $user['client_id']);
-
-                // Redirect to client dashboard
                 header('Location: client-dashboard.php');
                 exit;
             }
@@ -131,7 +110,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Check if already logged in (redirect appropriately)
 if (isset($_SESSION['admin_id'])) {
     header('Location: dashboard.php');
     exit;
@@ -143,7 +121,32 @@ if (isset($_SESSION['admin_id'])) {
     exit;
 }
 
-$messageHtml = $message ? '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show mb-3" role="alert">' . htmlspecialchars($message) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>' : '';
+$messageHtml = $message ? '<div class="alert" role="alert">' . htmlspecialchars($message) . '</div>' : '';
+
+require_once __DIR__ . '/../lib/portal-theme.php';
+$portalThemeCss = renderPortalThemeCss();
+$loginThemePreset = getPortalTheme()['preset'];
+$loginAccentPrimary = $loginThemePreset['primary'];
+$loginAccentDark = $loginThemePreset['primary_dark'];
+$loginAccentRgb = portalThemePrimaryRgb($loginAccentPrimary);
+$loginAccentMap = [
+    'admin' => [
+        'primary' => $loginAccentPrimary,
+        'dark' => $loginAccentDark,
+        'rgb' => $loginAccentRgb,
+    ],
+    'lawyer' => [
+        'primary' => $loginAccentPrimary,
+        'dark' => $loginAccentDark,
+        'rgb' => $loginAccentRgb,
+    ],
+    'client' => [
+        'primary' => $loginAccentPrimary,
+        'dark' => $loginAccentDark,
+        'rgb' => $loginAccentRgb,
+    ],
+];
+$loginAccentMapJson = json_encode($loginAccentMap, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
 $html = <<<'HTML'
 <!DOCTYPE html>
@@ -154,527 +157,621 @@ $html = <<<'HTML'
     <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <title>{COMPANY_NAME} - Login Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
-    <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
-    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
-    <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-    <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>{PORTAL_THEME_CSS}</style>
     <style>
-        :root {
-            --login-primary: #023e8a;
-            --login-primary-dark: #001845;
-            --login-accent: #0353a4;
-            --login-ink: #0f172a;
-            --login-muted: #64748b;
-            --login-border: rgba(15, 23, 42, 0.08);
-            --login-surface: #ffffff;
-            --login-radius: 1.25rem;
-        }
-        html, body {
-            min-height: 100%;
-            margin: 0;
-        }
         body.login-page {
-            color: var(--login-ink);
-            font-family: 'Montserrat', sans-serif;
-            -webkit-font-smoothing: antialiased;
+            --lp-accent: {LOGIN_ACCENT_PRIMARY};
+            --lp-accent-dark: {LOGIN_ACCENT_DARK};
+            --lp-accent-rgb: {LOGIN_ACCENT_RGB};
         }
-        .login-layout {
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
+    </style>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; overflow: hidden; }
+
+        body.login-page {
+            font-family: 'Outfit', sans-serif;
+            background: #000000;
+            --lp-glass: rgba(45, 43, 66, 0.72);
+            --lp-glass-border: rgba(255, 255, 255, 0.14);
+            --lp-text: #ffffff;
+            --lp-text-muted: #b0b0cc;
+            --lp-input-bg: rgba(0, 0, 0, 0.28);
+            --lp-input-border: rgba(255, 255, 255, 0.12);
+            color: var(--lp-text);
         }
-        .login-brand-panel {
+
+        .login-scene {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
             position: relative;
-            background:
-                radial-gradient(circle at 15% 20%, rgba(53, 166, 255, 0.22), transparent 45%),
-                linear-gradient(160deg, #06285a 0%, #0b3f8e 45%, #1463c9 100%);
-            color: #fff;
+            overflow: hidden;
+        }
+
+        .login-stage {
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 1;
+            transition: transform 90ms linear, opacity 90ms linear;
+        }
+
+        .login-plate {
+            flex: 0 0 50%;
+            min-width: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 3.5rem;
-            overflow: hidden;
-        }
-        .login-brand-panel::before,
-        .login-brand-panel::after {
-            content: "";
-            position: absolute;
-            border-radius: 0;
-            pointer-events: none;
-        }
-        .login-brand-panel::before {
-            inset: 0;
-            background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-            background-size: 18px 18px;
-            opacity: 0.6;
-        }
-        .login-brand-panel::after {
-            width: 360px;
-            height: 360px;
-            right: -120px;
-            bottom: -130px;
-            background: radial-gradient(circle, rgba(53, 166, 255, 0.42), rgba(53, 166, 255, 0));
-        }
-        .login-brand-content {
+            padding: clamp(1rem, 2.5vh, 2rem) clamp(1.25rem, 3vw, 2.5rem);
             position: relative;
-            max-width: 440px;
+            z-index: 3;
+            background: linear-gradient(90deg, #000000 0%, #000000 72%, rgba(0, 0, 0, 0.58) 86%, rgba(0, 0, 0, 0) 100%);
+            transition: transform 90ms linear, opacity 90ms linear;
+        }
+
+        .login-plate::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 280px;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.58) 0%, rgba(var(--lp-accent-rgb), 0.14) 55%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        .login-plate::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 72px;
+            height: 72px;
+            border-top: 2px solid rgba(var(--lp-accent-rgb), 0.35);
+            border-left: 2px solid rgba(var(--lp-accent-rgb), 0.35);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .glass-card {
+            width: 100%;
+            max-width: min(600px, 96%);
+            max-height: calc(100dvh - 2rem);
+            overflow: hidden;
+            padding: clamp(1.75rem, 3.8vh, 2.75rem) clamp(2rem, 3.6vw, 2.9rem);
+            border-radius: 28px;
+            background: var(--lp-glass);
+            border: 1px solid color-mix(in srgb, var(--lp-accent) 72%, white 28%);
+            backdrop-filter: blur(24px) saturate(1.3);
+            -webkit-backdrop-filter: blur(24px) saturate(1.3);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35), 0 0 0 1px color-mix(in srgb, var(--lp-accent) 60%, white 40%), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-art {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 64%;
+            height: 100%;
+            min-width: 0;
+            padding: 0;
+            overflow: hidden;
+            z-index: 1;
+            background: #000000;
+            transition: transform 90ms linear, opacity 90ms linear;
+        }
+
+        .login-art::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(var(--lp-accent-rgb), 0.12) 42%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        .login-art__frame {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        .login-art__frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 8% center;
+            display: block;
+        }
+
+        .login-art__frame::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.08);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .login-art__frame::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(var(--lp-accent-rgb), 0.58);
+            mix-blend-mode: multiply;
+            pointer-events: none;
             z-index: 1;
         }
-        .login-brand-logo {
-            width: 56px;
-            height: 56px;
-            object-fit: contain;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.96);
-            padding: 8px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+        .login-art__frame img {
+            filter: grayscale(1) contrast(1.12) brightness(0.9);
         }
-        .login-brand-content h1 {
-            color: #fff;
-            font-size: clamp(1.75rem, 3vw, 2.25rem);
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin-bottom: 0.75rem;
-            line-height: 1.15;
-        }
-        .login-brand-content > p {
-            color: rgba(255, 255, 255, 0.82);
-            line-height: 1.7;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-        }
-        .login-feature {
-            display: flex;
-            align-items: center;
-            gap: 0.85rem;
-            color: rgba(255, 255, 255, 0.94);
-            font-size: 0.9rem;
-            margin-bottom: 0.85rem;
-            font-weight: 500;
-        }
-        .login-feature i {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
-        }
-        .login-form-panel {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
+
+        .login-transition-gate {
+            position: fixed;
+            top: 0;
+            right: -42vw;
+            width: 42vw;
+            height: 100dvh;
+            pointer-events: none;
+            z-index: 20;
+            opacity: 0;
             background:
-                radial-gradient(ellipse 70% 60% at 10% 10%, rgba(43, 111, 255, 0.09), transparent 50%),
-                #f5f8ff;
+                linear-gradient(100deg, rgba(var(--lp-accent-rgb), 0) 0%, rgba(var(--lp-accent-rgb), 0.2) 34%, rgba(var(--lp-accent-rgb), 0.82) 56%, rgba(255, 255, 255, 0.92) 64%, rgba(var(--lp-accent-rgb), 0.14) 74%, rgba(0, 0, 0, 0) 100%);
+            filter: blur(0.2px);
+            transform: translateX(0);
         }
-        .auth-shell {
+
+        .login-transition-gate::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 38%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 100%);
+            opacity: 0.85;
+        }
+
+        body.login-page.login-entering .login-stage {
+            animation: lpPortalJump 150ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+        body.login-page.login-entering .login-plate {
+            animation: lpPlateSnap 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        body.login-page.login-entering .login-art {
+            animation: lpArtRush 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        body.login-page.login-entering .login-transition-gate {
+            animation: lpGateSweep 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes lpPortalJump {
+            0% { transform: translateX(0); opacity: 1; }
+            35% { transform: translateX(-4%); opacity: 0.99; }
+            100% { transform: translateX(-13%); opacity: 0.95; }
+        }
+
+        @keyframes lpPlateSnap {
+            0% { transform: translateX(0) scale(1); opacity: 1; }
+            100% { transform: translateX(-9%) scale(0.982); opacity: 0.92; }
+        }
+
+        @keyframes lpArtRush {
+            0% { transform: translateX(0) scale(1); opacity: 1; }
+            100% { transform: translateX(-22%) scale(1.035); opacity: 0.94; }
+        }
+
+        @keyframes lpGateSweep {
+            0% { transform: translateX(0); opacity: 0; }
+            8% { opacity: 1; }
+            100% { transform: translateX(-145vw); opacity: 0.35; }
+        }
+
+        .card-head {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: clamp(1rem, 2.4vh, 1.5rem);
+        }
+        .card-head img {
+            width: clamp(52px, 8vh, 64px);
+            height: clamp(52px, 8vh, 64px);
+            object-fit: contain;
+            border-radius: 50%;
+            padding: 10px;
+            margin-bottom: clamp(0.5rem, 1.2vh, 0.75rem);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            align-self: center;
+        }
+        .card-head .company-name {
+            margin: 0 0 clamp(0.65rem, 1.5vh, 0.85rem);
+            padding-bottom: clamp(0.4rem, 1vh, 0.55rem);
             width: 100%;
-            max-width: 430px;
-        }
-        .auth-intro {
-            margin-bottom: 1.1rem;
-            padding: 0;
-        }
-        .auth-intro h3 {
-            font-size: 1.95rem;
-            line-height: 1.2;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            color: var(--login-ink);
-            margin-bottom: 0.35rem;
-        }
-        .auth-intro p {
-            margin: 0;
-            color: var(--login-muted);
-            font-size: 0.92rem;
-            font-weight: 500;
-        }
-        .auth-body {
-            padding: 0;
-        }
-        .login-type-selector {
-            display: flex;
-            gap: 0.35rem;
-            padding: 0.35rem;
-            margin-bottom: 1.5rem;
-            background: #eef3ff;
-            border-radius: 14px;
-            border: 1px solid var(--login-border);
-        }
-        .login-type-option {
-            flex: 1;
-            border: none;
-            border-radius: 10px;
-            padding: 0.7rem 0.35rem;
-            cursor: pointer;
-            transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-            background: transparent;
+            font-size: clamp(1.05rem, 2.1vh, 1.25rem);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             text-align: center;
+            align-self: center;
+            color: #ffffff;
+            text-shadow: 0 1px 12px rgba(var(--lp-accent-rgb), 0.25);
+            border-bottom: 2px solid var(--lp-accent);
+            line-height: 1.2;
+            transition: border-color 0.2s ease, text-shadow 0.2s ease;
         }
-        .login-type-option:hover:not(.active) {
-            background: rgba(255, 255, 255, 0.55);
+
+        .glass-card h2 {
+            margin: 0 0 0.35rem;
+            font-size: clamp(1.05rem, 2vh, 1.2rem);
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            text-align: left;
+            color: var(--lp-text-muted);
         }
-        .login-type-option.active {
-            background: #fff;
-            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
-            transform: translateY(-1px);
-        }
-        .login-type-option .login-type-icon-wrap {
-            width: 2.1rem;
-            height: 2.1rem;
-            margin: 0 auto 0.35rem;
-            border-radius: 8px;
-            background: rgba(44, 169, 164, 0.12);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--login-primary);
-            transition: background 0.2s ease, color 0.2s ease;
-        }
-        .login-type-option.active .login-type-icon-wrap {
-            background: linear-gradient(135deg, var(--login-primary), var(--login-accent));
-            color: #fff;
-        }
-        .login-type-option i {
-            font-size: 0.95rem;
-            color: inherit;
-        }
-        .login-type-option h6 {
+        .glass-card .subtitle {
             margin: 0;
-            font-size: 0.68rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--login-muted);
-            font-weight: 700;
-        }
-        .login-type-option small {
-            display: block;
-            margin-top: 0.12rem;
-            font-size: 0.66rem;
-            color: #8a98ad;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .login-type-option.active h6 {
-            color: var(--login-ink);
-        }
-        .login-type-option.active small {
-            color: #6d7f98;
-        }
-        .login-page .form-control-label {
-            font-size: 0.72rem;
-            color: var(--login-muted);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 0.45rem;
-            display: block;
-        }
-        .login-page .input-group {
-            border-radius: 12px;
-            border: 1.5px solid #e2e8f0;
-            overflow: hidden;
-            background: #f8fafc;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-        }
-        .login-page .input-group:focus-within {
-            border-color: var(--login-primary);
-            background: #fff;
-            box-shadow: 0 0 0 4px rgba(43, 111, 255, 0.14);
-        }
-        .login-page .input-group .input-group-text {
-            border: none;
-            background: transparent;
-            min-width: 2.75rem;
-            color: #94a3b8;
-            padding-left: 1rem;
-        }
-        .login-page .input-group:focus-within .input-group-text {
-            color: var(--login-primary);
-        }
-        .login-page .input-group .form-control {
-            border: none;
-            box-shadow: none;
-            background: transparent;
-            padding: 0.85rem 1rem 0.85rem 0.25rem;
-            font-size: 0.94rem;
-            font-weight: 500;
-            color: var(--login-ink);
-        }
-        .login-page .input-group .form-control::placeholder {
-            color: #94a3b8;
+            font-size: clamp(0.84rem, 1.6vh, 0.95rem);
+            line-height: 1.5;
             font-weight: 400;
+            text-align: left;
+            color: rgba(176, 176, 204, 0.85);
         }
-        .login-page .password-toggle {
-            border: none;
-            border-left: 1px solid #e2e8f0;
-            background: transparent;
-            color: #94a3b8;
-            min-width: 2.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.15s ease, background 0.15s ease;
+
+        .alert {
+            margin-bottom: clamp(0.75rem, 1.8vh, 1rem);
+            padding: 0.65rem 0.85rem;
+            border-radius: 12px;
+            font-size: clamp(0.8rem, 1.5vh, 0.88rem);
+            background: rgba(200, 50, 65, 0.2);
+            color: #ffc8ce;
+            border: 1px solid rgba(255, 100, 110, 0.25);
         }
-        .login-page .password-toggle:hover,
-        .login-page .password-toggle:focus {
-            background: rgba(43, 111, 255, 0.08);
-            color: var(--login-primary);
+
+        .field { margin-bottom: clamp(0.8rem, 1.9vh, 1.1rem); }
+        .field label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: clamp(0.84rem, 1.6vh, 0.95rem);
+            font-weight: 500;
+            color: var(--lp-text-muted);
+        }
+        .field-input { position: relative; }
+        .field-input input {
+            width: 100%;
+            padding: clamp(0.9rem, 2vh, 1.05rem) 2.75rem clamp(0.9rem, 2vh, 1.05rem) 1.05rem;
+            font-family: inherit;
+            font-size: clamp(0.95rem, 1.8vh, 1.05rem);
+            color: var(--lp-text);
+            background: var(--lp-input-bg);
+            border: 1px solid var(--lp-input-border);
+            border-radius: 12px;
             outline: none;
+            transition: border-color 0.15s;
         }
-        .login-page .password-toggle .eye-icon {
-            width: 18px;
-            height: 18px;
-            color: currentColor;
+        .field-input input::placeholder { color: var(--lp-text-muted); opacity: 0.7; }
+        .field-input input:focus { border-color: rgba(var(--lp-accent-rgb), 0.55); }
+        .field-input input:-webkit-autofill,
+        .field-input input:-webkit-autofill:hover,
+        .field-input input:-webkit-autofill:focus {
+            -webkit-text-fill-color: var(--lp-text);
+            -webkit-box-shadow: 0 0 0 1000px var(--lp-input-bg) inset;
+            transition: background-color 9999s ease-in-out 0s;
         }
-        .login-page .password-toggle .eye-icon.is-hidden {
-            display: none;
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: var(--lp-text-muted);
+            cursor: pointer;
+            display: flex;
         }
-        .login-meta {
-            margin-top: 0.25rem;
-            margin-bottom: 1.25rem;
+        .password-toggle:hover { color: var(--lp-accent); }
+        .password-toggle svg { width: 18px; height: 18px; }
+        .eye-icon.is-hidden { display: none; }
+
+        .form-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 0.84rem;
-            color: var(--login-muted);
+            margin: 0.1rem 0 clamp(0.9rem, 2vh, 1.15rem);
+            font-size: clamp(0.8rem, 1.5vh, 0.9rem);
         }
-        .login-meta a {
-            color: var(--login-primary);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.15s ease;
-        }
-        .login-meta a:hover {
-            color: var(--login-primary-dark);
-        }
-        .login-page .login-remember {
-            display: inline-flex;
+        .form-remember input { accent-color: var(--lp-accent); width: 16px; height: 16px; }
+        .form-remember {
+            display: flex;
             align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            user-select: none;
-            margin: 0;
-            font-weight: 500;
-        }
-        .login-page .login-remember-checkbox {
-            width: 1rem;
-            height: 1rem;
-            margin: 0;
-            accent-color: var(--login-primary);
+            gap: 0.45rem;
+            color: var(--lp-text-muted);
             cursor: pointer;
         }
-        .login-page .btn-primary {
+        .form-forgot {
+            color: var(--lp-text-muted);
+            text-decoration: none;
+        }
+        .form-forgot:hover { color: var(--lp-accent); }
+
+        .btn-login {
+            width: 100%;
+            padding: clamp(0.95rem, 2.2vh, 1.15rem);
             border: none;
-            border-radius: 12px;
+            border-radius: 999px;
+            font-family: inherit;
+            font-size: clamp(1rem, 2vh, 1.12rem);
             font-weight: 700;
-            font-size: 0.92rem;
-            letter-spacing: 0.01em;
-            padding: 0.85rem 1rem;
-            background: linear-gradient(135deg, var(--login-primary) 0%, var(--login-accent) 100%);
-            box-shadow: 0 4px 14px rgba(43, 111, 255, 0.32);
-            transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+            color: var(--lp-accent-dark);
+            background: #ffffff;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.15s;
         }
-        .login-page .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 22px rgba(43, 111, 255, 0.38);
-            filter: brightness(1.03);
+        .btn-login:hover { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
+        .btn-login:active { transform: scale(0.99); }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: clamp(0.85rem, 2vh, 1.15rem) 0;
+            font-size: clamp(0.78rem, 1.4vh, 0.88rem);
+            color: var(--lp-text-muted);
         }
-        .login-page .btn-primary:active {
-            transform: translateY(0);
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.12);
         }
-        .login-security {
-            margin-top: 1.25rem;
-            padding-top: 1.25rem;
-            border-top: 1px solid #f1f5f9;
-            font-size: 0.78rem;
-            color: #94a3b8;
-            text-align: center;
+
+        .role-picker {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .role-btn {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
-        }
-        .login-security::before {
-            content: "";
-            width: 14px;
-            height: 14px;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'/%3E%3C/svg%3E") center/contain no-repeat;
-        }
-        .login-page .alert {
+            gap: 0.35rem;
+            padding: clamp(0.68rem, 1.6vh, 0.82rem) 0.25rem;
+            border: 1px solid var(--lp-input-border);
             border-radius: 12px;
-            border: none;
-            font-size: 0.88rem;
-            font-weight: 500;
+            background: var(--lp-input-bg);
+            font-family: inherit;
+            font-size: clamp(0.72rem, 1.4vh, 0.82rem);
+            font-weight: 600;
+            color: var(--lp-text-muted);
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
         }
-        @media (max-width: 991.98px) {
-            .login-layout {
-                grid-template-columns: 1fr;
+        .role-btn svg { width: 15px; height: 15px; }
+        .role-btn.active {
+            border-color: var(--lp-accent);
+            background: rgba(var(--lp-accent-rgb), 0.22);
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(var(--lp-accent-rgb), 0.18);
+        }
+
+        .card-footer {
+            margin-top: 1.1rem;
+            text-align: center;
+            font-size: 0.76rem;
+            color: var(--lp-text-muted);
+        }
+        .card-footer a {
+            color: #a8c4f0;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .card-footer a:hover { text-decoration: underline; }
+
+        @media (max-height: 720px) {
+            .glass-card { padding: 1.35rem 1.65rem; }
+            .card-head { margin-bottom: 0.85rem; }
+            .card-head img { width: 46px; height: 46px; padding: 8px; margin-bottom: 0.5rem; }
+            .field { margin-bottom: 0.7rem; }
+            .divider { margin: 0.7rem 0; }
+        }
+
+        @media (max-width: 820px) {
+            html, body { overflow: auto; }
+            .login-scene {
+                height: auto;
+                min-height: 100dvh;
+                overflow: auto;
             }
-            .login-brand-panel {
-                min-height: 240px;
-                padding: 2rem 1.5rem;
+            .login-stage {
+                flex-direction: column;
+                height: auto;
+                min-height: 100dvh;
             }
-            .login-brand-content > p,
-            .login-feature:nth-child(n+3) {
-                display: none;
+            .login-plate {
+                flex: 1 1 auto;
+                max-width: none;
+                min-height: 0;
+                padding: 1.5rem;
             }
-            .login-form-panel {
-                padding: 1.25rem;
+            .login-plate::before {
+                width: 56px;
+                height: 56px;
             }
-            .auth-body {
-                padding: 0;
+            .glass-card { max-height: none; overflow: visible; }
+            .login-art {
+                position: relative;
+                width: 100%;
+                min-height: 42vh;
+                height: auto;
             }
-            .auth-intro h3 {
-                font-size: 1.7rem;
+            .login-art__frame img {
+                object-position: center;
             }
+        }
+
+        @media (max-width: 480px) {
+            .role-btn { font-size: 0.62rem; }
         }
     </style>
 </head>
-<body class="login-page">
-    <div class="login-layout">
-        <section class="login-brand-panel">
-            <div class="login-brand-content">
-                <img src="{COMPANY_LOGO_URL}" alt="{COMPANY_NAME} logo" class="login-brand-logo">
-                <h1>{COMPANY_NAME}</h1>
-                <p>Secure portal for managing notary/legal operations, clients, cases, and documents.</p>
-                <div class="login-feature"><i class="ni ni-lock-circle-open"></i><span>Enterprise-grade security</span></div>
-                <div class="login-feature"><i class="ni ni-chart-bar-32"></i><span>Real-time analytics</span></div>
-                <div class="login-feature"><i class="ni ni-single-copy-04"></i><span>Client and case management</span></div>
-            </div>
-        </section>
-        <section class="login-form-panel">
-            <div class="auth-shell">
-                <div class="auth-intro">
-                    <h3 class="mb-0">Welcome back</h3>
-                    <p>Sign in to your portal account</p>
+<body class="login-page" data-login-portal="{DEFAULT_LOGIN_TYPE}">
+    <div class="login-transition-gate" aria-hidden="true"></div>
+    <div class="login-scene">
+        <div class="login-stage">
+            <div class="login-plate">
+                <div class="glass-card">
+                <div class="card-head">
+                    <img src="{COMPANY_LOGO_URL}" alt="{COMPANY_NAME}">
+                    <p class="company-name">{COMPANY_NAME}</p>
+                    <h2>Welcome back</h2>
+                    <p class="subtitle">Enter your credentials to continue to the portal.</p>
                 </div>
-                <div class="card-body auth-body">
-                    {MESSAGE}
 
-                        <div class="login-type-selector mb-4" role="tablist" aria-label="Login type">
-                            <div class="login-type-option active" role="button" tabindex="0" onclick="selectLoginType('admin')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectLoginType('admin');}">
-                                <span class="login-type-icon-wrap"><i class="ni ni-settings" aria-hidden="true"></i></span>
-                                <h6>Admin</h6>
-                                <small>Manage operations</small>
-                            </div>
-                            <div class="login-type-option" role="button" tabindex="0" onclick="selectLoginType('lawyer')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectLoginType('lawyer');}">
-                                <span class="login-type-icon-wrap"><i class="ni ni-single-02" aria-hidden="true"></i></span>
-                                <h6>Lawyer</h6>
-                                <small>Handle legal matters</small>
-                            </div>
-                            <div class="login-type-option" role="button" tabindex="0" onclick="selectLoginType('client')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectLoginType('client');}">
-                                <span class="login-type-icon-wrap"><i class="ni ni-circle-08" aria-hidden="true"></i></span>
-                                <h6>Client</h6>
-                                <small>View your cases</small>
-                            </div>
-                        </div>
+                {MESSAGE}
 
-                        <form method="post" id="loginForm">
-                            <input type="hidden" name="login_type" id="login_type" value="{DEFAULT_LOGIN_TYPE}">
+                <form method="post" id="loginForm">
+                <input type="hidden" name="login_type" id="login_type" value="{DEFAULT_LOGIN_TYPE}">
 
-                            <div class="mb-3">
-                                <label class="form-control-label" for="login_username">Email / Username</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text"><i class="ni ni-single-02" aria-hidden="true"></i></span>
-                                    <input type="text" class="form-control" id="login_username" name="username" placeholder="Email address or username" autocomplete="username" required>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-control-label" for="login_password">Password</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text"><i class="ni ni-lock-circle-open" aria-hidden="true"></i></span>
-                                    <input type="password" class="form-control" id="login_password" name="password" placeholder="Password" autocomplete="current-password" required>
-                                    <button type="button" class="password-toggle" id="toggle_login_password" aria-label="Show password" aria-controls="login_password" aria-pressed="false">
-                                        <svg class="eye-icon eye-open" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                            <path d="M2.5 12C4.3 8.5 7.7 6.25 12 6.25C16.3 6.25 19.7 8.5 21.5 12C19.7 15.5 16.3 17.75 12 17.75C7.7 17.75 4.3 15.5 2.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
-                                        </svg>
-                                        <svg class="eye-icon eye-closed is-hidden" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                            <path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                            <path d="M2.5 12C3.35 10.35 4.55 8.96 6 7.9M9.2 6.5C10.08 6.33 11.02 6.25 12 6.25C16.3 6.25 19.7 8.5 21.5 12C20.75 13.46 19.75 14.73 18.55 15.72M14.8 17.5C13.93 17.67 12.99 17.75 12 17.75C7.7 17.75 4.3 15.5 2.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="login-meta">
-                                <label class="login-remember mb-0">
-                                    <input type="checkbox" class="login-remember-checkbox" id="login_remember" name="remember" value="1" aria-label="Remember me">
-                                    <span>Remember me</span>
-                                </label>
-                                <a href="javascript:void(0)">Forgot password?</a>
-                            </div>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary" id="loginButton">
-                                    <span id="loginText">Sign in</span>
-                                </button>
-                            </div>
-                        </form>
+                <div class="field">
+                    <label for="login_username">Username</label>
+                    <div class="field-input">
+                        <input type="text" id="login_username" name="username" placeholder="Enter your username" autocomplete="username" required>
+                    </div>
+                </div>
 
-                    <div class="login-security">Protected by secure authentication and encryption</div>
+                <div class="field">
+                    <label for="login_password">Password</label>
+                    <div class="field-input">
+                        <input type="password" id="login_password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                        <button type="button" class="password-toggle" id="toggle_login_password" aria-label="Show password" aria-pressed="false">
+                            <svg class="eye-icon eye-open" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M2.5 12C4.3 8.5 7.7 6.25 12 6.25C16.3 6.25 19.7 8.5 21.5 12C19.7 15.5 16.3 17.75 12 17.75C7.7 17.75 4.3 15.5 2.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                            </svg>
+                            <svg class="eye-icon eye-closed is-hidden" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M2.5 12C3.35 10.35 4.55 8.96 6 7.9M14.8 17.5C13.93 17.67 12.99 17.75 12 17.75C7.7 17.75 4.3 15.5 2.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="form-remember">
+                        <input type="checkbox" id="login_remember" name="remember" value="1">
+                        <span>Remember me</span>
+                    </label>
+                    <a class="form-forgot" href="javascript:void(0)">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-login" id="loginButton">Log in</button>
+            </form>
+
+            <div class="divider">AS</div>
+
+            <div class="role-picker" role="tablist" aria-label="Portal role">
+                <button type="button" class="role-btn active" data-role="admin" onclick="selectLoginType('admin')">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l8 4v6c0 4.5-3.5 8-8 9-4.5-1-8-4.5-8-9V7l8-4z" stroke="currentColor" stroke-width="1.6"/></svg>
+                    Admin
+                </button>
+                <button type="button" class="role-btn" data-role="lawyer" onclick="selectLoginType('lawyer')">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 20h8M10 20V10l-3-6h10l-3 6v10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    Lawyer
+                </button>
+                <button type="button" class="role-btn" data-role="client" onclick="selectLoginType('client')">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" stroke-width="1.6"/></svg>
+                    Client
+                </button>
+            </div>
+
                 </div>
             </div>
-        </section>
+
+            <aside class="login-art" aria-hidden="true">
+                <div class="login-art__frame">
+                    <img src="../assets/img/login-custom.png?v=2" alt="">
+                </div>
+            </aside>
+        </div>
     </div>
 
-    <script src="../assets/js/core/popper.min.js"></script>
-    <script src="../assets/js/core/bootstrap.min.js"></script>
-
     <script>
-        function selectLoginType(type) {
-            // Update hidden input
-            document.getElementById('login_type').value = type;
+        var loginAccents = {LOGIN_ACCENT_MAP};
 
-            // Update UI
-            const options = document.querySelectorAll('.login-type-option');
-            options.forEach(option => option.classList.remove('active'));
-
-            if (type === 'admin') {
-                options[0].classList.add('active');
-                options[1].classList.remove('active');
-                options[2].classList.remove('active');
-                document.getElementById('loginText').textContent = 'Sign in as Admin';
-            } else if (type === 'lawyer') {
-                options[1].classList.add('active');
-                options[0].classList.remove('active');
-                options[2].classList.remove('active');
-                document.getElementById('loginText').textContent = 'Sign in as Lawyer';
-            } else if (type === 'client') {
-                options[2].classList.add('active');
-                options[0].classList.remove('active');
-                options[1].classList.remove('active');
-                document.getElementById('loginText').textContent = 'Sign in as Client';
+        function applyLoginAccent(type) {
+            var accent = loginAccents[type] || loginAccents.admin;
+            if (!accent) {
+                return;
             }
+            document.body.style.setProperty('--lp-accent', accent.primary);
+            document.body.style.setProperty('--lp-accent-dark', accent.dark);
+            document.body.style.setProperty('--lp-accent-rgb', accent.rgb);
+            document.body.setAttribute('data-login-portal', type);
         }
 
-        // Set initial state from query/default selection
+        function selectLoginType(type) {
+            document.getElementById('login_type').value = type;
+            document.querySelectorAll('.role-btn').forEach(function (btn) {
+                btn.classList.toggle('active', btn.dataset.role === type);
+            });
+            applyLoginAccent(type);
+        }
         selectLoginType('{DEFAULT_LOGIN_TYPE}');
 
-        const passwordInput = document.getElementById('login_password');
-        const passwordToggle = document.getElementById('toggle_login_password');
+        var passwordInput = document.getElementById('login_password');
+        var passwordToggle = document.getElementById('toggle_login_password');
+        var loginForm = document.getElementById('loginForm');
+        var loginButton = document.getElementById('loginButton');
+        var loginTransitionMs = 150;
+        var isSubmittingWithTransition = false;
         if (passwordInput && passwordToggle) {
             passwordToggle.addEventListener('click', function () {
-                const isPassword = passwordInput.type === 'password';
+                var isPassword = passwordInput.type === 'password';
                 passwordInput.type = isPassword ? 'text' : 'password';
                 passwordToggle.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
                 passwordToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
-                passwordToggle.classList.toggle('is-visible', isPassword);
-                const openIcon = passwordToggle.querySelector('.eye-open');
-                const closedIcon = passwordToggle.querySelector('.eye-closed');
+                var openIcon = passwordToggle.querySelector('.eye-open');
+                var closedIcon = passwordToggle.querySelector('.eye-closed');
                 if (openIcon && closedIcon) {
                     openIcon.classList.toggle('is-hidden', isPassword);
                     closedIcon.classList.toggle('is-hidden', !isPassword);
                 }
+            });
+        }
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', function (event) {
+                if (isSubmittingWithTransition) {
+                    return;
+                }
+                if (typeof loginForm.checkValidity === 'function' && !loginForm.checkValidity()) {
+                    return;
+                }
+
+                event.preventDefault();
+                isSubmittingWithTransition = true;
+                document.body.classList.add('login-entering');
+                if (loginButton) {
+                    loginButton.disabled = true;
+                    loginButton.textContent = 'Entering...';
+                }
+                setTimeout(function () {
+                    loginForm.submit();
+                }, loginTransitionMs);
             });
         }
     </script>
@@ -683,6 +780,11 @@ $html = <<<'HTML'
 HTML;
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{PORTAL_THEME_CSS}', $portalThemeCss, $html);
+$html = str_replace('{LOGIN_ACCENT_PRIMARY}', htmlspecialchars($loginAccentPrimary), $html);
+$html = str_replace('{LOGIN_ACCENT_DARK}', htmlspecialchars($loginAccentDark), $html);
+$html = str_replace('{LOGIN_ACCENT_RGB}', htmlspecialchars($loginAccentRgb), $html);
+$html = str_replace('{LOGIN_ACCENT_MAP}', $loginAccentMapJson, $html);
 $html = str_replace('{COMPANY_NAME}', htmlspecialchars($companyBranding['name']), $html);
 $html = str_replace('{COMPANY_LOGO_URL}', htmlspecialchars($companyBranding['logo_url']), $html);
 $html = str_replace('{LOGIN_PORTAL_TITLE}', htmlspecialchars($loginPortalTitle), $html);

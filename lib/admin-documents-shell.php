@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../inc/legalpro-icons.php';
+require_once __DIR__ . '/../inc/admin-layout.php';
 
 function legalpro_admin_documents_nav(): array
 {
@@ -112,7 +113,7 @@ function legalpro_admin_documents_overview_html(array $state): string
                     <strong>' . htmlspecialchars($name) . '</strong>
                     <span>' . htmlspecialchars($caseTitle) . '</span>
                 </div>
-                <a href="' . htmlspecialchars($url) . '" class="btn btn-sm btn-outline-primary mb-0" target="_blank" rel="noopener">View</a>
+                <a href="' . htmlspecialchars($url) . '" class="btn btn-sm lp-portal-accent-btn mb-0" target="_blank" rel="noopener">View</a>
             </div>';
         }
     }
@@ -199,17 +200,7 @@ function legalpro_admin_documents_render(string $pageKey, string $contentHtml, a
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav navbar navbar-vertical navbar-expand-xs fixed-start" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="documents.php">Documents</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">' . htmlspecialchars($page['title']) . '</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">' . htmlspecialchars($page['heading']) . '</h6>
-                </nav>
-            </div>
-        </nav>
+        ' . legalpro_render_admin_page_navbar($page['heading'], (string) ($page['subtitle'] ?? '')) . '
         <div class="container-fluid py-4">
             ' . $messageHtml . '
             <div class="legalpro-doc-page-head mb-3">

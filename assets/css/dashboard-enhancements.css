@@ -327,10 +327,10 @@
     margin-bottom: 0.5rem;
 }
 
-/* FullCalendar dashboard */
-#dashboardCalendar,
-#courtTrackingCalendar,
-#availabilityCalendar {
+/* FullCalendar dashboard (legacy hubs only — not lp-cal-studio schedule hub) */
+#dashboardCalendar:not(.lp-cal-studio__calendar),
+#courtTrackingCalendar:not(.lp-cal-studio__calendar),
+#availabilityCalendar:not(.lp-cal-studio__calendar) {
     font-family: 'Montserrat', sans-serif;
     color: #2c3e50;
     min-height: 480px;

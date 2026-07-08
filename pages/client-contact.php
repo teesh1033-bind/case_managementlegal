@@ -76,11 +76,6 @@ $formHtml = '<form method="post" class="cc-contact-form">'
     . '<button type="submit" class="btn btn-primary">' . legalpro_icon('send') . ' ' . htmlspecialchars(client_t('contact.send')) . '</button>'
     . '</form>';
 
-$chatLibraryHtml = '<section class="cp-panel cc-chat-library">'
-    . client_portal_render_panel_header(['title' => client_t('contact.chat_library'), 'subtitle' => client_t('contact.chat_library_sub', ['count' => '1']), 'icon' => 'messages-square'])
-    . '<div class="cp-panel-body"><a href="chatbot.php" class="btn btn-outline-primary btn-sm">' . htmlspecialchars(client_t('contact.open_assistant')) . '</a></div>'
-    . '</section>';
-
 $clientPageNavbar = legalpro_render_client_page_navbar(
     client_t('contact.title'),
     '',
@@ -120,7 +115,6 @@ $clientPortalHead = ob_get_clean();
                     <div class="cp-panel-body"><?= $formHtml ?></div>
                 </section>
             </div>
-            <?= $chatLibraryHtml ?>
         </div>
     </div>
 </main>

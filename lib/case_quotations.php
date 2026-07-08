@@ -7,6 +7,10 @@ if (!function_exists('getDefaultBankAccountSlot')) {
     require_once __DIR__ . '/bank_accounts.php';
 }
 
+if (!function_exists('legalpro_generate_invoice_number')) {
+    require_once __DIR__ . '/finance-reference-numbers.php';
+}
+
 function ensure_case_quotation_schema(PDO $pdo): void
 {
     $pdo->exec("
@@ -611,23 +615,7 @@ function quotation_can_client_respond(array $quotation): bool
 
 function quotation_get_next_invoice_number(PDO $pdo): string
 {
-    $maxNum = 0;
-
-    try {
-        $stmt = $pdo->query("SELECT invoice_number FROM invoices WHERE invoice_number IS NOT NULL AND invoice_number != ''");
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $num = (string) ($row['invoice_number'] ?? '');
-            if (preg_match('/^INV\s+(\d+)/i', $num, $matches)) {
-                $maxNum = max($maxNum, (int) $matches[1]);
-            } elseif (preg_match('/^Invoice\s+(\d+)/i', $num, $matches)) {
-                $maxNum = max($maxNum, (int) $matches[1]);
-            }
-        }
-    } catch (PDOException $e) {
-        // default numbering
-    }
-
-    return 'INV ' . str_pad((string) ($maxNum + 1), 3, '0', STR_PAD_LEFT);
+    return legalpro_generate_invoice_number($pdo);
 }
 
 function create_invoice_from_quotation(PDO $pdo, array $quotation): int

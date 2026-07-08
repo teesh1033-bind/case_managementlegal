@@ -528,17 +528,18 @@
     gap: 0.3rem;
     padding: 0.4rem 0.85rem;
     border-radius: 10px;
-    border: 1.5px solid rgba(var(--cc-primary-rgb), 0.35);
+    border: 1px solid var(--legalpro-theme-primary, #023e8a);
     font-size: 0.75rem;
     font-weight: 700;
-    color: var(--cc-primary);
-    background: rgba(var(--cc-primary-rgb), 0.06);
+    color: #fff;
+    background: var(--legalpro-theme-primary, #023e8a);
     text-decoration: none;
-    transition: background var(--cc-ease), color var(--cc-ease);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
 .btn-view:hover {
-    background: var(--cc-primary);
+    background: var(--legalpro-theme-primary-dark, #001845);
+    border-color: var(--legalpro-theme-primary-dark, #001845);
     color: #fff;
 }
 

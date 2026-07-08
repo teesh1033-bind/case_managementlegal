@@ -186,6 +186,7 @@ echo ob_get_clean();
 
 <main class="main-content position-relative border-radius-lg">
 
+<<<<<<< Updated upstream
     <!-- ── Sticky top navbar ──────────────────────────────────────────── -->
     <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
         <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -197,6 +198,9 @@ echo ob_get_clean();
             </div>
         </div>
     </nav>
+=======
+    <?php echo legalpro_render_admin_page_navbar('Dashboard', 'Welcome back, ' . $adminDisplayName . ' · ' . $welcomeDate); ?>
+>>>>>>> Stashed changes
 
     <div class="container-fluid py-4 px-4">
 

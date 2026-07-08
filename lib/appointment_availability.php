@@ -2,6 +2,9 @@
 
 const LAWYER_WEEK_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+/** Maximum clients who may book the same lawyer in an overlapping time window. */
+const LAWYER_APPOINTMENT_SLOT_CAPACITY = 2;
+
 function ensureAppointmentSlotColumn(PDO $pdo): void
 {
     static $ready = false;
@@ -51,39 +54,13 @@ function syncAppointmentAvailabilitySlot(PDO $pdo, array $appointment): void
     ensureAppointmentSlotColumn($pdo);
 
     $status = strtolower((string) ($appointment['status'] ?? 'pending'));
-    if ($status === 'rejected') {
-        removeAppointmentAvailabilitySlot($pdo, $appointmentId);
+    removeAppointmentAvailabilitySlot($pdo, $appointmentId, $lawyerId);
+
+    if ($status === 'rejected' || $status === 'cancelled') {
         return;
     }
 
-    $startsAt = new DateTime($startsAtRaw);
-    $endsAtRaw = $appointment['ends_at'] ?? '';
-    $endsAt = $endsAtRaw !== '' ? new DateTime($endsAtRaw) : (clone $startsAt)->modify('+1 hour');
-
-    $slotDate = $startsAt->format('Y-m-d');
-    $dayOfWeek = strtolower($startsAt->format('l'));
-    $startTime = $startsAt->format('H:i:s');
-    $endTime = $endsAt->format('H:i:s');
-
-    $stmt = $pdo->prepare('SELECT id FROM lawyer_time_slots WHERE appointment_id = ? LIMIT 1');
-    $stmt->execute([$appointmentId]);
-    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($existing) {
-        $stmt = $pdo->prepare("
-            UPDATE lawyer_time_slots
-            SET lawyer_id = ?, day_of_week = ?, slot_date = ?, start_time = ?, end_time = ?, slot_type = 'unavailable'
-            WHERE appointment_id = ?
-        ");
-        $stmt->execute([$lawyerId, $dayOfWeek, $slotDate, $startTime, $endTime, $appointmentId]);
-        return;
-    }
-
-    $stmt = $pdo->prepare("
-        INSERT INTO lawyer_time_slots (lawyer_id, day_of_week, slot_date, start_time, end_time, slot_type, appointment_id)
-        VALUES (?, ?, ?, ?, ?, 'unavailable', ?)
-    ");
-    $stmt->execute([$lawyerId, $dayOfWeek, $slotDate, $startTime, $endTime, $appointmentId]);
+    // Capacity is enforced by counting appointments — do not block the lawyer after one booking.
 }
 
 function normalizeAppointmentTime(string $appointmentTime): string
@@ -275,6 +252,8 @@ function formatSlotTimeForBooking(string $time): string
  */
 function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
 {
+    cleanupLegacyAppointmentSlotBlocks($pdo);
+
     $byDate = [];
     $byDay = [];
     $hasSchedule = [];
@@ -356,6 +335,199 @@ function loadLawyerAvailabilityForBooking(PDO $pdo, array $lawyerIds): array
     ];
 }
 
+function cleanupLegacyAppointmentSlotBlocks(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+
+    try {
+        ensureAppointmentSlotColumn($pdo);
+        $pdo->exec('DELETE FROM lawyer_time_slots WHERE appointment_id IS NOT NULL');
+    } catch (PDOException $e) {
+        // Capacity is enforced via appointment counts.
+    }
+}
+
+function legalpro_lawyer_slot_capacity_message(): string
+{
+    return 'This time slot is fully booked. A maximum of '
+        . LAWYER_APPOINTMENT_SLOT_CAPACITY
+        . ' clients can book the same lawyer at the same time.';
+}
+
+/**
+ * Row-locked capacity check — call inside an open transaction before INSERT/UPDATE.
+ *
+ * @return array{ok: bool, message?: string}
+ */
+function legalpro_assert_lawyer_slot_capacity_locked(
+    PDO $pdo,
+    int $lawyerId,
+    string $startsAt,
+    string $endsAt,
+    ?int $excludeAppointmentId = null
+): array {
+    if ($lawyerId <= 0 || $startsAt === '' || $endsAt === '') {
+        return ['ok' => false, 'message' => 'Lawyer, date, and time are required.'];
+    }
+
+    cleanupLegacyAppointmentSlotBlocks($pdo);
+
+    $sql = "
+        SELECT id FROM appointments
+        WHERE lawyer_id = ?
+          AND LOWER(COALESCE(status, 'pending')) NOT IN ('rejected', 'cancelled')
+          AND starts_at IS NOT NULL
+          AND starts_at < ?
+          AND COALESCE(ends_at, DATE_ADD(starts_at, INTERVAL 1 HOUR)) > ?
+    ";
+    $params = [$lawyerId, $endsAt, $startsAt];
+
+    if ($excludeAppointmentId !== null && $excludeAppointmentId > 0) {
+        $sql .= ' AND id <> ?';
+        $params[] = $excludeAppointmentId;
+    }
+
+    $sql .= ' FOR UPDATE';
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $count = count($stmt->fetchAll(PDO::FETCH_COLUMN));
+
+    if ($count >= LAWYER_APPOINTMENT_SLOT_CAPACITY) {
+        return ['ok' => false, 'message' => legalpro_lawyer_slot_capacity_message()];
+    }
+
+    return ['ok' => true];
+}
+
+/**
+ * @return array{ok: bool, message?: string}
+ */
+function legalpro_assert_lawyer_slot_capacity_for_booking(
+    PDO $pdo,
+    int $lawyerId,
+    string $appointmentDate,
+    string $appointmentTime,
+    int $durationMinutes = 60,
+    ?int $excludeAppointmentId = null
+): array {
+    $durationMinutes = in_array($durationMinutes, [30, 60], true) ? $durationMinutes : 60;
+    $requestedTime = normalizeAppointmentTime($appointmentTime);
+    $startTs = strtotime($appointmentDate . ' ' . $requestedTime);
+    if ($startTs === false) {
+        return ['ok' => false, 'message' => 'Invalid appointment date or time.'];
+    }
+
+    $startsAt = date('Y-m-d H:i:s', $startTs);
+    $endsAt = date('Y-m-d H:i:s', strtotime('+' . $durationMinutes . ' minutes', $startTs));
+
+    return legalpro_assert_lawyer_slot_capacity_locked($pdo, $lawyerId, $startsAt, $endsAt, $excludeAppointmentId);
+}
+
+/**
+ * @template T
+ * @param callable(): T $callback
+ * @return T
+ */
+function legalpro_with_locked_lawyer_booking(PDO $pdo, callable $callback)
+{
+    $pdo->beginTransaction();
+
+    try {
+        $result = $callback();
+        if (is_array($result) && array_key_exists('ok', $result) && empty($result['ok'])) {
+            $pdo->rollBack();
+
+            return $result;
+        }
+
+        $pdo->commit();
+
+        return $result;
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        throw $e;
+    }
+}
+
+function legalpro_merge_unavailable_slot(array &$slots, string $busyStart, string $busyEnd): void
+{
+    foreach ($slots as $slot) {
+        if (($slot['type'] ?? '') === 'unavailable'
+            && ($slot['start'] ?? '') === $busyStart
+            && ($slot['end'] ?? '') === $busyEnd) {
+            return;
+        }
+    }
+
+    $slots[] = [
+        'start' => $busyStart,
+        'end' => $busyEnd,
+        'type' => 'unavailable',
+    ];
+}
+
+/**
+ * Mark times on a date unavailable when the lawyer is at booking capacity.
+ */
+function legalpro_append_capacity_blocked_slots(
+    PDO $pdo,
+    int $lawyerId,
+    string $date,
+    array $slots,
+    int $durationMinutes = 60
+): array {
+    if ($lawyerId <= 0 || $date === '') {
+        return $slots;
+    }
+
+    $durationMinutes = in_array($durationMinutes, [30, 60], true) ? $durationMinutes : 60;
+    $candidateTimes = [];
+
+    $stmt = $pdo->prepare("
+        SELECT starts_at
+        FROM appointments
+        WHERE lawyer_id = ?
+          AND DATE(starts_at) = ?
+          AND LOWER(COALESCE(status, 'pending')) NOT IN ('rejected', 'cancelled')
+          AND starts_at IS NOT NULL
+    ");
+    $stmt->execute([$lawyerId, $date]);
+    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $startsAtRaw) {
+        $ts = strtotime((string) $startsAtRaw);
+        if ($ts !== false) {
+            $candidateTimes[] = date('H:i:s', $ts);
+        }
+    }
+
+    for ($hour = 8; $hour <= 18; $hour++) {
+        foreach (['00', '30'] as $minute) {
+            $candidateTimes[] = sprintf('%02d:%s:00', $hour, $minute);
+        }
+    }
+
+    foreach (array_unique($candidateTimes) as $timeValue) {
+        $startsAt = $date . ' ' . normalizeAvailabilityTime($timeValue);
+        $endsAt = date('Y-m-d H:i:s', strtotime('+' . $durationMinutes . ' minutes', strtotime($startsAt)));
+        if (countOverlappingAppointments($pdo, $lawyerId, $startsAt, $endsAt) >= LAWYER_APPOINTMENT_SLOT_CAPACITY) {
+            legalpro_merge_unavailable_slot(
+                $slots,
+                formatSlotTimeForBooking(date('H:i:s', strtotime($startsAt))),
+                formatSlotTimeForBooking(date('H:i:s', strtotime($endsAt)))
+            );
+        }
+    }
+
+    return $slots;
+}
+
 /**
  * Merge appointment busy blocks into slot list for a specific date.
  */
@@ -365,49 +537,7 @@ function appendAppointmentBusySlots(PDO $pdo, int $lawyerId, string $date, array
         return $slots;
     }
 
-    $stmt = $pdo->prepare("
-        SELECT starts_at, ends_at
-        FROM appointments
-        WHERE lawyer_id = ?
-          AND DATE(starts_at) = ?
-          AND LOWER(COALESCE(status, 'pending')) NOT IN ('rejected', 'cancelled')
-          AND starts_at IS NOT NULL
-    ");
-    $stmt->execute([$lawyerId, $date]);
-
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $startsAt = strtotime((string) $row['starts_at']);
-        if ($startsAt === false) {
-            continue;
-        }
-        $endsAtRaw = $row['ends_at'] ?? '';
-        $endsAt = $endsAtRaw !== '' ? strtotime((string) $endsAtRaw) : strtotime('+1 hour', $startsAt);
-        if ($endsAt === false || $endsAt <= $startsAt) {
-            $endsAt = strtotime('+1 hour', $startsAt);
-        }
-
-        $busyStart = formatSlotTimeForBooking(date('H:i:s', $startsAt));
-        $busyEnd = formatSlotTimeForBooking(date('H:i:s', $endsAt));
-
-        $duplicate = false;
-        foreach ($slots as $slot) {
-            if (($slot['type'] ?? '') === 'unavailable'
-                && ($slot['start'] ?? '') === $busyStart
-                && ($slot['end'] ?? '') === $busyEnd) {
-                $duplicate = true;
-                break;
-            }
-        }
-        if (!$duplicate) {
-            $slots[] = [
-                'start' => $busyStart,
-                'end' => $busyEnd,
-                'type' => 'unavailable',
-            ];
-        }
-    }
-
-    return $slots;
+    return legalpro_append_capacity_blocked_slots($pdo, $lawyerId, $date, $slots, 60);
 }
 
 /**
@@ -437,7 +567,42 @@ function legalpro_get_lawyer_slots_for_booking_date(PDO $pdo, int $lawyerId, str
 }
 
 /**
- * True when another non-rejected appointment overlaps the requested window.
+ * Count non-rejected appointments overlapping the requested window.
+ */
+function countOverlappingAppointments(
+    PDO $pdo,
+    int $lawyerId,
+    string $startsAt,
+    string $endsAt,
+    ?int $excludeAppointmentId = null
+): int {
+    if ($lawyerId <= 0 || $startsAt === '' || $endsAt === '') {
+        return 0;
+    }
+
+    $sql = "
+        SELECT COUNT(*) FROM appointments
+        WHERE lawyer_id = ?
+          AND LOWER(COALESCE(status, 'pending')) NOT IN ('rejected', 'cancelled')
+          AND starts_at IS NOT NULL
+          AND starts_at < ?
+          AND COALESCE(ends_at, DATE_ADD(starts_at, INTERVAL 1 HOUR)) > ?
+    ";
+    $params = [$lawyerId, $endsAt, $startsAt];
+
+    if ($excludeAppointmentId !== null && $excludeAppointmentId > 0) {
+        $sql .= ' AND id <> ?';
+        $params[] = $excludeAppointmentId;
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    return (int) $stmt->fetchColumn();
+}
+
+/**
+ * True when the lawyer's slot is at capacity for the requested window.
  */
 function lawyerHasOverlappingAppointment(
     PDO $pdo,
@@ -461,27 +626,8 @@ function lawyerHasOverlappingAppointment(
     $startsAt = date('Y-m-d H:i:s', $startTs);
     $endsAt = date('Y-m-d H:i:s', strtotime('+' . $durationMinutes . ' minutes', $startTs));
 
-    $sql = "
-        SELECT id FROM appointments
-        WHERE lawyer_id = ?
-          AND LOWER(COALESCE(status, 'pending')) NOT IN ('rejected', 'cancelled')
-          AND starts_at IS NOT NULL
-          AND starts_at < ?
-          AND COALESCE(ends_at, DATE_ADD(starts_at, INTERVAL 1 HOUR)) > ?
-    ";
-    $params = [$lawyerId, $endsAt, $startsAt];
-
-    if ($excludeAppointmentId !== null && $excludeAppointmentId > 0) {
-        $sql .= ' AND id <> ?';
-        $params[] = $excludeAppointmentId;
-    }
-
-    $sql .= ' LIMIT 1';
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-
-    return (bool) $stmt->fetchColumn();
+    return countOverlappingAppointments($pdo, $lawyerId, $startsAt, $endsAt, $excludeAppointmentId)
+        >= LAWYER_APPOINTMENT_SLOT_CAPACITY;
 }
 
 /**
@@ -513,6 +659,8 @@ function lawyerHasPublishedAvailabilitySchedule(PDO $pdo, int $lawyerId): bool
  */
 function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appointmentDate, string $appointmentTime, ?int $excludeAppointmentId = null, int $durationMinutes = 60): array
 {
+    cleanupLegacyAppointmentSlotBlocks($pdo);
+
     if ($lawyerId <= 0 || $appointmentDate === '' || $appointmentTime === '') {
         return ['ok' => false, 'message' => 'Lawyer, date, and time are required.'];
     }
@@ -637,7 +785,7 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
         if (lawyerHasOverlappingAppointment($pdo, $lawyerId, $appointmentDate, $appointmentTime, $durationMinutes, $excludeAppointmentId)) {
             return [
                 'ok' => false,
-                'message' => 'This lawyer already has an appointment at the selected time. Please choose another slot.',
+                'message' => legalpro_lawyer_slot_capacity_message(),
             ];
         }
 
@@ -647,7 +795,7 @@ function validateLawyerBookingAvailability(PDO $pdo, int $lawyerId, string $appo
     if (lawyerHasOverlappingAppointment($pdo, $lawyerId, $appointmentDate, $appointmentTime, $durationMinutes, $excludeAppointmentId)) {
         return [
             'ok' => false,
-            'message' => 'This lawyer already has an appointment at the selected time. Please choose another slot.',
+            'message' => legalpro_lawyer_slot_capacity_message(),
         ];
     }
 
@@ -662,18 +810,7 @@ function backfillLawyerAppointmentAvailability(PDO $pdo, int $lawyerId): void
 
     ensureAppointmentSlotColumn($pdo);
 
-    $stmt = $pdo->prepare("
-        SELECT a.*
-        FROM appointments a
-        LEFT JOIN lawyer_time_slots l ON l.appointment_id = a.id
-        WHERE a.lawyer_id = ?
-          AND a.starts_at IS NOT NULL
-          AND LOWER(COALESCE(a.status, 'pending')) <> 'rejected'
-          AND l.id IS NULL
-    ");
+    // Legacy rows blocked the lawyer after a single booking — remove them.
+    $stmt = $pdo->prepare('DELETE FROM lawyer_time_slots WHERE lawyer_id = ? AND appointment_id IS NOT NULL');
     $stmt->execute([$lawyerId]);
-
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $appointment) {
-        syncAppointmentAvailabilitySlot($pdo, $appointment);
-    }
 }

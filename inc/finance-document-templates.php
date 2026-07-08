@@ -3,6 +3,7 @@
 require_once __DIR__ . '/finance-document-styles.php';
 require_once dirname(__DIR__) . '/lib/bank_accounts.php';
 require_once dirname(__DIR__) . '/lib/finance-document-i18n.php';
+require_once dirname(__DIR__) . '/lib/finance-reference-numbers.php';
 
 function legalpro_finance_safe_filename(string $base): string
 {
@@ -347,7 +348,9 @@ function legalpro_render_payment_receipt_document_html(array $payment, int $paym
 
     $caseId = isset($payment['case_id']) ? (int) $payment['case_id'] : 0;
     $caseNumber = $caseId ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : fin_doc_t('na');
-    $receiptNumber = 'RC-' . str_pad((string) $paymentId, 6, '0', STR_PAD_LEFT);
+    $receiptNumber = ($pdo instanceof PDO)
+        ? legalpro_resolve_receipt_number($pdo, $paymentId, $payment)
+        : legalpro_legacy_receipt_number($paymentId);
     $issuedDate = fin_doc_format_date($payment['payment_date'] ?? ($payment['created_at'] ?? null), 'short');
     $amountFormatted = formatCurrency((float) ($payment['amount'] ?? 0));
 

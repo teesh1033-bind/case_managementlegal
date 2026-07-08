@@ -342,7 +342,7 @@ if (empty($documents)) {
         $actionButtons = '';
         if ($documentPath !== '' && is_file($fileSystemPath)) {
             $actionButtons .= '
-                <a href="' . htmlspecialchars($fileUrl) . '" target="_blank" class="btn btn-sm btn-outline-primary mb-0">View</a>
+                <a href="' . htmlspecialchars($fileUrl) . '" target="_blank" class="btn btn-sm lp-portal-accent-btn mb-0">View</a>
                 <a href="' . htmlspecialchars($fileUrl) . '" download class="btn btn-sm btn-outline-secondary mb-0">Download</a>';
         }
         if ($documentId > 0) {
@@ -836,7 +836,7 @@ if (!empty($comments)) {
 $eventsHtml = CaseEvents::renderEventsTimeline($caseId);
 
 $clientViewLinkHtml = $clientId > 0
-    ? '<a href="lawyer-client-view.php?id=' . $clientId . '" class="lcv-panel__head-actions btn btn-sm btn-outline-primary mb-0">' . htmlspecialchars(lawyer_tf('case_view.view_client', 'View client')) . '</a>'
+    ? '<a href="lawyer-client-view.php?id=' . $clientId . '" class="lcv-panel__head-actions btn btn-sm lp-portal-accent-btn mb-0">' . htmlspecialchars(lawyer_tf('case_view.view_client', 'View client')) . '</a>'
     : '';
 
 $replacements = [

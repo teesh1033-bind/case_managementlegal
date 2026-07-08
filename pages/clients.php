@@ -173,23 +173,15 @@ $html = <<<'HTML'
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=40" rel="stylesheet" />
-	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
-	<?php legalpro_icons_asset_links(); ?>
+<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
+{ADMIN_PORTAL_HEAD}
+	<link href="../assets/css/legalpro-admin-portal.css?v=26" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-clients-page{PORTAL_THEME_BODY_CLASS}">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
 	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-			<div class="container-fluid py-1 px-3">
-				<div>
-					<h6 class="font-weight-bolder mb-0">Clients</h6>
-					<p class="dashboard-welcome-sub mb-0 mt-1">Manage client profiles, contact details, and case history</p>
-				</div>
-			</div>
-		</nav>
+		{PAGE_NAVBAR}
 		<div class="container-fluid py-4">
 			{MESSAGE}
 
@@ -300,8 +292,8 @@ if (empty($clients)) {
             <td class="text-center"><span class="legalpro-client-activity">' . $lastActivity . '</span></td>
             <td class="text-end">
                 <div class="legalpro-admin-list-row__actions">
-                    <a href="client-detail.php?id=' . $clientId . '" class="btn btn-sm btn-legalpro-client-view mb-0">View</a>
-                    <button type="button" class="btn btn-sm btn-legalpro-client-delete mb-0" onclick="deleteClient(' . $clientId . ', \'' . addslashes($fullName) . '\')">Delete</button>
+                    <a href="client-detail.php?id=' . $clientId . '" class="' . legalpro_portal_accent_action_btn_class() . '">View</a>
+                    <button type="button" class="btn btn-sm btn-danger mb-0" onclick="deleteClient(' . $clientId . ', \'' . addslashes($fullName) . '\')">Delete</button>
                 </div>
             </td>
         </tr>';
@@ -337,6 +329,7 @@ $html = str_replace('{PORTAL_THEME_BODY_CLASS}', legalpro_portal_theme_body_clas
 
 // rewrite internal links from .html to .php
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
+$html = legalpro_apply_admin_page_shell($html, 'Clients', 'Manage your client directory');
 ob_start(); include __DIR__ . '/../inc/menunav.php'; $sidebar = ob_get_clean();
 $html = preg_replace('/<aside[\s\S]*?<\/aside>/', $sidebar, $html, 1);
 ob_start(); include __DIR__ . '/../inc/footer.php'; $footer = ob_get_clean();

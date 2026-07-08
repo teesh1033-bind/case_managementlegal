@@ -5,6 +5,10 @@ require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../inc/court-time-picker.php';
 require_once __DIR__ . '/../lib/court_time_booking.php';
 require_once __DIR__ . '/../inc/availability-date-picker.php';
+require_once __DIR__ . '/../lib/portal_list_ui.php';
+require_once __DIR__ . '/../lib/appointment_list_ui.php';
+require_once __DIR__ . '/../lib/portal_calendar_events.php';
+require_once __DIR__ . '/../inc/portal-calendar-studio.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -159,50 +163,7 @@ try {
 
 $courtBookingEntries = legalpro_court_booking_entries_from_rows($court_dates);
 
-// Prepare calendar events for FullCalendar (dashboard-style dots)
-$calendar_events = [];
-foreach ($court_dates as $date) {
-    $caseId = (int) ($date['case_id'] ?? 0);
-    $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
-    $status = strtolower((string) ($date['status'] ?? 'scheduled'));
-    $displayTitle = $caseNumber . ' · ' . ($date['title'] ?? 'Court date');
-    if (!empty($date['case_title'])) {
-        $displayTitle = $caseNumber . ' · ' . $date['case_title'];
-    }
-
-    $courtDateLabel = !empty($date['court_date'])
-        ? date('M j, Y · g:i A', strtotime($date['court_date']))
-        : '';
-    $searchHay = strtolower(
-        $displayTitle . ' ' . ($date['client_name'] ?? '') . ' ' . ($date['title'] ?? '')
-        . ' ' . ($date['case_title'] ?? '') . ' ' . ($date['location'] ?? '') . ' ' . $status
-    );
-
-    $calendar_events[] = [
-        'id' => (string) $date['id'],
-        'title' => $displayTitle,
-        'start' => $date['court_date'],
-        'backgroundColor' => 'transparent',
-        'borderColor' => 'transparent',
-        'textColor' => '#344767',
-        'extendedProps' => [
-            'status' => $status,
-            'description' => $date['description'] ?? '',
-            'location' => $date['location'] ?? '',
-            'client_name' => $date['client_name'] ?? '',
-            'case_title' => $date['case_title'] ?? '',
-            'court_title' => $date['title'] ?? '',
-            'created_by_name' => $date['created_by_name'] ?? '',
-            'creator_role' => $date['creator_role'] ?? '',
-            'case_id' => $caseId,
-            'courtDateId' => (int) $date['id'],
-            'courtDateLabel' => $courtDateLabel,
-            'hearingTitle' => $date['title'] ?? '',
-            'statusLabel' => ucfirst($status),
-            'searchHay' => $searchHay,
-        ],
-    ];
-}
+$calendar_events = legalpro_portal_build_court_calendar_events($court_dates);
 
 $iconCourtRow = legalpro_icon('landmark');
 $iconCourtEmpty = legalpro_icon('calendar');
@@ -236,6 +197,45 @@ if (empty($upcomingCourtDates)) {
         </button>';
     }
 }
+$adminCourtUpcomingCount = count($upcomingCourtDates);
+$adminCourtPageNavbar = legalpro_render_admin_page_navbar(
+    'Court Tracking',
+    $adminCourtUpcomingCount . ' upcoming'
+);
+
+$courtDatesTableRows = '';
+foreach ($court_dates as $date) {
+    $courtActionsHtml = '<button type="button" class="' . legalpro_portal_accent_action_btn_class() . ' mb-0" onclick="viewCourtDate(' . (int) $date['id'] . ')" title="View">View</button>'
+        . '<button type="button" class="' . legalpro_portal_accent_action_btn_class() . ' mb-0" onclick="editCourtDate(' . (int) $date['id'] . ')" title="Edit">Edit</button>'
+        . '<button type="button" class="' . legalpro_portal_danger_action_btn_class() . ' mb-0" onclick="deleteCourtDate(' . (int) $date['id'] . ')" title="Delete">Delete</button>';
+    $courtDatesTableRows .= legalpro_render_portal_court_date_table_row($date, $courtActionsHtml);
+}
+
+$courtListSubtitle = count($court_dates) . ' court date' . (count($court_dates) === 1 ? '' : 's');
+$adminCourtCalendarSection = legalpro_render_portal_schedule_hub_calendar([
+    'calendar_id' => 'courtTrackingCalendar',
+    'add_modal' => '#addCourtDateModal',
+    'add_title' => 'Add court date',
+    'add_aria' => 'Add court date',
+], 'adminCourtCalendarHub');
+$adminCourtListSection = legalpro_render_portal_schedule_hub_list_section(
+    'courtDatesTable',
+    'Court Date List',
+    $courtListSubtitle,
+    'courtDatesSearchInput',
+    'Search by case, client, hearing, or location…',
+    'Search court dates',
+    'courtDatesStatusFilter',
+    legalpro_portal_appointment_status_options(),
+    'courtDatesTableBody',
+    $courtDatesTableRows,
+    'courtDatesFilterEmpty',
+    [
+        'empty_message' => 'No court dates match your filters.',
+        'pagination_aria' => 'Court dates pagination',
+    ]
+);
+
 ob_start();
 ?>
 
@@ -253,7 +253,6 @@ ob_start();
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
     <style>
         .court-date-modal .modal-dialog {
@@ -264,34 +263,13 @@ ob_start();
     <?php legalpro_render_availability_date_picker_assets(); ?>
     <?php legalpro_render_availability_date_picker_styles(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-court-tracking-page lp-schedule-hub-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
-            <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Admin</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Court Tracking</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Court Tracking</h6>
-                </nav>
-                <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
-                    <ul class="navbar-nav ms-md-auto justify-content-end">
-                        <li class="nav-item d-flex align-items-center">
-                            <a href="admin-logout.php" class="nav-link text-white font-weight-bold px-0">
-                                <i class="fa fa-user me-sm-1"></i>
-                                <!-- <span class="d-sm-inline d-none">Logout</span> -->
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-
-        <div class="container-fluid py-4">
+		<?php echo $adminCourtPageNavbar; ?>
+		<div class="container-fluid py-4">
             <?php if (isset($_SESSION['success_message'])): ?>
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <?php echo htmlspecialchars($_SESSION['success_message']); ?>
@@ -308,105 +286,10 @@ ob_start();
                 <?php unset($_SESSION['error_message']); ?>
             <?php endif; ?>
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="dashboard-calendar-hub">
-                        <div class="dashboard-calendar-hub__head">
-                            <div class="admin-calendar-hub__intro">
-                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 w-100">
-                                    <div>
-                                        <h6 class="text-capitalize mb-0 font-weight-bold dashboard-calendar-hub__title">Court Dates Calendar</h6>
-                                        <p class="text-sm mb-0 text-muted">Use the search bar below to find court dates quickly, or click a calendar event</p>
-                                        <div class="dashboard-legend-pills">
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> Scheduled</span>
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> Completed</span>
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> Postponed</span>
-                                            <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> Cancelled</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-sm bg-gradient-primary mb-0" data-bs-toggle="modal" data-bs-target="#addCourtDateModal">
-                                        <i class="fas fa-plus me-1"></i>Add Court Date
-                                    </button>
-                                </div>
-                            </div>
-                            <?php echo legalpro_render_admin_featured_cal_search(
-                                'actCalSearchInput',
-                                'actCalSearchResults',
-                                'Search court dates',
-                                'Search by case, client, hearing, location, or status…'
-                            ); ?>
-                        </div>
-                        <div class="dashboard-calendar-hub__body">
-                            <div class="dashboard-calendar-layout">
-                                <div id="courtTrackingCalendar"></div>
-                                <aside class="dashboard-upcoming-panel">
-                                    <div class="dashboard-upcoming-panel__title">
-                                        <span>Upcoming</span>
-                                        <a href="#courtDatesTable" class="text-xs text-primary font-weight-bold">View all</a>
-                                    </div>
-                                    <div class="dashboard-upcoming-list" id="upcomingCourtDatesList">
-                                        <?php echo $upcomingCourtDatesHtml; ?>
-                                    </div>
-                                </aside>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Court Dates List -->
-            <div class="row mt-4" id="courtDatesTable">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header pb-0">
-                            <h6 class="mb-0">Upcoming Court Dates</h6>
-                        </div>
-                        <div class="card-body px-0 pt-0 pb-2">
-                            <?php echo legalpro_admin_table_pagination_open(); ?>
-                            <div class="table-responsive p-0">
-                                <table class="table align-items-center mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date & Time</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Title</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($court_dates as $date): ?>
-                                            <tr class="legalpro-admin-list-row">
-                                                <td class="align-middle">
-                                                    <div class="d-flex align-items-center gap-3">
-                                                        <div class="ct-row-icon dashboard-stat-icon-wrap dashboard-stat-icon-wrap--primary flex-shrink-0"><?php echo $iconCourtRow; ?></div>
-                                                        <span class="text-sm font-weight-bold"><?php echo htmlspecialchars($date['case_title']); ?></span>
-                                                    </div>
-                                                </td>
-                                                <td class="align-middle"><?php echo htmlspecialchars($date['client_name']); ?></td>
-                                                <td class="align-middle"><?php echo date('M d, Y g:i A', strtotime($date['court_date'])); ?></td>
-                                                <td class="align-middle"><?php echo htmlspecialchars($date['title']); ?></td>
-                                                <td class="align-middle text-center">
-                                                    <?php echo legalpro_court_date_status_badge((string) ($date['status'] ?? '')); ?>
-                                                </td>
-                                                <td class="align-middle text-end">
-                                                    <div class="legalpro-admin-list-row__actions">
-                                                        <button type="button" class="btn btn-sm btn-primary mb-0" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="View">View</button>
-                                                        <button type="button" class="btn btn-sm btn-dark mb-0" onclick="editCourtDate(<?php echo (int) $date['id']; ?>)" title="Edit">Edit</button>
-                                                        <button type="button" class="btn btn-sm btn-danger mb-0" onclick="deleteCourtDate(<?php echo (int) $date['id']; ?>)" title="Delete">Delete</button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <?php echo legalpro_admin_table_pagination_close('Court dates pagination'); ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <?php
+            echo $adminCourtCalendarSection;
+            echo $adminCourtListSection;
+            ?>
         </div>
     </main>
 
@@ -549,9 +432,7 @@ ob_start();
     <script src="../assets/js/court-date-view-modal.js?v=2"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('courtTrackingCalendar');
             var courtEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
-            var courtRows = <?php echo json_encode($court_dates, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 
             function courtStatusKey(status) {
                 var value = String(status || 'scheduled').toLowerCase();
@@ -561,166 +442,47 @@ ob_start();
                 return value;
             }
 
-            function renderCourtEvent(arg) {
-                var props = arg.event.extendedProps || {};
-                var statusKey = courtStatusKey(props.status);
-                var timeText = arg.timeText || '';
-                var title = arg.event.title || 'Court date';
-                if (title.length > 22) {
-                    title = title.slice(0, 19) + '...';
+            function focusCourtDateRow(id) {
+                var row = document.getElementById('court-' + id);
+                var wrap = document.querySelector('#courtDatesTable [data-lp-admin-paginate]');
+                if (wrap && window.LegalproAdminTablePagination && row) {
+                    window.LegalproAdminTablePagination.focusRow(wrap, row);
+                } else if (row) {
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-                var wrap = document.createElement('div');
-                wrap.className = 'dashboard-cal-event';
-                wrap.innerHTML =
-                    '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
-                    '<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
-                return { domNodes: [wrap] };
             }
 
-            document.getElementById('upcomingCourtDatesList').addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-court-date-id]');
-                if (!btn) return;
-                viewCourtDate(btn.getAttribute('data-court-date-id'));
-            });
-
-            if (!calendarEl || typeof FullCalendar === 'undefined') {
-                return;
+            if (typeof LegalproCalendarStudio !== 'undefined') {
+                LegalproCalendarStudio.mountScheduleHub({
+                    mode: 'court',
+                    calendarEl: '#courtTrackingCalendar',
+                    events: courtEvents,
+                    agendaEmptyText: 'No court dates this month',
+                    agendaIdAttr: 'data-court-date-id',
+                    scheduleActionLabel: 'Add court date',
+                    viewActionLabel: 'View court date',
+                    onAgendaItemClick: function(id) {
+                        viewCourtDate(id);
+                        focusCourtDateRow(id);
+                    },
+                    onDateClick: function(ymd) {
+                        if (ymd) {
+                            var modalEl = document.getElementById('addCourtDateModal');
+                            if (modalEl && window.bootstrap && bootstrap.Modal) {
+                                var dateInput = document.getElementById('add_court_date');
+                                if (dateInput) {
+                                    dateInput.value = ymd;
+                                }
+                                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                            }
+                        }
+                    },
+                    onEventClick: function(event) {
+                        viewCourtDate(event.id);
+                        focusCourtDateRow(event.id);
+                    }
+                });
             }
-
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
-                height: 'auto',
-                firstDay: 1,
-                navLinks: true,
-                nowIndicator: true,
-                fixedWeekCount: false,
-                dayMaxEvents: 3,
-                moreLinkClick: 'day',
-                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
-                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-                dayHeaderFormat: { weekday: 'short' },
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'
-                },
-                events: courtEvents,
-                eventContent: renderCourtEvent,
-                dateClick: function(info) {
-                    if (window.legalproHandleCalendarDateClick) {
-                        window.legalproHandleCalendarDateClick(info, function(event) {
-                            viewCourtDate(event.id);
-                        });
-                    }
-                },
-                dayCellDidMount: function(info) {
-                    if (window.legalproMountCalendarDayCell) {
-                        window.legalproMountCalendarDayCell(info);
-                    }
-                },
-                eventClick: function(info) {
-                    info.jsEvent.preventDefault();
-                    viewCourtDate(info.event.id);
-                },
-                eventDidMount: function(info) {
-                    if (window.legalproMountCalendarEventClickable) {
-                        window.legalproMountCalendarEventClickable(info);
-                    }
-                    var tip = info.event.title;
-                    var p = info.event.extendedProps || {};
-                    if (p.client_name) tip += '\nClient: ' + p.client_name;
-                    if (p.location) tip += '\nLocation: ' + p.location;
-                    info.el.setAttribute('title', tip);
-                }
-            });
-            calendar.render();
-
-            (function initAdminCourtCalendarSearch(cal, events) {
-                var input = document.getElementById('actCalSearchInput');
-                var resultsEl = document.getElementById('actCalSearchResults');
-                if (!input || !resultsEl) {
-                    return;
-                }
-
-                function escapeHtmlAct(str) {
-                    return String(str)
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;');
-                }
-
-                function hideResults() {
-                    resultsEl.hidden = true;
-                    resultsEl.innerHTML = '';
-                }
-
-                input.addEventListener('input', function() {
-                    var q = input.value.trim().toLowerCase();
-                    if (!q) {
-                        hideResults();
-                        return;
-                    }
-
-                    var matches = events.filter(function(ev) {
-                        var props = ev.extendedProps || {};
-                        var hay = props.searchHay || ((ev.title || '') + ' ' + (props.case_title || '')).toLowerCase();
-                        return hay.indexOf(q) !== -1;
-                    }).sort(function(a, b) {
-                        return new Date(b.start).getTime() - new Date(a.start).getTime();
-                    });
-
-                    if (!matches.length) {
-                        resultsEl.innerHTML = '<div class="admin-cal-search-empty">No court dates match your search.</div>';
-                        resultsEl.hidden = false;
-                        return;
-                    }
-
-                    var html = '';
-                    matches.slice(0, 12).forEach(function(ev) {
-                        var props = ev.extendedProps || {};
-                        var statusKey = courtStatusKey(props.status);
-                        var hearing = props.hearingTitle || '';
-                        var location = props.location ? ' · ' + props.location : '';
-                        html += '<button type="button" class="admin-cal-search-item" data-court-date-id="' + escapeHtmlAct(props.courtDateId || ev.id) + '" data-start="' + escapeHtmlAct(ev.start || '') + '">' +
-                            '<span class="admin-cal-search-item__dot admin-cal-search-item__dot--' + escapeHtmlAct(statusKey) + '" aria-hidden="true"></span>' +
-                            '<span class="admin-cal-search-item__body">' +
-                                '<p class="admin-cal-search-item__title">' + escapeHtmlAct(ev.title || 'Court date') + '</p>' +
-                                '<p class="admin-cal-search-item__sub">' + escapeHtmlAct(props.courtDateLabel || '') + (hearing ? ' · ' + escapeHtmlAct(hearing) : '') + escapeHtmlAct(location) + ' · ' + escapeHtmlAct(props.statusLabel || props.status || 'Scheduled') + '</p>' +
-                            '</span>' +
-                        '</button>';
-                    });
-                    resultsEl.innerHTML = html;
-                    resultsEl.hidden = false;
-                });
-
-                input.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape') {
-                        hideResults();
-                        input.blur();
-                    }
-                });
-
-                resultsEl.addEventListener('click', function(e) {
-                    var btn = e.target.closest('[data-court-date-id]');
-                    if (!btn) {
-                        return;
-                    }
-                    var id = btn.getAttribute('data-court-date-id');
-                    var start = btn.getAttribute('data-start');
-                    if (cal && start) {
-                        cal.gotoDate(start);
-                    }
-                    viewCourtDate(id);
-                    hideResults();
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.admin-cal-search-wrap')) {
-                        hideResults();
-                    }
-                });
-            })(calendar, courtEvents);
         });
 
         function viewCourtDate(id) {
@@ -1202,6 +964,13 @@ ob_start();
         bindCourtTimeManualInput('edit_court_time', refreshEditCourtTimeAvailability);
     </script>
     <?php legalpro_render_availability_date_picker_script(); ?>
+    <?php echo legalpro_portal_list_filter_script(
+        'courtDatesSearchInput',
+        'courtDatesTableBody',
+        'courtDatesFilterEmpty',
+        '.legalpro-admin-list-row',
+        'courtDatesStatusFilter'
+    ); ?>
 <?php include __DIR__ . '/../inc/footer.php'; ?>
 <?php
 echo legalpro_apply_copyright_line(ob_get_clean());

@@ -16,6 +16,10 @@ require_once __DIR__ . '/../inc/client-portal-navbar.php';
 require_once __DIR__ . '/../lib/client-portal-page-ui.php';
 require_once __DIR__ . '/../lib/client-locale.php';
 require_once __DIR__ . '/../lib/client-portal-i18n.php';
+require_once __DIR__ . '/../lib/portal_list_ui.php';
+require_once __DIR__ . '/../lib/appointment_list_ui.php';
+require_once __DIR__ . '/../lib/portal_calendar_events.php';
+require_once __DIR__ . '/../inc/portal-calendar-studio.php';
 require_once __DIR__ . '/../inc/legalpro-icons.php';
 $iconCourtRow = legalpro_icon('landmark');
 $iconCourtEmpty = legalpro_icon('calendar');
@@ -56,54 +60,7 @@ try {
     $court_dates = [];
 }
 
-// Prepare calendar events for FullCalendar (dashboard-style dots)
-$calendar_events = [];
-foreach ($court_dates as $date) {
-    $caseId = (int) ($date['case_id'] ?? 0);
-    $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
-    $status = strtolower((string) ($date['status'] ?? 'scheduled'));
-    $displayTitle = $caseNumber . ' · ' . ($date['title'] ?? 'Court date');
-    if (!empty($date['case_title'])) {
-        $displayTitle = $caseNumber . ' · ' . $date['case_title'];
-    }
-    $hearingTitle = (string) ($date['title'] ?? 'Court date');
-    $courtDateLabel = date('M j, Y g:i A', strtotime((string) $date['court_date']));
-
-    $calendar_events[] = [
-        'id' => (string) $date['id'],
-        'title' => $displayTitle,
-        'start' => $date['court_date'],
-        'backgroundColor' => 'transparent',
-        'borderColor' => 'transparent',
-        'textColor' => '#344767',
-        'extendedProps' => [
-            'status' => $status,
-            'description' => $date['description'],
-            'location' => $date['location'],
-            'created_by_name' => $date['created_by_name'],
-            'creator_role' => $date['creator_role'],
-            'case_title' => $date['case_title'] ?? '',
-            'case_id' => $caseId,
-            'hearingTitle' => $hearingTitle,
-            'statusLabel' => ucfirst($status),
-            'courtDateId' => (int) $date['id'],
-            'courtDateLabel' => $courtDateLabel,
-            'searchHay' => strtolower(implode(' ', array_filter([
-                $displayTitle,
-                $date['case_title'] ?? '',
-                $hearingTitle,
-                $date['location'] ?? '',
-                $date['description'] ?? '',
-                $status,
-                $courtDateLabel,
-                date('Y-m-d', strtotime((string) $date['court_date'])),
-                date('m/d/Y', strtotime((string) $date['court_date'])),
-                $caseNumber,
-                (string) $date['id'],
-            ]))),
-        ]
-    ];
-}
+$calendar_events = legalpro_portal_build_court_calendar_events($court_dates);
 
 $upcomingCourtDatesHtml = '';
 $upcomingCourtDates = array_values(array_filter($court_dates, function ($row) {
@@ -124,7 +81,7 @@ if (empty($upcomingCourtDates)) {
         }
         $caseId = (int) ($row['case_id'] ?? 0);
         $caseNumber = $caseId > 0 ? 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT) : 'Case';
-        $title = htmlspecialchars($caseNumber . ' · ' . ($row['title'] ?? 'Court date'));
+        $title = htmlspecialchars($caseNumber . ' Â· ' . ($row['title'] ?? 'Court date'));
         $hourLabel = date('g:i A', strtotime((string) $row['court_date']));
         $dayLabel = date('M j', strtotime((string) $row['court_date']));
         $upcomingCourtDatesHtml .= '
@@ -189,6 +146,71 @@ if (!empty($_SESSION['error_message'])) {
     $courtTableError = (string) $_SESSION['error_message'];
     unset($_SESSION['error_message']);
 }
+
+$clientCourtStatusResolver = static function (string $displayKey): string {
+    $map = [
+        'scheduled' => 'appointments.filter_scheduled',
+        'confirmed' => 'appointments.filter_confirmed',
+        'rescheduled' => 'appointments.filter_rescheduled',
+        'past' => 'appointments.filter_past',
+        'completed' => 'appointments.filter_completed',
+        'cancelled' => 'appointments.filter_cancelled',
+    ];
+
+    return client_t($map[$displayKey] ?? 'appointments.filter_scheduled');
+};
+
+$clientCourtDatesTableRows = '';
+foreach ($court_dates as $date) {
+    $viewBtn = '<button type="button" class="' . legalpro_portal_accent_action_btn_class() . ' mb-0" onclick="viewCourtDate(' . (int) $date['id'] . ')" title="' . htmlspecialchars(client_t('common.view'), ENT_QUOTES, 'UTF-8') . '">'
+        . htmlspecialchars(client_t('common.view')) . '</button>';
+    $clientCourtDatesTableRows .= legalpro_render_portal_court_date_table_row($date, $viewBtn, [
+        'label_resolver' => $clientCourtStatusResolver,
+    ]);
+}
+
+$clientCourtCalendarSection = legalpro_render_portal_schedule_hub_calendar([
+    'calendar_id' => 'courtTrackingCalendar',
+    'legend' => legalpro_portal_appointment_calendar_legend(static function (string $key, string $label): string {
+        $map = [
+            'scheduled' => client_t('appointments.filter_scheduled'),
+            'confirmed' => client_t('appointments.filter_confirmed'),
+            'rescheduled' => client_t('appointments.filter_rescheduled'),
+            'past' => client_t('appointments.filter_past'),
+            'completed' => client_t('appointments.filter_completed'),
+            'cancelled' => client_t('appointments.filter_cancelled'),
+        ];
+
+        return $map[$key] ?? $label;
+    }),
+], 'clientCourtCalendarHub');
+
+$clientCourtListSection = legalpro_render_portal_schedule_hub_list_section(
+    'courtDatesTable',
+    client_t('court.all_dates_title'),
+    client_t('court.all_dates_sub'),
+    'clientCourtDatesSearchInput',
+    client_t('court.search_placeholder_long'),
+    client_t('court.search_label'),
+    'clientCourtDatesStatusFilter',
+    legalpro_portal_appointment_status_options(),
+    'clientCourtDatesTableBody',
+    $clientCourtDatesTableRows,
+    'clientCourtDatesFilterEmpty',
+    [
+        'header_labels' => [
+            'datetime' => client_t('appointments.col_datetime'),
+            'title' => client_t('appointments.col_title'),
+            'person' => client_t('appointments.col_client'),
+            'case' => client_t('appointments.col_case'),
+            'status' => client_t('appointments.col_status'),
+            'calendar' => client_t('appointments.col_calendar'),
+            'actions' => client_t('common.actions'),
+        ],
+        'empty_message' => client_t('court.no_match_filters'),
+        'pagination_aria' => client_t('court.pagination_aria'),
+    ]
+);
 ?>
 
 <!DOCTYPE html>
@@ -207,7 +229,6 @@ if (!empty($_SESSION['error_message'])) {
     <?php
     define('LEGALPRO_SKIP_DASHBOARD_ENHANCEMENTS', true);
     include __DIR__ . '/../inc/client-portal-head.php';
-    include __DIR__ . '/../inc/client-court-tracking-calendar-css.php';
     ?>
     <link href="../assets/css/client-portal-pages.css?v=5" rel="stylesheet" />
     <style>
@@ -353,11 +374,11 @@ if (!empty($_SESSION['error_message'])) {
         .cct-row-icon .lp-icon svg { stroke: currentColor; }
         .btn-cct-view {
             padding: .35rem .9rem; border-radius: 8px;
-            border: 1.5px solid var(--cct-primary); color: var(--cct-primary);
-            font-size: 12px; font-weight: 600; background: none; cursor: pointer;
-            transition: background .15s, color .15s;
+            border: 1px solid var(--cct-primary); color: #fff;
+            font-size: 12px; font-weight: 700; background: var(--cct-primary); cursor: pointer;
+            transition: background .15s, border-color .15s, transform .15s;
         }
-        .btn-cct-view:hover { background: var(--cct-primary); color: #fff; }
+        .btn-cct-view:hover { background: var(--cct-primary-dark, #001845); border-color: var(--cct-primary-dark, #001845); color: #fff; }
 
         .cct-empty {
             padding: 3.5rem 1.5rem; text-align: center;
@@ -575,15 +596,18 @@ if (!empty($_SESSION['error_message'])) {
         }
     </style>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-court-tracking-page<?php echo legalpro_portal_theme_body_class(); ?>">
+<body class="g-sidenav-show bg-gray-100 legalpro-client-portal client-court-tracking-page lp-schedule-hub-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-client position-absolute w-100"></div>
     <?php include __DIR__ . '/../inc/client-menunav.php'; ?>
 
     <main class="main-content position-relative border-radius-lg">
         <?php
-        echo legalpro_render_client_page_navbar(client_t('court.navbar'), client_t('court.navbar'), client_t('court.search_placeholder'), array_merge(
+        echo legalpro_render_client_page_navbar(client_t('court.navbar'), client_t('court.navbar'), '', array_merge(
             legalpro_client_page_search_options('client-court-tracking.php'),
-            ['client_name' => $clientName]
+            [
+                'client_name' => $clientName,
+                'subtitle' => $ctUpcoming . ' ' . strtolower(client_t('court.stat_upcoming')),
+            ]
         ));
         ?>
 
@@ -598,138 +622,10 @@ if (!empty($_SESSION['error_message'])) {
 
             <?php echo $heroHtml; ?>
 
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="dashboard-calendar-hub">
-                        <div class="dashboard-calendar-hub__head">
-                            <div class="cct-calendar-hub__intro">
-                                <h6 class="text-capitalize mb-0 font-weight-bold" style="color: var(--cct-primary);"><?= htmlspecialchars(client_t('court.calendar_title')) ?></h6>
-                                <p class="text-sm mb-0 text-muted"><?= htmlspecialchars(client_t('court.calendar_sub')) ?></p>
-                                <div class="dashboard-legend-pills">
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--scheduled"><i></i> <?= htmlspecialchars(client_t('court.stat_scheduled')) ?></span>
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--completed"><i></i> <?= htmlspecialchars(client_t('court.stat_completed')) ?></span>
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--postponed"><i></i> <?= htmlspecialchars(client_t('court.status_postponed')) ?></span>
-                                    <span class="dashboard-legend-pill dashboard-legend-pill--cancelled"><i></i> <?= htmlspecialchars(client_t('court.status_cancelled')) ?></span>
-                                </div>
-                            </div>
-                            <div class="cct-cal-search-wrap cct-cal-search-wrap--featured">
-                                <label class="cct-cal-search-label" for="cctCalSearchInput"><?= htmlspecialchars(client_t('court.search_label')) ?></label>
-                                <div class="cct-cal-search-field">
-                                    <span class="cct-cal-search-icon" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
-                                            <circle cx="11" cy="11" r="7"></circle>
-                                            <path d="M20 20l-3-3"></path>
-                                        </svg>
-                                    </span>
-                                    <input type="search" id="cctCalSearchInput" class="cct-cal-search-input"
-                                           placeholder="<?= htmlspecialchars(client_t('court.search_placeholder_long')) ?>" autocomplete="off">
-                                </div>
-                                <div class="cct-cal-search-results" id="cctCalSearchResults" hidden></div>
-                            </div>
-                        </div>
-                        <div class="dashboard-calendar-hub__body">
-                            <div class="dashboard-calendar-layout">
-                                <div id="courtTrackingCalendar"></div>
-                                <aside class="dashboard-upcoming-panel">
-                                    <div class="dashboard-upcoming-panel__title">
-                                        <span><?= htmlspecialchars(client_t('court.stat_upcoming')) ?></span>
-                                        <a href="#courtDatesTable" class="text-xs text-primary font-weight-bold"><?= htmlspecialchars(client_t('common.view_all')) ?></a>
-                                    </div>
-                                    <div class="dashboard-upcoming-list" id="upcomingCourtDatesList">
-                                        <?php echo $upcomingCourtDatesHtml; ?>
-                                    </div>
-                                </aside>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cct-panel" id="courtDatesTable">
-                <div class="cct-panel-hdr">
-                    <div>
-                        <h5><?= htmlspecialchars(client_t('court.all_dates_title')) ?></h5>
-                        <p><?= htmlspecialchars(client_t('court.all_dates_sub')) ?></p>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-                        <span class="cct-count" id="cctRowCount"><?php echo (int) $ctTotal; ?> <?= htmlspecialchars(client_t('common.total')) ?></span>
-                        <a href="client-cases.php" class="btn-cct-view text-decoration-none"><?= htmlspecialchars(client_t('nav.my_cases')) ?></a>
-                    </div>
-                </div>
-                <?php if (empty($court_dates)): ?>
-                    <div class="cct-empty">
-                        <div class="cct-empty-icon"><?php echo $iconCourtEmpty; ?></div>
-                        <h5><?= htmlspecialchars(client_t('court.empty_title')) ?></h5>
-                        <p><?= htmlspecialchars(client_t('court.empty_sub')) ?></p>
-                    </div>
-                <?php else: ?>
-                    <div class="cct-court-table-wrap" id="clientCourtDatesTableWrap" data-court-per-page="10">
-                    <div class="table-responsive">
-                        <table class="cct-table">
-                            <thead>
-                                <tr>
-                                    <th><?= htmlspecialchars(client_t('court.col_case')) ?></th>
-                                    <th><?= htmlspecialchars(client_t('court.col_datetime')) ?></th>
-                                    <th><?= htmlspecialchars(client_t('court.col_title')) ?></th>
-                                    <th style="text-align:center"><?= htmlspecialchars(client_t('court.col_status')) ?></th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($court_dates as $date):
-                                    $cid = (int) ($date['case_id'] ?? 0);
-                                    $rowStatusBadge = client_court_date_status_badge((string) ($date['status'] ?? ''));
-                                    ?>
-                                    <?php
-                                    $rowCaseNumber = $cid > 0 ? 'C-' . str_pad((string) $cid, 4, '0', STR_PAD_LEFT) : '';
-                                    ?>
-                                    <tr class="cct-search-row cct-court-row"<?php echo legalpro_client_search_data_attr([
-                                        $rowCaseNumber,
-                                        $date['case_title'] ?? '',
-                                        $date['title'] ?? '',
-                                        $date['location'] ?? '',
-                                        $date['description'] ?? '',
-                                        $date['status'] ?? '',
-                                        $date['court_date'] ?? '',
-                                    ]); ?>>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-3 py-1">
-                                                <div class="cct-row-icon"><?php echo $iconCourtRow; ?></div>
-                                                <div class="min-width-0">
-                                                    <?php if ($cid > 0): ?>
-                                                    <a href="client-case-view.php?id=<?php echo $cid; ?>" class="text-sm font-weight-bold mb-0 d-inline-block text-truncate text-reset" style="max-width: 14rem;"><?php echo htmlspecialchars($date['case_title']); ?></a>
-                                                    <?php else: ?>
-                                                    <span class="text-sm font-weight-bold d-inline-block text-truncate" style="max-width: 14rem;"><?php echo htmlspecialchars($date['case_title']); ?></span>
-                                                    <?php endif; ?>
-                                                    <p class="text-xs text-muted mb-0"><?= htmlspecialchars(client_t('court.matter')) ?></p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <p class="text-xs font-weight-bold mb-0"><?php echo date('M j, Y', strtotime($date['court_date'])); ?></p>
-                                            <p class="text-xs text-muted mb-0"><?php echo date('g:i A', strtotime($date['court_date'])); ?></p>
-                                        </td>
-                                        <td>
-                                            <p class="text-xs font-weight-bold mb-0 text-truncate" style="max-width: 12rem;" title="<?php echo htmlspecialchars($date['title']); ?>"><?php echo htmlspecialchars($date['title']); ?></p>
-                                        </td>
-                                        <td class="text-center"><?php echo $rowStatusBadge; ?></td>
-                                        <td>
-                                            <div class="d-flex gap-1 justify-content-end flex-wrap">
-                                                <button type="button" class="btn-cct-view cdoc-touch-btn" onclick="viewCourtDate(<?php echo (int) $date['id']; ?>)" title="<?= htmlspecialchars(client_t('common.view')) ?>"><?= htmlspecialchars(client_t('common.view')) ?></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <nav class="cct-court-pagination" id="clientCourtDatesPagination" aria-label="Court dates pagination" hidden>
-                        <p class="cct-court-pagination__info" data-court-range></p>
-                        <div class="cct-court-pagination__controls" data-court-pages></div>
-                    </nav>
-                    </div>
-                <?php endif; ?>
-            </div>
+            <?php
+            echo $clientCourtCalendarSection;
+            echo $clientCourtListSection;
+            ?>
             </div>
         </div>
     </main>
@@ -749,327 +645,48 @@ if (!empty($_SESSION['error_message'])) {
     <script src="../assets/js/court-date-view-modal.js?v=3"></script>
     <script>
         var clientCourtTrackingCalendar = null;
+        var courtEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 
-        function escapeHtmlCct(text) {
-            var d = document.createElement('div');
-            d.textContent = text == null ? '' : String(text);
-            return d.innerHTML;
-        }
-
-        function initClientCourtDatesTablePagination() {
-            var wrap = document.getElementById('clientCourtDatesTableWrap');
-            var nav = document.getElementById('clientCourtDatesPagination');
-            if (!wrap || !nav) {
-                return;
+        function focusClientCourtDateRow(id) {
+            var row = document.getElementById('court-' + id);
+            var wrap = document.querySelector('#courtDatesTable [data-lp-admin-paginate]');
+            if (wrap && window.LegalproAdminTablePagination && row) {
+                window.LegalproAdminTablePagination.focusRow(wrap, row);
+            } else if (row) {
+                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-
-            var perPage = parseInt(wrap.getAttribute('data-court-per-page') || '10', 10);
-            var rows = Array.prototype.slice.call(document.querySelectorAll('.cct-table tbody .cct-court-row'));
-            var rangeEl = nav.querySelector('[data-court-range]');
-            var pagesEl = nav.querySelector('[data-court-pages]');
-
-            if (!rows.length || rows.length <= perPage) {
-                nav.hidden = true;
-                return;
-            }
-
-            nav.hidden = false;
-            var currentPage = 1;
-            var totalPages = Math.ceil(rows.length / perPage);
-
-            function pageButton(label, page, options) {
-                options = options || {};
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'cct-court-pagination__btn';
-                if (options.nav) {
-                    btn.className += ' cct-court-pagination__btn--nav';
-                }
-                if (options.active) {
-                    btn.className += ' cct-court-pagination__btn--active';
-                }
-                btn.textContent = label;
-                btn.setAttribute('aria-label', options.ariaLabel || ('Page ' + label));
-                if (options.disabled) {
-                    btn.disabled = true;
-                } else if (page) {
-                    btn.addEventListener('click', function() {
-                        showPage(page);
-                    });
-                }
-                return btn;
-            }
-
-            function ellipsis() {
-                var span = document.createElement('span');
-                span.className = 'cct-court-pagination__ellipsis';
-                span.textContent = '…';
-                span.setAttribute('aria-hidden', 'true');
-                return span;
-            }
-
-            function visiblePages() {
-                if (totalPages <= 7) {
-                    var all = [];
-                    for (var p = 1; p <= totalPages; p++) {
-                        all.push(p);
-                    }
-                    return all;
-                }
-                var pages = [1];
-                var start = Math.max(2, currentPage - 1);
-                var end = Math.min(totalPages - 1, currentPage + 1);
-                if (start > 2) {
-                    pages.push('gap');
-                }
-                for (var i = start; i <= end; i++) {
-                    pages.push(i);
-                }
-                if (end < totalPages - 1) {
-                    pages.push('gap');
-                }
-                pages.push(totalPages);
-                return pages;
-            }
-
-            function renderControls() {
-                if (!pagesEl) {
-                    return;
-                }
-                pagesEl.innerHTML = '';
-                pagesEl.appendChild(pageButton('‹ Prev', currentPage - 1, {
-                    nav: true,
-                    disabled: currentPage === 1,
-                    ariaLabel: 'Previous page'
-                }));
-                visiblePages().forEach(function(page) {
-                    if (page === 'gap') {
-                        pagesEl.appendChild(ellipsis());
-                        return;
-                    }
-                    pagesEl.appendChild(pageButton(String(page), page, {
-                        active: page === currentPage,
-                        ariaLabel: 'Page ' + page + (page === currentPage ? ', current' : '')
-                    }));
-                });
-                pagesEl.appendChild(pageButton('Next ›', currentPage + 1, {
-                    nav: true,
-                    disabled: currentPage === totalPages,
-                    ariaLabel: 'Next page'
-                }));
-            }
-
-            function showPage(page) {
-                currentPage = Math.max(1, Math.min(totalPages, page));
-                rows.forEach(function(row, index) {
-                    var rowPage = Math.floor(index / perPage) + 1;
-                    row.classList.toggle('cct-court-row--off-page', rowPage !== currentPage);
-                });
-
-                var start = (currentPage - 1) * perPage + 1;
-                var end = Math.min(currentPage * perPage, rows.length);
-                if (rangeEl) {
-                    rangeEl.textContent = 'Showing ' + start + '–' + end + ' of ' + rows.length;
-                }
-                renderControls();
-            }
-
-            window.cctCourtShowPage = showPage;
-            showPage(1);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('courtTrackingCalendar');
-            var courtEvents = <?php echo json_encode($calendar_events, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
-
-            function courtStatusKey(status) {
-                var value = String(status || 'scheduled').toLowerCase();
-                if (['scheduled', 'completed', 'cancelled', 'postponed'].indexOf(value) === -1) {
-                    return 'scheduled';
-                }
-                return value;
-            }
-
-            function renderCourtEvent(arg) {
-                var props = arg.event.extendedProps || {};
-                var statusKey = courtStatusKey(props.status);
-                var timeText = arg.timeText || '';
-                var title = arg.event.title || 'Court date';
-                if (title.length > 22) {
-                    title = title.slice(0, 19) + '...';
-                }
-                var wrap = document.createElement('div');
-                wrap.className = 'dashboard-cal-event';
-                wrap.innerHTML =
-                    '<span class="dashboard-cal-event__dot dashboard-cal-event__dot--' + statusKey + '"></span>' +
-                    '<span class="dashboard-cal-event__text">' + timeText + (timeText ? ' ' : '') + title + '</span>';
-                return { domNodes: [wrap] };
-            }
-
-            var upcomingList = document.getElementById('upcomingCourtDatesList');
-            if (upcomingList) {
-                upcomingList.addEventListener('click', function(e) {
-                    var btn = e.target.closest('[data-court-date-id]');
-                    if (!btn) return;
-                    viewCourtDate(btn.getAttribute('data-court-date-id'));
+            if (typeof LegalproCalendarStudio !== 'undefined') {
+                clientCourtTrackingCalendar = LegalproCalendarStudio.mountScheduleHub({
+                    mode: 'court',
+                    calendarEl: '#courtTrackingCalendar',
+                    events: courtEvents,
+                    schedulable: false,
+                    displayLabels: {
+                        scheduled: <?= json_encode(client_t('appointments.filter_scheduled'), JSON_UNESCAPED_UNICODE) ?>,
+                        confirmed: <?= json_encode(client_t('appointments.filter_confirmed'), JSON_UNESCAPED_UNICODE) ?>,
+                        rescheduled: <?= json_encode(client_t('appointments.filter_rescheduled'), JSON_UNESCAPED_UNICODE) ?>,
+                        past: <?= json_encode(client_t('appointments.filter_past'), JSON_UNESCAPED_UNICODE) ?>,
+                        completed: <?= json_encode(client_t('appointments.filter_completed'), JSON_UNESCAPED_UNICODE) ?>,
+                        cancelled: <?= json_encode(client_t('appointments.filter_cancelled'), JSON_UNESCAPED_UNICODE) ?>
+                    },
+                    agendaEmptyText: <?= json_encode(client_t('court.agenda_empty'), JSON_UNESCAPED_UNICODE) ?>,
+                    agendaIdAttr: 'data-court-date-id',
+                    viewActionLabel: <?= json_encode(client_t('common.view'), JSON_UNESCAPED_UNICODE) ?>,
+                    onAgendaItemClick: function(id) {
+                        viewCourtDate(id);
+                        focusClientCourtDateRow(id);
+                    },
+                    onEventClick: function(event) {
+                        viewCourtDate(event.id);
+                        focusClientCourtDateRow(event.id);
+                    }
                 });
             }
-
-            if (!calendarEl || typeof FullCalendar === 'undefined') {
-                initCctCalendarSearch(courtEvents);
-                initClientCourtDatesTablePagination();
-                return;
-            }
-
-            clientCourtTrackingCalendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
-                height: 'auto',
-                firstDay: 1,
-                navLinks: true,
-                nowIndicator: true,
-                fixedWeekCount: false,
-                dayMaxEvents: 3,
-                moreLinkClick: 'popover',
-                buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
-                eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
-                dayHeaderFormat: { weekday: 'short' },
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'
-                },
-                events: courtEvents,
-                eventContent: renderCourtEvent,
-                dateClick: function(info) {
-                    if (window.legalproHandleCalendarDateClick) {
-                        window.legalproHandleCalendarDateClick(info, function(event) {
-                            viewCourtDate(event.id);
-                        });
-                    }
-                },
-                dayCellDidMount: function(info) {
-                    if (window.legalproMountCalendarDayCell) {
-                        window.legalproMountCalendarDayCell(info);
-                    }
-                },
-                eventClick: function(info) {
-                    info.jsEvent.preventDefault();
-                    viewCourtDate(info.event.id);
-                },
-                eventDidMount: function(info) {
-                    if (window.legalproMountCalendarEventClickable) {
-                        window.legalproMountCalendarEventClickable(info);
-                    }
-                    info.el.setAttribute('title', info.event.title || 'Court date');
-                }
-            });
-            clientCourtTrackingCalendar.render();
-            initCctCalendarSearch(courtEvents);
-            initClientCourtDatesTablePagination();
         });
 
-        function initCctCalendarSearch(courtEvents) {
-            var input = document.getElementById('cctCalSearchInput');
-            var resultsEl = document.getElementById('cctCalSearchResults');
-            if (!input || !resultsEl) {
-                return;
-            }
-
-            function courtStatusKey(status) {
-                var value = String(status || 'scheduled').toLowerCase();
-                if (['scheduled', 'completed', 'cancelled', 'postponed'].indexOf(value) === -1) {
-                    return 'scheduled';
-                }
-                return value;
-            }
-
-            function hideResults() {
-                resultsEl.hidden = true;
-                resultsEl.innerHTML = '';
-            }
-
-            function renderSearchResults(matches) {
-                var query = input.value.trim();
-                if (!query) {
-                    hideResults();
-                    return;
-                }
-                if (!matches.length) {
-                    resultsEl.innerHTML = '<div class="cct-cal-search-empty">' + (window.clientPortalI18n && window.clientPortalI18n.no_court_search_match || 'No court dates match your search.') + '</div>';
-                    resultsEl.hidden = false;
-                    return;
-                }
-
-                var html = '';
-                matches.slice(0, 12).forEach(function(ev) {
-                    var props = ev.extendedProps || {};
-                    var statusKey = courtStatusKey(props.status);
-                    var title = ev.title || 'Court date';
-                    var when = props.courtDateLabel || '';
-                    var hearing = props.hearingTitle || '';
-                    var location = props.location ? ' · ' + props.location : '';
-                    html += '<button type="button" class="cct-cal-search-item" data-court-date-id="' + escapeHtmlCct(props.courtDateId || ev.id) + '" data-start="' + escapeHtmlCct(ev.start || '') + '">' +
-                        '<span class="cct-cal-search-item__dot cct-cal-search-item__dot--' + escapeHtmlCct(statusKey) + '" aria-hidden="true"></span>' +
-                        '<span class="cct-cal-search-item__body">' +
-                            '<p class="cct-cal-search-item__title">' + escapeHtmlCct(title) + '</p>' +
-                            '<p class="cct-cal-search-item__sub">' + escapeHtmlCct(when) + (hearing ? ' · ' + escapeHtmlCct(hearing) : '') + escapeHtmlCct(location) + ' · ' + escapeHtmlCct(props.statusLabel || props.status || 'Scheduled') + '</p>' +
-                        '</span>' +
-                    '</button>';
-                });
-                resultsEl.innerHTML = html;
-                resultsEl.hidden = false;
-            }
-
-            input.addEventListener('input', function() {
-                var q = input.value.trim().toLowerCase();
-                if (!q) {
-                    hideResults();
-                    return;
-                }
-
-                var matches = courtEvents.filter(function(ev) {
-                    var props = ev.extendedProps || {};
-                    var hay = props.searchHay || ((ev.title || '') + ' ' + (props.case_title || '')).toLowerCase();
-                    return hay.indexOf(q) !== -1;
-                });
-
-                matches.sort(function(a, b) {
-                    return new Date(b.start).getTime() - new Date(a.start).getTime();
-                });
-
-                renderSearchResults(matches);
-            });
-
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    hideResults();
-                    input.blur();
-                }
-            });
-
-            resultsEl.addEventListener('click', function(e) {
-                var btn = e.target.closest('[data-court-date-id]');
-                if (!btn) {
-                    return;
-                }
-                var id = btn.getAttribute('data-court-date-id');
-                var start = btn.getAttribute('data-start');
-                if (clientCourtTrackingCalendar && start) {
-                    clientCourtTrackingCalendar.gotoDate(start);
-                }
-                viewCourtDate(id);
-                hideResults();
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.cct-cal-search-wrap')) {
-                    hideResults();
-                }
-            });
-        }
-    </script>
-
-    <script>
         function viewCourtDate(id) {
             var events = <?php echo json_encode($court_dates); ?>;
             var eventData = events.find(function(e) { return e.id == id; });
@@ -1078,49 +695,12 @@ if (!empty($_SESSION['error_message'])) {
             }
         }
     </script>
-    <script>
-    (function () {
-        function applyClientCourtTableSearch() {
-            var params = new URLSearchParams(window.location.search);
-            var q = (params.get('q') || '').trim().toLowerCase();
-            var rows = document.querySelectorAll('.cct-table tbody .cct-court-row[data-search]');
-            var visible = 0;
-            rows.forEach(function (row) {
-                if (!q) {
-                    row.style.display = '';
-                    visible++;
-                    return;
-                }
-                var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
-                var show = hay.indexOf(q) !== -1;
-                row.style.display = show ? '' : 'none';
-                if (show) {
-                    visible++;
-                }
-            });
-            var countEl = document.querySelector('#cctRowCount');
-            if (countEl) {
-                countEl.textContent = visible + ' ' + (visible === 1 ? 'court date' : 'court dates') + ' total';
-            }
-            if (typeof window.cctCourtShowPage === 'function') {
-                window.cctCourtShowPage(1);
-            }
-        }
-        document.addEventListener('DOMContentLoaded', applyClientCourtTableSearch);
-    })();
-    </script>
-    <script>
-    (function () {
-        document.addEventListener('DOMContentLoaded', function () {
-            var params = new URLSearchParams(window.location.search);
-            var q = (params.get('q') || '').trim().toLowerCase();
-            if (!q) return;
-            document.querySelectorAll('#upcomingCourtDatesList .cct-search-row').forEach(function (row) {
-                var hay = (row.getAttribute('data-search') || row.textContent || '').toLowerCase();
-                row.style.display = hay.indexOf(q) !== -1 ? '' : 'none';
-            });
-        });
-    })();
-    </script>
+    <?php echo legalpro_portal_list_filter_script(
+        'clientCourtDatesSearchInput',
+        'clientCourtDatesTableBody',
+        'clientCourtDatesFilterEmpty',
+        '.legalpro-admin-list-row',
+        'clientCourtDatesStatusFilter'
+    ); ?>
 </body>
 </html>

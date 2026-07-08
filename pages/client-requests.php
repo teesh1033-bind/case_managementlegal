@@ -42,11 +42,10 @@ $clientPageNavbar = legalpro_render_client_page_navbar(
     ]
 );
 
-$assistantLink = '<a href="chatbot.php">' . htmlspecialchars(client_t('requests.open_assistant')) . '</a>';
 $rowsHtml = '';
 if (!$requests) {
     $rowsHtml = '<tr><td colspan="5" class="text-center text-muted py-4">'
-        . client_t('requests.empty', ['assistant' => $assistantLink])
+        . htmlspecialchars(client_t('requests.empty'))
         . '</td></tr>';
 } else {
     foreach ($requests as $r) {
@@ -80,12 +79,11 @@ $html = <<<'HTML'
 		{CLIENT_NAVBAR}
 		<div class="container-fluid py-4">
 			<div class="card">
-				<div class="card-header pb-0 d-flex justify-content-between align-items-center">
+				<div class="card-header pb-0">
 					<div>
 						<h6 class="mb-0">{LBL_TITLE}</h6>
 						<p class="text-sm text-muted mb-0">{LBL_SUBTITLE}</p>
 					</div>
-					<a href="chatbot.php" class="btn btn-sm btn-primary mb-0">{LBL_ASK_AI}</a>
 				</div>
 				<div class="card-body px-0 pt-0 pb-2">
 					<div class="cp-portal-table-wrap" data-portal-table-wrap data-portal-row=".cr-request-row" data-portal-per-page="10" data-portal-show-page-global="crRequestShowPage">
@@ -124,7 +122,6 @@ $html = str_replace('{HTML_LANG}', client_portal_html_lang(), $html);
 $html = str_replace('{PAGE_TITLE}', htmlspecialchars(client_t('requests.page_title')), $html);
 $html = str_replace('{LBL_TITLE}', htmlspecialchars(client_t('requests.title')), $html);
 $html = str_replace('{LBL_SUBTITLE}', htmlspecialchars(client_t('requests.subtitle')), $html);
-$html = str_replace('{LBL_ASK_AI}', htmlspecialchars(client_t('requests.ask_ai')), $html);
 $html = str_replace('{COL_TYPE}', htmlspecialchars(client_t('requests.col_type')), $html);
 $html = str_replace('{COL_SUBJECT}', htmlspecialchars(client_t('requests.col_subject')), $html);
 $html = str_replace('{COL_CASE}', htmlspecialchars(client_t('requests.col_case')), $html);

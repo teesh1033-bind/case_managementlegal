@@ -26,8 +26,8 @@ function getPortalThemeColorPresets(): array
             'label' => 'Blue',
             'primary' => $brand,
             'primary_dark' => $brandDark,
-            'sidebar_bg' => '#021a3a',
-            'sidebar_deep' => '#001028',
+            'sidebar_bg' => '#000000',
+            'sidebar_deep' => '#000000',
             'badge_class' => 'bg-gradient-primary',
         ],
         'dark' => [
@@ -165,6 +165,26 @@ function getPortalTheme(): array
 function legalpro_portal_theme_body_class(): string
 {
     return getEffectivePortalThemeMode() === 'dark' ? ' legalpro-dark-mode' : '';
+}
+
+/**
+ * CSS classes for View / Edit / Open row actions (system accent).
+ */
+function legalpro_portal_accent_action_btn_class(string $size = 'sm'): string
+{
+    $size = in_array($size, ['sm', 'md', 'lg'], true) ? $size : 'sm';
+
+    return 'btn btn-' . $size . ' lp-portal-accent-btn mb-0';
+}
+
+/**
+ * CSS classes for Delete / Remove row actions (solid danger).
+ */
+function legalpro_portal_danger_action_btn_class(string $size = 'sm'): string
+{
+    $size = in_array($size, ['sm', 'md', 'lg'], true) ? $size : 'sm';
+
+    return 'btn btn-' . $size . ' lp-portal-danger-btn mb-0';
 }
 
 function savePortalTheme(string $mode, string $color, ?string $customPrimary = null): array
@@ -581,7 +601,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
         ['url' => 'client-appointments.php', 'icon' => 'calendar', 'label' => $t('nav.appointments', 'Appointments')],
         ['url' => 'client-payments.php', 'icon' => 'credit-card', 'label' => $t('nav.payments', 'Payments')],
         ['url' => 'client-court-tracking.php', 'icon' => 'landmark', 'label' => $t('nav.court_tracking', 'Court Tracking')],
-        ['url' => 'chatbot.php', 'icon' => 'bot', 'label' => $t('nav.ai_assistant', 'AI Assistant')],
         ['url' => 'client-requests.php', 'icon' => 'message-circle', 'label' => $t('nav.my_requests', 'My requests')],
     ];
 
@@ -2044,15 +2063,17 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode.admin-cases-page .btn-legalpro-case-open {'
-        . 'background: ' . portalThemeHexToRgba($primary, 0.18) . ' !important;'
-        . 'border-color: ' . portalThemeHexToRgba($primary, 0.55) . ' !important;'
-        . 'color: ' . $primaryOnDark . ' !important;'
+        . 'background: ' . $primary . ' !important;'
+        . 'background-image: linear-gradient(135deg, ' . $primary . ' 0%, ' . $primaryDark . ' 100%) !important;'
+        . 'border-color: ' . $primary . ' !important;'
+        . 'color: #fff !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.admin-cases-page .btn-legalpro-case-open:hover,'
         . 'body.legalpro-dark-mode.admin-cases-page .btn-legalpro-case-open:focus {'
-        . 'background: ' . $primary . ' !important;'
-        . 'border-color: ' . $primary . ' !important;'
+        . 'background: ' . $primaryDark . ' !important;'
+        . 'background-image: none !important;'
+        . 'border-color: ' . $primaryDark . ' !important;'
         . 'color: #fff !important;'
         . '}';
 
@@ -2661,9 +2682,6 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= $clientDark . ' .btn-cd-link,'
-        . $clientDark . ' .btn-view,'
-        . $clientDark . ' .btn-det,'
-        . $clientDark . ' .btn-cct-view,'
         . $clientDark . ' .btn-cp-link,'
         . $clientDark . ' .btn-action,'
         . $clientDark . ' .cb-shortcut,'
@@ -2673,10 +2691,17 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'background: transparent !important;'
         . '}';
 
+    $css .= $clientDark . ' .lp-portal-accent-btn,'
+        . $clientDark . ' .btn-view,'
+        . $clientDark . ' .btn-det,'
+        . $clientDark . ' .btn-cct-view {'
+        . 'background: ' . $primary . ' !important;'
+        . 'background-image: linear-gradient(135deg, ' . $primary . ' 0%, ' . $primaryDark . ' 100%) !important;'
+        . 'border-color: ' . $primary . ' !important;'
+        . 'color: #fff !important;'
+        . '}';
+
     $css .= $clientDark . ' .btn-cd-link:hover,'
-        . $clientDark . ' .btn-view:hover,'
-        . $clientDark . ' .btn-det:hover,'
-        . $clientDark . ' .btn-cct-view:hover,'
         . $clientDark . ' .btn-cp-link:hover,'
         . $clientDark . ' .btn-action:hover,'
         . $clientDark . ' .cb-shortcut:hover,'
@@ -2684,6 +2709,20 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'background: var(--lp-dark-surface-hover) !important;'
         . 'color: #fff !important;'
         . 'border-color: rgba(255, 255, 255, 0.22) !important;'
+        . '}';
+
+    $css .= $clientDark . ' .lp-portal-accent-btn:hover,'
+        . $clientDark . ' .lp-portal-accent-btn:focus,'
+        . $clientDark . ' .btn-view:hover,'
+        . $clientDark . ' .btn-view:focus,'
+        . $clientDark . ' .btn-det:hover,'
+        . $clientDark . ' .btn-det:focus,'
+        . $clientDark . ' .btn-cct-view:hover,'
+        . $clientDark . ' .btn-cct-view:focus {'
+        . 'background: ' . $primaryDark . ' !important;'
+        . 'background-image: none !important;'
+        . 'border-color: ' . $primaryDark . ' !important;'
+        . 'color: #fff !important;'
         . '}';
 
     $css .= $clientDark . ' .cb-send-btn,'
@@ -3231,8 +3270,8 @@ function renderPortalThemeCss(): string
     $preset = $theme['preset'];
     $primary = $preset['primary'];
     $primaryDark = $preset['primary_dark'];
-    $sidebarBg = $preset['sidebar_bg'];
-    $sidebarDeep = $preset['sidebar_deep'];
+    $sidebarBg = '#000000';
+    $sidebarDeep = '#000000';
     $rgb = portalThemePrimaryRgb($primary);
     $soft14 = portalThemeHexToRgba($primary, 0.14);
     $soft12 = portalThemeHexToRgba($primary, 0.12);
@@ -3249,6 +3288,9 @@ function renderPortalThemeCss(): string
         . '--bs-link-color: ' . $primary . ';'
         . '--bs-link-color-rgb: ' . $rgb . ';'
         . '--bs-focus-ring-color: rgba(' . $rgb . ', 0.25);'
+        . '--lp-sidebar-width: 280px;'
+        . '--lp-admin-sidebar-width: 280px;'
+        . '--lp-portal-sidebar-width: 280px;'
         . '--lp-admin-primary: ' . $primary . ';'
         . '--lp-admin-primary-dark: ' . $primaryDark . ';'
         . '--lp-admin-gradient: ' . $gradient . ';'
@@ -3540,8 +3582,8 @@ function renderPortalSidebarPaintCss(): string
     $preset = $theme['preset'];
     $primary = $preset['primary'];
     $primaryDark = $preset['primary_dark'];
-    $sidebarBg = $preset['sidebar_bg'];
-    $sidebarDeep = $preset['sidebar_deep'];
+    $sidebarBg = '#000000';
+    $sidebarDeep = '#000000';
     $gradient = 'linear-gradient(135deg, ' . $primary . ' 0%, ' . $primaryDark . ' 100%)';
     $sidebarGradient = 'linear-gradient(180deg, ' . $sidebarBg . ' 0%, ' . $sidebarDeep . ' 100%)';
     $shadow = portalThemeHexToRgba($primary, 0.35);
