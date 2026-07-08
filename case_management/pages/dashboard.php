@@ -23,13 +23,12 @@ foreach ([
 }
 
 // ─── Core KPIs ────────────────────────────────────────────────────────────────
-$totalCases = $activeCases = $completedCases = $pendingTasks = $newCasesThisWeek = 0;
+$totalCases = $activeCases = $pendingTasks = $newCasesThisWeek = 0;
 $dueToday = $appointmentsToday = $appointmentsThisWeek = $unpaidInvoices = 0;
 
 try {
     $totalCases      = (int)$pdo->query("SELECT COUNT(*) FROM cases")->fetchColumn();
     $activeCases     = (int)$pdo->query("SELECT COUNT(*) FROM cases WHERE status != 'closed'")->fetchColumn();
-    $completedCases  = (int)$pdo->query("SELECT COUNT(*) FROM cases WHERE status = 'closed'")->fetchColumn();
     $newCasesThisWeek= (int)$pdo->query("SELECT COUNT(*) FROM cases WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
     $pendingTasks    = (int)$pdo->query("SELECT COUNT(*) FROM appointments WHERE status = 'pending'")->fetchColumn();
     $dueToday        = (int)$pdo->query("SELECT COUNT(*) FROM appointments WHERE DATE(starts_at) = CURDATE() AND status = 'pending'")->fetchColumn();
@@ -148,7 +147,6 @@ try {
 
 // ─── Derived ──────────────────────────────────────────────────────────────────
 require_once __DIR__ . '/../inc/legalpro-icons.php';
-$completionRate     = $totalCases > 0 ? round(($completedCases / $totalCases) * 100) : 0;
 $adminDisplayName   = $_SESSION['admin_username'] ?? 'Admin';
 $welcomeDate        = date('l, j F Y');
 
@@ -281,7 +279,7 @@ ob_start();
         /* Collection rate badge */
         .lp-collection-badge {
             display: inline-flex; align-items: center; gap: 5px;
-            background: rgba(45,206,137,0.1); color: #1e9e6a;
+            background: rgba(117,81,255,0.12); color: #4f46e5;
             font-size: 0.72rem; font-weight: 700;
             padding: 3px 10px; border-radius: 99px;
         }
@@ -379,10 +377,10 @@ echo ob_get_clean();
         </div>
 
         <!-- ── FOUR KPI STAT CARDS ─────────────────────────────────────── -->
-        <div class="row mb-4">
-            <div class="col-xl-3 col-sm-6 mb-4 mb-xl-0">
+        <div class="row g-3 mb-4 align-items-stretch">
+            <div class="col-xl-4 col-sm-6">
                 <a href="tables.php" style="text-decoration:none;color:inherit;">
-                    <div class="card dashboard-stat-card">
+                    <div class="card dashboard-stat-card h-100 mb-0">
                         <div class="card-body p-3">
                             <div class="row align-items-center">
                                 <div class="col-8">
@@ -403,9 +401,9 @@ echo ob_get_clean();
                     </div>
                 </a>
             </div>
-            <div class="col-xl-3 col-sm-6 mb-4 mb-xl-0">
+            <div class="col-xl-4 col-sm-6">
                 <a href="tables.php" style="text-decoration:none;color:inherit;">
-                    <div class="card dashboard-stat-card">
+                    <div class="card dashboard-stat-card h-100 mb-0">
                         <div class="card-body p-3">
                             <div class="row align-items-center">
                                 <div class="col-8">
@@ -423,32 +421,9 @@ echo ob_get_clean();
                     </div>
                 </a>
             </div>
-            <div class="col-xl-3 col-sm-6 mb-4 mb-xl-0">
-                <a href="tables.php" style="text-decoration:none;color:inherit;">
-                    <div class="card dashboard-stat-card">
-                        <div class="card-body p-3">
-                            <div class="row align-items-center">
-                                <div class="col-8">
-                                    <p class="text-sm mb-0 text-uppercase font-weight-bold">Completed</p>
-                                    <h5 class="font-weight-bolder"><?= $completedCases ?></h5>
-                                    <p class="mb-0">
-                                        <span class="lp-kpi-delta lp-kpi-delta--up"><?= $completionRate ?>%</span>
-                                        <span class="text-muted ms-1" style="font-size:.75rem;">completion rate</span>
-                                    </p>
-                                </div>
-                                <div class="col-4 text-end">
-                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">
-                                        <?= legalpro_icon('file-text') ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-xl-3 col-sm-6">
+            <div class="col-xl-4 col-sm-6">
                 <a href="appointments.php" style="text-decoration:none;color:inherit;">
-                    <div class="card dashboard-stat-card">
+                    <div class="card dashboard-stat-card h-100 mb-0">
                         <div class="card-body p-3">
                             <div class="row align-items-center">
                                 <div class="col-8">
@@ -648,7 +623,7 @@ echo ob_get_clean();
     var g1 = ctx.createLinearGradient(0,230,0,50);
     g1.addColorStop(1,'rgba(94,114,228,0.18)'); g1.addColorStop(0,'rgba(94,114,228,0)');
     var g2 = ctx.createLinearGradient(0,230,0,50);
-    g2.addColorStop(1,'rgba(45,206,137,0.18)'); g2.addColorStop(0,'rgba(45,206,137,0)');
+    g2.addColorStop(1,'rgba(117,81,255,0.22)'); g2.addColorStop(0,'rgba(117,81,255,0)');
 
     new Chart(ctx, {
         type: 'line',
@@ -661,7 +636,7 @@ echo ob_get_clean();
                 data: <?= $chartInvoicedJson ?>
             },{
                 label: 'Collected', tension: 0.4, pointRadius: 4,
-                pointBackgroundColor: '#2dce89', borderColor: '#2dce89',
+                pointBackgroundColor: '#7551FF', borderColor: '#7551FF',
                 backgroundColor: g2, borderWidth: 2.5, fill: true,
                 data: <?= $chartPaidJson ?>
             }]
@@ -698,7 +673,7 @@ echo ob_get_clean();
     if (!ctx) return;
     var labels = <?= $catLabels ?>;
     var data   = <?= $catData ?>;
-    var colors = ['#5e72e4','#2dce89','#11cdef','#fb6340','#825ee4','#f5365c'];
+    var colors = ['#5e72e4','#7551FF','#3B82F6','#8B5CF6','#1D4ED8','#7C3AED'];
 
     new Chart(ctx, {
         type: 'doughnut',

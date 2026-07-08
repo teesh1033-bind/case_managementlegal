@@ -23,13 +23,12 @@ foreach ([
 }
 
 // ─── Core KPIs ────────────────────────────────────────────────────────────────
-$totalCases = $activeCases = $completedCases = $pendingTasks = $newCasesThisWeek = 0;
+$totalCases = $activeCases = $pendingTasks = $newCasesThisWeek = 0;
 $dueToday = $appointmentsToday = $appointmentsThisWeek = $unpaidInvoices = 0;
 
 try {
     $totalCases      = (int)$pdo->query("SELECT COUNT(*) FROM cases")->fetchColumn();
     $activeCases     = (int)$pdo->query("SELECT COUNT(*) FROM cases WHERE status != 'closed'")->fetchColumn();
-    $completedCases  = (int)$pdo->query("SELECT COUNT(*) FROM cases WHERE status = 'closed'")->fetchColumn();
     $newCasesThisWeek= (int)$pdo->query("SELECT COUNT(*) FROM cases WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
     $pendingTasks    = (int)$pdo->query("SELECT COUNT(*) FROM appointments WHERE status = 'pending'")->fetchColumn();
     $dueToday        = (int)$pdo->query("SELECT COUNT(*) FROM appointments WHERE DATE(starts_at) = CURDATE() AND status = 'pending'")->fetchColumn();
@@ -81,7 +80,6 @@ try {
 
 // ─── Derived ──────────────────────────────────────────────────────────────────
 require_once __DIR__ . '/../inc/legalpro-icons.php';
-$completionRate     = $totalCases > 0 ? round(($completedCases / $totalCases) * 100) : 0;
 $adminDisplayName   = $_SESSION['admin_username'] ?? 'Admin';
 $welcomeDate        = date('l, j F Y');
 
@@ -149,8 +147,8 @@ ob_start();
         .lp-kpi-delta--down { color: var(--vu-danger, #f5365c); }
         .lp-collection-badge {
             display: inline-flex; align-items: center; gap: 5px;
-            background: var(--vu-collection-bg, rgba(45,206,137,0.1));
-            color: var(--vu-collection-text, #1e9e6a);
+            background: var(--vu-collection-bg, rgba(117,81,255,0.12));
+            color: var(--vu-collection-text, #4f46e5);
             font-size: 0.72rem; font-weight: 700;
             padding: 3px 10px; border-radius: 99px;
         }
@@ -192,7 +190,6 @@ echo ob_get_clean();
     <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
         <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div class="legalpro-navbar-heading">
-                <p class="vu-breadcrumb mb-0">Pages / <strong>Dashboard</strong></p>
                 <h6 class="vu-page-title font-weight-bolder mb-0">Dashboard</h6>
                 <p class="dashboard-welcome-sub mb-0">
                     Welcome back, <?= htmlspecialchars($adminDisplayName) ?> &nbsp;·&nbsp; <?= htmlspecialchars($welcomeDate) ?>
@@ -204,10 +201,10 @@ echo ob_get_clean();
     <div class="container-fluid py-4 px-4">
 
         <!-- ── FOUR KPI STAT CARDS ─────────────────────────────────────── -->
-        <div class="row mb-4">
-            <div class="col-xl-3 col-sm-6 mb-4 mb-xl-0">
+        <div class="row g-3 mb-4 align-items-stretch">
+            <div class="col-xl-4 col-sm-6">
                 <a href="tables.php" style="text-decoration:none;color:inherit;">
-                    <div class="card dashboard-stat-card">
+                    <div class="card dashboard-stat-card h-100 mb-0">
                         <div class="card-body p-3">
                             <div class="row align-items-center">
                                 <div class="col-8">
@@ -228,9 +225,9 @@ echo ob_get_clean();
                     </div>
                 </a>
             </div>
-            <div class="col-xl-3 col-sm-6 mb-4 mb-xl-0">
+            <div class="col-xl-4 col-sm-6">
                 <a href="tables.php" style="text-decoration:none;color:inherit;">
-                    <div class="card dashboard-stat-card">
+                    <div class="card dashboard-stat-card h-100 mb-0">
                         <div class="card-body p-3">
                             <div class="row align-items-center">
                                 <div class="col-8">
@@ -248,32 +245,9 @@ echo ob_get_clean();
                     </div>
                 </a>
             </div>
-            <div class="col-xl-3 col-sm-6 mb-4 mb-xl-0">
-                <a href="tables.php" style="text-decoration:none;color:inherit;">
-                    <div class="card dashboard-stat-card">
-                        <div class="card-body p-3">
-                            <div class="row align-items-center">
-                                <div class="col-8">
-                                    <p class="text-sm mb-0 text-uppercase font-weight-bold">Completed</p>
-                                    <h5 class="font-weight-bolder"><?= $completedCases ?></h5>
-                                    <p class="mb-0">
-                                        <span class="lp-kpi-delta lp-kpi-delta--up"><?= $completionRate ?>%</span>
-                                        <span class="text-muted ms-1" style="font-size:.75rem;">completion rate</span>
-                                    </p>
-                                </div>
-                                <div class="col-4 text-end">
-                                    <div class="dashboard-stat-icon-wrap dashboard-stat-icon-wrap--success">
-                                        <?= legalpro_icon('file-text') ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-xl-3 col-sm-6">
+            <div class="col-xl-4 col-sm-6">
                 <a href="appointments.php" style="text-decoration:none;color:inherit;">
-                    <div class="card dashboard-stat-card">
+                    <div class="card dashboard-stat-card h-100 mb-0">
                         <div class="card-body p-3">
                             <div class="row align-items-center">
                                 <div class="col-8">
@@ -298,25 +272,16 @@ echo ob_get_clean();
 
         <!-- ── WELCOME + INSIGHTS (Vision UI row) ─────────────────────── -->
         <div class="row mb-4">
-            <div class="col-lg-7 mb-4 mb-lg-0">
+            <div class="col-lg-8 mb-4 mb-lg-0">
                 <div class="card vu-welcome-card h-100 mb-0">
                     <h4>Welcome back, <?= htmlspecialchars($adminDisplayName) ?></h4>
                     <p>Monitor your legal operations, track cases, appointments, and financial performance from one place.</p>
                     <a href="case-new.php" class="vu-welcome-btn">Create new case →</a>
                 </div>
             </div>
-            <div class="col-lg-5">
+            <div class="col-lg-4">
                 <div class="row g-3">
-                    <div class="col-sm-6">
-                        <div class="card vu-mini-card h-100 mb-0 text-center">
-                            <p class="lp-section-hd mb-1">Completion Rate</p>
-                            <p class="lp-section-sub">Closed vs total cases</p>
-                            <div class="vu-gauge" style="--pct: <?= (int) $completionRate ?>;">
-                                <span><?= $completionRate ?>%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-6">
+                    <div class="col-12">
                         <div class="card vu-mini-card h-100 mb-0">
                             <p class="lp-section-hd mb-1">Operations</p>
                             <p class="lp-section-sub">Live activity snapshot</p>
@@ -422,7 +387,7 @@ function vuChartTheme() {
         grid: dark ? 'rgba(160, 174, 192, 0.15)' : 'rgba(112, 126, 174, 0.18)',
         doughnutBorder: dark ? '#1a1f37' : '#ffffff',
         invoicedFill: dark ? 'rgba(2, 62, 138, 0.35)' : 'rgba(2, 62, 138, 0.22)',
-        collectedFill: dark ? 'rgba(1, 181, 116, 0.28)' : 'rgba(1, 181, 116, 0.2)'
+        collectedFill: dark ? 'rgba(117, 81, 255, 0.3)' : 'rgba(117, 81, 255, 0.22)'
     };
 }
 
@@ -437,7 +402,7 @@ function vuChartTheme() {
     g1.addColorStop(1, 'rgba(2, 62, 138, 0)');
     var g2 = ctx.createLinearGradient(0, 200, 0, 20);
     g2.addColorStop(0, theme.collectedFill);
-    g2.addColorStop(1, 'rgba(1, 181, 116, 0)');
+    g2.addColorStop(1, 'rgba(117, 81, 255, 0)');
 
     new Chart(ctx, {
         type: 'line',
@@ -450,7 +415,7 @@ function vuChartTheme() {
                 data: <?= $chartInvoicedJson ?>
             }, {
                 label: 'Collected', tension: 0.45, pointRadius: 4,
-                pointBackgroundColor: '#01B574', borderColor: '#01B574',
+                pointBackgroundColor: '#7551FF', borderColor: '#7551FF',
                 backgroundColor: g2, borderWidth: 3, fill: true,
                 data: <?= $chartPaidJson ?>
             }]
@@ -487,7 +452,7 @@ function vuChartTheme() {
     var theme = vuChartTheme();
     var labels = <?= $catLabels ?>;
     var data   = <?= $catData ?>;
-    var colors = ['#023e8a', '#01B574', '#001845', '#FFB547', '#7551FF', '#E31A1A'];
+    var colors = ['#023e8a', '#7551FF', '#3B82F6', '#8B5CF6', '#1D4ED8', '#7C3AED'];
 
     new Chart(ctx, {
         type: 'doughnut',
