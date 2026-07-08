@@ -4,7 +4,6 @@ function getLawyerPortalLocales(): array
 {
     return [
         'en' => 'English',
-        'fr' => 'Français',
     ];
 }
 
@@ -19,23 +18,7 @@ function getLawyerPortalLocale(?int $lawyerId = null): string
         session_start();
     }
 
-    $locales = getLawyerPortalLocales();
-
-    if (!empty($_SESSION['lawyer_locale'])) {
-        $sessionLocale = strtolower(trim((string) $_SESSION['lawyer_locale']));
-        if (isset($locales[$sessionLocale])) {
-            return $sessionLocale;
-        }
-    }
-
-    $lawyerId = $lawyerId ?? (int) ($_SESSION['lawyer_id'] ?? 0);
-    if ($lawyerId > 0) {
-        $stored = strtolower(trim((string) getSetting(lawyerPortalLocaleSettingKey($lawyerId), '')));
-        if (isset($locales[$stored])) {
-            $_SESSION['lawyer_locale'] = $stored;
-            return $stored;
-        }
-    }
+    $_SESSION['lawyer_locale'] = 'en';
 
     return 'en';
 }
@@ -46,20 +29,14 @@ function saveLawyerPortalLocale(int $lawyerId, string $locale): array
         return ['ok' => false, 'message' => 'Invalid lawyer account.'];
     }
 
-    $locale = strtolower(trim($locale));
-    $locales = getLawyerPortalLocales();
-    if (!isset($locales[$locale])) {
-        return ['ok' => false, 'message' => lawyer_t('settings.invalid_locale', [], $locale)];
-    }
-
-    setSetting(lawyerPortalLocaleSettingKey($lawyerId), $locale);
+    setSetting(lawyerPortalLocaleSettingKey($lawyerId), 'en');
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    $_SESSION['lawyer_locale'] = $locale;
+    $_SESSION['lawyer_locale'] = 'en';
 
-    return ['ok' => true, 'message' => lawyer_t('settings.saved', [], $locale)];
+    return ['ok' => true, 'message' => lawyer_t('settings.saved')];
 }
 
 function lawyer_t(string $key, array $replace = [], ?string $forceLocale = null): string

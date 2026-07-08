@@ -190,18 +190,63 @@ $html = <<<'HTML'
             overflow: hidden;
         }
 
+        .login-scene::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(rgba(var(--lp-accent-rgb), 0.58), rgba(var(--lp-accent-rgb), 0.58)),
+                url("../assets/img/login-custom.png?v=6") center center / cover no-repeat;
+            background-blend-mode: color, normal;
+            filter: grayscale(0.15) contrast(1.08) brightness(0.82);
+            opacity: 1;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .login-scene::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.45;
+            background:
+                repeating-radial-gradient(
+                    ellipse at 20% 58%,
+                    rgba(120, 220, 255, 0.32) 0px,
+                    rgba(120, 220, 255, 0.32) 1px,
+                    rgba(120, 220, 255, 0) 5px,
+                    rgba(120, 220, 255, 0) 14px
+                ),
+                repeating-radial-gradient(
+                    ellipse at 80% 42%,
+                    rgba(120, 220, 255, 0.28) 0px,
+                    rgba(120, 220, 255, 0.28) 1px,
+                    rgba(120, 220, 255, 0) 6px,
+                    rgba(120, 220, 255, 0) 15px
+                );
+            mix-blend-mode: screen;
+        }
+
         .login-stage {
             display: flex;
-            align-items: stretch;
+            align-items: center;
+            justify-content: center;
             width: 100%;
             height: 100%;
             position: relative;
-            z-index: 1;
-            transition: transform 90ms linear, opacity 90ms linear;
+            z-index: 2;
+        }
+
+        .login-stage::before,
+        .login-stage::after {
+            content: none;
         }
 
         .login-plate {
-            flex: 0 0 50%;
+            flex: 0 0 auto;
+            width: min(640px, 94vw);
             min-width: 0;
             display: flex;
             align-items: center;
@@ -209,40 +254,24 @@ $html = <<<'HTML'
             padding: clamp(1rem, 2.5vh, 2rem) clamp(1.25rem, 3vw, 2.5rem);
             position: relative;
             z-index: 3;
-            background: linear-gradient(90deg, #000000 0%, #000000 72%, rgba(0, 0, 0, 0.58) 86%, rgba(0, 0, 0, 0) 100%);
-            transition: transform 90ms linear, opacity 90ms linear;
+            background: transparent;
         }
 
         .login-plate::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 280px;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-            background: linear-gradient(90deg, rgba(0, 0, 0, 0.58) 0%, rgba(var(--lp-accent-rgb), 0.14) 55%, rgba(0, 0, 0, 0) 100%);
+            content: none;
         }
 
         .login-plate::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 72px;
-            height: 72px;
-            border-top: 2px solid rgba(var(--lp-accent-rgb), 0.35);
-            border-left: 2px solid rgba(var(--lp-accent-rgb), 0.35);
-            pointer-events: none;
-            z-index: 3;
+            content: none;
         }
 
         .glass-card {
+            --lp-corner-size: clamp(52px, 8vh, 72px);
+            --lp-corner-outset: clamp(20px, 3.4vh, 28px);
             width: 100%;
             max-width: min(600px, 96%);
             max-height: calc(100dvh - 2rem);
-            overflow: hidden;
+            overflow: visible;
             padding: clamp(1.75rem, 3.8vh, 2.75rem) clamp(2rem, 3.6vw, 2.9rem);
             border-radius: 28px;
             background: var(--lp-glass);
@@ -254,30 +283,63 @@ $html = <<<'HTML'
             z-index: 2;
         }
 
+        .glass-card::before,
+        .glass-card::after {
+            content: '';
+            position: absolute;
+            width: var(--lp-corner-size);
+            height: var(--lp-corner-size);
+            pointer-events: none;
+            z-index: 3;
+            border-color: color-mix(in srgb, var(--lp-accent) 72%, white 28%);
+            border-style: solid;
+            border-width: 0;
+        }
+
+        .glass-card::before {
+            top: calc(-1 * var(--lp-corner-outset));
+            left: calc(-1 * var(--lp-corner-outset));
+            border-top-width: 2px;
+            border-left-width: 2px;
+        }
+
+        .glass-card::after {
+            right: calc(-1 * var(--lp-corner-outset));
+            bottom: calc(-1 * var(--lp-corner-outset));
+            border-right-width: 2px;
+            border-bottom-width: 2px;
+        }
+
         .login-art {
             position: absolute;
             top: 0;
             right: 0;
-            width: 64%;
+            width: 58%;
             height: 100%;
             min-width: 0;
             padding: 0;
             overflow: hidden;
             z-index: 1;
-            background: #000000;
-            transition: transform 90ms linear, opacity 90ms linear;
+            background: transparent;
+            -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.55) 22%, #000 42%, #000 100%);
+            mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.55) 22%, #000 42%, #000 100%);
+        }
+
+        .login-art.login-art--left {
+            right: auto;
+            left: 0;
+            -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 58%, rgba(0, 0, 0, 0.55) 78%, transparent 100%);
+            mask-image: linear-gradient(90deg, #000 0%, #000 58%, rgba(0, 0, 0, 0.55) 78%, transparent 100%);
+        }
+
+        .login-art--left .login-art__frame img {
+            transform: scaleY(-1);
+            transform-origin: center;
+            object-position: 80% center;
         }
 
         .login-art::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 300px;
-            height: 100%;
-            pointer-events: none;
-            z-index: 3;
-            background: linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0%, rgba(var(--lp-accent-rgb), 0.12) 42%, rgba(0, 0, 0, 0) 100%);
+            content: none;
         }
 
         .login-art__frame {
@@ -291,31 +353,23 @@ $html = <<<'HTML'
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: 8% center;
+            object-position: 14% center;
             display: block;
-        }
-
-        .login-art__frame::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.08);
-            pointer-events: none;
-            z-index: 2;
+            filter: grayscale(1) contrast(1.12) brightness(0.9);
         }
 
         .login-art__frame::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: rgba(var(--lp-accent-rgb), 0.58);
-            mix-blend-mode: multiply;
+            background: rgba(var(--lp-accent-rgb), 0.62);
+            mix-blend-mode: color;
             pointer-events: none;
             z-index: 1;
         }
 
-        .login-art__frame img {
-            filter: grayscale(1) contrast(1.12) brightness(0.9);
+        .login-art__frame::after {
+            content: none;
         }
 
         .login-transition-gate {
@@ -345,38 +399,45 @@ $html = <<<'HTML'
         }
 
         body.login-page.login-entering .login-stage {
-            animation: lpPortalJump 150ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation: lpPortalJump 55ms linear forwards;
         }
         body.login-page.login-entering .login-plate {
-            animation: lpPlateSnap 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: lpPlateSnap 55ms linear forwards;
         }
         body.login-page.login-entering .login-art {
-            animation: lpArtRush 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: lpArtRush 55ms linear forwards;
+        }
+        body.login-page.login-entering .login-art--left {
+            animation: lpLeftRush 55ms linear forwards;
         }
         body.login-page.login-entering .login-transition-gate {
-            animation: lpGateSweep 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: lpGateSweep 55ms linear forwards;
         }
 
         @keyframes lpPortalJump {
             0% { transform: translateX(0); opacity: 1; }
-            35% { transform: translateX(-4%); opacity: 0.99; }
-            100% { transform: translateX(-13%); opacity: 0.95; }
+            100% { transform: translateX(-8%); opacity: 0.97; }
         }
 
         @keyframes lpPlateSnap {
             0% { transform: translateX(0) scale(1); opacity: 1; }
-            100% { transform: translateX(-9%) scale(0.982); opacity: 0.92; }
+            100% { transform: translateX(-5%) scale(0.988); opacity: 0.96; }
         }
 
         @keyframes lpArtRush {
             0% { transform: translateX(0) scale(1); opacity: 1; }
-            100% { transform: translateX(-22%) scale(1.035); opacity: 0.94; }
+            100% { transform: translateX(-12%) scale(1.02); opacity: 0.97; }
+        }
+
+        @keyframes lpLeftRush {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-6%); opacity: 0.95; }
         }
 
         @keyframes lpGateSweep {
             0% { transform: translateX(0); opacity: 0; }
-            8% { opacity: 1; }
-            100% { transform: translateX(-145vw); opacity: 0.35; }
+            20% { opacity: 1; }
+            100% { transform: translateX(-145vw); opacity: 0.2; }
         }
 
         .card-head {
@@ -601,15 +662,19 @@ $html = <<<'HTML'
                 height: auto;
                 min-height: 100dvh;
             }
+            .login-art--left,
+            .login-scene::after {
+                display: none;
+            }
             .login-plate {
                 flex: 1 1 auto;
                 max-width: none;
                 min-height: 0;
                 padding: 1.5rem;
             }
-            .login-plate::before {
-                width: 56px;
-                height: 56px;
+            .glass-card {
+                --lp-corner-size: 56px;
+                --lp-corner-outset: 20px;
             }
             .glass-card { max-height: none; overflow: visible; }
             .login-art {
@@ -632,6 +697,11 @@ $html = <<<'HTML'
     <div class="login-transition-gate" aria-hidden="true"></div>
     <div class="login-scene">
         <div class="login-stage">
+            <aside class="login-art login-art--left" aria-hidden="true">
+                <div class="login-art__frame">
+                    <img src="../assets/img/login-custom.png?v=6" alt="">
+                </div>
+            </aside>
             <div class="login-plate">
                 <div class="glass-card">
                 <div class="card-head">
@@ -703,7 +773,7 @@ $html = <<<'HTML'
 
             <aside class="login-art" aria-hidden="true">
                 <div class="login-art__frame">
-                    <img src="../assets/img/login-custom.png?v=2" alt="">
+                    <img src="../assets/img/login-custom.png?v=6" alt="">
                 </div>
             </aside>
         </div>
@@ -736,7 +806,7 @@ $html = <<<'HTML'
         var passwordToggle = document.getElementById('toggle_login_password');
         var loginForm = document.getElementById('loginForm');
         var loginButton = document.getElementById('loginButton');
-        var loginTransitionMs = 150;
+        var loginTransitionMs = 55;
         var isSubmittingWithTransition = false;
         if (passwordInput && passwordToggle) {
             passwordToggle.addEventListener('click', function () {

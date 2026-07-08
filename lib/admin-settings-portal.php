@@ -142,13 +142,8 @@ function legalpro_admin_settings_handle_post(array &$state): void
         }
 
         $adminId = (int) ($_SESSION['admin_id'] ?? 0);
-        if ($adminId > 0 && isset($_POST['locale'])) {
-            $localeResult = saveAdminPortalLocale($adminId, (string) $_POST['locale']);
-            if (!$localeResult['ok']) {
-                $state['message'] = $localeResult['message'];
-                $state['messageType'] = 'danger';
-                return;
-            }
+        if ($adminId > 0) {
+            saveAdminPortalLocale($adminId, 'en');
         }
 
         header('Location: ' . $redirect . '?msg=' . urlencode(admin_t('settings.saved')) . '&type=success');

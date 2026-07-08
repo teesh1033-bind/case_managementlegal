@@ -377,15 +377,6 @@ function renderLawyerPortalSettingsFullHtml(?PDO $pdo, int $lawyerId): string
     $currentMode = getLawyerPortalThemeMode($lawyerId);
     $lightChecked = $currentMode === 'light' ? ' checked' : '';
     $darkChecked = $currentMode === 'dark' ? ' checked' : '';
-    $currentLocale = getLawyerPortalLocale($lawyerId);
-    $locales = getLawyerPortalLocales();
-
-    $localeOptions = '';
-    foreach ($locales as $code => $label) {
-        $selected = $code === $currentLocale ? ' selected' : '';
-        $localeOptions .= '<option value="' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '"' . $selected . '>'
-            . htmlspecialchars($label) . '</option>';
-    }
 
     $t = static function (string $key, string $fallback): string {
         return lawyer_tf($key, $fallback);
@@ -456,18 +447,13 @@ function renderLawyerPortalSettingsFullHtml(?PDO $pdo, int $lawyerId): string
     ]);
 
     $appearanceBody = '
-        <p class="text-sm text-muted mb-4">' . htmlspecialchars($t('settings.appearance_help', 'Choose light or dark mode and your preferred language.')) . '</p>
-        <div class="mb-4">
+        <p class="text-sm text-muted mb-4">' . htmlspecialchars($t('settings.appearance_help', 'Choose light or dark mode for your portal.')) . '</p>
+        <div class="mb-0">
             <label class="form-label d-block mb-2">' . htmlspecialchars($t('settings.theme_mode', 'Theme mode')) . '</label>
             <div class="settings-theme-mode">
                 <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars($t('settings.light', 'Light')) . '</label>
                 <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars($t('settings.dark', 'Dark')) . '</label>
             </div>
-        </div>
-        <div class="mb-0">
-            <label class="form-label d-block mb-2" for="lawyer_locale">' . htmlspecialchars($t('settings.language_label', 'Display language')) . '</label>
-            <select class="form-select" name="locale" id="lawyer_locale" required>' . $localeOptions . '</select>
-            <p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($t('settings.language_help', 'Updates navigation labels and settings across the lawyer portal.')) . '</p>
         </div>';
 
     $privacyBody = '
@@ -589,19 +575,6 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
     $currentMode = getClientPortalThemeMode($clientId);
     $lightChecked = $currentMode === 'light' ? ' checked' : '';
     $darkChecked = $currentMode === 'dark' ? ' checked' : '';
-    $currentLocale = function_exists('getClientPortalLocale')
-        ? getClientPortalLocale($clientId)
-        : 'en';
-    $locales = function_exists('getClientPortalLocales')
-        ? getClientPortalLocales()
-        : ['en' => 'English'];
-
-    $localeOptions = '';
-    foreach ($locales as $code => $label) {
-        $selected = $code === $currentLocale ? ' selected' : '';
-        $localeOptions .= '<option value="' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '"' . $selected . '>'
-            . htmlspecialchars($label) . '</option>';
-    }
 
     $t = static function (string $key, string $fallback): string {
         if (!function_exists('client_t')) {
@@ -677,18 +650,13 @@ function renderClientPortalSettingsFullHtml(?PDO $pdo, int $clientId): string
     ]);
 
     $appearanceBody = '
-        <p class="text-sm text-muted mb-4">' . htmlspecialchars($t('settings.appearance_help', 'Choose light or dark mode and your preferred language.')) . '</p>
-        <div class="mb-4">
+        <p class="text-sm text-muted mb-4">' . htmlspecialchars($t('settings.appearance_help', 'Choose light or dark mode for your portal.')) . '</p>
+        <div class="mb-0">
             <label class="form-label d-block mb-2">' . htmlspecialchars($t('settings.theme_mode', 'Theme mode')) . '</label>
             <div class="settings-theme-mode">
                 <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars($t('settings.light', 'Light')) . '</label>
                 <label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars($t('settings.dark', 'Dark')) . '</label>
             </div>
-        </div>
-        <div class="mb-0">
-            <label class="form-label d-block mb-2" for="client_locale">' . htmlspecialchars($t('settings.language_label', 'Display language')) . '</label>
-            <select class="form-select" name="locale" id="client_locale" required>' . $localeOptions . '</select>
-            <p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars($t('settings.language_help', 'Updates navigation labels and settings across the client portal.')) . '</p>
         </div>';
 
     $privacyBody = '
@@ -3749,13 +3717,8 @@ function renderPortalThemeSettingsHtml(): string
     $darkChecked = $currentMode === 'dark' ? ' checked' : '';
 
     $adminId = (int) ($_SESSION['admin_id'] ?? 0);
-    $currentLocale = $adminId > 0 ? getAdminPortalLocale($adminId) : 'en';
-    $locales = getAdminPortalLocales();
-    $localeOptions = '';
-    foreach ($locales as $code => $label) {
-        $selected = $code === $currentLocale ? ' selected' : '';
-        $localeOptions .= '<option value="' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '"' . $selected . '>'
-            . htmlspecialchars($label) . '</option>';
+    if ($adminId > 0) {
+        getAdminPortalLocale($adminId);
     }
 
     $swatches = legalpro_render_portal_accent_palette_html($currentColor, $customPrimary);
@@ -3772,11 +3735,6 @@ function renderPortalThemeSettingsHtml(): string
         . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="light"' . $lightChecked . '> ' . htmlspecialchars(admin_t('settings.light')) . '</label>'
         . '<label class="settings-theme-mode__option"><input type="radio" name="theme_mode" value="dark"' . $darkChecked . '> ' . htmlspecialchars(admin_t('settings.dark')) . '</label>'
         . '</div>'
-        . '</div>'
-        . '<div class="mb-4">'
-        . '<label class="form-control-label d-block mb-2" for="admin_locale">' . htmlspecialchars(admin_t('settings.language_label')) . '</label>'
-        . '<select class="form-select" name="locale" id="admin_locale" required>' . $localeOptions . '</select>'
-        . '<p class="text-xs text-muted mt-2 mb-0">' . htmlspecialchars(admin_t('settings.language_help')) . '</p>'
         . '</div>'
         . '<div class="mb-4">'
         . '<label class="form-control-label d-block mb-2">' . htmlspecialchars(admin_t('settings.accent_color')) . '</label>'

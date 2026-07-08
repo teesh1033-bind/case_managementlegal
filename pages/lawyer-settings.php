@@ -16,15 +16,11 @@ $messageType = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_preferences') {
     $themeMode = isset($_POST['theme_mode']) ? (string) $_POST['theme_mode'] : 'light';
-    $locale = isset($_POST['locale']) ? (string) $_POST['locale'] : 'en';
     $themeResult = saveLawyerPortalThemeMode($lawyerId, $themeMode);
-    $localeResult = saveLawyerPortalLocale($lawyerId, $locale);
+    saveLawyerPortalLocale($lawyerId, 'en');
 
     if (!$themeResult['ok']) {
         $message = $themeResult['message'];
-        $messageType = 'danger';
-    } elseif (!$localeResult['ok']) {
-        $message = $localeResult['message'];
         $messageType = 'danger';
     } else {
         header('Location: lawyer-settings.php?msg=' . urlencode(lawyer_t('settings.saved')) . '&type=success');

@@ -4,7 +4,6 @@ function getAdminPortalLocales(): array
 {
     return [
         'en' => 'English',
-        'fr' => 'Français',
     ];
 }
 
@@ -19,23 +18,7 @@ function getAdminPortalLocale(?int $adminId = null): string
         session_start();
     }
 
-    $locales = getAdminPortalLocales();
-
-    if (!empty($_SESSION['admin_locale'])) {
-        $sessionLocale = strtolower(trim((string) $_SESSION['admin_locale']));
-        if (isset($locales[$sessionLocale])) {
-            return $sessionLocale;
-        }
-    }
-
-    $adminId = $adminId ?? (int) ($_SESSION['admin_id'] ?? 0);
-    if ($adminId > 0) {
-        $stored = strtolower(trim((string) getSetting(adminPortalLocaleSettingKey($adminId), '')));
-        if (isset($locales[$stored])) {
-            $_SESSION['admin_locale'] = $stored;
-            return $stored;
-        }
-    }
+    $_SESSION['admin_locale'] = 'en';
 
     return 'en';
 }
@@ -46,20 +29,14 @@ function saveAdminPortalLocale(int $adminId, string $locale): array
         return ['ok' => false, 'message' => 'Invalid admin account.'];
     }
 
-    $locale = strtolower(trim($locale));
-    $locales = getAdminPortalLocales();
-    if (!isset($locales[$locale])) {
-        return ['ok' => false, 'message' => admin_t('settings.invalid_locale', [], 'en')];
-    }
-
-    setSetting(adminPortalLocaleSettingKey($adminId), $locale);
+    setSetting(adminPortalLocaleSettingKey($adminId), 'en');
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    $_SESSION['admin_locale'] = $locale;
+    $_SESSION['admin_locale'] = 'en';
 
-    return ['ok' => true, 'message' => admin_t('settings.saved', [], $locale)];
+    return ['ok' => true, 'message' => admin_t('settings.saved')];
 }
 
 function admin_t(string $key, array $replace = [], ?string $forceLocale = null): string

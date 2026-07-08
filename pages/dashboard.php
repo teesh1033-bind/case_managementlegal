@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../lib/admin-locale.php';
+require_once __DIR__ . '/../lib/portal-theme.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['admin_id'])) {
@@ -118,6 +119,21 @@ $chartInvoicedJson = json_encode($chartInvoiced, JSON_HEX_TAG | JSON_HEX_APOS | 
 $chartPaidJson     = json_encode($chartPaid, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 $catLabels         = json_encode(array_column($caseByCategory, 'cat'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 $catData           = json_encode(array_map(fn($r) => (int)$r['cnt'], $caseByCategory), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+
+$vuThemePreset     = getPortalTheme()['preset'];
+$vuChartPrimary    = $vuThemePreset['primary'];
+$vuChartPrimaryDark = $vuThemePreset['primary_dark'];
+$vuChartRgb        = portalThemePrimaryRgb($vuChartPrimary);
+$vuChartDarkRgb    = portalThemePrimaryRgb($vuChartPrimaryDark);
+$vuChartPalette    = [
+    $vuChartPrimary,
+    $vuChartPrimaryDark,
+    portalThemeMixHex($vuChartPrimary, '#ffffff', 0.3),
+    portalThemeMixHex($vuChartPrimaryDark, '#ffffff', 0.2),
+    portalThemeMixHex($vuChartPrimary, '#000000', 0.12),
+    portalThemeMixHex($vuChartPrimaryDark, '#000000', 0.2),
+];
+$vuChartPaletteJson = json_encode($vuChartPalette, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 ob_start();
 ?>
 <!DOCTYPE html>
@@ -135,7 +151,11 @@ ob_start();
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
+<<<<<<< Updated upstream
     <link href="../assets/css/vision-ui-dashboard.css?v=13" rel="stylesheet" />
+=======
+    <link href="../assets/css/vision-ui-dashboard.css?v=12" rel="stylesheet" />
+>>>>>>> Stashed changes
 
     <style>
         /* Inline extras not yet in the drop-in CSS */
@@ -372,12 +392,16 @@ function vuIsDarkTheme() {
 
 function vuChartTheme() {
     var dark = vuIsDarkTheme();
+    var rgb = '<?= $vuChartRgb ?>';
+    var darkRgb = '<?= $vuChartDarkRgb ?>';
     return {
         tick: dark ? '#A0AEC0' : '#707eae',
         grid: dark ? 'rgba(160, 174, 192, 0.15)' : 'rgba(112, 126, 174, 0.18)',
         doughnutBorder: dark ? '#1a1f37' : '#ffffff',
-        invoicedFill: dark ? 'rgba(2, 62, 138, 0.35)' : 'rgba(2, 62, 138, 0.22)',
-        collectedFill: dark ? 'rgba(117, 81, 255, 0.3)' : 'rgba(117, 81, 255, 0.22)'
+        invoicedFill: dark ? 'rgba(' + rgb + ', 0.35)' : 'rgba(' + rgb + ', 0.22)',
+        collectedFill: dark ? 'rgba(' + darkRgb + ', 0.3)' : 'rgba(' + darkRgb + ', 0.22)',
+        primary: '<?= htmlspecialchars($vuChartPrimary, ENT_QUOTES) ?>',
+        primaryDark: '<?= htmlspecialchars($vuChartPrimaryDark, ENT_QUOTES) ?>'
     };
 }
 
@@ -389,10 +413,10 @@ function vuChartTheme() {
     var ctx = ctxEl.getContext('2d');
     var g1 = ctx.createLinearGradient(0, 200, 0, 20);
     g1.addColorStop(0, theme.invoicedFill);
-    g1.addColorStop(1, 'rgba(2, 62, 138, 0)');
+    g1.addColorStop(1, 'rgba(<?= $vuChartRgb ?>, 0)');
     var g2 = ctx.createLinearGradient(0, 200, 0, 20);
     g2.addColorStop(0, theme.collectedFill);
-    g2.addColorStop(1, 'rgba(117, 81, 255, 0)');
+    g2.addColorStop(1, 'rgba(<?= $vuChartDarkRgb ?>, 0)');
 
     new Chart(ctx, {
         type: 'line',
@@ -400,12 +424,12 @@ function vuChartTheme() {
             labels: <?= $chartLabelsJson ?>,
             datasets: [{
                 label: 'Invoiced', tension: 0.45, pointRadius: 4,
-                pointBackgroundColor: '#023e8a', borderColor: '#023e8a',
+                pointBackgroundColor: theme.primary, borderColor: theme.primary,
                 backgroundColor: g1, borderWidth: 3, fill: true,
                 data: <?= $chartInvoicedJson ?>
             }, {
                 label: 'Collected', tension: 0.45, pointRadius: 4,
-                pointBackgroundColor: '#7551FF', borderColor: '#7551FF',
+                pointBackgroundColor: theme.primaryDark, borderColor: theme.primaryDark,
                 backgroundColor: g2, borderWidth: 3, fill: true,
                 data: <?= $chartPaidJson ?>
             }]
@@ -442,7 +466,7 @@ function vuChartTheme() {
     var theme = vuChartTheme();
     var labels = <?= $catLabels ?>;
     var data   = <?= $catData ?>;
-    var colors = ['#023e8a', '#7551FF', '#3B82F6', '#8B5CF6', '#1D4ED8', '#7C3AED'];
+    var colors = <?= $vuChartPaletteJson ?>;
 
     new Chart(ctx, {
         type: 'doughnut',

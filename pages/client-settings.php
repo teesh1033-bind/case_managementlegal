@@ -18,15 +18,11 @@ require_once __DIR__ . '/../lib/portal-theme.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_preferences') {
     $themeMode = isset($_POST['theme_mode']) ? (string) $_POST['theme_mode'] : 'light';
-    $locale = isset($_POST['locale']) ? (string) $_POST['locale'] : 'en';
     $themeResult = saveClientPortalThemeMode($clientId, $themeMode);
-    $localeResult = saveClientPortalLocale($clientId, $locale);
+    saveClientPortalLocale($clientId, 'en');
 
     if (!$themeResult['ok']) {
         $message = $themeResult['message'];
-        $messageType = 'danger';
-    } elseif (!$localeResult['ok']) {
-        $message = $localeResult['message'];
         $messageType = 'danger';
     } else {
         header('Location: client-settings.php?msg=' . urlencode(client_t('settings.saved')) . '&type=success');

@@ -5,7 +5,6 @@ function getClientPortalLocales(): array
     // Native language names only — must not call client_t() (client_t loads locale via getClientPortalLocale).
     return [
         'en' => 'English',
-        'fr' => 'Français',
     ];
 }
 
@@ -20,23 +19,7 @@ function getClientPortalLocale(?int $clientId = null): string
         session_start();
     }
 
-    $locales = getClientPortalLocales();
-
-    if (!empty($_SESSION['client_locale'])) {
-        $sessionLocale = strtolower(trim((string) $_SESSION['client_locale']));
-        if (isset($locales[$sessionLocale])) {
-            return $sessionLocale;
-        }
-    }
-
-    $clientId = $clientId ?? (int) ($_SESSION['client_id'] ?? 0);
-    if ($clientId > 0) {
-        $stored = strtolower(trim((string) getSetting(clientPortalLocaleSettingKey($clientId), '')));
-        if (isset($locales[$stored])) {
-            $_SESSION['client_locale'] = $stored;
-            return $stored;
-        }
-    }
+    $_SESSION['client_locale'] = 'en';
 
     return 'en';
 }
@@ -47,20 +30,14 @@ function saveClientPortalLocale(int $clientId, string $locale): array
         return ['ok' => false, 'message' => client_t('locale.invalid_account')];
     }
 
-    $locale = strtolower(trim($locale));
-    $locales = getClientPortalLocales();
-    if (!isset($locales[$locale])) {
-        return ['ok' => false, 'message' => client_t('locale.invalid_language')];
-    }
-
-    setSetting(clientPortalLocaleSettingKey($clientId), $locale);
+    setSetting(clientPortalLocaleSettingKey($clientId), 'en');
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    $_SESSION['client_locale'] = $locale;
+    $_SESSION['client_locale'] = 'en';
 
-    return ['ok' => true, 'message' => client_t('settings.saved', [], $locale)];
+    return ['ok' => true, 'message' => client_t('settings.saved')];
 }
 
 function client_t(string $key, array $replace = [], ?string $forceLocale = null): string
