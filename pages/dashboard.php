@@ -79,19 +79,6 @@ try {
     $recentCases = $stmt->fetchAll();
 } catch (PDOException $e) {}
 
-// ─── Top clients by case count ────────────────────────────────────────────────
-$topClients = [];
-try {
-    $stmt = $pdo->query("
-        SELECT TRIM(CONCAT(cl.first_name,' ',cl.last_name)) AS name,
-               COUNT(c.id) AS case_count,
-               SUM(CASE WHEN c.status='closed' THEN 1 ELSE 0 END) AS closed_count
-        FROM clients cl LEFT JOIN cases c ON c.client_id=cl.id
-        GROUP BY cl.id ORDER BY case_count DESC LIMIT 5
-    ");
-    $topClients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {}
-
 // ─── Derived ──────────────────────────────────────────────────────────────────
 require_once __DIR__ . '/../inc/legalpro-icons.php';
 $completionRate     = $totalCases > 0 ? round(($completedCases / $totalCases) * 100) : 0;
@@ -127,33 +114,6 @@ if (empty($recentCases)) {
     }
 }
 
-// Top clients
-$topClientsHtml = '';
-if (empty($topClients)) {
-    $topClientsHtml = '<p class="text-sm text-muted text-center py-2">No client data yet.</p>';
-} else {
-    $maxCount = max(array_column($topClients, 'case_count')) ?: 1;
-    foreach ($topClients as $tc) {
-        $n   = htmlspecialchars($tc['name']);
-        $cnt = (int)$tc['case_count'];
-        $cls = (int)$tc['closed_count'];
-        $pct = round(($cnt / $maxCount) * 100);
-        $initials = implode('', array_map(fn($w) => strtoupper($w[0] ?? ''), explode(' ', $tc['name'])));
-        $initials = substr($initials, 0, 2);
-        $topClientsHtml .= "<div class=\"lp-top-client d-flex align-items-center gap-2 mb-3\">
-            <div class=\"lp-avatar\">{$initials}</div>
-            <div class=\"flex-grow-1\">
-                <div class=\"d-flex justify-content-between align-items-baseline mb-1\">
-                    <span class=\"text-sm font-weight-bold vu-panel-title\">{$n}</span>
-                    <span class=\"text-xs text-muted\">{$cnt} case" . ($cnt !== 1 ? 's' : '') . "</span>
-                </div>
-                <div class=\"lp-progress-bar\">
-                    <div class=\"lp-progress-fill\" style=\"width:{$pct}%\"></div>
-                </div>
-            </div></div>";
-    }
-}
-
 // ─── JSON for JS ──────────────────────────────────────────────────────────────
 $chartLabelsJson   = json_encode($chartLabels, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 $chartInvoicedJson = json_encode($chartInvoiced, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
@@ -177,25 +137,10 @@ ob_start();
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/vision-ui-dashboard.css?v=7" rel="stylesheet" />
+    <link href="../assets/css/vision-ui-dashboard.css?v=11" rel="stylesheet" />
 
     <style>
         /* Inline extras not yet in the drop-in CSS */
-        .lp-avatar {
-            width: 36px; height: 36px; border-radius: 10px;
-            background: rgba(2,62,138,0.12);
-            color: var(--vu-primary, #023e8a); font-size: 0.72rem; font-weight: 800;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; letter-spacing: 0.03em;
-        }
-        .lp-progress-bar {
-            height: 5px; background: var(--vu-surface-muted, #f1f5f9);
-            border-radius: 99px; overflow: hidden;
-        }
-        .lp-progress-fill {
-            height: 100%; background: linear-gradient(90deg,var(--vu-primary,#023e8a),var(--vu-primary-2,#001845));
-            border-radius: 99px; transition: width 0.6s cubic-bezier(.4,0,.2,1);
-        }
         .lp-kpi-delta {
             display: inline-flex; align-items: center; gap: 3px;
             font-size: 0.72rem; font-weight: 700;
@@ -246,13 +191,13 @@ echo ob_get_clean();
     <!-- ── Sticky top navbar ──────────────────────────────────────────── -->
     <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
         <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <div>
+            <div class="legalpro-navbar-heading">
                 <p class="vu-breadcrumb mb-0">Pages / <strong>Dashboard</strong></p>
-                <h6 class="vu-page-title font-weight-bolder mb-0 mt-1">Dashboard</h6>
+                <h6 class="vu-page-title font-weight-bolder mb-0">Dashboard</h6>
+                <p class="dashboard-welcome-sub mb-0">
+                    Welcome back, <?= htmlspecialchars($adminDisplayName) ?> &nbsp;·&nbsp; <?= htmlspecialchars($welcomeDate) ?>
+                </p>
             </div>
-            <p class="dashboard-welcome-sub mb-0">
-                Welcome back, <?= htmlspecialchars($adminDisplayName) ?> &nbsp;·&nbsp; <?= htmlspecialchars($welcomeDate) ?>
-            </p>
         </div>
     </nav>
 
@@ -392,84 +337,58 @@ echo ob_get_clean();
         </div>
 
         <!-- ── CHARTS ROW ──────────────────────────────────────────────── -->
-        <div class="row mt-2 mb-4 align-items-stretch">
-
-            <!-- Financial overview (line) -->
-            <div class="col-lg-8 mb-4 mb-lg-0 d-flex">
-                <div class="card h-100 flex-fill">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <div>
-                            <p class="lp-section-hd">Financial Overview</p>
-                            <p class="lp-section-sub">Invoiced vs collected · last 6 months</p>
-                        </div>
-                        <span class="lp-collection-badge">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                            <?= $collectionRate ?>% collected
-                        </span>
+        <div class="vu-dashboard-grid mt-2 mb-4">
+            <div class="card vu-financial-chart-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="lp-section-hd">Financial Overview</p>
+                        <p class="lp-section-sub">Invoiced vs collected · last 6 months</p>
                     </div>
-                    <div class="card-body">
-                        <div style="position:relative;height:260px;">
-                            <canvas id="chart-financial" aria-label="Line chart: invoiced vs collected over 6 months">Financial chart unavailable.</canvas>
-                        </div>
+                    <span class="lp-collection-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                        <?= $collectionRate ?>% collected
+                    </span>
+                </div>
+                <div class="card-body pt-2 pb-3">
+                    <div class="vu-financial-chart-wrap">
+                        <canvas id="chart-financial" aria-label="Line chart: invoiced vs collected over 6 months">Financial chart unavailable.</canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Activity + categories -->
-            <div class="col-lg-4 d-flex flex-column vu-dashboard-side-col">
-                <div class="card vu-side-panel vu-activity-panel flex-fill mb-3">
-                    <div class="card-header pb-2">
-                        <p class="lp-section-hd"><?= htmlspecialchars(admin_t('activity.title')) ?></p>
-                        <p class="lp-section-sub"><?= htmlspecialchars(admin_t('activity.subtitle')) ?></p>
-                    </div>
-                    <div class="card-body pt-0">
-                        <?= $dashboardActivityHtml ?>
-                    </div>
+            <div class="card vu-side-panel vu-activity-panel">
+                <div class="card-header pb-2">
+                    <p class="lp-section-hd"><?= htmlspecialchars(admin_t('activity.title')) ?></p>
+                    <p class="lp-section-sub"><?= htmlspecialchars(admin_t('activity.subtitle')) ?></p>
                 </div>
-                <div class="card vu-side-panel vu-category-panel flex-fill mb-0">
-                    <div class="card-header pb-2">
-                        <p class="lp-section-hd">Cases by Category</p>
-                        <p class="lp-section-sub">Practice area split</p>
-                    </div>
-                    <div class="card-body d-flex flex-column align-items-center justify-content-center pt-0">
-                        <div style="position:relative;width:150px;height:150px;flex-shrink:0;">
-                            <canvas id="chart-categories" aria-label="Doughnut chart of case categories">Category chart unavailable.</canvas>
-                        </div>
-                        <div id="cat-legend" style="margin-top:1rem;width:100%;font-size:.75rem;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── RECENT CASES + TOP CLIENTS ─────────────────────────────── -->
-        <div class="row mb-4">
-            <div class="col-lg-7 mb-4 mb-lg-0">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <div>
-                            <p class="lp-section-hd">Recent Cases</p>
-                            <p class="lp-section-sub">Latest activity across all cases</p>
-                        </div>
-                        <a href="tables.php" class="btn btn-sm btn-outline-primary mb-0" style="border-radius:99px!important;font-size:.74rem!important;">View all</a>
-                    </div>
-                    <div class="card-body py-2">
-                        <?= $recentCasesHtml ?>
-                    </div>
+                <div class="card-body pt-0">
+                    <?= $dashboardActivityHtml ?>
                 </div>
             </div>
 
-            <div class="col-lg-5">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <div>
-                            <p class="lp-section-hd">Top Clients</p>
-                            <p class="lp-section-sub">Ranked by total cases</p>
-                        </div>
-                        <a href="clients.php" class="btn btn-sm btn-outline-primary mb-0" style="border-radius:99px!important;font-size:.74rem!important;">All clients</a>
+            <div class="card vu-recent-cases-card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="lp-section-hd">Recent Cases</p>
+                        <p class="lp-section-sub">Latest activity across all cases</p>
                     </div>
-                    <div class="card-body">
-                        <?= $topClientsHtml ?>
+                    <a href="tables.php" class="btn btn-sm btn-outline-primary mb-0" style="border-radius:99px!important;font-size:.74rem!important;">View all</a>
+                </div>
+                <div class="card-body py-2">
+                    <?= $recentCasesHtml ?>
+                </div>
+            </div>
+
+            <div class="card vu-side-panel vu-category-panel">
+                <div class="card-header pb-2">
+                    <p class="lp-section-hd">Cases by Category</p>
+                    <p class="lp-section-sub">Practice area split</p>
+                </div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center pt-0">
+                    <div class="vu-category-chart-wrap">
+                        <canvas id="chart-categories" aria-label="Doughnut chart of case categories">Category chart unavailable.</canvas>
                     </div>
+                    <div id="cat-legend" class="vu-category-legend"></div>
                 </div>
             </div>
         </div>
@@ -513,10 +432,10 @@ function vuChartTheme() {
     if (!ctxEl) return;
     var theme = vuChartTheme();
     var ctx = ctxEl.getContext('2d');
-    var g1 = ctx.createLinearGradient(0, 260, 0, 30);
+    var g1 = ctx.createLinearGradient(0, 200, 0, 20);
     g1.addColorStop(0, theme.invoicedFill);
     g1.addColorStop(1, 'rgba(2, 62, 138, 0)');
-    var g2 = ctx.createLinearGradient(0, 260, 0, 30);
+    var g2 = ctx.createLinearGradient(0, 200, 0, 20);
     g2.addColorStop(0, theme.collectedFill);
     g2.addColorStop(1, 'rgba(1, 181, 116, 0)');
 

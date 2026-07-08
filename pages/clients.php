@@ -153,6 +153,12 @@ try {
     $messageType = 'danger';
 }
 
+$totalClientsCount = count($clients);
+$clientsSubtitle = $totalClientsCount === 1 ? '1 total client' : $totalClientsCount . ' total clients';
+$addClientBtn = '<a href="client-detail.php" class="btn btn-sm btn-legalpro-clients-new mb-0">' . legalpro_icon('plus', 'me-1') . ' Add Client</a>';
+$clientsSearchHtml = legalpro_render_admin_list_search('clientsSearchInput', 'Search clients...');
+$clientsSearchScript = legalpro_admin_list_search_script('clientsSearchInput', 'clientsTableBody', 'clientsFilterEmpty');
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -161,81 +167,62 @@ $html = <<<'HTML'
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
 	<link rel="icon" type="image/png" href="../assets/img/favicon.png">
-	<title>Argon Dashboard - Clients</title>
+	<title>LegalPro Case Manager - Clients</title>
 	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-	<link href="../assets/css/legalpro-admin-portal.css?v=26" rel="stylesheet" />
+	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=40" rel="stylesheet" />
+	<?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
 	<?php legalpro_icons_asset_links(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-clients-page{PORTAL_THEME_BODY_CLASS}">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
-	<aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
-		<div class="sidenav-header">
-			<i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
-			<a class="navbar-brand m-0" href="../pages/dashboard.html">
-				<img src="../assets/img/logo-ct-dark.png" width="26px" height="26px" class="navbar-brand-img h-100" alt="Argon logo">
-				<span class="ms-1 font-weight-bold">Argon Dashboard</span>
-			</a>
-		</div>
-		<hr class="horizontal dark mt-0">
-		<div class="collapse navbar-collapse  w-auto " id="sidenav-collapse-main">
-			<ul class="navbar-nav">
-				<li class="nav-item"><a class="nav-link" href="../pages/dashboard.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-tv-2 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Dashboard</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/tables.php"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-collection text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Cases</span></a></li>
-				<li class="nav-item"><a class="nav-link active" href="../pages/clients.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-circle-08 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Clients</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/staff.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-badge text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Staff</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/billing.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-credit-card text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Finance</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/documents.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-folder-17 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Documents</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/appointments.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-time-alarm text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Appointments</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/reports.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-chart-bar-32 text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Reports</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/settings.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-settings text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Settings</span></a></li>
-				<li class="nav-item"><a class="nav-link" href="../pages/chatbot.html"><div class="icon icon-shape icon-sm border-radius-md text-center me-2 d-flex align-items-center justify-content-center"><i class="ni ni-chat-round text-dark text-sm opacity-10"></i></div><span class="nav-link-text ms-1">Chatbot</span></a></li>
-			</ul>
-		</div>
-	</aside>
+	<aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
 	<main class="main-content position-relative border-radius-lg ">
-		<nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
+		<nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
 			<div class="container-fluid py-1 px-3">
-				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-						<li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
-						<li class="breadcrumb-item text-sm text-white active" aria-current="page">Clients</li>
-					</ol>
-					<h6 class="font-weight-bolder text-white mb-0">Clients</h6>
-				</nav>
+				<div>
+					<h6 class="font-weight-bolder mb-0">Clients</h6>
+					<p class="dashboard-welcome-sub mb-0 mt-1">Manage client profiles, contact details, and case history</p>
+				</div>
 			</div>
 		</nav>
 		<div class="container-fluid py-4">
+			{MESSAGE}
+
 			<div class="row">
 				<div class="col-12">
-					<div class="card mb-4">
-						<div class="card-header pb-3 pt-3 d-flex justify-content-between align-items-center">
-							<h6 class="mb-0">Clients</h6>
-							<a href="client-detail.php" class="btn btn-sm bg-gradient-primary text-white mb-0">Add Client</a>
+					<div class="card mb-4 legalpro-clients-hub">
+						<div class="legalpro-clients-hub__head">
+							<div>
+								<h5 class="legalpro-clients-hub__title">Client Directory</h5>
+								<p class="legalpro-clients-hub__count">{CLIENTS_SUBTITLE}</p>
+							</div>
+							{ADD_CLIENT_BTN}
 						</div>
-						<div class="card-body px-0 pt-2 pb-2">
-							{MESSAGE}
+						<div class="legalpro-clients-filters">
 							{CLIENTS_SEARCH}
-							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
-							<div class="table-responsive p-0">
-								<table class="table align-items-center mb-0">
+						</div>
+						<div class="card-body px-0 pt-0 pb-2 legalpro-clients-table-wrap">
+							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-clients-row">
+							<div class="table-responsive">
+								<table class="table legalpro-clients-table mb-0" id="clientsTable">
 									<thead>
 										<tr>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Client</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Contact</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Active Cases</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7">Last Activity</th>
-											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
+											<th>Client</th>
+											<th>Contact</th>
+											<th class="text-center">Active Cases</th>
+											<th class="text-center">Last Activity</th>
+											<th class="text-end">Actions</th>
 										</tr>
 									</thead>
 									<tbody id="clientsTableBody">
 										{CLIENTS_ROWS}
 										<tr id="clientsFilterEmpty" class="d-none">
-											<td colspan="5" class="text-center text-muted text-sm py-4">No clients match your search.</td>
+											<td colspan="5" class="text-center text-muted text-sm py-4 border-0">No clients match your search.</td>
 										</tr>
 									</tbody>
 								</table>
@@ -246,11 +233,12 @@ $html = <<<'HTML'
 					</div>
 				</div>
 			</div>
-			<footer class="footer pt-3  ">
+
+			<footer class="footer pt-3">
 				<div class="container-fluid">
 					<div class="row align-items-center justify-content-lg-between">
 						<div class="col-lg-6 mb-lg-0 mb-4">
-							<div class="copyright text-center text-sm text-white text-lg-start">
+							<div class="copyright text-center text-sm text-muted text-lg-start">
 								{COPYRIGHT_LINE}
 							</div>
 						</div>
@@ -259,11 +247,6 @@ $html = <<<'HTML'
 			</footer>
 		</div>
 	</main>
-	<script src="../assets/js/core/popper.min.js"></script>
-	<script src="../assets/js/core/bootstrap.min.js"></script>
-	<script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
-	<script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-	<script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
 </body>
 </html>
 HTML;
@@ -271,10 +254,12 @@ HTML;
 // Generate client rows
 $clientsRows = '';
 if (empty($clients)) {
-    $clientsRows = '<tr><td colspan="6" class="text-center py-4 text-muted">No clients found. <a href="client-detail.php">Add your first client</a></td></tr>';
+    $clientsRows = '<tr><td colspan="5" class="text-center py-4 text-muted">No clients found. <a href="client-detail.php">Add your first client</a></td></tr>';
 } else {
     foreach ($clients as $client) {
-        $fullName = htmlspecialchars($client['first_name'] . ' ' . $client['last_name']);
+        $clientFullName = trim($client['first_name'] . ' ' . $client['last_name']);
+        $fullName = htmlspecialchars($clientFullName);
+        $initials = htmlspecialchars(legalpro_portal_initials($clientFullName, 'CL'));
         $email = htmlspecialchars(isset($client['email']) && $client['email'] ? $client['email'] : 'N/A');
         $phone = htmlspecialchars(isset($client['phone']) && $client['phone'] ? $client['phone'] : 'N/A');
         $activeCases = (int)$client['active_cases'];
@@ -284,38 +269,39 @@ if (empty($clients)) {
         $typeLabel = $clientType === 'Corporate' && !empty($client['business_name'])
             ? htmlspecialchars($client['business_name'])
             : htmlspecialchars($clientType);
-        
-        // Use avatar image (you can customize this later)
-        $avatarImg = '../assets/img/ivana-square.jpg';
-        
+
+        $activeCasesHtml = $activeCases > 0
+            ? '<span class="legalpro-client-cases-count legalpro-client-cases-count--active">' . $activeCases . '</span>'
+            : '<span class="legalpro-client-cases-count">0</span>';
+
         $searchBlob = strtolower(
             $client['first_name'] . ' ' . $client['last_name'] . ' '
             . ($client['email'] ?? '') . ' ' . ($client['phone'] ?? '') . ' '
             . $clientType . ' ' . ($client['business_name'] ?? '')
         );
 
-        $clientsRows .= '<tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td class="align-middle">
-                <div class="d-flex align-items-center px-2">
-                    <div>
-                        <img src="' . $avatarImg . '" class="avatar avatar-sm me-3" alt="client">
-                    </div>
-                    <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">' . $fullName . '</h6>
-                        <p class="text-xs text-secondary mb-0">' . $typeLabel . '</p>
+        $clientsRows .= '<tr class="legalpro-clients-row legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
+            <td>
+                <div class="legalpro-client-cell">
+                    <span class="legalpro-client-initials" aria-hidden="true">' . $initials . '</span>
+                    <div class="legalpro-client-cell__text">
+                        <a href="client-detail.php?id=' . $clientId . '" class="legalpro-client-name">' . $fullName . '</a>
+                        <span class="legalpro-client-type">' . $typeLabel . '</span>
                     </div>
                 </div>
             </td>
-            <td class="align-middle">
-                <p class="text-xs font-weight-bold mb-0">' . $email . '</p>
-                <p class="text-xs text-secondary mb-0">' . $phone . '</p>
+            <td>
+                <div class="legalpro-client-contact">
+                    <span class="legalpro-client-contact__email">' . $email . '</span>
+                    <span class="legalpro-client-contact__phone">' . $phone . '</span>
+                </div>
             </td>
-            <td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' . $activeCases . '</span></td>
-            <td class="align-middle text-center"><span class="text-secondary text-xs font-weight-bold">' . $lastActivity . '</span></td>
-            <td class="align-middle">
+            <td class="text-center">' . $activeCasesHtml . '</td>
+            <td class="text-center"><span class="legalpro-client-activity">' . $lastActivity . '</span></td>
+            <td class="text-end">
                 <div class="legalpro-admin-list-row__actions">
-                    <a href="client-detail.php?id=' . $clientId . '" class="btn btn-sm btn-primary mb-0">View</a>
-                    <button type="button" class="btn btn-sm btn-danger mb-0" onclick="deleteClient(' . $clientId . ', \'' . addslashes($fullName) . '\')">Delete</button>
+                    <a href="client-detail.php?id=' . $clientId . '" class="btn btn-sm btn-legalpro-client-view mb-0">View</a>
+                    <button type="button" class="btn btn-sm btn-legalpro-client-delete mb-0" onclick="deleteClient(' . $clientId . ', \'' . addslashes($fullName) . '\')">Delete</button>
                 </div>
             </td>
         </tr>';
@@ -336,18 +322,18 @@ if ($message) {
         $displayMessage = htmlspecialchars($message);
     }
 
-    $messageHtml = '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show mx-3 mt-3" role="alert">
+    $messageHtml = '<div class="alert alert-' . htmlspecialchars($messageType) . ' alert-dismissible fade show" role="alert">
         ' . $displayMessage . '
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>';
 }
 
-$clientsSearchHtml = legalpro_render_admin_list_search('clientsSearchInput', 'Search clients...');
-$clientsSearchScript = legalpro_admin_list_search_script('clientsSearchInput', 'clientsTableBody', 'clientsFilterEmpty');
-
 $html = str_replace('{CLIENTS_ROWS}', $clientsRows, $html);
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
 $html = str_replace('{CLIENTS_SEARCH}', $clientsSearchHtml, $html);
+$html = str_replace('{CLIENTS_SUBTITLE}', htmlspecialchars($clientsSubtitle), $html);
+$html = str_replace('{ADD_CLIENT_BTN}', $addClientBtn, $html);
+$html = str_replace('{PORTAL_THEME_BODY_CLASS}', legalpro_portal_theme_body_class(), $html);
 
 // rewrite internal links from .html to .php
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);

@@ -718,7 +718,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
     $soft12 = portalThemeHexToRgba($primary, 0.12);
     $soft20 = portalThemeHexToRgba($primary, 0.2);
     $soft35 = portalThemeHexToRgba($primary, 0.35);
-    $primaryOnDark = portalThemeMixHex($primary, '#ffffff', 0.55);
+    $primaryOnDark = portalThemeMixHex($primary, '#ffffff', 0.65);
     $rgbParts = array_map('intval', explode(',', $rgb));
     $primaryDark = portalThemeHexFromRgb(
         min(255, $rgbParts[0] + 36),
@@ -774,6 +774,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '--lp-task-card-bg: #3d455c;'
         . '--lp-task-card-border: rgba(255, 255, 255, 0.1);'
         . '--lp-task-card-body-bg: #3d455c;'
+        . '--lp-text-accent-on-dark: ' . $primaryOnDark . ';'
         . '}';
 
     $css .= $bodies . ' {'
@@ -1365,17 +1366,17 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode a:not(.btn):not(.nav-link):not(.dropdown-item):not(.badge):not(.legalpro-doc-subnav__link) {'
-        . 'color: ' . $primary . ';'
+        . 'color: ' . $primaryOnDark . ';'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .text-muted a:not(.btn):not(.legalpro-doc-subnav__link),'
         . 'body.legalpro-dark-mode .modal-content a:not(.btn):not(.nav-link):not(.dropdown-item):not(.legalpro-doc-subnav__link) {'
-        . 'color: ' . $primary . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .text-primary,'
         . 'body.legalpro-dark-mode a.text-primary {'
-        . 'color: ' . $primary . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode .bg-white,'
@@ -1894,7 +1895,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . '}';
 
     $css .= 'body.legalpro-dark-mode .cd-hero .cd-hero-kicker {'
-        . 'color: ' . $primary . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
         . 'opacity: 1 !important;'
         . '}';
 
@@ -2002,7 +2003,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode .cc-pill {'
         . 'background: ' . $soft12 . ' !important;'
-        . 'color: ' . $primary . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
         . '}';
 
     $css .= 'body.legalpro-dark-mode.admin-cases-page .legalpro-cases-hub__head {'
@@ -2714,7 +2715,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= $clientIconSurfaces . ' {'
         . 'background: ' . $clientIconSoft . ' !important;'
-        . 'color: ' . $primary . ' !important;'
+        . 'color: ' . $clientAccent . ' !important;'
         . '}';
 
     $css .= $clientDark . ' .dashboard-stat-icon-wrap--primary .lp-icon svg,'
@@ -2728,7 +2729,7 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . $clientDark . ' .cp-row-icon .lp-icon svg,'
         . $clientDark . ' .cct-empty-icon .lp-icon svg,'
         . $clientDark . ' .cp-empty-icon .lp-icon svg {'
-        . 'stroke: ' . $primary . ' !important;'
+        . 'stroke: ' . $clientAccent . ' !important;'
         . '}';
 
     $clientSemanticIconWraps = [
@@ -3034,6 +3035,17 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
 
     $css .= 'body.legalpro-dark-mode.client-court-tracking-page #courtTrackingCalendar .fc-daygrid-more-link {'
         . 'color: ' . $clientAccent . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .legalpro-notif-item__icon:not(.legalpro-notif-item__icon--court):not(.legalpro-notif-item__icon--payment) {'
+        . 'background: ' . $soft12 . ' !important;'
+        . 'color: ' . $primaryOnDark . ' !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .dashboard-upcoming-item__time,'
+        . 'body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary,'
+        . 'body.legalpro-dark-mode .legalpro-court-detail__card-icon {'
+        . 'color: ' . $primaryOnDark . ' !important;'
         . '}';
 
     return $css;
@@ -3496,7 +3508,7 @@ function renderModernSoftBadgeCss(string $primary): string
     $css .= 'body.legalpro-dark-mode .badge.bg-gradient-primary:not(.filter),'
         . 'body.legalpro-dark-mode .badge.bg-gradient-info:not(.filter) {'
         . 'background: ' . $primarySoftDark . ' !important;'
-        . 'color: ' . portalThemeMixHex($primary, '#ffffff', 0.55) . ' !important;'
+        . 'color: ' . portalThemeMixHex($primary, '#ffffff', 0.65) . ' !important;'
         . '}';
 
     return $css;

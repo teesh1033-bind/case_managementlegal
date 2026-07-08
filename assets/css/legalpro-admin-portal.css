@@ -16,6 +16,21 @@
     --lp-admin-gradient-soft: linear-gradient(135deg, #0b1437 0%, #111c44 50%, #1a2a5e 100%);
     --lawyer-portal-gradient: linear-gradient(140deg, #001028 0%, #023e8a 44%, #001845 100%);
     --lawyer-portal-bg-fallback: #001028;
+
+    /* Semantic status colors — use everywhere (paid, pending, overdue, etc.) */
+    --lp-semantic-success: #1aae6f;
+    --lp-semantic-success-bg: rgba(45, 206, 137, 0.14);
+    --lp-semantic-success-border: rgba(45, 206, 137, 0.28);
+    --lp-semantic-warning: #e65100;
+    --lp-semantic-warning-bg: rgba(251, 140, 0, 0.14);
+    --lp-semantic-warning-border: rgba(251, 140, 0, 0.28);
+    --lp-semantic-danger: #d6336c;
+    --lp-semantic-danger-bg: rgba(245, 54, 92, 0.12);
+    --lp-semantic-danger-border: rgba(245, 54, 92, 0.28);
+    --lp-semantic-info: #1171ef;
+    --lp-semantic-info-bg: rgba(17, 113, 239, 0.12);
+    --lp-semantic-neutral: #67748e;
+    --lp-semantic-neutral-bg: rgba(103, 116, 142, 0.12);
 }
 
 /* —— Admin shell body —— */
@@ -218,8 +233,33 @@ body.legalpro-admin-portal .legalpro-sidebar-nav__icon i {
 
 body.legalpro-admin-portal .legalpro-sidebar-footer {
     flex-shrink: 0;
-    padding: 1rem;
+    padding: 0.75rem 1rem 0.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-admin-portal .legalpro-sidebar-footer .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.15rem;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.72) !important;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+body.legalpro-admin-portal .legalpro-sidebar-footer .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff !important;
+}
+
+body.legalpro-admin-portal .legalpro-sidebar-footer .nav-link.active {
+    background: var(--legalpro-theme-gradient, var(--lp-admin-gradient)) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.35);
 }
 
 body.legalpro-admin-portal .legalpro-sidebar-signout {
@@ -269,6 +309,7 @@ body.legalpro-admin-portal .main-content > .container-fluid {
 /* —— Navbar actions (notifications + user, inside top bar) —— */
 .legalpro-navbar-actions {
     margin-left: auto;
+    gap: 0.5rem !important;
 }
 
 body.legalpro-admin-portal .navbar-main .dashboard-quick-actions {
@@ -291,24 +332,25 @@ body.legalpro-admin-portal .navbar-main .dashboard-quick-actions + .legalpro-nav
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: 10px;
     background: #fff;
-    color: #344767;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    color: #475569;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    box-shadow: none;
     text-decoration: none;
-    font-size: 1.1rem;
-    border: none;
+    font-size: 1.05rem;
     padding: 0;
     cursor: pointer;
-    transition: box-shadow 0.2s ease, background 0.2s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .legalpro-header-notif:hover,
 .legalpro-header-notif:focus,
 .legalpro-header-notif.show {
-    background: #fff;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    color: #344767;
+    background: #f8fafc;
+    border-color: rgba(15, 23, 42, 0.14);
+    box-shadow: none;
+    color: #334155;
     outline: none;
 }
 
@@ -331,59 +373,60 @@ body.legalpro-admin-portal .navbar-main .dashboard-quick-actions + .legalpro-nav
 
 .legalpro-admin-portal .legalpro-header-theme-toggle {
     position: relative;
-    width: 2.6rem;
-    height: 2.6rem;
+    width: 2.5rem;
+    height: 2.5rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 14px;
-    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
     padding: 0;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 248, 255, 0.96) 100%);
-    color: #43516f;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+    background: #fff;
+    color: #475569;
+    box-shadow: none;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .legalpro-admin-portal .legalpro-header-theme-toggle:hover,
 .legalpro-admin-portal .legalpro-header-theme-toggle:focus {
-    transform: translateY(-1px) scale(1.02);
-    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+    transform: none;
+    background: #f8fafc;
+    border-color: rgba(15, 23, 42, 0.14);
+    box-shadow: none;
     color: var(--legalpro-theme-primary, #023e8a);
-    border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.45);
     outline: none;
 }
 
 body.legalpro-admin-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle {
-    background: linear-gradient(140deg, #ffffff 0%, #f3f7ff 100%);
-    color: #344767;
-    border-color: rgba(148, 163, 184, 0.24);
-    border-radius: 14px;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+    background: #fff;
+    color: #475569;
+    border-color: rgba(15, 23, 42, 0.1);
+    border-radius: 10px;
+    box-shadow: none;
     backdrop-filter: none;
 }
 
 body.legalpro-admin-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle:hover,
 body.legalpro-admin-portal:not(.legalpro-dark-mode) .navbar-main .legalpro-header-theme-toggle:focus {
-    background: linear-gradient(140deg, #ffffff 0%, #eef3ff 100%);
+    background: #f8fafc;
     color: var(--legalpro-theme-primary, #023e8a);
-    border-color: rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.38);
-    box-shadow: 0 12px 26px rgba(56, 73, 120, 0.2);
+    border-color: rgba(15, 23, 42, 0.14);
+    box-shadow: none;
 }
 
 body.legalpro-dark-mode.legalpro-admin-portal .legalpro-header-theme-toggle {
-    background: linear-gradient(145deg, rgba(71, 81, 109, 0.95) 0%, rgba(56, 65, 89, 0.95) 100%);
-    color: #eef3ff;
-    border-color: rgba(206, 218, 255, 0.18);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.34);
+    background: var(--lp-dark-surface-raised, #3d455c);
+    color: #e2e8f2;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: none;
 }
 
 body.legalpro-dark-mode.legalpro-admin-portal .legalpro-header-theme-toggle:hover,
 body.legalpro-dark-mode.legalpro-admin-portal .legalpro-header-theme-toggle:focus {
-    background: linear-gradient(145deg, rgba(86, 97, 129, 0.98) 0%, rgba(65, 75, 102, 0.98) 100%);
+    background: var(--lp-dark-surface-hover, #464f68);
     color: #fff;
-    border-color: rgba(var(--legalpro-theme-primary-rgb, 154, 174, 255), 0.46);
+    border-color: rgba(255, 255, 255, 0.16);
 }
 
 .legalpro-admin-portal .legalpro-header-theme-toggle .lp-icon svg {
@@ -638,15 +681,16 @@ body.legalpro-dark-mode .legalpro-notif-item__hover-caption {
 .legalpro-header-user__toggle {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.6rem;
     text-decoration: none !important;
-    padding: 0.35rem 0.5rem 0.35rem 0.35rem;
-    border-radius: 999px;
+    padding: 0.3rem 0.65rem 0.3rem 0.3rem;
+    border-radius: 10px;
     background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border: none;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    box-shadow: none;
     cursor: pointer;
     color: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .legalpro-header-user__caret {
@@ -664,8 +708,9 @@ body.legalpro-dark-mode .legalpro-notif-item__hover-caption {
 .legalpro-header-user__toggle.show,
 .legalpro-header-user__toggle:focus,
 .legalpro-header-user__toggle:hover {
-    background: #fff;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    background: #f8fafc;
+    border-color: rgba(15, 23, 42, 0.14);
+    box-shadow: none;
     color: inherit;
 }
 
@@ -729,16 +774,17 @@ body.legalpro-dark-mode .legalpro-notif-item__hover-caption {
 }
 
 .legalpro-header-user__avatar {
-    width: 2.35rem;
-    height: 2.35rem;
-    border-radius: 50%;
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 8px;
     background: var(--lp-admin-gradient);
     color: #fff;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .legalpro-header-user__meta {
@@ -749,16 +795,72 @@ body.legalpro-dark-mode .legalpro-notif-item__hover-caption {
 
 .legalpro-header-user__name {
     display: block;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: #344767;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1e293b;
+    letter-spacing: -0.01em;
 }
 
 .legalpro-header-user__role {
     display: block;
     font-size: 0.72rem;
-    color: #8392ab;
+    color: #64748b;
     font-weight: 500;
+}
+
+/* —— Navbar heading block (breadcrumb + title + subtitle) —— */
+.legalpro-navbar-heading {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.legalpro-navbar-heading .vu-breadcrumb,
+.legalpro-navbar-heading .breadcrumb {
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+    line-height: 1.35;
+}
+
+.legalpro-navbar-heading .vu-page-title,
+.legalpro-navbar-heading > h6 {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-top: 0.1rem !important;
+}
+
+.legalpro-navbar-heading .dashboard-welcome-sub {
+    font-size: 0.8125rem !important;
+    margin-top: 0.2rem !important;
+    line-height: 1.4;
+    color: #64748b !important;
+    font-weight: 500 !important;
+}
+
+body.legalpro-admin-portal .navbar-main .container-fluid > div:first-child h6.font-weight-bolder {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+}
+
+body.legalpro-admin-portal .navbar-main .container-fluid > div:first-child .dashboard-welcome-sub {
+    font-size: 0.8125rem !important;
+    margin-top: 0.2rem !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+}
+
+/* —— Page navbar (title bar) —— */
+body.legalpro-dark-mode .legalpro-header-notif,
+body.legalpro-dark-mode .legalpro-header-notif:hover,
+body.legalpro-dark-mode .legalpro-header-notif:focus,
+body.legalpro-dark-mode .legalpro-header-notif.show {
+    background: var(--lp-dark-surface-raised, #3d455c) !important;
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1)) !important;
+    box-shadow: none !important;
+    color: var(--lp-dark-text, #f8f9fc) !important;
 }
 
 body.legalpro-dark-mode .legalpro-header-user__name {
@@ -1377,6 +1479,479 @@ body.admin-cases-page .btn-legalpro-case-open:hover {
     border-color: var(--lp-cases-accent) !important;
 }
 
+/* —— Clients hub (matches cases table styling) —— */
+body.admin-clients-page {
+    --lp-clients-accent: var(--lp-admin-primary);
+    --lp-clients-accent-dark: var(--lp-admin-primary-dark);
+    --lp-clients-accent-soft: rgba(2, 62, 138, 0.12);
+    --lp-clients-accent-border: rgba(2, 62, 138, 0.35);
+}
+
+body.admin-clients-page .legalpro-clients-hub {
+    border-radius: var(--lp-admin-card-radius) !important;
+    overflow: hidden;
+}
+
+body.admin-clients-page .legalpro-clients-hub__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.35rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: #fff;
+}
+
+body.admin-clients-page .legalpro-clients-hub__title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #344767;
+    margin: 0 0 0.2rem;
+    letter-spacing: -0.02em;
+}
+
+body.admin-clients-page .legalpro-clients-hub__count {
+    font-size: 0.8rem;
+    color: #8392ab;
+    margin: 0;
+}
+
+body.admin-clients-page .btn-legalpro-clients-new {
+    background: var(--lp-admin-gradient) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 0.5rem 1.1rem;
+    box-shadow: 0 4px 14px rgba(2, 62, 138, 0.32);
+}
+
+body.admin-clients-page .btn-legalpro-clients-new:hover {
+    filter: brightness(1.06);
+    color: #fff !important;
+}
+
+body.admin-clients-page .legalpro-clients-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem 1.25rem;
+    align-items: center;
+}
+
+body.admin-clients-page .legalpro-clients-filters .legalpro-admin-list-search {
+    flex: 1 1 100%;
+    max-width: 100%;
+}
+
+body.admin-clients-page .legalpro-clients-table-wrap {
+    padding: 0 0.5rem 0.5rem;
+}
+
+body.admin-clients-page .legalpro-clients-table {
+    margin-bottom: 0;
+}
+
+body.admin-clients-page .legalpro-clients-table thead th {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8392ab !important;
+    background: transparent !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 0.85rem 1rem;
+    white-space: nowrap;
+}
+
+body.admin-clients-page .legalpro-clients-table tbody td {
+    padding: 1.1rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.875rem;
+    color: #344767;
+}
+
+body.admin-clients-page .legalpro-clients-table tbody tr:hover {
+    background: rgba(2, 62, 138, 0.05);
+}
+
+body.admin-clients-page .legalpro-client-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+body.admin-clients-page .legalpro-client-initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 10px;
+    background: var(--lp-clients-accent-soft);
+    color: var(--lp-clients-accent);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+body.admin-clients-page .legalpro-client-cell__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+body.admin-clients-page .legalpro-client-name {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #344767;
+    text-decoration: none;
+    line-height: 1.3;
+}
+
+body.admin-clients-page .legalpro-client-name:hover {
+    color: var(--lp-clients-accent);
+}
+
+body.admin-clients-page .legalpro-client-type {
+    font-size: 0.75rem;
+    color: #8392ab;
+}
+
+body.admin-clients-page .legalpro-client-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+body.admin-clients-page .legalpro-client-contact__email {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: #344767;
+}
+
+body.admin-clients-page .legalpro-client-contact__phone {
+    font-size: 0.75rem;
+    color: #8392ab;
+}
+
+body.admin-clients-page .legalpro-client-cases-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 0.5rem;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #8392ab;
+    background: rgba(131, 146, 171, 0.12);
+}
+
+body.admin-clients-page .legalpro-client-cases-count--active {
+    color: var(--lp-clients-accent);
+    background: var(--lp-clients-accent-soft);
+}
+
+body.admin-clients-page .legalpro-client-activity {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #67748e;
+    white-space: nowrap;
+}
+
+body.admin-clients-page .btn-legalpro-client-view {
+    background: var(--lp-clients-accent-soft) !important;
+    border: 1px solid var(--lp-clients-accent-border) !important;
+    color: var(--lp-clients-accent) !important;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    border-radius: 8px;
+    padding: 0.4rem 1rem;
+}
+
+body.admin-clients-page .btn-legalpro-client-view:hover {
+    background: var(--lp-clients-accent) !important;
+    color: #fff !important;
+    border-color: var(--lp-clients-accent) !important;
+}
+
+body.admin-clients-page .btn-legalpro-client-delete {
+    background: rgba(245, 54, 92, 0.08) !important;
+    border: 1px solid rgba(245, 54, 92, 0.28) !important;
+    color: #e31a52 !important;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    border-radius: 8px;
+    padding: 0.4rem 1rem;
+}
+
+body.admin-clients-page .btn-legalpro-client-delete:hover {
+    background: #e31a52 !important;
+    color: #fff !important;
+    border-color: #e31a52 !important;
+}
+
+body.legalpro-dark-mode.admin-clients-page .legalpro-clients-hub__head {
+    background: var(--lp-dark-surface, #343b4f);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-dark-mode.admin-clients-page .legalpro-clients-hub__title,
+body.legalpro-dark-mode.admin-clients-page .legalpro-client-name,
+body.legalpro-dark-mode.admin-clients-page .legalpro-client-contact__email {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.admin-clients-page .legalpro-clients-table tbody td {
+    color: var(--lp-dark-text-secondary, #e2e8f2);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.legalpro-dark-mode.admin-clients-page .legalpro-clients-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* —— Lawyers hub (matches clients table styling) —— */
+body.admin-lawyers-page {
+    --lp-lawyers-accent: var(--lp-admin-primary);
+    --lp-lawyers-accent-dark: var(--lp-admin-primary-dark);
+    --lp-lawyers-accent-soft: rgba(2, 62, 138, 0.12);
+    --lp-lawyers-accent-border: rgba(2, 62, 138, 0.35);
+}
+
+body.admin-lawyers-page .legalpro-lawyers-hub {
+    border-radius: var(--lp-admin-card-radius) !important;
+    overflow: hidden;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-hub__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.35rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: #fff;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-hub__title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #344767;
+    margin: 0 0 0.2rem;
+    letter-spacing: -0.02em;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-hub__count {
+    font-size: 0.8rem;
+    color: #8392ab;
+    margin: 0;
+}
+
+body.admin-lawyers-page .btn-legalpro-lawyers-new {
+    background: var(--lp-admin-gradient) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 0.5rem 1.1rem;
+    box-shadow: 0 4px 14px rgba(2, 62, 138, 0.32);
+}
+
+body.admin-lawyers-page .btn-legalpro-lawyers-new:hover {
+    filter: brightness(1.06);
+    color: #fff !important;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem 1.25rem;
+    align-items: center;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-filters .legalpro-admin-list-search {
+    flex: 1 1 100%;
+    max-width: 100%;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-table-wrap {
+    padding: 0 0.5rem 0.5rem;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-table {
+    margin-bottom: 0;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-table thead th {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8392ab !important;
+    background: transparent !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 0.85rem 1rem;
+    white-space: nowrap;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-table tbody td {
+    padding: 1.1rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.875rem;
+    color: #344767;
+}
+
+body.admin-lawyers-page .legalpro-lawyers-table tbody tr:hover {
+    background: rgba(2, 62, 138, 0.05);
+}
+
+body.admin-lawyers-page .legalpro-lawyer-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+}
+
+body.admin-lawyers-page .legalpro-lawyer-initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 10px;
+    background: var(--lp-lawyers-accent-soft);
+    color: var(--lp-lawyers-accent);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+body.admin-lawyers-page .legalpro-lawyer-cell__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+body.admin-lawyers-page .legalpro-lawyer-name {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #344767;
+    line-height: 1.3;
+}
+
+body.admin-lawyers-page .legalpro-lawyer-email {
+    font-size: 0.75rem;
+    color: #8392ab;
+}
+
+body.admin-lawyers-page .legalpro-lawyer-specialization {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+body.admin-lawyers-page .legalpro-lawyer-specialization__main {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: #344767;
+}
+
+body.admin-lawyers-page .legalpro-lawyer-specialization__sub {
+    font-size: 0.75rem;
+    color: #8392ab;
+}
+
+body.admin-lawyers-page .legalpro-lawyer-cases-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 0.5rem;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #8392ab;
+    background: rgba(131, 146, 171, 0.12);
+}
+
+body.admin-lawyers-page .legalpro-lawyer-cases-count--active {
+    color: var(--lp-lawyers-accent);
+    background: var(--lp-lawyers-accent-soft);
+}
+
+body.admin-lawyers-page .legalpro-lawyer-cases-label {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.7rem;
+    color: #8392ab;
+}
+
+body.admin-lawyers-page .btn-legalpro-lawyer-edit {
+    background: var(--lp-lawyers-accent-soft) !important;
+    border: 1px solid var(--lp-lawyers-accent-border) !important;
+    color: var(--lp-lawyers-accent) !important;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    border-radius: 8px;
+    padding: 0.4rem 1rem;
+}
+
+body.admin-lawyers-page .btn-legalpro-lawyer-edit:hover {
+    background: var(--lp-lawyers-accent) !important;
+    color: #fff !important;
+    border-color: var(--lp-lawyers-accent) !important;
+}
+
+body.admin-lawyers-page .btn-legalpro-lawyer-delete {
+    background: rgba(245, 54, 92, 0.08) !important;
+    border: 1px solid rgba(245, 54, 92, 0.28) !important;
+    color: #e31a52 !important;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    border-radius: 8px;
+    padding: 0.4rem 1rem;
+}
+
+body.admin-lawyers-page .btn-legalpro-lawyer-delete:hover {
+    background: #e31a52 !important;
+    color: #fff !important;
+    border-color: #e31a52 !important;
+}
+
+body.legalpro-dark-mode.admin-lawyers-page .legalpro-lawyers-hub__head {
+    background: var(--lp-dark-surface, #343b4f);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.legalpro-dark-mode.admin-lawyers-page .legalpro-lawyers-hub__title,
+body.legalpro-dark-mode.admin-lawyers-page .legalpro-lawyer-name,
+body.legalpro-dark-mode.admin-lawyers-page .legalpro-lawyer-specialization__main {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode.admin-lawyers-page .legalpro-lawyers-table tbody td {
+    color: var(--lp-dark-text-secondary, #e2e8f2);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+body.legalpro-dark-mode.admin-lawyers-page .legalpro-lawyers-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
 body.legalpro-admin-portal .lp-pill,
 body.legalpro-admin-portal .ca-status-pill {
     display: inline-block;
@@ -1389,8 +1964,8 @@ body.legalpro-admin-portal .ca-status-pill {
 }
 
 body.legalpro-admin-portal .ca-status-pill--pending {
-    background: rgba(251, 140, 0, 0.14);
-    color: #c45c00;
+    background: var(--lp-semantic-warning-bg);
+    color: var(--lp-semantic-warning);
 }
 
 body.legalpro-admin-portal .ca-status-pill--scheduled {
@@ -1399,13 +1974,13 @@ body.legalpro-admin-portal .ca-status-pill--scheduled {
 }
 
 body.legalpro-admin-portal .ca-status-pill--done {
-    background: rgba(103, 116, 142, 0.12);
-    color: #67748e;
+    background: var(--lp-semantic-success-bg);
+    color: var(--lp-semantic-success);
 }
 
 body.legalpro-admin-portal .ca-status-pill--declined {
-    background: rgba(245, 54, 92, 0.12);
-    color: #d6336c;
+    background: var(--lp-semantic-danger-bg);
+    color: var(--lp-semantic-danger);
 }
 
 body.legalpro-admin-portal .ca-status-pill--muted {
@@ -1428,14 +2003,15 @@ body.legalpro-admin-portal .lp-pill--priority-medium {
     color: #023e8a;
 }
 
-body.legalpro-admin-portal .lp-pill--status-active {
-    background: rgba(45, 206, 137, 0.14);
-    color: #1aae6f;
+body.legalpro-admin-portal .lp-pill--status-active,
+body.legalpro-admin-portal .lp-pill--status-success {
+    background: var(--lp-semantic-success-bg);
+    color: var(--lp-semantic-success);
 }
 
 body.legalpro-admin-portal .lp-pill--status-progress {
-    background: rgba(17, 113, 239, 0.12);
-    color: #1171ef;
+    background: var(--lp-semantic-info-bg);
+    color: var(--lp-semantic-info);
 }
 
 body.legalpro-admin-portal .lp-pill--status-waiting {
@@ -1443,24 +2019,48 @@ body.legalpro-admin-portal .lp-pill--status-waiting {
     color: #001845;
 }
 
-body.legalpro-admin-portal .lp-pill--status-pending {
-    background: rgba(251, 140, 0, 0.14);
-    color: #e65100;
+body.legalpro-admin-portal .lp-pill--status-pending,
+body.legalpro-admin-portal .lp-pill--status-warning {
+    background: var(--lp-semantic-warning-bg);
+    color: var(--lp-semantic-warning);
 }
 
 body.legalpro-admin-portal .lp-pill--status-closed {
-    background: rgba(103, 116, 142, 0.14);
-    color: #67748e;
+    background: var(--lp-semantic-neutral-bg);
+    color: var(--lp-semantic-neutral);
 }
 
 body.legalpro-admin-portal .lp-pill--status-default {
-    background: rgba(103, 116, 142, 0.12);
-    color: #67748e;
+    background: var(--lp-semantic-neutral-bg);
+    color: var(--lp-semantic-neutral);
 }
 
-body.legalpro-admin-portal .lp-pill--status-declined {
-    background: rgba(245, 54, 92, 0.12);
-    color: #d6336c;
+body.legalpro-admin-portal .lp-pill--status-declined,
+body.legalpro-admin-portal .lp-pill--status-danger {
+    background: var(--lp-semantic-danger-bg);
+    color: var(--lp-semantic-danger);
+}
+
+/* Semantic text utilities */
+body.legalpro-admin-portal .lp-text-success,
+body.legalpro-lawyer-portal .lp-text-success,
+body.legalpro-client-portal .lp-text-success,
+body.legalpro-finance-page .lp-text-success {
+    color: var(--lp-semantic-success) !important;
+}
+
+body.legalpro-admin-portal .lp-text-warning,
+body.legalpro-lawyer-portal .lp-text-warning,
+body.legalpro-client-portal .lp-text-warning,
+body.legalpro-finance-page .lp-text-warning {
+    color: var(--lp-semantic-warning) !important;
+}
+
+body.legalpro-admin-portal .lp-text-danger,
+body.legalpro-lawyer-portal .lp-text-danger,
+body.legalpro-client-portal .lp-text-danger,
+body.legalpro-finance-page .lp-text-danger {
+    color: var(--lp-semantic-danger) !important;
 }
 
 body.admin-court-tracking-page .ct-row-icon.dashboard-stat-icon-wrap {
@@ -1780,6 +2380,8 @@ body.legalpro-dark-mode.legalpro-admin-portal,
 body.legalpro-dark-mode.legalpro-dashboard-page,
 body.legalpro-dark-mode.admin-court-tracking-page,
 body.legalpro-dark-mode.admin-cases-page,
+body.legalpro-dark-mode.admin-clients-page,
+body.legalpro-dark-mode.admin-lawyers-page,
 body.legalpro-dark-mode.admin-case-view-page,
 body.legalpro-dark-mode.admin-appointments-page,
 body.legalpro-dark-mode.admin-client-detail-page {
@@ -1792,7 +2394,9 @@ body.legalpro-dark-mode.admin-client-detail-page {
 body.legalpro-dark-mode.legalpro-admin-portal.bg-gray-100,
 body.legalpro-dark-mode.legalpro-dashboard-page.bg-gray-100,
 body.legalpro-dark-mode.admin-court-tracking-page.bg-gray-100,
-body.legalpro-dark-mode.admin-cases-page.bg-gray-100 {
+body.legalpro-dark-mode.admin-cases-page.bg-gray-100,
+body.legalpro-dark-mode.admin-clients-page.bg-gray-100,
+body.legalpro-dark-mode.admin-lawyers-page.bg-gray-100 {
     background: var(--lp-dark-bg, #2a3040) !important;
     background-color: var(--lp-dark-bg, #2a3040) !important;
 }
@@ -1805,7 +2409,11 @@ body.legalpro-dark-mode.legalpro-dashboard-page #navbarBlur,
 body.legalpro-dark-mode.admin-court-tracking-page .navbar-main,
 body.legalpro-dark-mode.admin-court-tracking-page #navbarBlur,
 body.legalpro-dark-mode.admin-cases-page .navbar-main,
-body.legalpro-dark-mode.admin-cases-page #navbarBlur {
+body.legalpro-dark-mode.admin-cases-page #navbarBlur,
+body.legalpro-dark-mode.admin-clients-page .navbar-main,
+body.legalpro-dark-mode.admin-clients-page #navbarBlur,
+body.legalpro-dark-mode.admin-lawyers-page .navbar-main,
+body.legalpro-dark-mode.admin-lawyers-page #navbarBlur {
     background: var(--lp-dark-surface, #343b4f) !important;
     background-color: var(--lp-dark-surface, #343b4f) !important;
     backdrop-filter: none !important;
@@ -1957,4 +2565,44 @@ body.legalpro-dark-mode .lp-admin-pagination__btn--active {
     background: #023e8a;
     border-color: #023e8a;
     color: #fff;
+}
+
+/* Dark mode — lighten hardcoded dark-blue text accents for readability */
+body.legalpro-dark-mode .legalpro-notif-panel__count,
+body.legalpro-dark-mode .legalpro-notif-item__icon:not(.legalpro-notif-item__icon--court):not(.legalpro-notif-item__icon--payment),
+body.legalpro-dark-mode .ca-status-pill--scheduled,
+body.legalpro-dark-mode .lp-pill--status-waiting,
+body.legalpro-dark-mode .lp-text-info,
+body.legalpro-dark-mode.admin-cases-page .legalpro-case-number,
+body.legalpro-dark-mode.admin-cases-page .legalpro-case-number:hover,
+body.legalpro-dark-mode.admin-cases-page .btn-legalpro-case-open {
+    color: var(--lp-text-accent-on-dark, #93c5fd) !important;
+}
+
+/* —— Global Montserrat (all portals) —— */
+body.legalpro-admin-portal,
+body.legalpro-lawyer-portal,
+body.legalpro-client-portal,
+body.legalpro-finance-page,
+body.legalpro-payments-activity-page,
+body.legalpro-admin-portal .main-content,
+body.legalpro-lawyer-portal .main-content,
+body.legalpro-client-portal .main-content,
+body.legalpro-admin-portal .sidenav,
+body.legalpro-lawyer-portal .sidenav,
+body.legalpro-client-portal .sidenav,
+body.legalpro-admin-portal .card,
+body.legalpro-admin-portal .table,
+body.legalpro-admin-portal .btn,
+body.legalpro-admin-portal .form-control,
+body.legalpro-admin-portal .form-select,
+body.legalpro-admin-portal .navbar,
+body.legalpro-admin-portal h1,
+body.legalpro-admin-portal h2,
+body.legalpro-admin-portal h3,
+body.legalpro-admin-portal h4,
+body.legalpro-admin-portal h5,
+body.legalpro-admin-portal h6,
+body.legalpro-dashboard-page:not(.vision-ui-theme) {
+    font-family: 'Montserrat', sans-serif !important;
 }

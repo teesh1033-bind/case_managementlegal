@@ -25,6 +25,24 @@ body {
 
 }
 
+body,
+body.legalpro-admin-portal,
+body.legalpro-lawyer-portal,
+body.legalpro-client-portal,
+body.legalpro-finance-page,
+.main-content,
+.sidenav,
+.card,
+.table,
+.btn,
+.form-control,
+.form-select,
+.navbar,
+h1, h2, h3, h4, h5, h6,
+p, span, label, a, td, th, li {
+  font-family: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 
 
 .card .card-body {

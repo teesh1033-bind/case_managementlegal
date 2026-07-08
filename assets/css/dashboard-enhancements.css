@@ -973,11 +973,11 @@ body.legalpro-dark-mode #appointmentsCalendar .fc .fc-list-day-cushion {
 }
 
 body.legalpro-dark-mode .dashboard-upcoming-item__time {
-    color: var(--legalpro-theme-primary, #4a90d9) !important;
+    color: var(--lp-text-accent-on-dark, #93c5fd) !important;
 }
 
 body.legalpro-dark-mode .dashboard-upcoming-panel a.text-primary {
-    color: var(--legalpro-theme-primary, #4a90d9) !important;
+    color: var(--lp-text-accent-on-dark, #93c5fd) !important;
 }
 
 body.legalpro-dark-mode .dashboard-cal-event__dot {
@@ -1442,8 +1442,8 @@ body.legalpro-dark-mode .legalpro-court-detail__notes--empty .legalpro-court-det
 /* Premium dashboard visual refresh (admin dashboard only, not Vision UI)     */
 /* -------------------------------------------------------------------------- */
 .legalpro-dashboard-page:not(.vision-ui-theme) {
-    --dash-font-body: "Inter", "Montserrat", "Segoe UI", sans-serif;
-    --dash-font-heading: "Plus Jakarta Sans", "Inter", "Montserrat", sans-serif;
+    --dash-font-body: "Montserrat", "Segoe UI", sans-serif;
+    --dash-font-heading: "Montserrat", "Segoe UI", sans-serif;
     --dash-bg-light: radial-gradient(1200px 500px at -10% -25%, rgba(112, 99, 255, 0.17), transparent 45%),
         radial-gradient(900px 450px at 110% -10%, rgba(32, 201, 255, 0.14), transparent 50%),
         #f2f5ff;

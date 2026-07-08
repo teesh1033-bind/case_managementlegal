@@ -255,6 +255,15 @@ if (empty($lawyers)) {
         $activeCases = (int)$lawyer['active_cases'];
 
         $lawyerName = trim($lawyer['first_name'] . ' ' . $lawyer['last_name']);
+        $initials = htmlspecialchars(legalpro_portal_initials($lawyerName, 'LW'));
+        $specialization = htmlspecialchars($lawyer['specialization'] ?: 'Not specified');
+        $experienceYears = (int) $lawyer['experience_years'];
+        $experienceLabel = $experienceYears === 1 ? '1 year experience' : $experienceYears . ' years experience';
+
+        $activeCasesHtml = $activeCases > 0
+            ? '<span class="legalpro-lawyer-cases-count legalpro-lawyer-cases-count--active">' . $activeCases . '</span>'
+            : '<span class="legalpro-lawyer-cases-count">0</span>';
+
         $searchBlob = strtolower(
             $lawyerName . ' ' . ($lawyer['email'] ?? '') . ' '
             . ($lawyer['specialization'] ?? '') . ' ' . ($lawyer['license_number'] ?? '') . ' '
@@ -262,34 +271,34 @@ if (empty($lawyers)) {
         );
 
         $lawyersTable .= '
-        <tr class="legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
-            <td class="align-middle">
-                <div class="d-flex align-items-center">
-                    <div class="icon icon-shape icon-sm bg-gradient-primary shadow text-center border-radius-md me-3">
-                        <i class="ni ni-single-02 text-white text-xs opacity-10"></i>
-                    </div>
-                    <div>
-                        <h6 class="mb-0 text-sm">' . htmlspecialchars($lawyerName) . '</h6>
-                        <p class="text-xs text-muted mb-0">' . htmlspecialchars($lawyer['email']) . '</p>
+        <tr class="legalpro-lawyers-row legalpro-admin-list-row" data-search="' . htmlspecialchars($searchBlob, ENT_QUOTES, 'UTF-8') . '">
+            <td>
+                <div class="legalpro-lawyer-cell">
+                    <span class="legalpro-lawyer-initials" aria-hidden="true">' . $initials . '</span>
+                    <div class="legalpro-lawyer-cell__text">
+                        <span class="legalpro-lawyer-name">' . htmlspecialchars($lawyerName) . '</span>
+                        <span class="legalpro-lawyer-email">' . htmlspecialchars($lawyer['email']) . '</span>
                     </div>
                 </div>
             </td>
-            <td class="align-middle">
-                <p class="text-sm mb-0">' . htmlspecialchars($lawyer['specialization'] ?: 'Not specified') . '</p>
-                <p class="text-xs text-muted mb-0">' . htmlspecialchars($lawyer['experience_years']) . ' years experience</p>
+            <td>
+                <div class="legalpro-lawyer-specialization">
+                    <span class="legalpro-lawyer-specialization__main">' . $specialization . '</span>
+                    <span class="legalpro-lawyer-specialization__sub">' . htmlspecialchars($experienceLabel) . '</span>
+                </div>
             </td>
-            <td class="align-middle text-center">' . $statusBadge . '</td>
-            <td class="align-middle text-center">
-                <span class="text-sm font-weight-bold">' . $activeCases . '</span>
-                <p class="text-xs text-muted mb-0">active cases</p>
+            <td class="text-center">' . $statusBadge . '</td>
+            <td class="text-center">
+                ' . $activeCasesHtml . '
+                <span class="legalpro-lawyer-cases-label">active cases</span>
             </td>
-            <td class="align-middle text-end">
+            <td class="text-end">
                 <div class="legalpro-admin-list-row__actions">
-                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-dark mb-0">Edit</a>
+                    <a href="lawyers.php?edit=' . (int)$lawyer['id'] . '" class="btn btn-sm btn-legalpro-lawyer-edit mb-0">Edit</a>
                     <form method="post" onsubmit="return confirm(\'Are you sure you want to delete ' . htmlspecialchars($lawyer['first_name'] . ' ' . $lawyer['last_name']) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete_lawyer">
                         <input type="hidden" name="lawyer_id" value="' . (int)$lawyer['id'] . '">
-                        <button class="btn btn-sm btn-danger mb-0" type="submit">Delete</button>
+                        <button class="btn btn-sm btn-legalpro-lawyer-delete mb-0" type="submit">Delete</button>
                     </form>
                 </div>
             </td>
@@ -348,6 +357,12 @@ $isEditing = !empty($formData['lawyer_id']);
 $formTitle = $isEditing ? 'Edit Lawyer' : 'Add New Lawyer';
 $submitLabel = $isEditing ? 'Update Lawyer' : 'Add Lawyer';
 
+$totalLawyersCount = count($lawyers);
+$lawyersSubtitle = $totalLawyersCount === 1 ? '1 total lawyer' : $totalLawyersCount . ' total lawyers';
+$addLawyerBtn = '<button type="button" class="btn btn-sm btn-legalpro-lawyers-new mb-0" onclick="showLawyerForm()">' . legalpro_icon('plus', 'me-1') . ' Add Lawyer</button>';
+$lawyersSearchHtml = legalpro_render_admin_list_search('lawyersSearchInput', 'Search lawyers...');
+$lawyersSearchScript = legalpro_admin_list_search_script('lawyersSearchInput', 'lawyersTableBody', 'lawyersFilterEmpty');
+
 $html = <<<'HTML'
 <!DOCTYPE html>
 <html lang="en">
@@ -362,83 +377,56 @@ $html = <<<'HTML'
     <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
-    <link href="../assets/css/legalpro-admin-portal.css?v=20" rel="stylesheet" />
+    <link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+    <link href="../assets/css/legalpro-admin-portal.css?v=41" rel="stylesheet" />
+    <?php include __DIR__ . '/../inc/portal-theme-head.php'; ?>
     <?php legalpro_icons_asset_links(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-lawyers-page{PORTAL_THEME_BODY_CLASS}">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
-    <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4 " id="sidenav-main">
-    </aside>
+    <aside class="sidenav navbar navbar-vertical navbar-expand-xs" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg ">
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl " id="navbarBlur" data-scroll="false">
+        <nav class="navbar navbar-main navbar-expand-lg px-0 shadow-none border-radius-xl" id="navbarBlur" data-scroll="false">
             <div class="container-fluid py-1 px-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
-                        <li class="breadcrumb-item text-sm"><a class="opacity-5 text-white" href="javascript:;">Pages</a></li>
-                        <li class="breadcrumb-item text-sm text-white active" aria-current="page">Lawyers</li>
-                    </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Lawyer Management</h6>
-                </nav>
+                <div>
+                    <h6 class="font-weight-bolder mb-0">Lawyer Management</h6>
+                    <p class="dashboard-welcome-sub mb-0 mt-1">Manage lawyers, specializations, and case assignments</p>
+                </div>
             </div>
         </nav>
         <div class="container-fluid py-4">
             {MESSAGE}
 
-            <!-- Page Header -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body p-3">
-                            <div class="row align-items-center">
-                                <div class="col-lg-8">
-                                    <h5 class="mb-0">Lawyer Management</h5>
-                                    <p class="text-sm text-muted mb-0">Manage lawyers and their information</p>
-                                </div>
-                                <div class="col-lg-4 text-end">
-                                    <button class="btn btn-dark btn-sm mb-0" onclick="showLawyerForm()">
-                                        <i class="ni ni-fat-add me-1"></i> Add Lawyer
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="row">
-                <!-- Lawyers Table -->
                 <div class="col-12">
-                    <div class="card mb-4">
-                        <div class="card-header pb-3 pt-3">
-                            <div class="d-flex align-items-center">
-                                <div class="icon icon-shape icon-md bg-gradient-primary shadow text-center border-radius-md me-3">
-                                    <i class="ni ni-single-02 text-white text-lg opacity-10"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0">All Lawyers</h6>
-                                    <p class="text-xs text-muted mb-0">Manage lawyer accounts and information</p>
-                                </div>
+                    <div class="card mb-4 legalpro-lawyers-hub">
+                        <div class="legalpro-lawyers-hub__head">
+                            <div>
+                                <h5 class="legalpro-lawyers-hub__title">All Lawyers</h5>
+                                <p class="legalpro-lawyers-hub__count">{LAWYERS_SUBTITLE}</p>
                             </div>
+                            {ADD_LAWYER_BTN}
                         </div>
-                        <div class="card-body px-0 pt-2 pb-2">
+                        <div class="legalpro-lawyers-filters">
                             {LAWYERS_SEARCH}
-                            <div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
+                        </div>
+                        <div class="card-body px-0 pt-0 pb-2 legalpro-lawyers-table-wrap">
+                            <div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-lawyers-row">
                             <div class="table-responsive">
-                                <table class="table align-items-center mb-0">
+                                <table class="table legalpro-lawyers-table mb-0" id="lawyersTable">
                                     <thead>
                                         <tr>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Lawyer</th>
-                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Specialization</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cases</th>
-                                            <th class="text-secondary opacity-7"></th>
+                                            <th>Lawyer</th>
+                                            <th>Specialization</th>
+                                            <th class="text-center">Status</th>
+                                            <th class="text-center">Cases</th>
+                                            <th class="text-end">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="lawyersTableBody">
                                         {LAWYERS_TABLE}
                                         <tr id="lawyersFilterEmpty" class="d-none">
-                                            <td colspan="5" class="text-center text-muted text-sm py-4">No lawyers match your search.</td>
+                                            <td colspan="5" class="text-center text-muted text-sm py-4 border-0">No lawyers match your search.</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -627,11 +615,6 @@ $html = <<<'HTML'
         </div>
     </div>
 
-    <script src="../assets/js/core/popper.min.js"></script>
-    <script src="../assets/js/core/bootstrap.min.js"></script>
-    <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
-    <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
-    <script src="../assets/js/argon-dashboard.min.js?v=2.1.0"></script>
     <script src="../assets/js/legalpro-password-validation.js?v=1"></script>
     <script>
         function showLawyerForm() {
@@ -692,9 +675,6 @@ $html = <<<'HTML'
 </html>
 HTML;
 
-$lawyersSearchHtml = legalpro_render_admin_list_search('lawyersSearchInput', 'Search lawyers...');
-$lawyersSearchScript = legalpro_admin_list_search_script('lawyersSearchInput', 'lawyersTableBody', 'lawyersFilterEmpty');
-
 // Handle form display for errors
 $showCreateUserForm = false;
 $showEditModalOnPost = false;
@@ -712,6 +692,9 @@ $replacements = [
     '{LAWYERS_SEARCH}' => $lawyersSearchHtml,
     '{LAWYERS_SEARCH_SCRIPT}' => $lawyersSearchScript,
     '{LAWYERS_TABLE}' => $lawyersTable,
+    '{LAWYERS_SUBTITLE}' => htmlspecialchars($lawyersSubtitle),
+    '{ADD_LAWYER_BTN}' => $addLawyerBtn,
+    '{PORTAL_THEME_BODY_CLASS}' => legalpro_portal_theme_body_class(),
     '{FORM_TITLE}' => htmlspecialchars($formTitle),
     '{SUBMIT_LABEL}' => htmlspecialchars($submitLabel),
     '{LAWYER_ID}' => htmlspecialchars($formData['lawyer_id']),

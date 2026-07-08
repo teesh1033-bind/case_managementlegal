@@ -85,14 +85,23 @@ body.legalpro-dashboard-page.vision-ui-theme .navbar-main {
 body.legalpro-dashboard-page.vision-ui-theme .navbar-main h6,
 body.legalpro-dashboard-page.vision-ui-theme .vu-page-title {
     color: var(--vu-text) !important;
-    font-size: 1.05rem !important;
+    font-size: 1.25rem !important;
     font-weight: 700 !important;
+    letter-spacing: -0.025em;
 }
 
 body.legalpro-dashboard-page.vision-ui-theme .dashboard-welcome-sub,
 body.legalpro-dashboard-page.vision-ui-theme .vu-breadcrumb {
     color: var(--vu-muted) !important;
-    font-size: 0.82rem !important;
+    font-size: 0.8125rem !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-breadcrumb {
+    font-size: 0.75rem !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .legalpro-navbar-heading .dashboard-welcome-sub {
+    margin-top: 0.2rem !important;
 }
 
 body.legalpro-dashboard-page.vision-ui-theme .vu-breadcrumb strong {
@@ -445,10 +454,86 @@ body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .legalpro-
 
 body.legalpro-dashboard-page.vision-ui-theme:not(.legalpro-dark-mode) .cat-legend-pct { color: var(--vu-text) !important; }
 
-/* ── Dashboard side column (activity + category) ───────────────────────── */
+/* ── Dashboard grid (equal-height paired cards) ─────────────────────────── */
+body.legalpro-dashboard-page.vision-ui-theme .vu-dashboard-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        "financial"
+        "activity"
+        "recent"
+        "category";
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-financial-chart-card {
+    grid-area: financial;
+    height: auto;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-activity-panel {
+    grid-area: activity;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-recent-cases-card {
+    grid-area: recent;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-category-panel {
+    grid-area: category;
+}
+
+@media (min-width: 992px) {
+    body.legalpro-dashboard-page.vision-ui-theme .vu-dashboard-grid {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "financial activity"
+            "recent category";
+        align-items: stretch;
+    }
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-dashboard-grid > .card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-bottom: 0 !important;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-dashboard-grid > .card > .card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-financial-chart-card .card-body {
+    padding-top: 0.5rem;
+    padding-bottom: 0.85rem;
+    flex: 0 0 auto;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-financial-chart-wrap {
+    position: relative;
+    height: 200px;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-category-chart-wrap {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    flex-shrink: 0;
+}
+
+body.legalpro-dashboard-page.vision-ui-theme .vu-category-legend {
+    margin-top: 1rem;
+    width: 100%;
+    font-size: 0.75rem;
+}
+
+/* ── Dashboard side panels ─────────────────────────────────────────────── */
 body.legalpro-dashboard-page.vision-ui-theme .vu-dashboard-side-col {
     gap: 1rem;
-    min-height: 100%;
+    min-height: 0;
 }
 
 body.legalpro-dashboard-page.vision-ui-theme .vu-side-panel {

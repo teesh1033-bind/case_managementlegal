@@ -806,17 +806,36 @@ function legalpro_case_payment_status_badge(float $totalDue, float $paid): strin
     $label = legalpro_case_payment_status_label($totalDue, $paid);
     $map = [
         admin_badge_t('badges.status.no_fees', 'No fees') => 'lp-pill--status-default',
-        admin_badge_t('badges.status.paid', 'Paid') => 'lp-pill--status-active',
-        admin_badge_t('badges.status.partial', 'Partial') => 'lp-pill--status-progress',
-        admin_badge_t('badges.status.outstanding', 'Outstanding') => 'lp-pill--status-pending',
+        admin_badge_t('badges.status.paid', 'Paid') => 'lp-pill--status-success',
+        admin_badge_t('badges.status.partial', 'Partial') => 'lp-pill--status-warning',
+        admin_badge_t('badges.status.outstanding', 'Outstanding') => 'lp-pill--status-warning',
         'No fees' => 'lp-pill--status-default',
-        'Paid' => 'lp-pill--status-active',
-        'Partial' => 'lp-pill--status-progress',
-        'Outstanding' => 'lp-pill--status-pending',
+        'Paid' => 'lp-pill--status-success',
+        'Partial' => 'lp-pill--status-warning',
+        'Outstanding' => 'lp-pill--status-warning',
     ];
     $class = $map[$label] ?? 'lp-pill--status-default';
 
     return '<span class="lp-pill ' . $class . '">' . htmlspecialchars($label) . '</span>';
+}
+
+function legalpro_payment_paid_amount_class(float $paid): string
+{
+    return $paid > 0.01
+        ? 'legalpro-payments-amount legalpro-payments-amount--paid'
+        : 'legalpro-payments-muted';
+}
+
+function legalpro_payment_balance_amount_class(float $paid, float $balance): string
+{
+    if ($balance <= 0.01) {
+        return 'legalpro-payments-amount legalpro-payments-amount--paid';
+    }
+    if ($paid <= 0.01) {
+        return 'legalpro-payments-amount legalpro-payments-amount--overdue';
+    }
+
+    return 'legalpro-payments-amount legalpro-payments-amount--balance';
 }
 
 function legalpro_invoice_status_badge(string $status): string
@@ -825,8 +844,8 @@ function legalpro_invoice_status_badge(string $status): string
     $map = [
         'draft' => ['key' => 'badges.status.draft', 'label' => 'Draft', 'class' => 'lp-pill--status-default'],
         'sent' => ['key' => 'badges.status.sent', 'label' => 'Sent', 'class' => 'lp-pill--status-progress'],
-        'paid' => ['key' => 'badges.status.paid', 'label' => 'Paid', 'class' => 'lp-pill--status-active'],
-        'overdue' => ['key' => 'badges.status.overdue', 'label' => 'Overdue', 'class' => 'lp-pill--status-declined'],
+        'paid' => ['key' => 'badges.status.paid', 'label' => 'Paid', 'class' => 'lp-pill--status-success'],
+        'overdue' => ['key' => 'badges.status.overdue', 'label' => 'Overdue', 'class' => 'lp-pill--status-danger'],
         'cancelled' => ['key' => 'badges.status.cancelled', 'label' => 'Cancelled', 'class' => 'lp-pill--status-closed'],
     ];
 

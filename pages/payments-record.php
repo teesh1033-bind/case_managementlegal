@@ -4,7 +4,7 @@ require_once __DIR__ . '/../lib/admin-payments-activity-portal.php';
 
 $state = legalpro_payments_portal_load($pdo);
 $content = legalpro_payments_portal_wrap_content(
-    'payments',
-    legalpro_payments_portal_overview_html($state)
+    'payments-record',
+    legalpro_payments_portal_record_html($state)
 );
-legalpro_payments_activity_render_page('payments', $content, $state);
+legalpro_payments_activity_render_page('payments-record', $content, $state);

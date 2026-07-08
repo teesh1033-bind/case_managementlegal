@@ -49,6 +49,12 @@ if (!function_exists('legalpro_admin_menu_is_active')) {
         if ($itemId === 'documents' && in_array($currentPage, ['documents', 'document-upload', 'document-templates', 'document-generate', 'document-browse'], true)) {
             return true;
         }
+        if ($itemId === 'settings' && strpos($currentPage, 'settings') === 0) {
+            return true;
+        }
+        if ($itemId === 'payments' && strpos($currentPage, 'payments') === 0) {
+            return true;
+        }
 
         return $itemId === $currentPage;
     }
@@ -80,6 +86,9 @@ echo legalpro_render_portal_sidebar([
     'logo_url' => $companyLogoUrl,
     'current_page' => $currentPage,
     'items' => $menuItems,
+    'footer_items' => [
+        ['title_key' => 'nav.settings', 'url' => 'settings.php', 'icon' => 'settings', 'id' => 'settings'],
+    ],
     'logout_url' => 'admin-logout.php',
     'is_active' => 'legalpro_admin_menu_is_active',
     'compact' => true,
