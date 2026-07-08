@@ -1267,6 +1267,20 @@ body.admin-payments-page .legalpro-payments-form-panel .form-label {
     margin-bottom: 0.4rem;
 }
 
+body.admin-payments-page .legalpro-payments-form-panel--record {
+    border: 1px solid #e9ecf3;
+    border-radius: 14px;
+    padding: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+body.admin-payments-page .legalpro-payments-form-section {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.01em;
+}
+
 body.admin-payments-page .legalpro-payments-form-panel .form-control,
 body.admin-payments-page .legalpro-payments-form-panel .form-select {
     border-radius: 10px;
@@ -1289,6 +1303,31 @@ body.admin-payments-page .legalpro-payments-form-hint {
 body.admin-payments-page .legalpro-payments-form-panel .btn-legalpro-payments-save {
     min-width: 11rem;
     padding: 0.7rem 1.5rem;
+}
+
+body.admin-payments-page .legalpro-invoices-form .form-label {
+    margin-bottom: 0.35rem;
+}
+
+body.admin-payments-page .legalpro-invoices-form .legalpro-payments-form-section {
+    margin-top: 0.4rem;
+}
+
+body.admin-payments-page .legalpro-invoices-form .lp-invoice-bank {
+    margin-bottom: 1rem;
+    border-radius: 12px;
+}
+
+body.admin-payments-page .legalpro-invoices-form .lp-bank-ui__head {
+    margin-bottom: 0.65rem;
+}
+
+body.admin-payments-page .legalpro-invoices-form .lp-invoice-bank__hint {
+    margin: 0.45rem 0 0.75rem;
+}
+
+body.admin-payments-page .legalpro-invoices-form #case-amount-summary .legalpro-form-panel {
+    border-radius: 12px;
 }
 
 body.admin-payments-page .legalpro-payments-ledger-panel {
@@ -1342,7 +1381,11 @@ body.admin-payments-page .legalpro-payments-ledger-tools .form-select {
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-workspace,
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-workspace__header {
     background: var(--lp-dark-surface, #343b4f);
-    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-workspace__header {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
 }
 
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-workspace__title,
@@ -1359,6 +1402,33 @@ body.legalpro-dark-mode.admin-payments-page .legalpro-payments-workspace__conten
     border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
 }
 
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-form-panel--record {
+    background: linear-gradient(180deg, rgba(52, 59, 79, 0.95) 0%, rgba(45, 53, 74, 0.95) 100%);
+    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-form-section {
+    color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-form-panel .form-label {
+    color: #dbe7ff !important;
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-form-panel input[type="date"]::-webkit-calendar-picker-indicator,
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-form-panel input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+body.legalpro-dark-mode.legalpro-finance-page.admin-payments-page input[type="date"]::-webkit-calendar-picker-indicator,
+body.legalpro-dark-mode.legalpro-finance-page.admin-payments-page input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.2);
+    cursor: pointer;
+    opacity: 1;
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-form-panel input[type="date"],
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-form-panel input[type="datetime-local"] {
+    color-scheme: dark;
+}
+
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-table thead th {
     background: rgba(0, 0, 0, 0.15) !important;
     border-bottom-color: rgba(255, 255, 255, 0.08);
@@ -1366,25 +1436,79 @@ body.legalpro-dark-mode.admin-payments-page .legalpro-payments-table thead th {
 
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat {
     background: var(--lp-dark-surface-raised, #3d455c);
-    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat:hover {
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat__label {
+    color: #dbe7ff !important;
 }
 
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat__value {
-    color: var(--lp-dark-text, #f8f9fc) !important;
+    color: #ffffff !important;
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat__meta {
+    color: #c5d4f0 !important;
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat__meta--success {
+    color: #86efac !important;
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat__icon {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #e8f0ff !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat--success .legalpro-payments-stat__icon {
+    background: rgba(45, 206, 137, 0.2) !important;
+    color: #86efac !important;
+    border-color: rgba(45, 206, 137, 0.35);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat--warning .legalpro-payments-stat__icon {
+    background: rgba(251, 99, 64, 0.2) !important;
+    color: #fdba74 !important;
+    border-color: rgba(251, 99, 64, 0.35);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat--info .legalpro-payments-stat__icon {
+    background: rgba(58, 123, 255, 0.22) !important;
+    color: #93c5fd !important;
+    border-color: rgba(58, 123, 255, 0.35);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-stat--primary .legalpro-payments-stat__icon {
+    background: rgba(147, 51, 234, 0.22) !important;
+    color: #c4b5fd !important;
+    border-color: rgba(147, 51, 234, 0.35);
+}
+
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-workspace__sub,
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-workspace__section,
+body.legalpro-dark-mode.admin-payments-page .legalpro-payments-form-hint {
+    color: #c5d4f0 !important;
 }
 
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-tabs {
-    background: rgba(0, 0, 0, 0.15);
-    border-color: var(--lp-dark-border, rgba(255, 255, 255, 0.1));
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.14);
 }
 
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-tabs__link {
-    color: var(--lp-dark-text-muted, #94a3b8);
+    color: #dbe7ff !important;
 }
 
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-tabs__link:hover {
-    color: var(--lp-dark-text, #f8f9fc);
-    background: var(--lp-dark-surface-hover, #464f68);
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 body.legalpro-dark-mode.admin-payments-page .legalpro-payments-tabs__link.is-active {
@@ -1451,4 +1575,52 @@ body.legalpro-dark-mode.admin-payments-page .legalpro-payments-table tbody tr:ho
 body.legalpro-dark-mode.admin-payments-page .navbar-main,
 body.legalpro-dark-mode.admin-payments-page #navbarBlur {
     background: var(--lp-dark-surface, #343b4f) !important;
+}
+
+/* —— Invoices list polish —— */
+body.admin-invoices-page .legalpro-invoices-list-card {
+    border-radius: 16px;
+    border: 1px solid #e9ecf3;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
+}
+
+body.admin-invoices-page .legalpro-invoices-list-card .card-header {
+    padding: 1.25rem 1.5rem 0.75rem;
+    background: transparent;
+}
+
+body.admin-invoices-page .legalpro-invoices-list-card .card-header h6 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: -0.02em;
+}
+
+body.admin-invoices-page .legalpro-invoices-list__actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+}
+
+body.admin-invoices-page .legalpro-invoices-list__actions .btn,
+body.admin-invoices-page .legalpro-invoices-list__actions form {
+    margin: 0;
+}
+
+body.admin-invoices-page .legalpro-invoices-table tbody td {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+body.admin-invoices-page .legalpro-invoices-table tbody td strong {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+body.legalpro-dark-mode.admin-invoices-page .legalpro-invoices-list-card .card-header h6,
+body.legalpro-dark-mode.admin-invoices-page .legalpro-invoices-table tbody td strong {
+    color: var(--lp-dark-text, #f8f9fc) !important;
 }

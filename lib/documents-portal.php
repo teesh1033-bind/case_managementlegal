@@ -730,6 +730,208 @@ function legalpro_documents_document_row_actions_html(array $doc, int $caseId, b
     return $html . '</div>';
 }
 
+function legalpro_documents_browse_file_actions_html(array $doc, int $caseId = 0, bool $allowDelete = false): string
+{
+    $downloadUrl = !empty($doc['filepath']) ? '../' . ltrim((string) $doc['filepath'], '/') : '#';
+    $html = '<div class="lp-doc-browse__actions">'
+        . '<a class="lp-doc-browse__action lp-doc-browse__action--view" href="' . htmlspecialchars($downloadUrl) . '" target="_blank" rel="noopener" title="View" aria-label="View">'
+        . legalpro_icon('eye')
+        . '</a>'
+        . '<a class="lp-doc-browse__action lp-doc-browse__action--download" href="' . htmlspecialchars($downloadUrl) . '" download title="Download" aria-label="Download">'
+        . legalpro_icon('download')
+        . '</a>';
+
+    if ($allowDelete) {
+        $documentId = (int) ($doc['id'] ?? 0);
+        $displayName = !empty($doc['label']) ? (string) $doc['label'] : (string) ($doc['filename'] ?? 'this document');
+        $confirmMessage = 'Remove "' . $displayName . '"? This cannot be undone.';
+        $html .= '<form method="POST" class="lp-doc-browse__delete-form doc-delete-form">'
+            . '<input type="hidden" name="form_type" value="delete_document">'
+            . '<input type="hidden" name="document_id" value="' . $documentId . '">'
+            . '<input type="hidden" name="case_id" value="' . $caseId . '">'
+            . '<button type="button" class="lp-doc-browse__action lp-doc-browse__action--delete doc-delete-btn"'
+            . ' data-confirm-message="' . htmlspecialchars($confirmMessage, ENT_QUOTES, 'UTF-8') . '" title="Remove" aria-label="Remove">'
+            . legalpro_icon('trash-2')
+            . '</button>'
+            . '</form>';
+    }
+
+    return $html . '</div>';
+}
+
+function legalpro_documents_browse_recent_item_html(array $doc): string
+{
+    $displayName = !empty($doc['label']) ? $doc['label'] : $doc['filename'];
+    $caseTitle = !empty($doc['case_title']) ? $doc['case_title'] : 'Unassigned case';
+    $uploadedAt = !empty($doc['uploaded_at']) ? date('M j, Y', strtotime($doc['uploaded_at'])) : '';
+    $searchText = strtolower(trim($displayName . ' ' . $caseTitle));
+
+    return '
+    <li class="lp-doc-browse__recent-item" data-browse-search="' . htmlspecialchars($searchText, ENT_QUOTES, 'UTF-8') . '">
+        <div class="lp-doc-browse__recent-main">
+            ' . legalpro_document_file_icon_wrap($doc['filename'], 'lp-doc-browse__file-icon') . '
+            <div class="lp-doc-browse__file-copy">
+                <strong class="lp-doc-browse__file-name">' . htmlspecialchars($displayName) . '</strong>
+                <span class="lp-doc-browse__file-meta">' . htmlspecialchars($caseTitle) . ' · ' . htmlspecialchars($uploadedAt) . '</span>
+            </div>
+        </div>
+        ' . legalpro_documents_browse_file_actions_html($doc) . '
+    </li>';
+}
+
+function legalpro_documents_browse_case_file_html(array $doc, int $caseId): string
+{
+    $displayName = !empty($doc['label']) ? $doc['label'] : $doc['filename'];
+    $uploadedAt = !empty($doc['uploaded_at']) ? date('M j, Y g:i A', strtotime($doc['uploaded_at'])) : '';
+    $uploadedBy = !empty($doc['uploaded_by']) ? $doc['uploaded_by'] : 'System';
+    $searchText = strtolower(trim($displayName . ' ' . $uploadedBy));
+
+    return '
+    <div class="lp-doc-browse__file" data-browse-search="' . htmlspecialchars($searchText, ENT_QUOTES, 'UTF-8') . '">
+        <div class="lp-doc-browse__file-main">
+            ' . legalpro_document_file_icon_wrap($doc['filename'], 'lp-doc-browse__file-icon') . '
+            <div class="lp-doc-browse__file-copy">
+                <strong class="lp-doc-browse__file-name">' . htmlspecialchars($displayName) . '</strong>
+                <span class="lp-doc-browse__file-meta">Uploaded ' . htmlspecialchars($uploadedAt) . ' by ' . htmlspecialchars($uploadedBy) . '</span>
+            </div>
+        </div>
+        ' . legalpro_documents_browse_file_actions_html($doc, $caseId, true) . '
+    </div>';
+}
+
+function legalpro_documents_browse_case_block_html(array $case, array $docs, bool $expanded = false): string
+{
+    $caseId = (int) $case['id'];
+    $caseNumber = 'C-' . str_pad((string) $caseId, 4, '0', STR_PAD_LEFT);
+    $docsCount = count($docs);
+    $hasDocs = $docsCount > 0;
+    $searchText = strtolower(trim($caseNumber . ' ' . ($case['title'] ?? '') . ' ' . ($case['client_name'] ?? '')));
+    $filesHtml = '';
+
+    if ($hasDocs) {
+        foreach ($docs as $doc) {
+            $filesHtml .= legalpro_documents_browse_case_file_html($doc, $caseId);
+        }
+    } else {
+        $filesHtml = '<div class="lp-doc-browse__case-empty">'
+            . '<span class="lp-doc-browse__case-empty-icon">' . legalpro_icon('folder-open') . '</span>'
+            . '<p>No documents uploaded yet.</p>'
+            . '</div>';
+    }
+
+    $expandedClass = $expanded ? ' is-open' : '';
+    $ariaExpanded = $expanded ? 'true' : 'false';
+
+    return '
+    <article class="lp-doc-browse__case' . ($hasDocs ? '' : ' lp-doc-browse__case--empty') . $expandedClass . '"'
+        . ' data-browse-search="' . htmlspecialchars($searchText, ENT_QUOTES, 'UTF-8') . '"'
+        . ' data-has-docs="' . ($hasDocs ? '1' : '0') . '">'
+        . '<button type="button" class="lp-doc-browse__case-toggle" aria-expanded="' . $ariaExpanded . '">'
+        . '<span class="lp-doc-browse__case-count">' . htmlspecialchars((string) max(0, $docsCount)) . '</span>'
+        . '<span class="lp-doc-browse__case-info">'
+        . '<strong class="lp-doc-browse__case-title">' . htmlspecialchars($caseNumber . ' · ' . $case['title']) . '</strong>'
+        . '<span class="lp-doc-browse__case-client">' . htmlspecialchars($case['client_name']) . '</span>'
+        . '</span>'
+        . '<span class="lp-doc-browse__case-chevron">' . legalpro_icon('chevron-down') . '</span>'
+        . '</button>'
+        . '<div class="lp-doc-browse__case-panel">' . $filesHtml . '</div>'
+        . '</article>';
+}
+
+function legalpro_documents_render_browse_workspace_html(array $state): string
+{
+    $recentDocuments = $state['recentDocuments'] ?? [];
+    $cases = $state['cases'] ?? [];
+    $documentsByCase = $state['documentsByCase'] ?? [];
+    $totalDocuments = (int) ($state['totalDocuments'] ?? 0);
+    $casesWithDocs = (int) ($state['casesWithDocs'] ?? 0);
+    $recentCount = (int) ($state['recentCount'] ?? count($recentDocuments));
+
+    $recentHtml = '';
+    if (empty($recentDocuments)) {
+        $recentHtml = '<div class="lp-doc-browse__empty">'
+            . '<span class="lp-doc-browse__empty-icon">' . legalpro_icon('file-text') . '</span>'
+            . '<p>No recent documents.</p>'
+            . '</div>';
+    } else {
+        $recentHtml = '<ul class="lp-doc-browse__recent-list">';
+        foreach ($recentDocuments as $doc) {
+            $recentHtml .= legalpro_documents_browse_recent_item_html($doc);
+        }
+        $recentHtml .= '</ul>';
+    }
+
+    $casesHtml = '';
+    if (empty($cases)) {
+        $casesHtml = '<div class="lp-doc-browse__empty">'
+            . '<span class="lp-doc-browse__empty-icon">' . legalpro_icon('folder-open') . '</span>'
+            . '<p>No cases available.</p>'
+            . '</div>';
+    } else {
+        $casesHtml = '<div class="lp-doc-browse__case-list" id="lpDocBrowseCases">';
+        $caseIndex = 0;
+        foreach ($cases as $case) {
+            $caseId = (int) $case['id'];
+            $docs = $documentsByCase[$caseId] ?? [];
+            $casesHtml .= legalpro_documents_browse_case_block_html($case, $docs, $caseIndex === 0 && !empty($docs));
+            $caseIndex++;
+        }
+        $casesHtml .= '</div>';
+    }
+
+    return '
+    <div class="lp-doc-browse">
+        <div class="lp-doc-browse__stats">
+            <div class="lp-doc-browse__stat">
+                <span class="lp-doc-browse__stat-value">' . htmlspecialchars((string) $totalDocuments) . '</span>
+                <span class="lp-doc-browse__stat-label">Total files</span>
+            </div>
+            <div class="lp-doc-browse__stat">
+                <span class="lp-doc-browse__stat-value">' . htmlspecialchars((string) $casesWithDocs) . '</span>
+                <span class="lp-doc-browse__stat-label">Cases with docs</span>
+            </div>
+            <div class="lp-doc-browse__stat">
+                <span class="lp-doc-browse__stat-value">' . htmlspecialchars((string) $recentCount) . '</span>
+                <span class="lp-doc-browse__stat-label">Recent uploads</span>
+            </div>
+        </div>
+
+        <div class="lp-doc-browse__toolbar">
+            <label class="lp-doc-browse__search">
+                <span class="lp-doc-browse__search-icon">' . legalpro_icon('search') . '</span>
+                <input type="search" id="lpDocBrowseSearch" class="lp-doc-browse__search-input" placeholder="Search files, cases, or clients…" autocomplete="off">
+            </label>
+            <div class="lp-doc-browse__filters" role="group" aria-label="Filter cases">
+                <button type="button" class="lp-doc-browse__filter is-active" data-browse-filter="all">All cases</button>
+                <button type="button" class="lp-doc-browse__filter" data-browse-filter="with-docs">With files</button>
+                <button type="button" class="lp-doc-browse__filter" data-browse-filter="empty">Empty</button>
+            </div>
+        </div>
+
+        <div class="lp-doc-browse__grid">
+            <section class="lp-doc-browse__panel lp-doc-browse__panel--recent">
+                <header class="lp-doc-browse__panel-head">
+                    <div>
+                        <h2 class="lp-doc-browse__panel-title">Recent uploads</h2>
+                        <p class="lp-doc-browse__panel-lead">Latest files across all matters</p>
+                    </div>
+                </header>
+                <div class="lp-doc-browse__panel-body" id="lpDocBrowseRecent">' . $recentHtml . '</div>
+            </section>
+
+            <section class="lp-doc-browse__panel lp-doc-browse__panel--cases">
+                <header class="lp-doc-browse__panel-head">
+                    <div>
+                        <h2 class="lp-doc-browse__panel-title">Case library</h2>
+                        <p class="lp-doc-browse__panel-lead">Every upload grouped by matter</p>
+                    </div>
+                </header>
+                <div class="lp-doc-browse__panel-body">' . $casesHtml . '</div>
+            </section>
+        </div>
+    </div>';
+}
+
 function legalpro_documents_message_html(array $state): string
 {
     if (empty($state['message'])) {
@@ -1005,29 +1207,90 @@ function legalpro_documents_browse_script(): string
 {
     return <<<'JS'
         document.addEventListener('DOMContentLoaded', function() {
-            var accordion = document.getElementById('documentsAccordion');
-            if (accordion && typeof legalproInitIcons === 'function') {
-                legalproInitIcons(accordion);
-                accordion.addEventListener('shown.bs.collapse', function(e) {
-                    legalproInitIcons(e.target);
-                });
+            var browseRoot = document.querySelector('.lp-doc-browse');
+            if (browseRoot && typeof legalproInitIcons === 'function') {
+                legalproInitIcons(browseRoot);
             }
 
-            document.addEventListener('click', function(e) {
-                var btn = e.target.closest('.doc-delete-btn');
-                if (!btn) {
+            browseRoot && browseRoot.addEventListener('click', function(e) {
+                var toggle = e.target.closest('.lp-doc-browse__case-toggle');
+                if (toggle) {
+                    var caseBlock = toggle.closest('.lp-doc-browse__case');
+                    if (!caseBlock) {
+                        return;
+                    }
+                    var isOpen = caseBlock.classList.contains('is-open');
+                    caseBlock.classList.toggle('is-open', !isOpen);
+                    toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                    if (!isOpen && typeof legalproInitIcons === 'function') {
+                        legalproInitIcons(caseBlock);
+                    }
+                    return;
+                }
+
+                var filterBtn = e.target.closest('[data-browse-filter]');
+                if (filterBtn) {
+                    browseRoot.querySelectorAll('[data-browse-filter]').forEach(function(btn) {
+                        btn.classList.toggle('is-active', btn === filterBtn);
+                    });
+                    applyBrowseFilters();
+                    return;
+                }
+
+                var deleteBtn = e.target.closest('.doc-delete-btn');
+                if (!deleteBtn) {
                     return;
                 }
                 e.preventDefault();
-                var form = btn.closest('form');
+                var form = deleteBtn.closest('form');
                 if (!form) {
                     return;
                 }
-                var msg = btn.getAttribute('data-confirm-message') || 'Remove this document? This cannot be undone.';
+                var msg = deleteBtn.getAttribute('data-confirm-message') || 'Remove this document? This cannot be undone.';
                 if (window.confirm(msg)) {
                     form.submit();
                 }
             });
+
+            var searchInput = document.getElementById('lpDocBrowseSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', applyBrowseFilters);
+            }
+
+            function applyBrowseFilters() {
+                if (!browseRoot) {
+                    return;
+                }
+                var query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+                var activeFilter = browseRoot.querySelector('[data-browse-filter].is-active');
+                var filterMode = activeFilter ? activeFilter.getAttribute('data-browse-filter') : 'all';
+
+                browseRoot.querySelectorAll('.lp-doc-browse__recent-item').forEach(function(item) {
+                    var haystack = item.getAttribute('data-browse-search') || '';
+                    item.hidden = query !== '' && haystack.indexOf(query) === -1;
+                });
+
+                browseRoot.querySelectorAll('.lp-doc-browse__case').forEach(function(caseBlock) {
+                    var caseHaystack = caseBlock.getAttribute('data-browse-search') || '';
+                    var hasDocs = caseBlock.getAttribute('data-has-docs') === '1';
+                    var matchesFilter = filterMode === 'all'
+                        || (filterMode === 'with-docs' && hasDocs)
+                        || (filterMode === 'empty' && !hasDocs);
+                    var fileMatches = false;
+
+                    caseBlock.querySelectorAll('.lp-doc-browse__file').forEach(function(file) {
+                        var fileHaystack = file.getAttribute('data-browse-search') || '';
+                        var fileMatch = query === '' || fileHaystack.indexOf(query) !== -1 || caseHaystack.indexOf(query) !== -1;
+                        file.hidden = query !== '' && !fileMatch;
+                        if (fileMatch) {
+                            fileMatches = true;
+                        }
+                    });
+
+                    var caseMatch = query === '' || caseHaystack.indexOf(query) !== -1 || fileMatches;
+                    caseBlock.hidden = !matchesFilter || !caseMatch;
+                });
+            }
         });
 JS;
 }
@@ -1105,7 +1368,7 @@ function legalpro_documents_render_page(string $pageKey, string $contentHtml, ar
     ob_start();
     include dirname(__DIR__) . '/inc/admin-portal-head.php';
     $html .= ob_get_clean();
-    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=6" rel="stylesheet" />'
+    $html .= '<link href="../assets/css/legalpro-documents-hub.css?v=8" rel="stylesheet" />'
         . '<style>' . legalpro_documents_shared_styles() . '</style>
 </head>
 <body class="g-sidenav-show g-sidenav-pinned bg-gray-100 legalpro-admin-portal legalpro-documents-page' . $bodyClass . '">

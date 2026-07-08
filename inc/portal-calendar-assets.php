@@ -7,7 +7,7 @@ if (defined('LEGALPRO_PORTAL_CALENDAR_ASSETS')) {
 }
 define('LEGALPRO_PORTAL_CALENDAR_ASSETS', true);
 
-echo '<link href="../assets/css/legalpro-appointments-calendar.css?v=31" rel="stylesheet" />' . "\n";
+echo '<link href="../assets/css/legalpro-appointments-calendar.css?v=33" rel="stylesheet" />' . "\n";
 echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />' . "\n";
 echo '<script src="../assets/js/legalpro-calendar-studio.js?v=5" defer></script>' . "\n";
 

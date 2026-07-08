@@ -303,6 +303,14 @@ ob_start();
             font-family: inherit; font-size: 0.68rem; font-weight: 600;
             color: #64748b; box-shadow: 0 1px 0 #e2e8f0;
         }
+        body.legalpro-dashboard-page.legalpro-dark-mode .dashboard-stat-card,
+        body.legalpro-dashboard-page.legalpro-dark-mode .dashboard-stat-card *,
+        body.legalpro-dashboard-page.legalpro-dark-mode .card.h-100,
+        body.legalpro-dashboard-page.legalpro-dark-mode .card.h-100 *,
+        body.legalpro-dashboard-page.legalpro-dark-mode .dashboard-calendar-hub,
+        body.legalpro-dashboard-page.legalpro-dark-mode .dashboard-calendar-hub * {
+            color: #ffffff !important;
+        }
     </style>
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page<?php echo legalpro_portal_theme_body_class(); ?>">

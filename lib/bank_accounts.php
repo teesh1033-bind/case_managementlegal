@@ -310,7 +310,7 @@ function legalpro_render_bank_icon_field(string $name, array $meta, string $valu
 
 function legalpro_bank_accounts_stylesheet_tag(): string
 {
-    return '<link href="../assets/css/bank-accounts-ui.css?v=4" rel="stylesheet" />';
+    return '<link href="../assets/css/bank-accounts-ui.css?v=6" rel="stylesheet" />';
 }
 
 function legalpro_render_invoice_bank_section(int $selectedSlot, string $paymentTerms, string $paymentInstructions): string
@@ -322,18 +322,28 @@ function legalpro_render_invoice_bank_section(int $selectedSlot, string $payment
     return '<div class="lp-invoice-bank lp-bank-ui">'
         . '<div class="lp-bank-ui__head">'
         . '<span class="lp-bank-ui__head-icon">' . legalpro_icon('landmark') . '</span>'
-        . '<div><h6 class="lp-bank-ui__title mb-0">Bank account on invoice</h6></div></div>'
+        . '<div>'
+        . '<h6 class="lp-bank-ui__title mb-0">Receiving account</h6>'
+        . '<p class="lp-bank-ui__subtitle mb-0">Shown on the invoice PDF for client payments.</p>'
+        . '</div></div>'
         . $select
-        . '<p class="lp-invoice-bank__hint">Configure accounts under <a href="settings.php#bank-accounts-settings">Settings → Branding → Bank accounts</a>.</p>'
+        . '<p class="lp-invoice-bank__hint">Manage accounts in <a href="settings.php#bank-accounts-settings">Settings → Branding → Bank accounts</a>.</p>'
         . '<div id="invoice-bank-preview" class="lp-invoice-bank__card" hidden>'
-        . '<span class="lp-invoice-bank__card-icon">' . legalpro_icon('credit-card') . '</span>'
-        . '<div><div class="lp-invoice-bank__card-kicker" id="invoice-bank-preview-kicker">Account number</div>'
+        . '<div class="lp-invoice-bank__card-top">'
+        . '<span class="lp-invoice-bank__card-icon" aria-hidden="true">' . legalpro_icon('credit-card') . '</span>'
+        . '<div class="lp-invoice-bank__card-main">'
+        . '<div class="lp-invoice-bank__card-kicker" id="invoice-bank-preview-kicker">Account number</div>'
         . '<div class="lp-invoice-bank__card-value" id="invoice-bank-preview-value">—</div>'
-        . '<div class="lp-invoice-bank__card-meta" id="invoice-bank-preview-meta"></div></div></div>'
-        . '<div class="row mt-3"><div class="col-md-6 mb-0">'
+        . '</div>'
+        . '<span class="lp-invoice-bank__card-badge" id="invoice-bank-preview-badge">Selected</span>'
+        . '</div>'
+        . '<div class="lp-invoice-bank__chips" id="invoice-bank-preview-chips"></div>'
+        . '<div class="lp-invoice-bank__card-meta" id="invoice-bank-preview-meta"></div>'
+        . '</div>'
+        . '<div class="row mt-3 g-3"><div class="col-md-6">'
         . '<label class="form-label">Payment terms</label>'
         . '<input type="text" class="form-control" name="payment_terms" value="' . htmlspecialchars($paymentTerms, ENT_QUOTES, 'UTF-8') . '">'
-        . '</div><div class="col-md-6 mb-0">'
+        . '</div><div class="col-md-6">'
         . '<label class="form-label">Payment instructions</label>'
         . '<input type="text" class="form-control" name="payment_instructions" value="' . htmlspecialchars($paymentInstructions, ENT_QUOTES, 'UTF-8') . '" placeholder="Optional">'
         . '</div></div></div>';

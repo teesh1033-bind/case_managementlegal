@@ -905,34 +905,112 @@ body.legalpro-dark-mode.client-appointments-page .lp-appt-book-section .ca-book-
     border-color: rgba(255, 255, 255, 0.08);
 }
 
-body.legalpro-dark-mode .lp-cal-studio-wrap {
-    background: var(--lp-dark-surface, #1a2035);
-    border-color: rgba(255, 255, 255, 0.08);
+body.legalpro-dark-mode .lp-cal-studio-wrap,
+body.legalpro-dark-mode.lp-schedule-hub-page .dashboard-calendar-hub.lp-cal-studio-wrap {
+    background: var(--lp-dark-surface-raised, #343b4f) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35) !important;
 }
 
 body.legalpro-dark-mode .lp-cal-studio__main {
-    border-right-color: rgba(255, 255, 255, 0.08);
+    border-right-color: rgba(255, 255, 255, 0.1);
 }
 
 body.legalpro-dark-mode .lp-cal-studio__month-title {
+    color: #cbd5e1;
+}
+
+body.legalpro-dark-mode .lp-cal-studio .lp-cal-studio__calendar .fc .fc-col-header-cell-cushion {
+    color: #94a3b8 !important;
+}
+
+body.legalpro-dark-mode .lp-cal-studio__day-num {
+    color: #e2e8f0;
+}
+
+body.legalpro-dark-mode .lp-cal-studio .fc .fc-day-other .lp-cal-studio__day-num {
     color: #64748b;
+}
+
+body.legalpro-dark-mode .lp-cal-studio__legend {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.legalpro-dark-mode .lp-cal-studio__legend-item {
+    color: #cbd5e1;
+}
+
+body.legalpro-dark-mode .lp-cal-studio__agenda-head {
+    color: #94a3b8;
+}
+
+body.legalpro-dark-mode .lp-cal-studio__agenda-list::before {
+    background: linear-gradient(180deg, rgba(var(--legalpro-theme-primary-rgb, 2, 62, 138), 0.55), rgba(255, 255, 255, 0.08));
 }
 
 body.legalpro-dark-mode .lp-cal-studio__agenda-title {
     color: var(--lp-dark-text, #f8f9fc);
 }
 
+body.legalpro-dark-mode .lp-cal-studio__agenda-meta,
+body.legalpro-dark-mode .lp-cal-studio__agenda-sub {
+    color: #94a3b8;
+}
+
+body.legalpro-dark-mode .lp-cal-studio__agenda-empty {
+    color: #94a3b8;
+}
+
 body.legalpro-dark-mode .lp-cal-studio__agenda-item:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 body.legalpro-dark-mode .lp-cal-studio__agenda-dot {
-    box-shadow: 0 0 0 3px var(--lp-dark-surface, #1a2035);
+    box-shadow: 0 0 0 3px var(--lp-dark-surface-raised, #343b4f);
+}
+
+body.legalpro-dark-mode .lp-cal-studio__agenda-delete {
+    color: #64748b;
+}
+
+body.legalpro-dark-mode .lp-cal-studio__agenda-delete:hover {
+    color: #f5365c;
+    background: rgba(245, 54, 92, 0.12);
+}
+
+body.legalpro-dark-mode .lp-cal-studio .fc-popover,
+body.legalpro-dark-mode .lp-cal-studio .fc-more-popover,
+body.legalpro-dark-mode .fc-popover,
+body.legalpro-dark-mode .fc-more-popover {
+    background: var(--lp-dark-surface-raised, #343b4f) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.5) !important;
+}
+
+body.legalpro-dark-mode .lp-cal-studio .fc-popover-header,
+body.legalpro-dark-mode .fc-popover-header {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.legalpro-dark-mode .lp-cal-studio .fc-popover-title,
+body.legalpro-dark-mode .fc-popover-title {
+    color: var(--lp-dark-text, #f8f9fc) !important;
+}
+
+body.legalpro-dark-mode .lp-cal-studio .fc-popover-body,
+body.legalpro-dark-mode .fc-popover-body {
+    background: var(--lp-dark-surface-raised, #343b4f) !important;
+}
+
+body.legalpro-dark-mode .lp-cal-studio .fc-popover .fc-event,
+body.legalpro-dark-mode .fc-popover .fc-event {
+    color: var(--lp-dark-text, #f8f9fc) !important;
 }
 
 @media (max-width: 767px) {
     body.legalpro-dark-mode .lp-cal-studio__main {
-        border-bottom-color: rgba(255, 255, 255, 0.08);
+        border-bottom-color: rgba(255, 255, 255, 0.1);
     }
 }
 
@@ -1170,7 +1248,86 @@ body.legalpro-client-portal .lp-schedule-hub-page .lp-appt-list-card .lp-appt-li
     border-radius: 1.15rem !important;
     border: 1px solid rgba(15, 23, 42, 0.08) !important;
     box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1) !important;
+}
+
+body:not(.legalpro-dark-mode).lp-schedule-hub-page .dashboard-calendar-hub.lp-cal-studio-wrap {
     background: #fff !important;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .dashboard-calendar-hub.lp-cal-studio-wrap,
+body.legalpro-dark-mode.admin-court-tracking-page .dashboard-calendar-hub.lp-cal-studio-wrap,
+body.legalpro-dark-mode.admin-appointments-page .dashboard-calendar-hub.lp-cal-studio-wrap,
+body.legalpro-dark-mode.lawyer-court-tracking-page .dashboard-calendar-hub.lp-cal-studio-wrap,
+body.legalpro-dark-mode.lawyer-appointments-page .dashboard-calendar-hub.lp-cal-studio-wrap,
+body.legalpro-dark-mode.client-court-tracking-page .dashboard-calendar-hub.lp-cal-studio-wrap,
+body.legalpro-dark-mode.client-appointments-page .dashboard-calendar-hub.lp-cal-studio-wrap,
+body.legalpro-dark-mode.lawyer-availability-page .dashboard-calendar-hub.lp-cal-studio-wrap {
+    background: var(--lp-dark-surface-raised, #343b4f) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio__main,
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio__agenda {
+    background: transparent;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-studio__calendar,
+body.legalpro-dark-mode.lp-schedule-hub-page #courtTrackingCalendar.lp-cal-studio__calendar,
+body.legalpro-dark-mode.lp-schedule-hub-page #appointmentsCalendar.lp-cal-studio__calendar,
+body.legalpro-dark-mode.lp-schedule-hub-page #availabilityCalendar.lp-cal-studio__calendar {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: inherit !important;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-studio__calendar .fc .fc-daygrid-day,
+body.legalpro-dark-mode.lp-schedule-hub-page #courtTrackingCalendar.lp-cal-studio__calendar .fc .fc-daygrid-day,
+body.legalpro-dark-mode.lp-schedule-hub-page #appointmentsCalendar.lp-cal-studio__calendar .fc .fc-daygrid-day {
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio__month-title {
+    color: #e2e8f0;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio__day-num {
+    color: #f1f5f9;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .fc .fc-day-other .lp-cal-studio__day-num {
+    color: #94a3b8;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio__agenda-empty {
+    color: #94a3b8;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-day--scheduled .lp-cal-studio__day-num {
+    color: #dbeafe;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-day--confirmed .lp-cal-studio__day-num {
+    color: #bbf7d0;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-day--rescheduled .lp-cal-studio__day-num {
+    color: #e9d5ff;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-day--past .lp-cal-studio__day-num,
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-day--postponed .lp-cal-studio__day-num {
+    color: #fed7aa;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-day--completed .lp-cal-studio__day-num {
+    color: #e2e8f0;
+}
+
+body.legalpro-dark-mode.lp-schedule-hub-page .lp-cal-studio .lp-cal-day--cancelled .lp-cal-studio__day-num {
+    color: #fecdd3;
 }
 
 .lp-schedule-hub-page .lp-cal-studio__main,

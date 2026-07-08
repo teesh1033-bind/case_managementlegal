@@ -377,9 +377,10 @@ if (empty($invoices)) {
             <td class="align-middle text-center">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
             <td class="align-middle text-end">
                 <div class="legalpro-admin-list-row__actions">
+                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '&view=1" class="btn btn-sm btn-outline-primary mb-0" title="View invoice" target="_blank" rel="noopener">View</a>
+                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary mb-0" title="Download invoice PDF" target="_blank" rel="noopener">Download</a>
                     <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-dark mb-0" title="Edit Invoice">Edit</a>
-                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary mb-0" title="Download invoice PDF" target="_blank">Download PDF</a>
-                    <form method="post" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This action cannot be undone.\');">
+                    <form method="post" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number'], ENT_QUOTES) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete">
                         <input type="hidden" name="invoice_id" value="' . (int)$invoice['id'] . '">
                         <button class="btn btn-sm btn-danger mb-0" type="submit" title="Delete Invoice">Delete</button>

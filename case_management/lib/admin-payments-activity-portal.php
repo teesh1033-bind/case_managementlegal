@@ -422,7 +422,7 @@ function legalpro_payments_activity_render_page(string $pageKey, string $content
     ob_start();
     include dirname(__DIR__) . '/inc/admin-portal-head.php';
     $html .= ob_get_clean();
-    $html .= '<link href="../assets/css/legalpro-finance-pages.css?v=5" rel="stylesheet" />'
+    $html .= '<link href="../../assets/css/legalpro-finance-pages.css?v=19" rel="stylesheet" />'
         . '<link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />'
         . '<style>' . legalpro_payments_activity_table_styles() . '</style>
 </head>

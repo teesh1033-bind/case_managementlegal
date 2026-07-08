@@ -2,56 +2,91 @@
 
 function getPortalThemeColorPresets(): array
 {
+    $brand = '#023e8a';
+    $brandDark = '#001845';
+
     return [
-        'primary' => [
-            'label' => 'Purple',
-            'primary' => '#5e72e4',
-            'primary_dark' => '#825ee4',
-            'sidebar_bg' => '#1e2a44',
-            'sidebar_deep' => '#151d30',
+        'navy' => [
+            'label' => 'Classic Navy',
+            'desc' => 'Trusted legal standard',
+            'primary' => $brand,
+            'primary_dark' => $brandDark,
+            'sidebar_bg' => '#000000',
+            'sidebar_deep' => '#000000',
             'badge_class' => 'bg-gradient-primary',
         ],
-        'dark' => [
-            'label' => 'Slate',
-            'primary' => '#344767',
-            'primary_dark' => '#2d3748',
-            'sidebar_bg' => '#1a2035',
-            'sidebar_deep' => '#111525',
+        'charcoal' => [
+            'label' => 'Executive Charcoal',
+            'desc' => 'Refined neutral tone',
+            'primary' => '#2d3748',
+            'primary_dark' => '#1a202c',
+            'sidebar_bg' => '#141820',
+            'sidebar_deep' => '#0c0f14',
             'badge_class' => 'bg-gradient-dark',
         ],
-        'info' => [
-            'label' => 'Cyan',
-            'primary' => '#11cdef',
-            'primary_dark' => '#1171ef',
-            'sidebar_bg' => '#1a2f44',
-            'sidebar_deep' => '#122333',
+        'teal' => [
+            'label' => 'Professional Teal',
+            'desc' => 'Calm and contemporary',
+            'primary' => '#0d5c63',
+            'primary_dark' => '#084248',
+            'sidebar_bg' => '#0a2e32',
+            'sidebar_deep' => '#061c1f',
             'badge_class' => 'bg-gradient-info',
         ],
-        'success' => [
-            'label' => 'Green',
-            'primary' => '#2dce89',
-            'primary_dark' => '#2dcecc',
-            'sidebar_bg' => '#1a352f',
-            'sidebar_deep' => '#122820',
+        'forest' => [
+            'label' => 'Heritage Forest',
+            'desc' => 'Established and trustworthy',
+            'primary' => '#1e4d3b',
+            'primary_dark' => '#123228',
+            'sidebar_bg' => '#0f2920',
+            'sidebar_deep' => '#091a14',
             'badge_class' => 'bg-gradient-success',
         ],
-        'warning' => [
-            'label' => 'Orange',
-            'primary' => '#fb6340',
-            'primary_dark' => '#fbb140',
-            'sidebar_bg' => '#3d2a20',
-            'sidebar_deep' => '#2a1c15',
-            'badge_class' => 'bg-gradient-warning',
+        'slate' => [
+            'label' => 'Corporate Slate',
+            'desc' => 'Modern business gray',
+            'primary' => '#475569',
+            'primary_dark' => '#334155',
+            'sidebar_bg' => '#1e293b',
+            'sidebar_deep' => '#0f172a',
+            'badge_class' => 'bg-gradient-dark',
         ],
-        'danger' => [
-            'label' => 'Red',
-            'primary' => '#f5365c',
-            'primary_dark' => '#f56036',
-            'sidebar_bg' => '#3d1f2a',
-            'sidebar_deep' => '#2a141c',
+        'burgundy' => [
+            'label' => 'Deep Burgundy',
+            'desc' => 'Distinguished executive accent',
+            'primary' => '#5c2e37',
+            'primary_dark' => '#3d1f26',
+            'sidebar_bg' => '#2a1419',
+            'sidebar_deep' => '#1a0c10',
             'badge_class' => 'bg-gradient-danger',
         ],
     ];
+}
+
+function portalThemeLegacyColorMap(): array
+{
+    return [
+        'primary' => 'navy',
+        'dark' => 'charcoal',
+        'info' => 'teal',
+        'success' => 'forest',
+        'warning' => 'burgundy',
+        'danger' => 'burgundy',
+    ];
+}
+
+function portalThemeResolveColorKey(string $stored): string
+{
+    $stored = strtolower(trim($stored));
+    $legacy = portalThemeLegacyColorMap();
+    if (isset($legacy[$stored])) {
+        return $legacy[$stored];
+    }
+    if ($stored === 'custom' || isset(getPortalThemeColorPresets()[$stored])) {
+        return $stored;
+    }
+
+    return 'navy';
 }
 
 function portalThemeNormalizeHex(string $hex): ?string
@@ -106,7 +141,8 @@ function portalThemeBuildCustomPreset(string $primaryHex): array
     );
 
     return [
-        'label' => 'Custom',
+        'label' => 'Your brand',
+        'desc' => 'Custom accent color',
         'primary' => $primary,
         'primary_dark' => $primaryDark,
         'sidebar_bg' => portalThemeMixHex($primary, '#1a2035', 0.82),
@@ -126,13 +162,13 @@ function getPortalTheme(): array
 {
     $presets = getPortalThemeColorOptions();
     $mode = strtolower(trim((string) getSetting('portal_theme_mode', 'light')));
-    $color = strtolower(trim((string) getSetting('portal_theme_color', 'primary')));
+    $color = portalThemeResolveColorKey((string) getSetting('portal_theme_color', 'navy'));
 
     if (!in_array($mode, ['light', 'dark'], true)) {
         $mode = 'light';
     }
     if (!isset($presets[$color])) {
-        $color = 'primary';
+        $color = 'navy';
     }
 
     return [
@@ -152,7 +188,7 @@ function savePortalTheme(string $mode, string $color, ?string $customPrimary = n
 {
     $presets = getPortalThemeColorOptions();
     $mode = strtolower(trim($mode));
-    $color = strtolower(trim($color));
+    $color = portalThemeResolveColorKey($color);
 
     if (!in_array($mode, ['light', 'dark'], true)) {
         return ['ok' => false, 'message' => 'Invalid theme mode selected.'];
@@ -1308,7 +1344,12 @@ function renderPortalThemeDarkCss(string $primary, string $rgb): string
         . 'color: var(--lp-dark-text) !important;'
         . '}';
 
-    $css .= 'body.legalpro-dark-mode .settings-theme-swatch__label {'
+    $css .= 'body.legalpro-dark-mode .lp-accent-card__name {'
+        . 'color: var(--lp-dark-text) !important;'
+        . '}';
+
+    $css .= 'body.legalpro-dark-mode .lp-accent-card__desc,'
+        . 'body.legalpro-dark-mode .settings-theme-swatch__label {'
         . 'color: var(--lp-dark-text-muted) !important;'
         . '}';
 
@@ -3315,8 +3356,7 @@ function renderPortalThemeCss(): string
         . '}';
 
     $css .= '.settings-theme-mode__option:has(input:checked),'
-        . '.settings-theme-swatch.active .settings-theme-swatch__dot,'
-        . '.settings-theme-swatch:has(input:checked) .settings-theme-swatch__dot {'
+        . '.lp-accent-card:has(input:checked) {'
         . 'border-color: ' . $primary . ' !important;'
         . '}';
 
@@ -3324,9 +3364,12 @@ function renderPortalThemeCss(): string
         . 'background: ' . $soft08 . ' !important;'
         . '}';
 
-    $css .= '.settings-theme-swatch.active .settings-theme-swatch__dot,'
-        . '.settings-theme-swatch:has(input:checked) .settings-theme-swatch__dot {'
-        . 'box-shadow: 0 0 0 3px ' . portalThemeHexToRgba($primary, 0.25) . ' !important;'
+    $css .= '.lp-accent-card:has(input:checked) {'
+        . 'box-shadow: 0 0 0 3px ' . portalThemeHexToRgba($primary, 0.22) . ' !important;'
+        . '}';
+
+    $css .= '.lp-accent-card:has(input:checked) .lp-accent-card__check {'
+        . 'color: ' . $primary . ' !important;'
         . '}';
 
     $css .= '.cc-case-row:hover td,'
@@ -3540,6 +3583,58 @@ function renderPortalThemeHead(): void
     echo '<style id="legalpro-portal-theme">' . $css . '</style>';
 }
 
+function legalpro_render_portal_accent_palette_html(string $currentColor, string $customPrimary): string
+{
+    $presets = getPortalThemeColorPresets();
+    $cards = '';
+
+    foreach ($presets as $key => $preset) {
+        $checked = $currentColor === $key ? ' checked' : '';
+        $gradient = 'linear-gradient(135deg, ' . $preset['primary'] . ' 0%, ' . $preset['primary_dark'] . ' 100%)';
+        $desc = (string) ($preset['desc'] ?? '');
+        $cards .= '<label class="lp-accent-card" title="' . htmlspecialchars($preset['label'], ENT_QUOTES, 'UTF-8') . '">'
+            . '<input type="radio" name="theme_color" value="' . htmlspecialchars($key, ENT_QUOTES, 'UTF-8') . '"' . $checked . '>'
+            . '<span class="lp-accent-card__stripe" style="background:' . htmlspecialchars($gradient, ENT_QUOTES, 'UTF-8') . ';"></span>'
+            . '<span class="lp-accent-card__body">'
+            . '<span class="lp-accent-card__name">' . htmlspecialchars($preset['label'], ENT_QUOTES, 'UTF-8') . '</span>'
+            . ($desc !== '' ? '<span class="lp-accent-card__desc">' . htmlspecialchars($desc, ENT_QUOTES, 'UTF-8') . '</span>' : '')
+            . '</span>'
+            . '<span class="lp-accent-card__check" aria-hidden="true">&#10003;</span>'
+            . '</label>';
+    }
+
+    $customPreset = portalThemeBuildCustomPreset($customPrimary);
+    $customGradient = 'linear-gradient(135deg, ' . $customPreset['primary'] . ' 0%, ' . $customPreset['primary_dark'] . ' 100%)';
+    $customChecked = $currentColor === 'custom' ? ' checked' : '';
+    $customPanelStyle = $currentColor === 'custom' ? '' : ' hidden';
+
+    $cards .= '<label class="lp-accent-card lp-accent-card--custom" title="' . htmlspecialchars(admin_t('settings.accent_custom'), ENT_QUOTES, 'UTF-8') . '">'
+        . '<input type="radio" name="theme_color" value="custom"' . $customChecked . '>'
+        . '<span class="lp-accent-card__stripe lp-accent-card__stripe--custom" data-custom-stripe style="background:' . htmlspecialchars($customGradient, ENT_QUOTES, 'UTF-8') . ';"></span>'
+        . '<span class="lp-accent-card__body">'
+        . '<span class="lp-accent-card__name">' . htmlspecialchars(admin_t('settings.accent_custom')) . '</span>'
+        . '<span class="lp-accent-card__desc">' . htmlspecialchars(admin_t('settings.accent_custom_short')) . '</span>'
+        . '</span>'
+        . '<span class="lp-accent-card__check" aria-hidden="true">&#10003;</span>'
+        . '</label>';
+
+    return '<div class="lp-accent-palette">'
+        . '<p class="text-xs text-muted mb-3">' . htmlspecialchars(admin_t('settings.accent_palette_help')) . '</p>'
+        . '<div class="lp-accent-palette__grid">' . $cards . '</div>'
+        . '<div class="lp-accent-custom-panel"' . ($customPanelStyle === ' hidden' ? ' hidden' : '') . ' data-custom-panel>'
+        . '<label class="form-control-label d-block mb-2">' . htmlspecialchars(admin_t('settings.custom_color')) . '</label>'
+        . '<div class="lp-accent-custom-panel__controls">'
+        . '<input type="color" class="form-control form-control-color lp-accent-custom-panel__picker" name="custom_primary" value="' . htmlspecialchars($customPrimary, ENT_QUOTES, 'UTF-8') . '" title="' . htmlspecialchars(admin_t('settings.accent_pick_color'), ENT_QUOTES, 'UTF-8') . '">'
+        . '<div class="lp-accent-custom-panel__hex-wrap">'
+        . '<label class="visually-hidden" for="custom_primary_hex">' . htmlspecialchars(admin_t('settings.accent_hex')) . '</label>'
+        . '<input type="text" class="form-control lp-accent-custom-panel__hex" id="custom_primary_hex" value="' . htmlspecialchars(strtoupper($customPrimary), ENT_QUOTES, 'UTF-8') . '" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#023E8A">'
+        . '</div>'
+        . '<p class="text-xs text-muted mb-0 lp-accent-custom-panel__help">' . htmlspecialchars(admin_t('settings.custom_color_help')) . '</p>'
+        . '</div>'
+        . '</div>'
+        . '</div>';
+}
+
 function renderPortalThemeSettingsHtml(): string
 {
     if (!function_exists('admin_t')) {
@@ -3547,7 +3642,6 @@ function renderPortalThemeSettingsHtml(): string
     }
 
     $theme = getPortalTheme();
-    $presets = getPortalThemeColorPresets();
     $currentMode = $theme['mode'];
     $currentColor = $theme['color'];
     $customPrimary = $theme['custom_primary'];
@@ -3565,28 +3659,7 @@ function renderPortalThemeSettingsHtml(): string
             . htmlspecialchars($label) . '</option>';
     }
 
-    $swatches = '';
-    foreach ($presets as $key => $preset) {
-        $active = $currentColor === $key ? ' active' : '';
-        $swatchGradient = 'linear-gradient(135deg, ' . $preset['primary'] . ' 0%, ' . $preset['primary_dark'] . ' 100%)';
-        $swatches .= '<label class="settings-theme-swatch' . $active . '" title="' . htmlspecialchars($preset['label']) . '">'
-            . '<input type="radio" name="theme_color" value="' . htmlspecialchars($key) . '"' . ($currentColor === $key ? ' checked' : '') . '>'
-            . '<span class="settings-theme-swatch__dot" style="background: ' . htmlspecialchars($swatchGradient) . ';"></span>'
-            . '<span class="settings-theme-swatch__label">' . htmlspecialchars($preset['label']) . '</span>'
-            . '</label>';
-    }
-
-    $customPreset = portalThemeBuildCustomPreset($customPrimary);
-    $customGradient = 'linear-gradient(135deg, ' . $customPreset['primary'] . ' 0%, ' . $customPreset['primary_dark'] . ' 100%)';
-    $customActive = $currentColor === 'custom' ? ' active' : '';
-    $customChecked = $currentColor === 'custom' ? ' checked' : '';
-    $customPickerStyle = $currentColor === 'custom' ? '' : ' style="display:none;"';
-
-    $swatches .= '<label class="settings-theme-swatch settings-theme-swatch--custom' . $customActive . '" title="Custom">'
-        . '<input type="radio" name="theme_color" value="custom"' . $customChecked . '>'
-        . '<span class="settings-theme-swatch__dot settings-theme-swatch__dot--custom" style="background: ' . htmlspecialchars($customGradient) . ';"></span>'
-        . '<span class="settings-theme-swatch__label">Custom</span>'
-        . '</label>';
+    $swatches = legalpro_render_portal_accent_palette_html($currentColor, $customPrimary);
 
     return '<div class="card mb-4">'
         . '<div class="card-header pb-0"><h6>' . htmlspecialchars(admin_t('settings.appearance')) . '</h6></div>'
@@ -3608,18 +3681,11 @@ function renderPortalThemeSettingsHtml(): string
         . '</div>'
         . '<div class="mb-4">'
         . '<label class="form-control-label d-block mb-2">' . htmlspecialchars(admin_t('settings.accent_color')) . '</label>'
-        . '<div class="settings-theme-swatches">' . $swatches . '</div>'
-        . '</div>'
-        . '<div class="settings-theme-custom-picker mb-4"' . $customPickerStyle . '>'
-        . '<label class="form-control-label d-block mb-2">' . htmlspecialchars(admin_t('settings.custom_color')) . '</label>'
-        . '<div class="d-flex align-items-center gap-3 flex-wrap">'
-        . '<input type="color" class="form-control form-control-color settings-theme-color-input" name="custom_primary" value="' . htmlspecialchars($customPrimary) . '" title="Pick a custom accent color">'
-        . '<span class="text-sm text-muted">' . htmlspecialchars(admin_t('settings.custom_color_help')) . '</span>'
-        . '</div>'
+        . $swatches
         . '</div>'
         . '<button type="submit" class="btn btn-dark">' . htmlspecialchars(admin_t('settings.save_appearance')) . '</button>'
         . '</form>'
-        . '<script>(function(){var form=document.querySelector(".settings-theme-form");if(!form)return;var customInput=form.querySelector(\'input[name="theme_color"][value="custom"]\');var pickerWrap=form.querySelector(".settings-theme-custom-picker");var picker=form.querySelector(\'input[name="custom_primary"]\');var customDot=form.querySelector(".settings-theme-swatch--custom .settings-theme-swatch__dot");var sync=function(){if(pickerWrap)pickerWrap.style.display=customInput&&customInput.checked?"block":"none";};form.querySelectorAll(\'input[name="theme_color"]\').forEach(function(radio){radio.addEventListener("change",sync);});if(picker){picker.addEventListener("input",function(){if(customDot)customDot.style.background=picker.value;});}sync();})();</script>'
+        . '<script>(function(){var form=document.querySelector(".settings-theme-form");if(!form)return;var panel=form.querySelector("[data-custom-panel]");var customRadio=form.querySelector(\'input[name="theme_color"][value="custom"]\');var picker=form.querySelector(".lp-accent-custom-panel__picker");var hex=form.querySelector(".lp-accent-custom-panel__hex");var stripe=form.querySelector("[data-custom-stripe]");function normHex(v){v=(v||"").trim();if(!v)return"";if(v.charAt(0)!=="#")v="#"+v;return/^#[0-9a-fA-F]{6}$/.test(v)?v.toUpperCase():"";}function grad(c){return"linear-gradient(135deg,"+c+" 0%,"+c+" 100%)";}function syncPanel(){if(panel)panel.hidden=!(customRadio&&customRadio.checked);}function applyCustom(c){var n=normHex(c);if(!n)return;if(picker)picker.value=n;if(hex)hex.value=n;if(stripe)stripe.style.background=grad(n);}form.querySelectorAll(\'input[name="theme_color"]\').forEach(function(r){r.addEventListener("change",syncPanel);});if(picker){picker.addEventListener("input",function(){applyCustom(picker.value);});}if(hex){hex.addEventListener("input",function(){var n=normHex(hex.value);if(n){applyCustom(n);}});hex.addEventListener("blur",function(){var n=normHex(hex.value);if(n)hex.value=n;});}syncPanel();})();</script>'
         . '</div>'
         . '</div>';
 }

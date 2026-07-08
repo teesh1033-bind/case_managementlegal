@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
 require_once __DIR__ . '/../lib/finance-reference-numbers.php';
+require_once __DIR__ . '/../lib/admin-payments-activity-portal.php';
 
 ensure_invoice_bank_columns($pdo);
 
@@ -384,10 +385,11 @@ if (empty($invoices)) {
             <td class="align-middle text-center">' . $statusBadge . '</td>
             <td class="align-middle text-center">' . ($invoice['due_date'] ? htmlspecialchars(date('d M Y', strtotime($invoice['due_date']))) : 'N/A') . '</td>
             <td class="align-middle text-end">
-                <div class="legalpro-admin-list-row__actions">
+                <div class="legalpro-admin-list-row__actions legalpro-invoices-list__actions">
+                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '&view=1" class="btn btn-sm btn-legalpro-payments-outline mb-0" title="View invoice" target="_blank" rel="noopener">View</a>
+                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary mb-0" title="Download invoice PDF" target="_blank" rel="noopener">Download</a>
                     <a href="invoices.php?id=' . (int)$invoice['id'] . '" class="' . legalpro_portal_accent_action_btn_class() . '" title="Edit Invoice">Edit</a>
-                    <a href="invoice-download.php?id=' . (int)$invoice['id'] . '" class="btn btn-sm btn-secondary mb-0" title="Download invoice PDF" target="_blank">Download PDF</a>
-                    <form method="post" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number']) . '? This action cannot be undone.\');">
+                    <form method="post" onsubmit="return confirm(\'Are you sure you want to delete invoice ' . htmlspecialchars($invoice['invoice_number'], ENT_QUOTES) . '? This action cannot be undone.\');">
                         <input type="hidden" name="form_type" value="delete">
                         <input type="hidden" name="invoice_id" value="' . (int)$invoice['id'] . '">
                         <button class="btn btn-sm btn-danger mb-0" type="submit" title="Delete Invoice">Delete</button>
@@ -416,7 +418,7 @@ $formTitle = $formData['invoice_id'] ? 'Edit Invoice' : 'Create Invoice';
 $formButtonLabel = $formData['invoice_id'] ? 'Update Invoice' : 'Create Invoice';
 $invoiceNumberHint = $formData['invoice_id']
     ? ''
-    : '<small class="text-muted">Assigned automatically when you save.</small>';
+    : '<small class="legalpro-payments-form-hint">Auto-generated on save.</small>';
 $invoiceNumberField = '<input type="text" class="form-control bg-light" value="' . htmlspecialchars($formData['invoice_number']) . '" readonly tabindex="-1">' . $invoiceNumberHint;
 
 $html = <<<'HTML'
@@ -435,34 +437,29 @@ $html = <<<'HTML'
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     {ADMIN_PORTAL_HEAD}
-    <link href="../assets/css/legalpro-finance-pages.css?v=7" rel="stylesheet" />
+    <link href="../assets/css/legalpro-finance-pages.css?v=17" rel="stylesheet" />
     <link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />
     <?php echo legalpro_bank_accounts_stylesheet_tag(); ?>
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-finance-page admin-payments-page legalpro-payments-activity-page admin-invoices-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main"></aside>
     <main class="main-content position-relative border-radius-lg">
 		{PAGE_NAVBAR}
         <div class="container-fluid py-4">
-            {FINANCE_SUBNAV}
+            {PAYMENTS_SUBNAV}
             {MESSAGE}
-            <div class="fin-hero-card">
-                <p class="fin-hero-kicker">Finance</p>
-                <h4 class="fin-hero-title">Invoices</h4>
-                <p class="fin-hero-sub">Generate clean invoices with linked cases and clients, then track status from draft to paid.</p>
-            </div>
             <div class="row">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header pb-0">
+                    <div class="card legalpro-payments-form-panel legalpro-payments-form-panel--record">
+                        <div class="card-header pb-0 border-0">
                             <h6 class="mb-0">{FORM_TITLE}</h6>
-                            <p class="text-sm text-muted mb-0">Generate clean invoices with linked cases and clients.</p>
                         </div>
-                        <div class="card-body pt-0">
-                            <form method="post" autocomplete="off">
+                        <div class="card-body pt-3">
+                            <form method="post" autocomplete="off" class="legalpro-invoices-form">
                                 <input type="hidden" name="form_type" value="save">
                                 <input type="hidden" name="invoice_id" value="{FORM_INVOICE_ID}">
+                                <div class="legalpro-payments-form-section mb-2">Invoice details</div>
                                 <div class="mb-3">
                                     <label class="form-label">Invoice Number</label>
                                     {INVOICE_NUMBER_FIELD}
@@ -499,6 +496,7 @@ $html = <<<'HTML'
                                         <p class="text-xs text-muted mb-0 mt-2" id="case-amount-summary-paid"></p>
                                     </div>
                                 </div>
+                                <div class="legalpro-payments-form-section mb-2 mt-1">Dates and totals</div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Issue Date</label>
@@ -525,26 +523,31 @@ $html = <<<'HTML'
                                         </select>
                                     </div>
                                 </div>
+                                <div class="legalpro-payments-form-section mb-2 mt-1">Bank and notes</div>
                                 {INVOICE_BANK_SECTION}
                                 <div class="mb-3">
                                     <label class="form-label">Notes</label>
                                     <textarea class="form-control" rows="3" name="notes" placeholder="Additional notes...">{FORM_NOTES}</textarea>
                                 </div>
-                                <button class="btn btn-dark w-100">{FORM_BUTTON}</button>
+                                <div class="d-flex justify-content-end pt-1">
+                                    <button class="btn btn-legalpro-payments-save mb-0">{FORM_BUTTON}</button>
+                                </div>
                             </form>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 mt-4">
-                    <div class="card">
-                        <div class="card-header pb-0">
+                    <div class="card legalpro-invoices-list-card">
+                        <div class="card-header pb-0 border-0">
                             <h6 class="mb-0">Invoice List</h6>
                         </div>
                         <div class="card-body px-0 pt-0 pb-2">
-                            {INVOICES_SEARCH}
-                            <div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
-                            <div class="table-responsive">
-                                <table class="table align-items-center mb-0">
+                            <div class="legalpro-invoices-list__search px-4 pb-3">
+                                {INVOICES_SEARCH}
+                            </div>
+                            <div class="lp-admin-table-paginate px-3 pb-3" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
+                            <div class="table-responsive legalpro-payments-table-wrap">
+                                <table class="table align-items-center mb-0 legalpro-payments-table legalpro-invoices-table">
                                     <thead>
                                         <tr>
                                             <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Invoice</th>
@@ -652,6 +655,26 @@ $html = <<<'HTML'
             var bankPreviewKicker = document.getElementById('invoice-bank-preview-kicker');
             var bankPreviewValue = document.getElementById('invoice-bank-preview-value');
             var bankPreviewMeta = document.getElementById('invoice-bank-preview-meta');
+            var bankPreviewChips = document.getElementById('invoice-bank-preview-chips');
+            var bankPreviewBadge = document.getElementById('invoice-bank-preview-badge');
+
+            function addBankChip(label, value) {
+                if (!bankPreviewChips || !value) return;
+                var chip = document.createElement('span');
+                chip.className = 'lp-invoice-bank__chip';
+                // Fallback readability even if stylesheet fails to load.
+                chip.style.display = 'inline-flex';
+                chip.style.alignItems = 'center';
+                chip.style.gap = '6px';
+                chip.style.marginRight = '8px';
+                chip.style.marginBottom = '6px';
+                chip.textContent = label + ': ' + value;
+                chip.innerHTML = '<span class="lp-invoice-bank__chip-label"></span><span class="lp-invoice-bank__chip-value"></span>';
+                chip.querySelector('.lp-invoice-bank__chip-label').textContent = label;
+                chip.querySelector('.lp-invoice-bank__chip-value').textContent = value;
+                bankPreviewChips.appendChild(chip);
+            }
+
             function renderBankPreview() {
                 if (!bankSelect || !bankPreview) return;
                 var account = bankAccountsData[bankSelect.value];
@@ -661,13 +684,31 @@ $html = <<<'HTML'
                 }
                 bankPreview.hidden = false;
                 if (bankPreviewKicker) bankPreviewKicker.textContent = 'Account number';
-                if (bankPreviewValue) bankPreviewValue.textContent = account.account_number || '—';
+                if (bankPreviewBadge) bankPreviewBadge.textContent = 'Selected';
+
+                var accountNumber = (account.account_number || '').trim();
+                if (bankPreviewValue) {
+                    bankPreviewValue.textContent = accountNumber || 'Account number not set';
+                    bankPreviewValue.classList.toggle('is-empty', !accountNumber);
+                }
+
+                if (bankPreviewChips) {
+                    bankPreviewChips.innerHTML = '';
+                    addBankChip('Account', account.account_name || '');
+                    addBankChip('Bank', account.bank_name || '');
+                    addBankChip('Sort', account.sort_code || '');
+                    if (account.iban) addBankChip('IBAN', account.iban);
+                }
+
                 if (bankPreviewMeta) {
-                    var parts = [];
-                    if (account.account_name) parts.push(account.account_name);
-                    if (account.bank_name) parts.push(account.bank_name);
-                    if (account.sort_code) parts.push('Sort code ' + account.sort_code);
-                    bankPreviewMeta.textContent = parts.join(' · ');
+                    var hasChips = bankPreviewChips && bankPreviewChips.children.length > 0;
+                    if (!hasChips) {
+                        bankPreviewMeta.textContent = 'Update details in Settings > Branding > Bank accounts';
+                        bankPreviewMeta.classList.add('is-visible');
+                    } else {
+                        bankPreviewMeta.textContent = '';
+                        bankPreviewMeta.classList.remove('is-visible');
+                    }
                 }
             }
             if (bankSelect) {
@@ -695,7 +736,7 @@ $invoiceBankSectionHtml = legalpro_render_invoice_bank_section(
 );
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
-$html = str_replace('{FINANCE_SUBNAV}', legalpro_finance_subnav_html('invoices'), $html);
+$html = str_replace('{PAYMENTS_SUBNAV}', legalpro_payments_portal_subnav_html('invoices'), $html);
 $html = str_replace('{FORM_TITLE}', htmlspecialchars($formTitle), $html);
 $html = str_replace('{FORM_BUTTON}', htmlspecialchars($formButtonLabel), $html);
 $html = str_replace('{FORM_INVOICE_ID}', htmlspecialchars($formData['invoice_id']), $html);
@@ -719,7 +760,7 @@ $html = str_replace('{CASE_FINANCIAL_JSON}', json_encode($caseFinancialData), $h
 $html = str_replace('{CURRENCY_ZERO}', formatCurrency(0), $html);
 
 $html = preg_replace('/href="([^"\']+)\.html"/i', 'href="$1.php"', $html);
-$html = legalpro_apply_admin_page_shell($html, 'Invoices', 'Billing and invoice records');
+$html = legalpro_apply_admin_page_shell($html, 'Payments', 'Record client payments, track balances, and manage case ledgers');
 
 ob_start();
 include __DIR__ . '/../inc/menunav.php';

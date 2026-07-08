@@ -26,7 +26,6 @@ $menuItems = [
     ['title_key' => 'nav.appointments', 'fallback' => 'Appointments', 'url' => 'appointments.php', 'icon' => 'calendar', 'id' => 'appointments'],
     ['title_key' => 'nav.court_tracking', 'fallback' => 'Court Tracking', 'url' => 'court-tracking.php', 'icon' => 'landmark', 'id' => 'court-tracking'],
     ['title_key' => 'nav.lawyers', 'fallback' => 'Lawyers', 'url' => 'lawyers.php', 'icon' => 'user-round', 'id' => 'lawyers'],
-    ['title_key' => 'nav.finance', 'fallback' => 'Finance', 'url' => 'financial-summary.php', 'icon' => 'pie-chart', 'id' => 'financial-summary'],
     ['title_key' => 'nav.documents', 'fallback' => 'Documents', 'url' => 'documents.php', 'icon' => 'folder-open', 'id' => 'documents'],
     ['title_key' => 'nav.ai_assistant', 'fallback' => 'AI Assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
     ['title_key' => 'nav.settings', 'fallback' => 'Settings', 'url' => 'settings.php', 'icon' => 'settings', 'id' => 'settings'],
@@ -56,13 +55,10 @@ if (!function_exists('legalpro_admin_menu_is_active')) {
         if ($itemId === 'documents' && in_array($currentPage, ['documents', 'document-upload', 'document-templates', 'document-generate', 'document-browse'], true)) {
             return true;
         }
-        if ($itemId === 'financial-summary' && in_array($currentPage, ['financial-summary', 'invoices'], true)) {
-            return true;
-        }
         if ($itemId === 'settings' && strpos($currentPage, 'settings') === 0) {
             return true;
         }
-        if ($itemId === 'payments' && strpos($currentPage, 'payments') === 0) {
+        if ($itemId === 'payments' && (strpos($currentPage, 'payments') === 0 || in_array($currentPage, ['financial-summary', 'invoices'], true))) {
             return true;
         }
 
@@ -79,9 +75,9 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 <?php if (!defined('LEGALPRO_ADMIN_PORTAL_HEAD')): ?>
 <?php include __DIR__ . '/portal-theme-head-early.php'; ?>
 <?php legalpro_icons_head_scripts(); ?>
-<link href="../assets/css/legalpro-portal-shell.css?v=26" rel="stylesheet" />
-<link href="../assets/css/legalpro-admin-portal.css?v=39" rel="stylesheet" />
-<link href="../assets/css/dashboard-enhancements.css?v=18" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=29" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=49" rel="stylesheet" />
+<link href="../assets/css/dashboard-enhancements.css?v=21" rel="stylesheet" />
 <?php echo legalpro_sidebar_stylesheet_tag(); ?>
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>

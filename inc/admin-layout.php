@@ -704,6 +704,16 @@ function legalpro_render_page_toolbar(string $title, string $subtitle = '', stri
 function legalpro_finance_portal_pages(): array
 {
     return [
+        'payments' => [
+            'file' => 'payments.php',
+            'title_key' => 'nav.payments',
+            'fallback' => 'Payments',
+        ],
+        'payments-record' => [
+            'file' => 'payments-record.php',
+            'title_key' => 'nav.record_payment',
+            'fallback' => 'Record Payment',
+        ],
         'financial-summary' => [
             'file' => 'financial-summary.php',
             'title_key' => 'nav.finance_summary',
@@ -713,6 +723,21 @@ function legalpro_finance_portal_pages(): array
             'file' => 'invoices.php',
             'title_key' => 'nav.invoices',
             'fallback' => 'Invoices',
+        ],
+        'payments-ledger' => [
+            'file' => 'payments-ledger.php',
+            'title_key' => 'nav.case_ledger',
+            'fallback' => 'Case Ledger',
+        ],
+        'payments-recent' => [
+            'file' => 'payments-recent.php',
+            'title_key' => 'nav.recent_payments',
+            'fallback' => 'Recent',
+        ],
+        'payments-outstanding' => [
+            'file' => 'payments-outstanding.php',
+            'title_key' => 'nav.outstanding',
+            'fallback' => 'Outstanding',
         ],
     ];
 }

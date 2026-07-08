@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/case_events.php';
+require_once __DIR__ . '/bank_accounts.php';
 
 function legalpro_payments_portal_load(PDO $pdo): array
 {
@@ -58,6 +59,14 @@ function legalpro_payments_portal_load(PDO $pdo): array
 
     try {
         $pdo->query('ALTER TABLE payments ADD COLUMN invoice_id INT NULL AFTER client_id');
+    } catch (PDOException $e) {
+        if (stripos($e->getMessage(), 'duplicate column') === false) {
+            throw $e;
+        }
+    }
+
+    try {
+        $pdo->query('ALTER TABLE payments ADD COLUMN bank_account_slot TINYINT UNSIGNED NULL AFTER invoice_id');
     } catch (PDOException $e) {
         if (stripos($e->getMessage(), 'duplicate column') === false) {
             throw $e;
@@ -125,6 +134,7 @@ function legalpro_payments_portal_load(PDO $pdo): array
     $formData = [
         'case_id' => $selectedCaseId ?: '',
         'invoice_id' => $selectedInvoiceId ?: '',
+        'bank_account_slot' => '',
         'amount' => $prefillAmount > 0 ? $prefillAmount : '',
         'method' => 'cash',
         'reference' => '',
@@ -132,6 +142,23 @@ function legalpro_payments_portal_load(PDO $pdo): array
         'payment_date' => date('Y-m-d'),
         'recorded_by' => 'admin',
     ];
+
+    $configuredBankAccounts = [];
+    foreach (getBankAccounts() as $account) {
+        $slot = (int) ($account['slot'] ?? 0);
+        if ($slot < 1 || !bank_account_is_configured($account)) {
+            continue;
+        }
+        $configuredBankAccounts[$slot] = bank_account_option_label($account, $slot);
+    }
+    $showBankAccountSelector = count($configuredBankAccounts) >= 3;
+    $bankAccountOptions = '<option value="">Select receiving account</option>';
+    if ($showBankAccountSelector) {
+        foreach ($configuredBankAccounts as $slot => $label) {
+            $selected = ((string) $formData['bank_account_slot'] === (string) $slot) ? ' selected' : '';
+            $bankAccountOptions .= '<option value="' . $slot . '"' . $selected . '>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</option>';
+        }
+    }
 
     if ($selectedCaseId > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST' && $prefillAmount <= 0) {
         $prefilled = false;
@@ -200,6 +227,9 @@ function legalpro_payments_portal_load(PDO $pdo): array
         $caseId = isset($_POST['case_id']) ? (int) $_POST['case_id'] : 0;
         $invoiceId = isset($_POST['invoice_id']) && $_POST['invoice_id'] !== '' ? (int) $_POST['invoice_id'] : 0;
         $amount = isset($_POST['amount']) ? (float) $_POST['amount'] : 0;
+        $bankAccountSlot = isset($_POST['bank_account_slot']) && $_POST['bank_account_slot'] !== ''
+            ? (int) $_POST['bank_account_slot']
+            : 0;
         $method = isset($_POST['method']) ? trim($_POST['method']) : 'cash';
         $reference = isset($_POST['reference']) ? trim($_POST['reference']) : '';
         $notes = isset($_POST['notes']) ? trim($_POST['notes']) : '';
@@ -209,6 +239,7 @@ function legalpro_payments_portal_load(PDO $pdo): array
         $formData = [
             'case_id' => $caseId ?: '',
             'invoice_id' => $invoiceId ?: '',
+            'bank_account_slot' => $bankAccountSlot ?: '',
             'amount' => $amount,
             'method' => $method,
             'reference' => $reference,
@@ -222,6 +253,9 @@ function legalpro_payments_portal_load(PDO $pdo): array
             $messageType = 'danger';
         } elseif (!isset($allowedMethods[$method])) {
             $message = 'Invalid payment method selected.';
+            $messageType = 'danger';
+        } elseif ($showBankAccountSelector && $bankAccountSlot > 0 && !isset($configuredBankAccounts[$bankAccountSlot])) {
+            $message = 'Please select a valid receiving bank account.';
             $messageType = 'danger';
         } else {
             $dateObj = DateTime::createFromFormat('Y-m-d', $paymentDate);
@@ -314,13 +348,14 @@ function legalpro_payments_portal_load(PDO $pdo): array
                     if ($canInsert) {
                         try {
                             $insert = $pdo->prepare("
-                                INSERT INTO payments (case_id, client_id, invoice_id, amount, method, reference, notes, payment_date, recorded_by)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                INSERT INTO payments (case_id, client_id, invoice_id, bank_account_slot, amount, method, reference, notes, payment_date, recorded_by)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                             ");
                             $insert->execute([
                                 $caseRow['id'],
                                 $caseRow['client_id'],
                                 $invoiceId > 0 ? $invoiceId : null,
+                                ($showBankAccountSelector && $bankAccountSlot > 0) ? $bankAccountSlot : null,
                                 $amount,
                                 $method,
                                 $reference,
@@ -458,6 +493,14 @@ function legalpro_payments_portal_load(PDO $pdo): array
         $methodsOptions .= '<option value="' . htmlspecialchars($value) . '"' . $selected . '>' . htmlspecialchars($label) . '</option>';
     }
 
+    if ($showBankAccountSelector) {
+        $bankAccountOptions = '<option value="">Select receiving account</option>';
+        foreach ($configuredBankAccounts as $slot => $label) {
+            $selected = ((string) $formData['bank_account_slot'] === (string) $slot) ? ' selected' : '';
+            $bankAccountOptions .= '<option value="' . $slot . '"' . $selected . '>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</option>';
+        }
+    }
+
     $casesPaidOff = 0;
     foreach ($cases as $case) {
         $estimated = isset($case['estimated_fees']) ? (float) $case['estimated_fees'] : 0;
@@ -478,6 +521,8 @@ function legalpro_payments_portal_load(PDO $pdo): array
         'messageType' => $messageType,
         'formData' => $formData,
         'caseOptions' => $caseOptions,
+        'showBankAccountSelector' => $showBankAccountSelector,
+        'bankAccountOptions' => $bankAccountOptions,
         'ledgerOptions' => $ledgerOptions,
         'caseLedger' => $caseLedger,
         'caseInvoices' => $caseInvoices,

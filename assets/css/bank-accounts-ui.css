@@ -318,47 +318,127 @@
 }
 
 .lp-invoice-bank__card {
+    display: block;
+    border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.28);
+    border-radius: 14px;
+    padding: 1rem 1.05rem 1.05rem;
+    background:
+        radial-gradient(circle at top right, rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.16), transparent 45%),
+        linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.lp-invoice-bank__card-top {
     display: flex;
     align-items: center;
     gap: 0.85rem;
-    border: 1px solid rgba(17, 205, 239, 0.28);
-    border-radius: 12px;
-    padding: 0.85rem 1rem;
-    background: linear-gradient(135deg, rgba(17, 205, 239, 0.08) 0%, rgba(17, 205, 239, 0.02) 100%);
 }
 
 .lp-invoice-bank__card-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 10px;
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(17, 205, 239, 0.14);
+    background: rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.14);
     color: var(--lp-bank-accent);
+    border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.18);
     flex-shrink: 0;
 }
 
+.lp-invoice-bank__card-main {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
 .lp-invoice-bank__card-kicker {
-    font-size: 0.62rem;
+    font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--lp-bank-accent);
-    margin-bottom: 0.15rem;
+    color: #64748b;
+    margin-bottom: 0.2rem;
 }
 
 .lp-invoice-bank__card-value {
-    font-size: 1.05rem;
+    font-size: 1.12rem;
     font-weight: 800;
-    color: var(--lp-bank-text);
+    color: #0f172a;
     line-height: 1.2;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-invoice-bank__card-badge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--lp-bank-accent);
+    background: rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.12);
+    border: 1px solid rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.22);
+    border-radius: 999px;
+    padding: 0.28rem 0.65rem;
+}
+
+.lp-invoice-bank__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+}
+
+.lp-invoice-bank__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    padding: 0.38rem 0.7rem;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.2;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.lp-invoice-bank__chip-label {
+    color: #94a3b8;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.lp-invoice-bank__chip-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lp-invoice-bank__card-meta {
+    display: none;
     font-size: 0.78rem;
     color: var(--lp-bank-muted);
-    margin-top: 0.15rem;
+    margin-top: 0.7rem;
+    line-height: 1.4;
+}
+
+.lp-invoice-bank__card-meta.is-visible {
+    display: block;
+}
+
+.lp-invoice-bank__card-value.is-empty {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0;
 }
 
 /* Dark mode */
@@ -428,10 +508,31 @@ body.legalpro-dark-mode .lp-bank-default {
 }
 
 body.legalpro-dark-mode .lp-invoice-bank__card {
-    background: rgba(17, 205, 239, 0.1);
-    border-color: rgba(17, 205, 239, 0.25);
+    background:
+        radial-gradient(circle at top right, rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.22), transparent 42%),
+        linear-gradient(180deg, rgba(52, 59, 79, 0.98) 0%, rgba(45, 53, 74, 0.98) 100%);
+    border-color: rgba(var(--legalpro-theme-primary-rgb, 17, 205, 239), 0.34);
+    box-shadow: none;
 }
 
 body.legalpro-dark-mode .lp-invoice-bank__card-value {
     color: var(--lp-dark-text, #f8f9fc);
+}
+
+body.legalpro-dark-mode .lp-invoice-bank__card-kicker {
+    color: var(--lp-dark-text-muted, #a8b3cf);
+}
+
+body.legalpro-dark-mode .lp-invoice-bank__chip {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--lp-dark-text-secondary, #e2e8f2);
+}
+
+body.legalpro-dark-mode .lp-invoice-bank__chip-label {
+    color: var(--lp-dark-text-muted, #a8b3cf);
+}
+
+body.legalpro-dark-mode .lp-invoice-bank__card-value.is-empty {
+    color: var(--lp-dark-text-muted, #a8b3cf);
 }

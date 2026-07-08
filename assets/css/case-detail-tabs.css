@@ -620,3 +620,21 @@ body.legalpro-dark-mode.admin-case-view-page #quotations .case-quotation-card .b
     background-color: rgba(245, 54, 92, 0.28) !important;
     border-color: rgba(245, 54, 92, 0.65) !important;
 }
+
+/* Global case detail text visibility in dark mode */
+body.legalpro-dark-mode.admin-case-view-page .case-detail-hub,
+body.legalpro-dark-mode.admin-case-view-page .case-detail-form-card,
+body.legalpro-dark-mode.admin-case-view-page .case-detail-table-wrap,
+body.legalpro-dark-mode.admin-case-view-page .case-feed-item__title,
+body.legalpro-dark-mode.admin-case-view-page .case-detail-hub h6,
+body.legalpro-dark-mode.admin-case-view-page .case-detail-hub .font-weight-bolder {
+    color: #f8fbff !important;
+}
+
+body.legalpro-dark-mode.admin-case-view-page .case-feed-item__sub,
+body.legalpro-dark-mode.admin-case-view-page .case-feed-item__time,
+body.legalpro-dark-mode.admin-case-view-page .case-detail-hub .text-muted,
+body.legalpro-dark-mode.admin-case-view-page .case-detail-hub .text-xs,
+body.legalpro-dark-mode.admin-case-view-page .case-detail-hub small {
+    color: #dbe7ff !important;
+}

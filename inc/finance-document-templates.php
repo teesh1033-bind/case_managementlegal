@@ -138,7 +138,7 @@ function legalpro_render_finance_document_top(string $heading, string $badge = '
 }
 
 /**
- * Modern invoice header: accent bar, firm branding, and amount due.
+ * Professional invoice header: firm brand left, INVOICE + number right.
  */
 function legalpro_render_invoice_document_header(
     string $invoiceNumber,
@@ -154,48 +154,17 @@ function legalpro_render_invoice_document_header(
         $logoHtml = '<img class="fin-doc-inv-logo" src="' . $logoSrc . '" alt="' . legalpro_finance_h($firm['name']) . '">';
     }
 
-    $statusKey = strtolower($status);
-    $statusClass = 'is-open';
-    if ($statusKey === 'paid') {
-        $statusClass = 'is-paid';
-    } elseif (in_array($statusKey, ['overdue', 'late', 'cancelled'], true)) {
-        $statusClass = 'is-overdue';
-    }
-
-    $statusLabel = fin_doc_invoice_status_label($status);
-    $amountLabel = $statusKey === 'paid' ? fin_doc_t('paid_in_full') : fin_doc_t('amount_due');
-    $dueLabel = $statusKey === 'paid' ? fin_doc_t('settled') : fin_doc_t('due_on', ['date' => $dueDate]);
-
-    $contact = [];
-    if (trim((string) $firm['email']) !== '') {
-        $contact[] = legalpro_finance_h($firm['email']);
-    }
-    if (trim((string) $firm['phone']) !== '') {
-        $contact[] = legalpro_finance_h($firm['phone']);
-    }
-    $contactHtml = $contact !== [] ? '<div class="fin-doc-inv-contact">' . implode(' · ', $contact) . '</div>' : '';
-
     return '<div class="fin-doc-inv-header">'
-        . '<div class="fin-doc-inv-accent"></div>'
         . '<div class="fin-doc-inv-header-inner">'
         . '<div class="fin-doc-inv-col fin-doc-inv-col--brand">'
         . '<div class="fin-doc-inv-brand">' . $logoHtml
         . '<div class="fin-doc-inv-brand-text">'
-        . '<div class="fin-doc-inv-firm">' . legalpro_finance_h($firm['name']) . '</div>'
-        . '<div class="fin-doc-inv-address">' . nl2br(legalpro_finance_h($firm['address'])) . '</div>'
-        . $contactHtml
+        . '<div class="fin-doc-inv-firm">' . legalpro_finance_h(strtoupper($firm['name'])) . '</div>'
         . '</div></div>'
-        . '<div class="fin-doc-inv-doc-label">' . fin_doc_t('invoice') . '</div>'
         . '</div>'
-        . '<div class="fin-doc-inv-col fin-doc-inv-col--spacer"></div>'
         . '<div class="fin-doc-inv-col fin-doc-inv-col--meta">'
-        . '<div class="fin-doc-inv-number">' . legalpro_finance_h($invoiceNumber) . '</div>'
-        . '<div class="fin-doc-inv-status ' . $statusClass . '">' . legalpro_finance_h($statusLabel) . '</div>'
-        . '<div class="fin-doc-inv-due-card">'
-        . '<span class="fin-doc-inv-due-label">' . legalpro_finance_h($amountLabel) . '</span>'
-        . '<span class="fin-doc-inv-due-value">' . legalpro_finance_h($amountDueDisplay) . '</span>'
-        . '<span class="fin-doc-inv-due-date">' . legalpro_finance_h($dueLabel) . '</span>'
-        . '</div>'
+        . '<div class="fin-doc-inv-doc-label">' . fin_doc_t('invoice') . '</div>'
+        . '<div class="fin-doc-inv-number">#' . legalpro_finance_h($invoiceNumber) . '</div>'
         . '</div>'
         . '</div>'
         . '</div>';
@@ -258,13 +227,16 @@ function legalpro_render_invoice_document_html(array $invoice, int $invoiceId): 
     $paymentTerms = (string) ($invoice['payment_terms'] ?? '');
     $paymentInstructions = (string) ($invoice['payment_instructions'] ?? '');
 
+    $vatRateLabel = rtrim(rtrim(number_format($taxRate, 2, '.', ''), '0'), '.');
     $vatLabel = $taxRate > 0
-        ? fin_doc_t('vat_rate', ['rate' => rtrim(rtrim(number_format($taxRate, 2, '.', ''), '0'), '.')])
+        ? fin_doc_t('vat_rate', ['rate' => $vatRateLabel])
         : fin_doc_t('vat');
 
     $summaryRows = [
         ['label' => fin_doc_t('subtotal'), 'value' => formatCurrency($subtotal)],
         ['label' => $vatLabel, 'value' => formatCurrency($taxAmount)],
+        ['label' => fin_doc_t('net_excl_vat'), 'value' => formatCurrency($subtotal)],
+        ['label' => fin_doc_t('net_incl_vat'), 'value' => formatCurrency($amount)],
     ];
     if ($paidTotal > 0) {
         $summaryRows[] = ['label' => fin_doc_t('amount_paid'), 'value' => formatCurrency($paidTotal)];
@@ -283,13 +255,25 @@ function legalpro_render_invoice_document_html(array $invoice, int $invoiceId): 
         $lineDescription .= ' — ' . $invoice['case_title'];
     }
 
-    $caseRef = $invoice['case_title'] ?: fin_doc_t('na');
-    $footerContact = [];
+    $vatCell = $taxRate > 0 ? ($vatRateLabel . '%') : '—';
+    $firmContact = [];
     if (trim((string) $firm['email']) !== '') {
-        $footerContact[] = legalpro_finance_h($firm['email']);
+        $firmContact[] = legalpro_finance_h($firm['email']);
     }
     if (trim((string) $firm['phone']) !== '') {
-        $footerContact[] = legalpro_finance_h($firm['phone']);
+        $firmContact[] = legalpro_finance_h($firm['phone']);
+    }
+    $vatNumber = getCompanyVatNumber();
+    $payableMeta = $vatNumber !== ''
+        ? '<div class="fin-doc-inv-payable-vat">' . fin_doc_t('vat_no') . ': ' . legalpro_finance_h($vatNumber) . '</div>'
+        : '';
+
+    $clientLines = [];
+    if (trim((string) ($invoice['client_email'] ?? '')) !== '') {
+        $clientLines[] = legalpro_finance_h($invoice['client_email']);
+    }
+    if (trim((string) ($invoice['client_phone'] ?? '')) !== '') {
+        $clientLines[] = legalpro_finance_h($invoice['client_phone']);
     }
 
     return '<div class="fin-doc fin-doc--invoice">'
@@ -300,42 +284,56 @@ function legalpro_render_invoice_document_html(array $invoice, int $invoiceId): 
             $dueDate
         )
         . '<div class="fin-doc-body">'
-        . '<div class="fin-doc-inv-cards">'
-        . '<div class="fin-doc-inv-card"><div class="fin-doc-section-title">' . fin_doc_t('bill_to') . '</div>'
-        . '<div class="fin-doc-inv-card-name">' . legalpro_finance_h($invoice['client_name'] ?: fin_doc_t('client')) . '</div>'
-        . '<div class="fin-doc-inv-card-line">' . legalpro_finance_h($invoice['client_email'] ?: '—') . '</div>'
-        . '<div class="fin-doc-inv-card-line">' . legalpro_finance_h($invoice['client_phone'] ?: '—') . '</div>'
-        . '</div>'
-        . '<div class="fin-doc-inv-card"><div class="fin-doc-section-title">' . fin_doc_t('details') . '</div>'
-        . '<div class="fin-doc-inv-detail"><span>' . fin_doc_t('issue_date') . '</span>' . legalpro_finance_h($issueDate) . '</div>'
-        . '<div class="fin-doc-inv-detail"><span>' . fin_doc_t('due_date') . '</span>' . legalpro_finance_h($dueDate) . '</div>'
-        . '<div class="fin-doc-inv-detail"><span>' . fin_doc_t('case') . '</span>' . legalpro_finance_h($caseRef) . '</div>'
-        . '<div class="fin-doc-inv-detail"><span>' . fin_doc_t('status') . '</span>' . legalpro_finance_h($statusDisplay) . '</div>'
+        . '<div class="fin-doc-inv-parties">'
+        . '<div class="fin-doc-inv-party fin-doc-inv-party--from">'
+        . '<div class="fin-doc-inv-party-name">' . legalpro_finance_h(strtoupper($firm['name'])) . '</div>'
+        . '<div class="fin-doc-inv-party-line">' . nl2br(legalpro_finance_h($firm['address'])) . '</div>'
+        . ($firmContact !== [] ? '<div class="fin-doc-inv-party-line">' . implode('<br>', $firmContact) . '</div>' : '')
+        . '<div class="fin-doc-inv-dates">'
+        . '<div><strong>' . fin_doc_t('issue_date') . ':</strong> ' . legalpro_finance_h($issueDate) . '</div>'
+        . '<div><strong>' . fin_doc_t('due_date') . ':</strong> ' . legalpro_finance_h($dueDate) . '</div>'
         . '</div>'
         . '</div>'
-        . '<div class="fin-doc-section fin-doc-section--items"><div class="fin-doc-section-title">' . fin_doc_t('line_items') . '</div>'
+        . '<div class="fin-doc-inv-party fin-doc-inv-party--to">'
+        . '<div class="fin-doc-section-title">' . fin_doc_t('bill_to') . ':</div>'
+        . '<div class="fin-doc-inv-party-name">' . legalpro_finance_h($invoice['client_name'] ?: fin_doc_t('client')) . '</div>'
+        . ($clientLines !== [] ? '<div class="fin-doc-inv-party-line">' . implode('<br>', $clientLines) . '</div>' : '')
+        . (trim((string) ($invoice['case_title'] ?? '')) !== ''
+            ? '<div class="fin-doc-inv-party-line"><strong>' . fin_doc_t('case') . ':</strong> ' . legalpro_finance_h($invoice['case_title']) . '</div>'
+            : '')
+        . '<div class="fin-doc-inv-party-line"><strong>' . fin_doc_t('status') . ':</strong> ' . legalpro_finance_h($statusDisplay) . '</div>'
+        . '</div>'
+        . '</div>'
+        . '<div class="fin-doc-section fin-doc-section--items">'
         . '<table class="fin-doc-table fin-doc-table--invoice"><thead><tr>'
-        . '<th class="col-num">#</th><th>' . fin_doc_t('description') . '</th><th class="text-end">' . fin_doc_t('amount') . '</th>'
+        . '<th>' . fin_doc_t('description') . '</th>'
+        . '<th class="text-center">' . fin_doc_t('qty') . '</th>'
+        . '<th class="text-end">' . fin_doc_t('unit_price') . '</th>'
+        . '<th class="text-center">' . fin_doc_t('vat') . '</th>'
+        . '<th class="text-end">' . fin_doc_t('line_total') . '</th>'
         . '</tr></thead><tbody>'
-        . '<tr><td class="col-num">01</td><td><strong>' . legalpro_finance_h($lineDescription) . '</strong></td>'
+        . '<tr><td><strong>' . legalpro_finance_h($lineDescription) . '</strong></td>'
+        . '<td class="text-center">1</td>'
+        . '<td class="text-end">' . legalpro_finance_h(formatCurrency($subtotal)) . '</td>'
+        . '<td class="text-center">' . legalpro_finance_h($vatCell) . '</td>'
         . '<td class="text-end fin-doc-amount-cell">' . legalpro_finance_h($amountDisplay) . '</td></tr>'
         . '</tbody></table>'
         . '</div>'
         . $notesBlock
         . '<div class="fin-doc-inv-bottom">'
         . '<div class="fin-doc-inv-bottom-pay">'
-        . '<div class="fin-doc-section-title">' . fin_doc_t('payment_details') . '</div>'
+        . '<div class="fin-doc-inv-payable">'
+        . '<span class="fin-doc-inv-payable-label">' . fin_doc_t('payable_to') . '</span>'
+        . '<span class="fin-doc-inv-payable-name">' . legalpro_finance_h(strtoupper($firm['name'])) . '</span>'
+        . $payableMeta
+        . '</div>'
         . legalpro_render_finance_payment_details_html($bankSlot, $paymentTerms, $paymentInstructions, null)
         . '</div>'
         . '<div class="fin-doc-inv-bottom-totals">'
-        . legalpro_render_finance_summary_box_html($summaryRows, $amountDisplay, 'light')
+        . legalpro_render_finance_summary_box_html($summaryRows, $amountDisplay, 'dark')
         . '</div>'
         . '</div>'
         . '<div class="fin-doc-inv-footer">'
-        . '<div class="fin-doc-inv-footer-firm">' . legalpro_finance_h($firm['name']) . '</div>'
-        . '<div class="fin-doc-inv-footer-meta">' . nl2br(legalpro_finance_h($firm['address']))
-        . ($footerContact !== [] ? '<br>' . implode(' · ', $footerContact) : '')
-        . '</div>'
         . '<div class="fin-doc-inv-footer-thanks">' . fin_doc_t('thank_you') . '</div>'
         . '</div>'
         . '</div></div>';
@@ -474,6 +472,7 @@ function legalpro_deliver_finance_document(
     if ($mode === 'view' || $mode === 'print') {
         $toolbar = '<div class="fin-doc-toolbar no-print">'
             . '<a href="' . legalpro_finance_h($baseUrl) . '" class="fin-doc-action fin-doc-action--download">' . fin_doc_t('download_pdf') . '</a>'
+            . '<button type="button" class="fin-doc-action" onclick="window.print()">' . fin_doc_t('print') . '</button>'
             . '</div>';
         $bodyHtml = $toolbar . $bodyHtml;
 

@@ -135,7 +135,7 @@ ob_start();
     <link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
     <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
-    <link href="../assets/css/vision-ui-dashboard.css?v=11" rel="stylesheet" />
+    <link href="../assets/css/vision-ui-dashboard.css?v=13" rel="stylesheet" />
 
     <style>
         /* Inline extras not yet in the drop-in CSS */
@@ -186,21 +186,7 @@ echo ob_get_clean();
 
 <main class="main-content position-relative border-radius-lg">
 
-<<<<<<< Updated upstream
-    <!-- ── Sticky top navbar ──────────────────────────────────────────── -->
-    <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" data-scroll="true">
-        <div class="container-fluid py-1 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <div class="legalpro-navbar-heading">
-                <h6 class="vu-page-title font-weight-bolder mb-0">Dashboard</h6>
-                <p class="dashboard-welcome-sub mb-0">
-                    Welcome back, <?= htmlspecialchars($adminDisplayName) ?> &nbsp;·&nbsp; <?= htmlspecialchars($welcomeDate) ?>
-                </p>
-            </div>
-        </div>
-    </nav>
-=======
     <?php echo legalpro_render_admin_page_navbar('Dashboard', 'Welcome back, ' . $adminDisplayName . ' · ' . $welcomeDate); ?>
->>>>>>> Stashed changes
 
     <div class="container-fluid py-4 px-4">
 

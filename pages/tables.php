@@ -235,7 +235,7 @@ $html = <<<'HTML'
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
 	{ADMIN_PORTAL_HEAD}
-	<link href="../assets/css/legalpro-admin-portal.css?v=27" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=48" rel="stylesheet" />
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-cases-page">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>

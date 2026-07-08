@@ -1,6 +1,10 @@
 <?php
+header('Location: payments.php');
+exit;
+
 require_once __DIR__ . '/../inc/db.php';
 require_once __DIR__ . '/../inc/admin-layout.php';
+require_once __DIR__ . '/../lib/admin-payments-activity-portal.php';
 
 $message = '';
 $messageType = '';
@@ -260,7 +264,7 @@ $html = <<<'HTML'
     <?php include __DIR__ . '/../inc/admin-portal-head.php'; ?>
     <link href="../assets/css/legalpro-finance-pages.css?v=7" rel="stylesheet" />
 </head>
-<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page legalpro-finance-page<?php echo legalpro_portal_theme_body_class(); ?>">
+<body class="g-sidenav-show bg-gray-100 legalpro-admin-portal legalpro-dashboard-page legalpro-finance-page admin-payments-page<?php echo legalpro_portal_theme_body_class(); ?>">
     <div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
     <aside class="sidenav bg-white navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-4" id="sidenav-main">
         <!-- replaced dynamically -->
@@ -278,10 +282,10 @@ $html = <<<'HTML'
             </div>
         </nav>
         <div class="container-fluid py-4">
+            {PAYMENTS_SUBNAV}
             {MESSAGE}
             <div class="fin-hero-card">
-                <p class="fin-hero-kicker">Finance</p>
-                <h4 class="fin-hero-title">Financial summary</h4>
+                <h4 class="fin-hero-title">Financial Summary</h4>
                 <p class="fin-hero-sub">Overview of fees, collections, and outstanding balances across all active matters.</p>
             </div>
             <div class="row">
@@ -475,6 +479,7 @@ $casesWithBalance = count(array_filter($cases, function($case) {
 }));
 
 $html = str_replace('{MESSAGE}', $messageHtml, $html);
+$html = str_replace('{PAYMENTS_SUBNAV}', legalpro_payments_portal_subnav_html('financial-summary'), $html);
 $html = str_replace('{CASE_ROWS}', $caseRows, $html);
 $html = str_replace('{TOTAL_FEES}', formatCurrency($totalFees), $html);
 $html = str_replace('{TOTAL_PAID}', formatCurrency($totalPaid), $html);

@@ -378,7 +378,7 @@ $html = <<<'HTML'
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
 <link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
 {ADMIN_PORTAL_HEAD}
-	<link href="../assets/css/legalpro-admin-portal.css?v=25" rel="stylesheet" />
+	<link href="../assets/css/legalpro-admin-portal.css?v=49" rel="stylesheet" />
 	<link href="../assets/css/dashboard-enhancements.css?v=14" rel="stylesheet" />
 	<link href="../assets/css/legalpro-finance-pages.css?v=5" rel="stylesheet" />
 </head>
@@ -404,15 +404,15 @@ $html = <<<'HTML'
 		<div class="container-fluid py-4">
 			<div class="row">
 				<div class="col-lg-8">
-					<div class="card">
-						<div class="card-header pb-0">
+					<div class="card legalpro-client-detail-main-card">
+						<div class="card-header pb-0 legalpro-client-detail-main-card__header">
 							<div class="d-flex align-items-center">
-								<p class="mb-0">Client Information</p>
+								<p class="mb-0 legalpro-client-detail-main-card__title">Client Information</p>
 							</div>
 						</div>
 						<div class="card-body">
 							{MESSAGE}
-							<form method="POST" action="">
+							<form method="POST" action="" class="legalpro-client-detail-form">
 								<input type="hidden" name="client_id" value="{CLIENT_ID}">
 								<div class="row">
 									<div class="col-md-6">
@@ -456,7 +456,7 @@ $html = <<<'HTML'
 										<input class="form-control" type="text" name="address" id="client_address" placeholder="Street, City, Country" value="{ADDRESS}">
 									</div>
 								</div>
-								<div id="corporate-fields" class="client-type-panel legalpro-form-panel border rounded p-3" style="display: none;">
+								<div id="corporate-fields" class="client-type-panel legalpro-form-panel border rounded p-3 legalpro-client-corporate-panel" style="display: none;">
 									<h6 class="text-sm mb-3">Business Details</h6>
 									<div class="form-group">
 										<label class="form-control-label">Business Name <span class="text-danger">*</span></label>
@@ -482,16 +482,16 @@ $html = <<<'HTML'
 								<!-- User Account Creation Section (only show for new clients) -->
 								{NEW_USER_ACCOUNT_SECTION}
 
-								<div class="mt-4">
-									<button type="submit" class="btn btn-primary btn-sm">Save Client</button>
-									<a href="clients.php" class="btn btn-outline-secondary btn-sm ms-2">Cancel</a>
+								<div class="mt-4 legalpro-client-detail-actions-row">
+									<button type="submit" class="btn btn-primary btn-sm legalpro-client-detail-save-btn">Save Client</button>
+									<a href="clients.php" class="btn btn-outline-secondary btn-sm ms-2 legalpro-client-detail-cancel-btn">Cancel</a>
 								</div>
 							</form>
-							<hr class="horizontal dark">
-							<p class="text-uppercase text-sm">Linked Cases</p>
+							<hr class="horizontal dark legalpro-client-detail-divider">
+							<p class="text-uppercase text-sm legalpro-client-detail-section-label">Linked Cases</p>
 							<div class="lp-admin-table-paginate" data-lp-admin-paginate data-lp-per-page="10" data-lp-row=".legalpro-admin-list-row">
 							<div class="table-responsive">
-								<table class="table align-items-center">
+								<table class="table align-items-center legalpro-client-linked-table">
 									<thead>
 										<tr>
 											<th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Case</th>
@@ -511,13 +511,13 @@ $html = <<<'HTML'
 					</div>
 				</div>
 				<div class="col-lg-4">
-					<div class="card">
-						<div class="card-header pb-0">
+					<div class="card legalpro-client-detail-side-card">
+						<div class="card-header pb-0 legalpro-client-detail-side-card__header">
 							<h6>Actions</h6>
 						</div>
-						<div class="card-body">
-							<a href="case-new.php?client_id={CLIENT_ID}" class="btn btn-outline-dark w-100 mb-2">Register New Case</a>
-							<a href="appointments.html" class="btn btn-outline-dark w-100">Book Appointment</a>
+						<div class="card-body legalpro-client-detail-side-card__body">
+							<a href="case-new.php?client_id={CLIENT_ID}" class="btn btn-outline-dark w-100 mb-2 btn-legalpro-client-detail-action">Register New Case</a>
+							<a href="appointments.html" class="btn btn-outline-dark w-100 btn-legalpro-client-detail-action">Book Appointment</a>
 						</div>
 					</div>
 				</div>

@@ -16,6 +16,13 @@ function legalpro_payments_portal_pages(): array
             'nav' => 'Payments',
             'desc' => 'Financial summary at a glance',
         ],
+        'invoices' => [
+            'file' => 'invoices.php',
+            'title' => 'Invoices',
+            'tab' => 'Invoices',
+            'nav' => 'Invoices',
+            'desc' => 'Create and manage invoice records',
+        ],
         'payments-record' => [
             'file' => 'payments-record.php',
             'title' => 'Record Payment',
@@ -339,10 +346,22 @@ function legalpro_payments_portal_overview_html(array $state): string
 function legalpro_payments_portal_record_html(array $state): string
 {
     $formData = $state['formData'];
+    $bankAccountField = '';
+    if (!empty($state['showBankAccountSelector'])) {
+        $bankAccountField = '<div class="col-md-6">'
+            . '<label class="form-label">Receiving account</label>'
+            . '<select class="form-select" name="bank_account_slot">' . ($state['bankAccountOptions'] ?? '') . '</select>'
+            . '<p class="legalpro-payments-form-hint mb-0 mt-1">Choose the account where this payment was received.</p>'
+            . '</div>';
+    }
 
-    return '<div class="legalpro-payments-form-panel">
+    return '<div class="legalpro-payments-form-panel legalpro-payments-form-panel--record">
             <form method="post" autocomplete="off" class="legalpro-payments-form">
                 <div class="row g-4">
+                    <div class="col-12">
+                        <h6 class="legalpro-payments-form-section mb-1">Payment details</h6>
+                        <p class="legalpro-payments-form-hint mb-0">Capture payment accurately for reconciliation and audit history.</p>
+                    </div>
                     <div class="col-12">
                         <label class="form-label">Select Case</label>
                         <select class="form-select" name="case_id" id="case_id" required>' . $state['caseOptions'] . '</select>
@@ -369,6 +388,7 @@ function legalpro_payments_portal_record_html(array $state): string
                         <label class="form-label">Method</label>
                         <select class="form-select" name="method">' . $state['methodsOptions'] . '</select>
                     </div>
+                    ' . $bankAccountField . '
                     <div class="col-md-6">
                         <label class="form-label">Reference <span class="text-muted fw-normal">(optional)</span></label>
                         <input type="text" class="form-control" name="reference" value="' . htmlspecialchars($formData['reference']) . '" placeholder="Receipt no., bank ref...">
@@ -397,7 +417,7 @@ function legalpro_payments_portal_ledger_html(array $state): string
                 <label class="form-label mb-1" for="ledger_case_select">Select case</label>
                 <select class="form-select" id="ledger_case_select">' . $state['ledgerOptions'] . '</select>
             </div>
-            <a href="financial-summary.php" class="btn btn-sm btn-legalpro-payments-outline">Financial Summary</a>
+            <a href="invoices.php" class="btn btn-sm btn-legalpro-payments-outline">Invoices</a>
         </div>
         <p class="legalpro-payments-ledger-case-label" id="selected-case-label">Select a case to view its balance.</p>
         <div class="legalpro-payments-ledger-stats">
@@ -741,7 +761,7 @@ function legalpro_payments_activity_render_page(string $pageKey, string $content
     ob_start();
     include dirname(__DIR__) . '/inc/admin-portal-head.php';
     $html .= ob_get_clean();
-    $html .= '<link href="../assets/css/legalpro-finance-pages.css?v=14" rel="stylesheet" />'
+    $html .= '<link href="../assets/css/legalpro-finance-pages.css?v=19" rel="stylesheet" />'
         . '<link href="../assets/css/legalpro-documents-hub.css?v=5" rel="stylesheet" />'
         . '<link href="../assets/css/app-font-montserrat.css?v=8" rel="stylesheet" />
 </head>

@@ -25,8 +25,6 @@ $menuItems = [
     ['title_key' => 'nav.appointments', 'url' => 'appointments.php', 'icon' => 'calendar', 'id' => 'appointments'],
     ['title_key' => 'nav.court_tracking', 'url' => 'court-tracking.php', 'icon' => 'landmark', 'id' => 'court-tracking'],
     ['title_key' => 'nav.lawyers', 'url' => 'lawyers.php', 'icon' => 'user-round', 'id' => 'lawyers'],
-    ['title_key' => 'nav.invoices', 'url' => 'invoices.php', 'icon' => 'file-text', 'id' => 'invoices'],
-    ['title_key' => 'nav.finance', 'url' => 'financial-summary.php', 'icon' => 'pie-chart', 'id' => 'financial-summary'],
     ['title_key' => 'nav.documents', 'url' => 'documents.php', 'icon' => 'folder-open', 'id' => 'documents'],
     ['title_key' => 'nav.ai_assistant', 'url' => 'chatbot.php', 'icon' => 'bot', 'id' => 'chatbot'],
 ];
@@ -50,6 +48,10 @@ if (!function_exists('legalpro_admin_menu_is_active')) {
             return true;
         }
 
+        if ($itemId === 'payments' && (strpos($currentPage, 'payments') === 0 || in_array($currentPage, ['financial-summary', 'invoices'], true))) {
+            return true;
+        }
+
         return $itemId === $currentPage;
     }
 }
@@ -63,9 +65,9 @@ $navbarUtilitiesMount = legalpro_navbar_utilities_mount(
 <?php if (!defined('LEGALPRO_ADMIN_PORTAL_HEAD')): ?>
 <?php include __DIR__ . '/portal-theme-head-early.php'; ?>
 <?php legalpro_icons_head_scripts(); ?>
-<link href="../assets/css/legalpro-portal-shell.css?v=21" rel="stylesheet" />
-<link href="../assets/css/legalpro-admin-portal.css?v=37" rel="stylesheet" />
-<link href="../assets/css/dashboard-enhancements.css?v=16" rel="stylesheet" />
+<link href="../assets/css/legalpro-portal-shell.css?v=29" rel="stylesheet" />
+<link href="../assets/css/legalpro-admin-portal.css?v=49" rel="stylesheet" />
+<link href="../assets/css/dashboard-enhancements.css?v=21" rel="stylesheet" />
 <?php echo legalpro_sidebar_stylesheet_tag(); ?>
 <?php legalpro_icons_asset_links(); ?>
 <?php include __DIR__ . '/portal-theme-head.php'; ?>

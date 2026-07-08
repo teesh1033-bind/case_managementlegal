@@ -156,10 +156,6 @@ function legalpro_apply_copyright_line(string $html): string
         $html = str_replace('{COPYRIGHT_LINE}', legalpro_copyright_line(), $html);
     }
 
-    if (function_exists('admin_i18n_fill_tokens')) {
-        $html = admin_i18n_fill_tokens($html);
-    }
-
     if (function_exists('legalpro_apply_admin_i18n_for_page')) {
         $html = legalpro_apply_admin_i18n_for_page($html);
     } elseif (function_exists('legalpro_apply_admin_i18n')) {
@@ -169,7 +165,76 @@ function legalpro_apply_copyright_line(string $html): string
     return $html;
 }
 
-function saveCompanyBranding(string $companyName, string $companyDetails, ?array $logoFile = null): array
+function legalpro_save_branding_logo_file(string $tmpPath, string $extension): array
+{
+    $uploadDir = dirname(__DIR__) . '/uploads/branding';
+    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+        return ['ok' => false, 'message' => 'Unable to create branding upload folder.'];
+    }
+
+    $targetPath = $uploadDir . '/company-logo.' . $extension;
+    $relativePath = 'uploads/branding/company-logo.' . $extension;
+
+    $oldLogo = getCompanyLogoRelativePath();
+    if ($oldLogo !== getDefaultCompanyLogoPath() && strpos($oldLogo, 'uploads/branding/') === 0) {
+        $oldAbsolute = dirname(__DIR__) . '/' . $oldLogo;
+        if (is_file($oldAbsolute)) {
+            @unlink($oldAbsolute);
+        }
+    }
+
+    foreach (glob($uploadDir . '/company-logo.*') ?: [] as $existingLogo) {
+        if (is_file($existingLogo)) {
+            @unlink($existingLogo);
+        }
+    }
+
+    if (!@rename($tmpPath, $targetPath)) {
+        if (!@copy($tmpPath, $targetPath)) {
+            return ['ok' => false, 'message' => 'Unable to save logo file.'];
+        }
+    }
+
+    setSetting('company_logo', $relativePath);
+
+    return ['ok' => true, 'message' => 'Branding updated successfully.'];
+}
+
+function legalpro_save_branding_logo_data_uri(string $dataUri): array
+{
+    $dataUri = trim($dataUri);
+    if ($dataUri === '') {
+        return ['ok' => false, 'message' => 'Logo image data is empty.'];
+    }
+
+    if (!preg_match('/^data:image\/(png|jpeg|jpg|webp);base64,([A-Za-z0-9+\/=]+)$/i', $dataUri, $m)) {
+        return ['ok' => false, 'message' => 'Invalid logo image format. Please use PNG, JPG, or WEBP.'];
+    }
+
+    $type = strtolower($m[1]);
+    $extension = $type === 'jpg' ? 'jpg' : ($type === 'jpeg' ? 'jpg' : $type);
+    $decoded = base64_decode($m[2], true);
+    if ($decoded === false || $decoded === '') {
+        return ['ok' => false, 'message' => 'Unable to decode cropped logo image.'];
+    }
+
+    if (strlen($decoded) > 4 * 1024 * 1024) {
+        return ['ok' => false, 'message' => 'Cropped logo is too large. Maximum size is 4 MB.'];
+    }
+
+    $tmpPath = tempnam(sys_get_temp_dir(), 'logo_');
+    if ($tmpPath === false) {
+        return ['ok' => false, 'message' => 'Unable to prepare logo file for saving.'];
+    }
+    file_put_contents($tmpPath, $decoded);
+
+    $saved = legalpro_save_branding_logo_file($tmpPath, $extension);
+    @unlink($tmpPath);
+
+    return $saved;
+}
+
+function saveCompanyBranding(string $companyName, string $companyDetails, ?array $logoFile = null, string $croppedLogoData = ''): array
 {
     $companyName = trim($companyName);
     if ($companyName === '') {
@@ -178,6 +243,16 @@ function saveCompanyBranding(string $companyName, string $companyDetails, ?array
 
     setSetting('company_name', $companyName);
     setSetting('company_details', $companyDetails);
+
+    $croppedLogoData = trim($croppedLogoData);
+    if ($croppedLogoData !== '') {
+        $saved = legalpro_save_branding_logo_data_uri($croppedLogoData);
+        if (!$saved['ok']) {
+            return $saved;
+        }
+
+        return ['ok' => true, 'message' => 'Branding updated successfully.'];
+    }
 
     if ($logoFile !== null && isset($logoFile['error']) && $logoFile['error'] !== UPLOAD_ERR_NO_FILE) {
         if ($logoFile['error'] !== UPLOAD_ERR_OK) {
@@ -212,34 +287,22 @@ function saveCompanyBranding(string $companyName, string $companyDetails, ?array
             return ['ok' => false, 'message' => 'Logo file is too large. Maximum size is 2 MB.'];
         }
 
-        $uploadDir = dirname(__DIR__) . '/uploads/branding';
-        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
-            return ['ok' => false, 'message' => 'Unable to create branding upload folder.'];
-        }
-
         $extension = $allowedTypes[$mimeType];
-        $targetPath = $uploadDir . '/company-logo.' . $extension;
-        $relativePath = 'uploads/branding/company-logo.' . $extension;
-
-        $oldLogo = getCompanyLogoRelativePath();
-        if ($oldLogo !== getDefaultCompanyLogoPath() && strpos($oldLogo, 'uploads/branding/') === 0) {
-            $oldAbsolute = dirname(__DIR__) . '/' . $oldLogo;
-            if (is_file($oldAbsolute)) {
-                @unlink($oldAbsolute);
-            }
+        $tmpPath = $logoFile['tmp_name'];
+        if (!is_uploaded_file($tmpPath)) {
+            return ['ok' => false, 'message' => 'Invalid uploaded logo file.'];
         }
 
-        foreach (glob($uploadDir . '/company-logo.*') ?: [] as $existingLogo) {
-            if (is_file($existingLogo)) {
-                @unlink($existingLogo);
-            }
-        }
-
-        if (!move_uploaded_file($logoFile['tmp_name'], $targetPath)) {
+        $tempCopy = tempnam(sys_get_temp_dir(), 'logo_up_');
+        if ($tempCopy === false || !move_uploaded_file($tmpPath, $tempCopy)) {
             return ['ok' => false, 'message' => 'Unable to save uploaded logo.'];
         }
 
-        setSetting('company_logo', $relativePath);
+        $saved = legalpro_save_branding_logo_file($tempCopy, $extension);
+        @unlink($tempCopy);
+        if (!$saved['ok']) {
+            return $saved;
+        }
     }
 
     return ['ok' => true, 'message' => 'Branding updated successfully.'];

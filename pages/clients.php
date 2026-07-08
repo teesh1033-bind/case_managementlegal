@@ -173,9 +173,8 @@ $html = <<<'HTML'
 	<link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
 	<script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 	<link id="pagestyle" href="../assets/css/argon-dashboard.css?v=2.1.0" rel="stylesheet" />
-<link href="../assets/css/app-font-montserrat.css?v=1" rel="stylesheet" />
-{ADMIN_PORTAL_HEAD}
-	<link href="../assets/css/legalpro-admin-portal.css?v=26" rel="stylesheet" />
+	<link href="../assets/css/app-font-montserrat.css?v=2" rel="stylesheet" />
+	{ADMIN_PORTAL_HEAD}
 </head>
 <body class="g-sidenav-show bg-gray-100 legalpro-admin-portal admin-clients-page{PORTAL_THEME_BODY_CLASS}">
 	<div class="min-height-300 bg-legalpro-admin position-absolute w-100"></div>
